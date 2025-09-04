@@ -20,7 +20,17 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
+        'mac_address',
+        'ip_address',
+        'device_name',
+        'connected_at',
+        'expires_at',
+        'data_used',
+        'status',
+        'role',
+        'registered_at',
     ];
 
     /**
@@ -43,6 +53,30 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'connected_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'registered_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Relacionamentos
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class);
+    }
+
+    /**
+     * Verifica se o usuário está conectado
+     */
+    public function isConnected(): bool
+    {
+        return $this->status === 'connected' && $this->expires_at && $this->expires_at->isFuture();
     }
 }
