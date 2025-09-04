@@ -141,46 +141,46 @@
         </div>
     </div>
 
-    <div class="container mx-auto px-6 py-8 max-w-6xl">
+    <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
         
         <!-- Header -->
-        <div class="text-center mb-12 animate-fade-in">
+        <div class="text-center mb-8 animate-fade-in">
             <!-- Logo -->
-            <div class="mb-6">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="mx-auto h-20 w-auto drop-shadow-lg">
+            <div class="mb-4">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="mx-auto h-12 sm:h-16 md:h-20 w-auto drop-shadow-lg">
             </div>
-            <h1 class="text-xl font-bold text-tocantins-gray-green mb-2">🌐 CONECTE-SE À INTERNET</h1>
-            <p class="text-tocantins-green font-semibold text-sm">WiFi Tocantins Express</p>
+            <h1 class="text-lg sm:text-xl font-bold text-tocantins-gray-green mb-2">🌐 CONECTE-SE À INTERNET</h1>
+            <p class="text-tocantins-green font-semibold text-xs sm:text-sm">WiFi Tocantins Express</p>
         </div>
 
         <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 mb-8">
             
             <!-- Left Column - Main Card -->
-            <div class="elegant-card rounded-3xl shadow-2xl p-10 animate-slide-up relative overflow-hidden">
+            <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-10 animate-slide-up relative overflow-hidden">
                 
                 <!-- Welcome Section -->
-                <div class="text-center mb-8">
-                    <h2 class="text-base font-bold text-tocantins-gray-green mb-4">
+                <div class="text-center mb-6">
+                    <h2 class="text-sm sm:text-base font-bold text-tocantins-gray-green mb-3">
                         Bem-vindo ao WiFi a bordo! 🚌
                     </h2>
                     
                     <!-- Service Info -->
-                    <div class="grid grid-cols-3 gap-6 mb-8">
-                        <div class="service-card text-center glass-effect rounded-2xl p-4 shadow-lg border border-tocantins-gold/30">
-                            <div class="text-xl mb-2 text-tocantins-green">📶</div>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+                        <div class="service-card text-center glass-effect rounded-xl p-2 sm:p-3 shadow-lg border border-tocantins-gold/30">
+                            <div class="text-lg sm:text-xl mb-1 text-tocantins-green">📶</div>
                             <p class="text-xs text-tocantins-gray-green font-medium">Velocidade</p>
-                            <p class="text-sm font-bold text-tocantins-green">100+ Mbps</p>
+                            <p class="text-xs sm:text-sm font-bold text-tocantins-green">100+ Mbps</p>
                         </div>
-                        <div class="service-card text-center glass-effect rounded-2xl p-4 shadow-lg border border-tocantins-gold/30">
-                            <div class="text-xl mb-2 text-tocantins-green">⏱️</div>
+                        <div class="service-card text-center glass-effect rounded-xl p-2 sm:p-3 shadow-lg border border-tocantins-gold/30">
+                            <div class="text-lg sm:text-xl mb-1 text-tocantins-green">⏱️</div>
                             <p class="text-xs text-tocantins-gray-green font-medium">Durante</p>
-                            <p class="text-sm font-bold text-tocantins-green">A Viagem</p>
+                            <p class="text-xs sm:text-sm font-bold text-tocantins-green">A Viagem</p>
                         </div>
-                        <div class="service-card text-center glass-effect rounded-2xl p-4 shadow-lg border border-tocantins-gold/30">
-                            <div class="text-xl mb-2 text-tocantins-green">🔒</div>
+                        <div class="service-card text-center glass-effect rounded-xl p-2 sm:p-3 shadow-lg border border-tocantins-gold/30">
+                            <div class="text-lg sm:text-xl mb-1 text-tocantins-green">🔒</div>
                             <p class="text-xs text-tocantins-gray-green font-medium">Conexão</p>
-                            <p class="text-sm font-bold text-tocantins-green">Segura</p>
+                            <p class="text-xs sm:text-sm font-bold text-tocantins-green">Segura</p>
                         </div>
                     </div>
                 </div>
@@ -209,15 +209,15 @@
             <div class="space-y-6">
                 
                 <!-- Price & Connect Button (PRIMEIRO) -->
-                <div class="elegant-card rounded-3xl shadow-2xl p-6 animate-slide-up shimmer-effect relative overflow-hidden">
-                    <div class="text-center mb-6">
-                        <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-6 mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
+                <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up shimmer-effect relative overflow-hidden">
+                    <div class="text-center mb-4 sm:mb-6">
+                        <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 animate-pulse-slow"></div>
-                            <p class="text-white text-sm font-semibold mb-2 relative z-10">🚌 Promoção de Acesso por viagem</p>
-                            <p class="text-white text-2xl font-bold relative z-10">R$ 4,99</p>
+                            <p class="text-white text-xs sm:text-sm font-semibold mb-1 sm:mb-2 relative z-10">🚌 Promoção de Acesso por viagem</p>
+                            <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ 4,99</p>
                         </div>
                         
-                        <button id="connect-btn" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-base relative z-10">
+                        <button id="connect-btn" class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm sm:text-base relative z-10">
                             🚀 CONECTAR AGORA
                         </button>
                     </div>
