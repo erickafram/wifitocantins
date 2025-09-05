@@ -464,8 +464,8 @@
                 <a href="#" class="hover:text-tocantins-green transition-colors font-medium">Termos de Uso</a> • 
                 <a href="#" class="hover:text-tocantins-green transition-colors font-medium">Política de Privacidade</a>
             </p>
-            <p class="text-tocantins-green font-semibold text-sm">📞 Suporte: (63) 99999-9999</p>
-            <p class="text-xs text-tocantins-gray-green/70 mt-2">Desenvolvido com ❤️ para Tocantins</p>
+            <p class="text-tocantins-green font-semibold text-sm">📞 Suporte: (63) 9992410056</p>
+            <p class="text-xs text-tocantins-gray-green/70 mt-2">Desenvolvido por Érick Vinicius</p>
         </footer>
     </div>
 

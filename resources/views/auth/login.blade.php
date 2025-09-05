@@ -191,10 +191,10 @@
             <!-- Footer -->
             <div class="text-center">
                 <p class="text-xs text-tocantins-gray-green/70">
-                    © 2025 WiFi Tocantins Express - Todos os direitos reservados
+                    ©2025 WiFi Tocantins Express - Todos os direitos reservados
                 </p>
                 <p class="text-xs text-tocantins-gray-green/50 mt-1">
-                    Desenvolvido com ❤️ para Tocantins
+                    Desenvolvido por Érick Vinicius
                 </p>
             </div>
         </div>
