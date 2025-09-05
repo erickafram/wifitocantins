@@ -153,50 +153,50 @@
         <div class="flex-1 flex flex-col overflow-hidden">
             
             <!-- Top Header -->
-            <header class="bg-gradient-to-r from-white via-gray-50 to-white shadow-lg border-b border-gray-200/50 px-6 py-4 backdrop-blur-sm">
-                <div class="flex justify-between items-center">
+            <header class="bg-gradient-to-r from-white via-gray-50 to-white shadow-lg border-b border-gray-200/50 px-3 sm:px-6 py-2 sm:py-4 backdrop-blur-sm">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
                     <div>
-                        <h1 class="text-xl font-bold bg-gradient-to-r from-tocantins-green to-tocantins-dark-green bg-clip-text text-transparent">
+                        <h1 class="text-sm sm:text-xl font-bold bg-gradient-to-r from-tocantins-green to-tocantins-dark-green bg-clip-text text-transparent">
                             WiFi Tocantins Admin
                         </h1>
                         <p class="text-xs text-gray-500 font-medium">{{ now()->format('d/m/Y H:i') }}</p>
                     </div>
                     
                     <!-- Status Indicators -->
-                    <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2 sm:space-x-6 overflow-x-auto">
                         
                         <!-- Internet Status -->
-                        <div class="bg-white/70 rounded-2xl px-4 py-2 shadow-lg backdrop-blur-sm border border-gray-200/50">
-                            <div class="flex items-center space-x-3">
+                        <div class="bg-white/70 rounded-xl sm:rounded-2xl px-2 sm:px-4 py-1 sm:py-2 shadow-lg backdrop-blur-sm border border-gray-200/50 flex-shrink-0">
+                            <div class="flex items-center space-x-1 sm:space-x-3">
                                 <div class="flex flex-col items-center">
-                                    <div id="internet-status" class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg"></div>
-                                    <span class="text-xs text-gray-600 font-medium mt-1">Internet</span>
+                                    <div id="internet-status" class="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse shadow-lg"></div>
+                                    <span class="text-xs text-gray-600 font-medium mt-0.5 hidden sm:block">Internet</span>
                                 </div>
-                                <div class="border-l border-gray-300 h-8"></div>
+                                <div class="border-l border-gray-300 h-4 sm:h-8 hidden sm:block"></div>
                                 <div class="flex flex-col">
-                                    <span id="internet-speed" class="text-sm font-bold text-tocantins-green">100 Mbps</span>
-                                    <span id="internet-ping" class="text-xs text-gray-500">Ping: 15ms</span>
+                                    <span id="internet-speed" class="text-xs sm:text-sm font-bold text-tocantins-green">100 Mbps</span>
+                                    <span id="internet-ping" class="text-xs text-gray-500 hidden sm:block">Ping: 15ms</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- System Status -->
-                        <div class="bg-white/70 rounded-2xl px-4 py-2 shadow-lg backdrop-blur-sm border border-gray-200/50">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-3 h-3 bg-green-500 rounded-full shadow-lg"></div>
+                        <div class="bg-white/70 rounded-xl sm:rounded-2xl px-2 sm:px-4 py-1 sm:py-2 shadow-lg backdrop-blur-sm border border-gray-200/50 flex-shrink-0">
+                            <div class="flex items-center space-x-1 sm:space-x-3">
+                                <div class="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full shadow-lg"></div>
                                 <div class="flex flex-col">
-                                    <span class="text-xs text-gray-600 font-medium">Sistema Online</span>
+                                    <span class="text-xs text-gray-600 font-medium hidden sm:block">Sistema Online</span>
                                     <span class="text-xs text-tocantins-green font-semibold">{{ $stats['connected_users'] }} usuários</span>
-                    </div>
-                </div>
-            </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- MikroTik Status -->
-                        <div class="bg-white/70 rounded-2xl px-4 py-2 shadow-lg backdrop-blur-sm border border-gray-200/50">
-                            <div class="flex items-center space-x-3">
-                                <div id="mikrotik-status" class="w-3 h-3 bg-green-500 rounded-full shadow-lg"></div>
+                        <div class="bg-white/70 rounded-xl sm:rounded-2xl px-2 sm:px-4 py-1 sm:py-2 shadow-lg backdrop-blur-sm border border-gray-200/50 flex-shrink-0">
+                            <div class="flex items-center space-x-1 sm:space-x-3">
+                                <div id="mikrotik-status" class="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full shadow-lg"></div>
                                 <div class="flex flex-col">
-                                    <span class="text-xs text-gray-600 font-medium">MikroTik</span>
+                                    <span class="text-xs text-gray-600 font-medium hidden sm:block">MikroTik</span>
                                     <span id="mikrotik-uptime" class="text-xs text-tocantins-green font-semibold">Online</span>
                                 </div>
                             </div>
