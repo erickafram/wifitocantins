@@ -243,10 +243,7 @@
                              🚀 CONECTAR AGORA
                          </button>
 
-                        <!-- Garantia -->
-                        <p class="text-xs text-gray-600 mb-3">
-                            🛡️ <span class="font-semibold">Garantia:</span> Conexão estável ou seu dinheiro de volta
-                        </p>
+                       
                     </div>
                      
                      <!-- Payment Methods -->
@@ -473,11 +470,6 @@
                         <button id="connect-btn-desktop" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale">
                             🚀 CONECTAR AGORA!
                 </button>
-
-                        <!-- Garantia Desktop -->
-                        <p class="text-sm text-gray-600 mb-3">
-                            🛡️ <span class="font-semibold">Garantia:</span> Conexão estável ou seu dinheiro de volta
-                        </p>
             </div>
 
             <!-- Payment Methods -->
