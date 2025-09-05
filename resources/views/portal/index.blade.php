@@ -56,16 +56,31 @@
             33% { transform: translateY(-10px) rotate(1deg); }
             66% { transform: translateY(-5px) rotate(-1deg); }
         }
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3); }
-            50% { box-shadow: 0 4px 25px rgba(34, 139, 34, 0.5), 0 0 30px rgba(255, 215, 0, 0.3); }
+        @keyframes pulse-glow-scale {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 4px 15px rgba(34, 139, 34, 0.4);
+            }
+            50% { 
+                transform: scale(1.08); 
+                box-shadow: 0 12px 35px rgba(34, 139, 34, 0.8), 0 0 50px rgba(255, 215, 0, 0.7);
+            }
         }
-        @keyframes pulse-scale {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        @keyframes pulse-glow-scale-fixed {
+            0%, 100% { 
+                transform: translateX(-50%) scale(1); 
+                box-shadow: 0 4px 15px rgba(34, 139, 34, 0.4);
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.08); 
+                box-shadow: 0 12px 35px rgba(34, 139, 34, 0.8), 0 0 50px rgba(255, 215, 0, 0.7);
+            }
         }
         .animate-pulse-scale {
-            animation: pulse-scale 2s ease-in-out infinite;
+            animation: pulse-glow-scale 1s ease-in-out infinite !important;
+        }
+        #fixed-connect-btn.animate-pulse-scale {
+            animation: pulse-glow-scale-fixed 1s ease-in-out infinite !important;
         }
         
         /* Botão Fixo */
@@ -73,11 +88,13 @@
             position: fixed;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s;
+            font-size: 0.9rem;
+            padding: 12px 20px !important;
+            max-width: 200px;
         }
         #fixed-connect-btn.show {
             opacity: 1;
@@ -110,9 +127,12 @@
         .connect-button {
             background: linear-gradient(135deg, #228B22 0%, #006400 50%, #228B22 100%);
             background-size: 200% 200%;
-            animation: pulse-glow 2s infinite;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .connect-button:hover {
+            filter: brightness(1.1);
         }
         .connect-button::before {
             content: '';
@@ -122,7 +142,11 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 2s infinite;
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
         .service-card {
             transition: all 0.3s ease;
@@ -199,13 +223,6 @@
                  <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up  relative overflow-hidden">
                     
 
-                    <!-- Timer de Oferta -->
-                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 ">
-                        <div class="text-center">
-                            <p class="text-red-600 font-bold text-xs mb-1">⏰ OFERTA POR TEMPO LIMITADO!</p>
-                            <p class="text-red-500 text-xs">Válida apenas durante a viagem de inauguração</p>
-                        </div>
-                    </div>
 
                      <div class="text-center mb-4 sm:mb-6">
                         <!-- Preço Original Riscado -->
@@ -440,13 +457,6 @@
                 <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up  relative overflow-hidden">
                     
 
-                    <!-- Timer de Oferta Desktop -->
-                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 ">
-                        <div class="text-center">
-                            <p class="text-red-600 font-bold text-xs mb-1">⏰ OFERTA POR TEMPO LIMITADO!</p>
-                            <p class="text-red-500 text-xs">Válida apenas durante a viagem de inauguração</p>
-                        </div>
-                    </div>
 
                     <div class="text-center mb-4 sm:mb-6">
                         <!-- Preço Original Riscado Desktop -->
@@ -492,7 +502,7 @@
 
                         
                         <button id="connect-btn-desktop" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale">
-                            🚀 CONECTAR AGORA - OFERTA ESPECIAL!
+                            🚀 CONECTAR AGORA!
                 </button>
 
                         <!-- Garantia Desktop -->
@@ -707,8 +717,8 @@
     </div>
 
     <!-- Botão Fixo -->
-    <button id="fixed-connect-btn" class="connect-button px-6 py-3 text-white font-bold rounded-full shadow-2xl animate-pulse-scale">
-        🚀 CONECTAR AGORA!
+    <button id="fixed-connect-btn" class="connect-button text-white font-bold rounded-full shadow-2xl animate-pulse-scale">
+        🚀 CONECTAR!
     </button>
 
     <script src="{{ asset('js/portal.js') }}"></script>
@@ -726,15 +736,16 @@
             connectButtons.forEach(button => {
                 if (button) {
                     const rect = button.getBoundingClientRect();
-                    const isVisible = rect.top >= -100 && rect.bottom <= (window.innerHeight + 100);
+                    // Botão é considerado visível se pelo menos metade está na tela
+                    const isVisible = rect.top >= -50 && rect.bottom <= (window.innerHeight + 50);
                     if (isVisible) {
                         anyButtonVisible = true;
                     }
                 }
             });
             
-            // Mostra o botão fixo quando os principais não estão visíveis e depois de 300px de scroll
-            if (!anyButtonVisible && window.scrollY > 300) {
+            // Mostra o botão fixo quando os principais não estão visíveis ou após scroll de 200px
+            if (!anyButtonVisible || window.scrollY > 200) {
                 fixedBtn.classList.add('show');
             } else {
                 fixedBtn.classList.remove('show');
@@ -744,6 +755,9 @@
         // Fazer o botão fixo funcionar igual aos outros
         document.addEventListener('DOMContentLoaded', function() {
             const fixedBtn = document.getElementById('fixed-connect-btn');
+            const registrationModal = document.getElementById('registration-modal');
+            const paymentModal = document.getElementById('payment-modal');
+            
             if (fixedBtn) {
                 fixedBtn.addEventListener('click', function() {
                     // Simular clique no botão principal
@@ -753,6 +767,40 @@
                     }
                 });
             }
+            
+            // Observar mudanças nos modais para esconder/mostrar botão fixo
+            function checkModalVisibility() {
+                const isRegistrationModalOpen = registrationModal && !registrationModal.classList.contains('hidden');
+                const isPaymentModalOpen = paymentModal && !paymentModal.classList.contains('hidden');
+                
+                if (fixedBtn) {
+                    if (isRegistrationModalOpen || isPaymentModalOpen) {
+                        fixedBtn.style.display = 'none';
+                    } else {
+                        fixedBtn.style.display = 'block';
+                    }
+                }
+            }
+            
+            // Observar mudanças nas classes dos modais
+            if (registrationModal) {
+                const observer = new MutationObserver(checkModalVisibility);
+                observer.observe(registrationModal, { 
+                    attributes: true, 
+                    attributeFilter: ['class'] 
+                });
+            }
+            
+            if (paymentModal) {
+                const observer = new MutationObserver(checkModalVisibility);
+                observer.observe(paymentModal, { 
+                    attributes: true, 
+                    attributeFilter: ['class'] 
+                });
+            }
+            
+            // Verificar estado inicial
+            checkModalVisibility();
         });
     </script>
 </body>
