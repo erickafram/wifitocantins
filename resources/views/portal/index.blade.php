@@ -188,29 +188,104 @@
              <div class="space-y-6">
                  <!-- Price & Connect Button -->
                  <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up shimmer-effect relative overflow-hidden">
+                    
+                    <!-- Badge de Inauguração -->
+                    <div class="absolute top-2 right-2 z-20">
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                            🔥 INAUGURAÇÃO
+                        </div>
+                    </div>
+
+                    <!-- Timer de Oferta -->
+                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 animate-pulse-glow">
+                        <div class="text-center">
+                            <p class="text-red-600 font-bold text-xs mb-1">⏰ OFERTA POR TEMPO LIMITADO!</p>
+                            <p class="text-red-500 text-xs">Válida apenas durante a viagem de inauguração</p>
+                        </div>
+                    </div>
+
                      <div class="text-center mb-4 sm:mb-6">
+                        <!-- Preço Original Riscado -->
+                        <div class="mb-2">
+                            <p class="text-gray-500 line-through text-xs sm:text-sm">De R$ 9,99</p>
+                            <p class="text-red-600 font-bold text-xs">🎉 50% DE DESCONTO!</p>
+                        </div>
+
                          <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
                              <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 animate-pulse-slow"></div>
-                             <p class="text-white text-xs sm:text-sm font-semibold mb-2 relative z-10">🚌 Promoção de Acesso por viagem</p>
-                             <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ 4,99</p>
+                             
+                            <!-- Badge Promocional -->
+                            <div class="absolute top-2 right-2 bg-tocantins-gold text-tocantins-gray-green text-xs font-bold px-2 py-1 rounded-full">
+                                PROMO
+                            </div>
+                            
+                             <p class="text-white text-xs sm:text-sm font-semibold mb-1 sm:mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
+                            <div class="flex items-center justify-center space-x-2 mb-2">
+                                <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ 4,99</p>
+                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                    -50%
+                                </div>
+                            </div>
+                            <p class="text-green-100 text-xs relative z-10">✅ Internet ilimitada + Alta velocidade</p>
                          </div>
+
+                        <!-- Benefícios -->
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-3 mb-4 border border-green-200">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-1">✅</span>
+                                    <span class="text-gray-700">Conexão instantânea</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-1">✅</span>
+                                    <span class="text-gray-700">Sem limite de dados</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-1">✅</span>
+                                    <span class="text-gray-700">Velocidade máxima</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-1">✅</span>
+                                    <span class="text-gray-700">Pagamento seguro</span>
+                                </div>
+                            </div>
+                        </div>
+
                          
                          <button 
                              id="connect-btn" 
-                             class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm sm:text-base relative z-10"
+                             class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm sm:text-base relative z-10 mb-3"
                          >
-                             🚀 CONECTAR AGORA
+                             🚀 CONECTAR AGORA - OFERTA ESPECIAL!
                          </button>
+
+                        <!-- Garantia -->
+                        <p class="text-xs text-gray-600 mb-3">
+                            🛡️ <span class="font-semibold">Garantia:</span> Conexão estável ou seu dinheiro de volta
+                        </p>
                     </div>
                      
                      <!-- Payment Methods -->
                      <div class="text-center">
-                         <p class="text-tocantins-gray-green font-medium mb-4 text-xs sm:text-sm">💳 Forma de pagamento:</p>
+                         <p class="text-tocantins-gray-green font-medium mb-4 text-xs sm:text-sm">💳 Pagamento rápido e seguro:</p>
                          <div class="flex justify-center">
                              <div class="flex items-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-xl px-4 sm:px-6 py-2 sm:py-3 border border-tocantins-gold/40 shadow-lg">
                                  <span class="text-lg sm:text-xl mr-2 sm:mr-3 text-tocantins-green">📱</span>
                                  <span class="text-sm sm:text-lg font-bold text-tocantins-green">PIX</span>
+                                <span class="text-xs text-gray-500 ml-2">Instantâneo</span>
                     </div>
+                    </div>
+                        
+                        <!-- Confiança -->
+                        <div class="mt-4 flex justify-center items-center space-x-4 text-xs text-gray-500">
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-1">🔒</span>
+                                <span>Pagamento Seguro</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-blue-500 mr-1">⚡</span>
+                                <span>Conexão Imediata</span>
+                            </div>
                     </div>
                 </div>
             </div>
@@ -365,25 +440,100 @@
                 
                 <!-- Price & Connect Button (PRIMEIRO) -->
                 <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up shimmer-effect relative overflow-hidden">
+                    
+                    <!-- Badge de Inauguração Desktop -->
+                    <div class="absolute top-2 right-2 z-20">
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                            🔥 INAUGURAÇÃO
+                        </div>
+                    </div>
+
+                    <!-- Timer de Oferta Desktop -->
+                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 animate-pulse-glow">
+                        <div class="text-center">
+                            <p class="text-red-600 font-bold text-xs mb-1">⏰ OFERTA POR TEMPO LIMITADO!</p>
+                            <p class="text-red-500 text-xs">Válida apenas durante a viagem de inauguração</p>
+                        </div>
+                    </div>
+
                     <div class="text-center mb-4 sm:mb-6">
+                        <!-- Preço Original Riscado Desktop -->
+                        <div class="mb-2">
+                            <p class="text-gray-500 line-through text-sm">De R$ 9,99</p>
+                            <p class="text-red-600 font-bold text-xs">🎉 50% DE DESCONTO!</p>
+                        </div>
+
                         <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 animate-pulse-slow"></div>
-                            <p class="text-white text-xs sm:text-sm font-semibold mb-1 sm:mb-2 relative z-10">🚌 Promoção de Acesso por viagem</p>
-                            <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ 4,99</p>
+                            
+                            <!-- Badge Promocional Desktop -->
+                            <div class="absolute top-2 right-2 bg-tocantins-gold text-tocantins-gray-green text-xs font-bold px-2 py-1 rounded-full">
+                                PROMO
+                            </div>
+                            
+                            <p class="text-white text-sm font-semibold mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
+                            <div class="flex items-center justify-center space-x-2 mb-2">
+                                <p class="text-white text-2xl font-bold relative z-10">R$ 4,99</p>
+                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                    -50%
+                                </div>
+                            </div>
+                            <p class="text-green-100 text-sm relative z-10">✅ Internet ilimitada + Alta velocidade</p>
                         </div>
+
+                        <!-- Benefícios Desktop -->
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 mb-4 border border-green-200">
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-2">✅</span>
+                                    <span class="text-gray-700">Conexão instantânea</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-2">✅</span>
+                                    <span class="text-gray-700">Sem limite de dados</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-2">✅</span>
+                                    <span class="text-gray-700">Velocidade máxima</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-green-500 mr-2">✅</span>
+                                    <span class="text-gray-700">Pagamento seguro</span>
+                                </div>
+                            </div>
+                        </div>
+
                         
-                        <button id="connect-btn" class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm sm:text-base relative z-10">
-                    🚀 CONECTAR AGORA
+                        <button id="connect-btn-desktop" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-base relative z-10 mb-3">
+                            🚀 CONECTAR AGORA - OFERTA ESPECIAL!
                 </button>
+
+                        <!-- Garantia Desktop -->
+                        <p class="text-sm text-gray-600 mb-3">
+                            🛡️ <span class="font-semibold">Garantia:</span> Conexão estável ou seu dinheiro de volta
+                        </p>
             </div>
 
             <!-- Payment Methods -->
                     <div class="text-center">
-                        <p class="text-tocantins-gray-green font-medium mb-4 text-sm">💳 Forma de pagamento:</p>
+                        <p class="text-tocantins-gray-green font-medium mb-4 text-sm">💳 Pagamento rápido e seguro:</p>
                 <div class="flex justify-center">
                             <div class="flex items-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-xl px-6 py-3 border border-tocantins-gold/40 shadow-lg">
                                 <span class="text-xl mr-3 text-tocantins-green">📱</span>
                                 <span class="text-lg font-bold text-tocantins-green">PIX</span>
+                                <span class="text-sm text-gray-500 ml-2">Instantâneo</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Confiança Desktop -->
+                        <div class="mt-4 flex justify-center items-center space-x-6 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-2">🔒</span>
+                                <span>Pagamento Seguro</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-blue-500 mr-2">⚡</span>
+                                <span>Conexão Imediata</span>
                             </div>
                         </div>
                     </div>
