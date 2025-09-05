@@ -66,39 +66,8 @@
                 box-shadow: 0 12px 35px rgba(34, 139, 34, 0.8), 0 0 50px rgba(255, 215, 0, 0.7);
             }
         }
-        @keyframes pulse-glow-scale-fixed {
-            0%, 100% { 
-                transform: translateX(-50%) scale(1); 
-                box-shadow: 0 4px 15px rgba(34, 139, 34, 0.4);
-            }
-            50% { 
-                transform: translateX(-50%) scale(1.08); 
-                box-shadow: 0 12px 35px rgba(34, 139, 34, 0.8), 0 0 50px rgba(255, 215, 0, 0.7);
-            }
-        }
         .animate-pulse-scale {
             animation: pulse-glow-scale 1s ease-in-out infinite !important;
-        }
-        #fixed-connect-btn.animate-pulse-scale {
-            animation: pulse-glow-scale-fixed 1s ease-in-out infinite !important;
-        }
-        
-        /* Botão Fixo */
-        #fixed-connect-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-            font-size: 0.9rem;
-            padding: 12px 20px !important;
-            max-width: 200px;
-        }
-        #fixed-connect-btn.show {
-            opacity: 1;
-            visibility: visible;
         }
         .elegant-card {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
@@ -271,7 +240,7 @@
                              id="connect-btn" 
                              class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale"
                          >
-                             🚀 CONECTAR AGORA - OFERTA ESPECIAL!
+                             🚀 CONECTAR AGORA
                          </button>
 
                         <!-- Garantia -->
@@ -716,92 +685,7 @@
         </div>
     </div>
 
-    <!-- Botão Fixo -->
-    <button id="fixed-connect-btn" class="connect-button text-white font-bold rounded-full shadow-2xl animate-pulse-scale">
-        🚀 CONECTAR!
-    </button>
 
     <script src="{{ asset('js/portal.js') }}"></script>
-    
-    <script>
-        // Mostrar/esconder botão fixo baseado na posição do scroll
-        window.addEventListener('scroll', function() {
-            const connectButtons = document.querySelectorAll('#connect-btn, #connect-btn-desktop');
-            const fixedBtn = document.getElementById('fixed-connect-btn');
-            
-            if (!fixedBtn) return; // Verifica se o botão existe
-            
-            let anyButtonVisible = false;
-            
-            connectButtons.forEach(button => {
-                if (button) {
-                    const rect = button.getBoundingClientRect();
-                    // Botão é considerado visível se pelo menos metade está na tela
-                    const isVisible = rect.top >= -50 && rect.bottom <= (window.innerHeight + 50);
-                    if (isVisible) {
-                        anyButtonVisible = true;
-                    }
-                }
-            });
-            
-            // Mostra o botão fixo quando os principais não estão visíveis ou após scroll de 200px
-            if (!anyButtonVisible || window.scrollY > 200) {
-                fixedBtn.classList.add('show');
-            } else {
-                fixedBtn.classList.remove('show');
-            }
-        });
-        
-        // Fazer o botão fixo funcionar igual aos outros
-        document.addEventListener('DOMContentLoaded', function() {
-            const fixedBtn = document.getElementById('fixed-connect-btn');
-            const registrationModal = document.getElementById('registration-modal');
-            const paymentModal = document.getElementById('payment-modal');
-            
-            if (fixedBtn) {
-                fixedBtn.addEventListener('click', function() {
-                    // Simular clique no botão principal
-                    const mainBtn = document.getElementById('connect-btn') || document.getElementById('connect-btn-desktop');
-                    if (mainBtn) {
-                        mainBtn.click();
-                    }
-                });
-            }
-            
-            // Observar mudanças nos modais para esconder/mostrar botão fixo
-            function checkModalVisibility() {
-                const isRegistrationModalOpen = registrationModal && !registrationModal.classList.contains('hidden');
-                const isPaymentModalOpen = paymentModal && !paymentModal.classList.contains('hidden');
-                
-                if (fixedBtn) {
-                    if (isRegistrationModalOpen || isPaymentModalOpen) {
-                        fixedBtn.style.display = 'none';
-                    } else {
-                        fixedBtn.style.display = 'block';
-                    }
-                }
-            }
-            
-            // Observar mudanças nas classes dos modais
-            if (registrationModal) {
-                const observer = new MutationObserver(checkModalVisibility);
-                observer.observe(registrationModal, { 
-                    attributes: true, 
-                    attributeFilter: ['class'] 
-                });
-            }
-            
-            if (paymentModal) {
-                const observer = new MutationObserver(checkModalVisibility);
-                observer.observe(paymentModal, { 
-                    attributes: true, 
-                    attributeFilter: ['class'] 
-                });
-            }
-            
-            // Verificar estado inicial
-            checkModalVisibility();
-        });
-    </script>
 </body>
 </html>
