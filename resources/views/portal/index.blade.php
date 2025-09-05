@@ -249,7 +249,7 @@
                  <div class="grid grid-cols-2 gap-2 mb-4">
                      <!-- Card Passagens Compacto -->
                      <a 
-                         href="https://wa.me/5563849621180" 
+                         href="https://wa.me/556384962118" 
                          target="_blank"
                          class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center"
                      >
@@ -262,7 +262,7 @@
 
                      <!-- Card Turismo Compacto -->
                      <a 
-                         href="https://wa.me/5563846661840" 
+                         href="https://wa.me/5563984666184" 
                          target="_blank"
                          class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center"
                      >
@@ -314,7 +314,7 @@
                          
                          <!-- Card Passagens Compacto -->
                          <a 
-                             href="https://wa.me/5563849621180" 
+                             href="https://wa.me/556384962118" 
                              target="_blank"
                              class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center"
                          >
@@ -327,7 +327,7 @@
 
                          <!-- Card Turismo Compacto -->
                          <a 
-                             href="https://wa.me/5563846661840" 
+                             href="https://wa.me/5563984666184"
                              target="_blank"
                              class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center"
                          >
