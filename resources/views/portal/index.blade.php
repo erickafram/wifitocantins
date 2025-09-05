@@ -47,10 +47,6 @@
                 transform: translateY(0);
             }
         }
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
         @keyframes glow {
             0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
             50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4); }
@@ -64,21 +60,34 @@
             0%, 100% { box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3); }
             50% { box-shadow: 0 4px 25px rgba(34, 139, 34, 0.5), 0 0 30px rgba(255, 215, 0, 0.3); }
         }
+        @keyframes pulse-scale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-pulse-scale {
+            animation: pulse-scale 2s ease-in-out infinite;
+        }
+        
+        /* Botão Fixo */
+        #fixed-connect-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #fixed-connect-btn.show {
+            opacity: 1;
+            visibility: visible;
+        }
         .elegant-card {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 215, 0, 0.2);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        .shimmer-effect::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            animation: shimmer 3s infinite;
         }
         .floating-shapes::before {
             content: '🚌';
@@ -187,17 +196,11 @@
              <!-- Payment Section - Mobile (Logo após serviços WiFi) -->
              <div class="space-y-6">
                  <!-- Price & Connect Button -->
-                 <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up shimmer-effect relative overflow-hidden">
+                 <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up  relative overflow-hidden">
                     
-                    <!-- Badge de Inauguração -->
-                    <div class="absolute top-2 right-2 z-20">
-                        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                            🔥 INAUGURAÇÃO
-                        </div>
-                    </div>
 
                     <!-- Timer de Oferta -->
-                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 animate-pulse-glow">
+                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 ">
                         <div class="text-center">
                             <p class="text-red-600 font-bold text-xs mb-1">⏰ OFERTA POR TEMPO LIMITADO!</p>
                             <p class="text-red-500 text-xs">Válida apenas durante a viagem de inauguração</p>
@@ -212,17 +215,12 @@
                         </div>
 
                          <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
-                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 animate-pulse-slow"></div>
                              
-                            <!-- Badge Promocional -->
-                            <div class="absolute top-2 right-2 bg-tocantins-gold text-tocantins-gray-green text-xs font-bold px-2 py-1 rounded-full">
-                                PROMO
-                            </div>
                             
                              <p class="text-white text-xs sm:text-sm font-semibold mb-1 sm:mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
                             <div class="flex items-center justify-center space-x-2 mb-2">
                                 <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ 4,99</p>
-                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ">
                                     -50%
                                 </div>
                             </div>
@@ -254,7 +252,7 @@
                          
                          <button 
                              id="connect-btn" 
-                             class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm sm:text-base relative z-10 mb-3"
+                             class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale"
                          >
                              🚀 CONECTAR AGORA - OFERTA ESPECIAL!
                          </button>
@@ -303,7 +301,7 @@
                  <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-5 animate-slide-up relative overflow-hidden">
                      <div class="text-center mb-4">
                          <div class="bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow rounded-2xl p-3 sm:p-4 mb-4 shadow-lg border border-tocantins-gold/50 relative overflow-hidden">
-                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse-slow"></div>
+                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -slow"></div>
                              <p class="text-tocantins-gray-green text-xs font-bold mb-1 relative z-10">🎁 GRÁTIS</p>
                              <p class="text-tocantins-gray-green text-xs mb-1 relative z-10">📸 Curta no Instagram e ganhe</p>
                              <p class="text-tocantins-gray-green text-xs sm:text-sm font-bold relative z-10">5 MIN GRÁTIS</p>
@@ -439,17 +437,11 @@
              <div class="space-y-6">
                 
                 <!-- Price & Connect Button (PRIMEIRO) -->
-                <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up shimmer-effect relative overflow-hidden">
+                <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up  relative overflow-hidden">
                     
-                    <!-- Badge de Inauguração Desktop -->
-                    <div class="absolute top-2 right-2 z-20">
-                        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                            🔥 INAUGURAÇÃO
-                        </div>
-                    </div>
 
                     <!-- Timer de Oferta Desktop -->
-                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 animate-pulse-glow">
+                    <div class="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-200 rounded-xl p-2 mb-3 ">
                         <div class="text-center">
                             <p class="text-red-600 font-bold text-xs mb-1">⏰ OFERTA POR TEMPO LIMITADO!</p>
                             <p class="text-red-500 text-xs">Válida apenas durante a viagem de inauguração</p>
@@ -464,17 +456,12 @@
                         </div>
 
                         <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 animate-pulse-slow"></div>
                             
-                            <!-- Badge Promocional Desktop -->
-                            <div class="absolute top-2 right-2 bg-tocantins-gold text-tocantins-gray-green text-xs font-bold px-2 py-1 rounded-full">
-                                PROMO
-                            </div>
                             
                             <p class="text-white text-sm font-semibold mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
                             <div class="flex items-center justify-center space-x-2 mb-2">
                                 <p class="text-white text-2xl font-bold relative z-10">R$ 4,99</p>
-                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ">
                                     -50%
                                 </div>
                             </div>
@@ -504,7 +491,7 @@
                         </div>
 
                         
-                        <button id="connect-btn-desktop" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-base relative z-10 mb-3">
+                        <button id="connect-btn-desktop" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale">
                             🚀 CONECTAR AGORA - OFERTA ESPECIAL!
                 </button>
 
@@ -552,7 +539,7 @@
                 <div class="elegant-card rounded-3xl shadow-2xl p-5 animate-slide-up relative overflow-hidden">
                     <div class="text-center mb-4">
                         <div class="bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow rounded-2xl p-4 mb-4 shadow-lg border border-tocantins-gold/50 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse-slow"></div>
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -slow"></div>
                             <p class="text-tocantins-gray-green text-xs font-bold mb-1 relative z-10">🎁 GRÁTIS</p>
                             <p class="text-tocantins-gray-green text-xs mb-1 relative z-10">📸 Curta no Instagram e ganhe</p>
                             <p class="text-tocantins-gray-green text-sm font-bold relative z-10">5 MIN GRÁTIS</p>
@@ -592,7 +579,7 @@
         <div id="connection-status" class="bg-white rounded-xl p-4 mb-4 hidden">
             <div class="flex items-center justify-center">
                 <div class="flex items-center text-tocantins-green">
-                    <div class="w-3 h-3 bg-tocantins-green rounded-full mr-3 animate-pulse"></div>
+                    <div class="w-3 h-3 bg-tocantins-green rounded-full mr-3 "></div>
                     <span class="font-medium">Status: <span id="status-text">Verificando...</span></span>
                 </div>
             </div>
@@ -719,6 +706,54 @@
         </div>
     </div>
 
+    <!-- Botão Fixo -->
+    <button id="fixed-connect-btn" class="connect-button px-6 py-3 text-white font-bold rounded-full shadow-2xl animate-pulse-scale">
+        🚀 CONECTAR AGORA!
+    </button>
+
     <script src="{{ asset('js/portal.js') }}"></script>
+    
+    <script>
+        // Mostrar/esconder botão fixo baseado na posição do scroll
+        window.addEventListener('scroll', function() {
+            const connectButtons = document.querySelectorAll('#connect-btn, #connect-btn-desktop');
+            const fixedBtn = document.getElementById('fixed-connect-btn');
+            
+            if (!fixedBtn) return; // Verifica se o botão existe
+            
+            let anyButtonVisible = false;
+            
+            connectButtons.forEach(button => {
+                if (button) {
+                    const rect = button.getBoundingClientRect();
+                    const isVisible = rect.top >= -100 && rect.bottom <= (window.innerHeight + 100);
+                    if (isVisible) {
+                        anyButtonVisible = true;
+                    }
+                }
+            });
+            
+            // Mostra o botão fixo quando os principais não estão visíveis e depois de 300px de scroll
+            if (!anyButtonVisible && window.scrollY > 300) {
+                fixedBtn.classList.add('show');
+            } else {
+                fixedBtn.classList.remove('show');
+            }
+        });
+        
+        // Fazer o botão fixo funcionar igual aos outros
+        document.addEventListener('DOMContentLoaded', function() {
+            const fixedBtn = document.getElementById('fixed-connect-btn');
+            if (fixedBtn) {
+                fixedBtn.addEventListener('click', function() {
+                    // Simular clique no botão principal
+                    const mainBtn = document.getElementById('connect-btn') || document.getElementById('connect-btn-desktop');
+                    if (mainBtn) {
+                        mainBtn.click();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
