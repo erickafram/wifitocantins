@@ -243,37 +243,6 @@
 
                  <!-- Mobile Layout -->
          <div class="lg:hidden space-y-6 mb-8">
-             <!-- Welcome Card - Mobile -->
-             <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up relative overflow-hidden">
-            <!-- Welcome Section -->
-            <div class="text-center mb-8">
-                     <h2 class="text-base sm:text-lg font-bold text-tocantins-gray-green mb-4 gradient-text">
-                         Bem-vindo ao WiFi a bordo! 🚌
-                </h2>
-                
-                <!-- Service Info -->
-                     <div class="grid grid-cols-3 gap-3 sm:gap-6 mb-8">
-                         <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group">
-                             <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">📶</div>
-                             <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Velocidade</p>
-                             <p class="text-sm sm:text-base font-bold gradient-text">100+ Mbps</p>
-                             <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                         </div>
-                         <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group" style="animation-delay: 1s;">
-                             <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">⏱️</div>
-                             <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Durante</p>
-                             <p class="text-sm sm:text-base font-bold gradient-text">A Viagem</p>
-                             <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                         </div>
-                         <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group" style="animation-delay: 2s;">
-                             <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">🔒</div>
-                             <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Conexão</p>
-                             <p class="text-sm sm:text-base font-bold gradient-text">Segura</p>
-                             <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                         </div>
-                     </div>
-                 </div>
-             </div>
 
              <!-- Payment Section - Mobile (Logo após serviços WiFi) -->
              <div class="space-y-6">
@@ -356,6 +325,38 @@
                                 <span class="text-blue-500 mr-1">⚡</span>
                                 <span>Conexão Imediata</span>
                             </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Welcome Card - Mobile (Movida para após pagamento) -->
+            <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up relative overflow-hidden">
+                <!-- Welcome Section -->
+                <div class="text-center mb-8">
+                    <h2 class="text-base sm:text-lg font-bold text-tocantins-gray-green mb-4 gradient-text">
+                        Bem-vindo ao WiFi a bordo! 🚌
+                    </h2>
+                    
+                    <!-- Service Info -->
+                    <div class="grid grid-cols-3 gap-3 sm:gap-6 mb-8">
+                        <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group">
+                            <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">📶</div>
+                            <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Velocidade</p>
+                            <p class="text-sm sm:text-base font-bold gradient-text">100+ Mbps</p>
+                            <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group" style="animation-delay: 1s;">
+                            <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">⏱️</div>
+                            <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Durante</p>
+                            <p class="text-sm sm:text-base font-bold gradient-text">A Viagem</p>
+                            <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group" style="animation-delay: 2s;">
+                            <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">🔒</div>
+                            <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Conexão</p>
+                            <p class="text-sm sm:text-base font-bold gradient-text">Segura</p>
+                            <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
                     </div>
                 </div>
             </div>
