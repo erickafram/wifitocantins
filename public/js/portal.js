@@ -28,16 +28,28 @@ class WiFiPortal {
     }
 
     setupEventListeners() {
-        // Botão principal de conectar
+        // Botão principal de conectar (mobile)
         const connectBtn = document.getElementById('connect-btn');
         if (connectBtn) {
             connectBtn.addEventListener('click', () => this.showRegistrationModal());
         }
 
-        // Botão Instagram
-        const instagramBtn = document.getElementById('instagram-btn');
-        if (instagramBtn) {
-            instagramBtn.addEventListener('click', () => this.processInstagramFree());
+        // Botão principal de conectar (desktop)
+        const connectBtnDesktop = document.getElementById('connect-btn-desktop');
+        if (connectBtnDesktop) {
+            connectBtnDesktop.addEventListener('click', () => this.showRegistrationModal());
+        }
+
+        // Botão Instagram (mobile)
+        const instagramBtnMobile = document.getElementById('instagram-btn-mobile');
+        if (instagramBtnMobile) {
+            instagramBtnMobile.addEventListener('click', () => this.processInstagramFree());
+        }
+
+        // Botão Instagram (desktop)
+        const instagramBtnDesktop = document.getElementById('instagram-btn-desktop');
+        if (instagramBtnDesktop) {
+            instagramBtnDesktop.addEventListener('click', () => this.processInstagramFree());
         }
 
         // Fechar modais
@@ -91,6 +103,13 @@ class WiFiPortal {
         const manageBtn = document.getElementById('manage-connection');
         if (manageBtn) {
             manageBtn.addEventListener('click', () => this.showConnectionManager());
+        }
+
+        // Máscara de telefone
+        const phoneInput = document.getElementById('user_phone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => this.applyPhoneMask(e));
+            phoneInput.addEventListener('keydown', (e) => this.handlePhoneKeydown(e));
         }
 
         // Fechar modais clicando fora
@@ -320,7 +339,7 @@ class WiFiPortal {
         const data = {
             name: formData.get('name'),
             email: formData.get('email'),
-            phone: formData.get('phone')
+            phone: formData.get('phone').replace(/\D/g, '') // Remove formatação para enviar apenas números
         };
 
         // Validação básica
@@ -333,6 +352,12 @@ class WiFiPortal {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(data.email)) {
             this.showRegistrationError('Por favor, insira um e-mail válido.');
+            return;
+        }
+
+        // Validar telefone brasileiro (10 ou 11 dígitos)
+        if (data.phone.length < 10 || data.phone.length > 11) {
+            this.showRegistrationError('Por favor, insira um telefone válido com DDD.');
             return;
         }
 
@@ -848,6 +873,53 @@ Clique OK se SIM, Cancelar se NÃO.`);
         const timer = document.getElementById('instagram-timer');
         if (timer) {
             timer.remove();
+        }
+    }
+
+    /**
+     * Aplica máscara de telefone brasileiro (XX) X XXXX-XXXX
+     */
+    applyPhoneMask(e) {
+        let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+        
+        // Limita a 11 dígitos
+        if (value.length > 11) {
+            value = value.slice(0, 11);
+        }
+        
+        // Aplica a máscara
+        if (value.length <= 2) {
+            value = value.replace(/(\d{0,2})/, '($1');
+        } else if (value.length <= 3) {
+            value = value.replace(/(\d{2})(\d{0,1})/, '($1) $2');
+        } else if (value.length <= 7) {
+            value = value.replace(/(\d{2})(\d{1})(\d{0,4})/, '($1) $2 $3');
+        } else {
+            value = value.replace(/(\d{2})(\d{1})(\d{4})(\d{0,4})/, '($1) $2 $3-$4');
+        }
+        
+        e.target.value = value;
+    }
+
+    /**
+     * Lida com teclas especiais no campo de telefone
+     */
+    handlePhoneKeydown(e) {
+        // Permite: backspace, delete, tab, escape, enter
+        if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+            // Permite: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            (e.keyCode === 65 && e.ctrlKey === true) ||
+            (e.keyCode === 67 && e.ctrlKey === true) ||
+            (e.keyCode === 86 && e.ctrlKey === true) ||
+            (e.keyCode === 88 && e.ctrlKey === true) ||
+            // Permite: setas
+            (e.keyCode >= 35 && e.keyCode <= 39)) {
+            return;
+        }
+        
+        // Bloqueia se não for número
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
         }
     }
 

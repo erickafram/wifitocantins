@@ -27,6 +27,10 @@ Route::get('/admin-access', function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::get('/users/{id}', [AdminController::class, 'getUserDetails'])->name('users.details');
+    Route::post('/users/{id}/disconnect', [AdminController::class, 'disconnectUser'])->name('users.disconnect');
+    Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
     Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report');
     Route::get('/vouchers', [AdminController::class, 'vouchers'])->name('vouchers');
     Route::post('/vouchers', [AdminController::class, 'createVoucher'])->name('vouchers.create');

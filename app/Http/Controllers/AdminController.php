@@ -282,4 +282,108 @@ class AdminController extends Controller
 
         return $code;
     }
+
+    /**
+     * Gerenciar usuários
+     */
+    public function users()
+    {
+        $users = User::with('payments')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        // Estatísticas para a página
+        $stats = [
+            'total_users' => User::count(),
+            'connected_users' => User::where('status', 'connected')->count(),
+            'today_registrations' => User::whereDate('created_at', today())->count(),
+            'users_with_payments' => User::whereHas('payments', function($q) { 
+                $q->where('status', 'completed'); 
+            })->count()
+        ];
+        
+        return view('admin.users', compact('users', 'stats'));
+    }
+
+    /**
+     * Obter detalhes de um usuário
+     */
+    public function getUserDetails($id)
+    {
+        $user = User::with(['payments', 'sessions'])->findOrFail($id);
+        
+        return response()->json($user);
+    }
+
+    /**
+     * Desconectar usuário
+     */
+    public function disconnectUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            
+            // Atualizar status do usuário
+            $user->update([
+                'status' => 'offline',
+                'expires_at' => null,
+                'connected_at' => null
+            ]);
+
+            // Finalizar sessões ativas
+            $user->sessions()->where('session_status', 'active')->update([
+                'session_status' => 'ended',
+                'ended_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário desconectado com sucesso!'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao desconectar usuário: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Excluir usuário
+     */
+    public function deleteUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            
+            // Verificar se é um administrador
+            if ($user->role === 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Não é possível excluir usuários administradores!'
+                ], 403);
+            }
+
+            // Finalizar sessões ativas antes de excluir
+            $user->sessions()->where('session_status', 'active')->update([
+                'session_status' => 'ended',
+                'ended_at' => now()
+            ]);
+
+            // Excluir o usuário (soft delete se estiver configurado)
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário excluído com sucesso!'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao excluir usuário: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
