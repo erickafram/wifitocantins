@@ -28,13 +28,20 @@ Route::post('/detect-device', [PortalController::class, 'detectDevice']);
 
 // Registro de usuários
 Route::post('/register', [RegistrationController::class, 'register']);
+Route::post('/register-for-payment', [RegistrationController::class, 'registerForPayment']);
 Route::post('/check-email', [RegistrationController::class, 'checkEmail']);
+Route::post('/check-user', [RegistrationController::class, 'checkUser']);
 
 // Pagamentos
 Route::prefix('payment')->group(function () {
     Route::post('/pix', [PaymentController::class, 'processPix']);
+    Route::post('/pix/generate-qr', [PaymentController::class, 'generatePixQRCode']);
+    Route::get('/pix/status', [PaymentController::class, 'checkPixStatus']);
     Route::post('/card', [PaymentController::class, 'processCard']);
     Route::post('/process', [PaymentController::class, 'process']);
+    Route::post('/webhook', [PaymentController::class, 'webhook']);
+    Route::post('/webhook/santander', [PaymentController::class, 'santanderWebhook']);
+    Route::get('/test-santander', [PaymentController::class, 'testSantanderConnection']);
 });
 
 // Vouchers

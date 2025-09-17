@@ -20,20 +20,30 @@ return [
     ],
 
     'mikrotik' => [
-        'host' => env('MIKROTIK_HOST', '192.168.1.1'),
-        'username' => env('MIKROTIK_USERNAME', 'admin'),
+        'host' => env('MIKROTIK_HOST', '192.168.10.1'),
+        'username' => env('MIKROTIK_USERNAME', 'api-laravel'),
         'password' => env('MIKROTIK_PASSWORD', ''),
         'port' => env('MIKROTIK_PORT', 8728),
-        'api_enabled' => env('MIKROTIK_API_ENABLED', false),
+        'api_enabled' => env('MIKROTIK_API_ENABLED', true),
         'hotspot_server' => env('MIKROTIK_HOTSPOT_SERVER', 'hotspot1'),
+        'bridge_interface' => env('MIKROTIK_BRIDGE_INTERFACE', 'bridge-hotspot'),
+        'pool_name' => env('MIKROTIK_POOL_NAME', 'hotspot-pool'),
+        'walled_garden' => [
+            'portal_domain' => env('PORTAL_DOMAIN', '192.168.1.100'),
+            'allowed_domains' => ['googleapis.com', 'gstatic.com', 'cloudflare.com'],
+        ],
     ],
 
     'payment_gateways' => [
         'pix' => [
             'enabled' => env('PIX_ENABLED', true),
-            'gateway' => env('PIX_GATEWAY', 'mercadopago'), // mercadopago, pagseguro, banco_brasil
-            'key' => env('PIX_API_KEY', ''),
-            'secret' => env('PIX_API_SECRET', ''),
+            'gateway' => env('PIX_GATEWAY', 'santander'),
+            'client_id' => env('SANTANDER_CLIENT_ID', ''),
+            'client_secret' => env('SANTANDER_CLIENT_SECRET', ''),
+            'workspace_id' => env('SANTANDER_WORKSPACE_ID', ''),
+            'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'storage/certificates/santander.pfx'),
+            'certificate_password' => env('SANTANDER_CERTIFICATE_PASSWORD', ''),
+            'environment' => env('SANTANDER_ENVIRONMENT', 'sandbox'), // sandbox ou production
         ],
         'card' => [
             'enabled' => env('CARD_ENABLED', true),
@@ -91,6 +101,13 @@ return [
         ],
         'mac_address_validation' => env('VALIDATE_MAC_ADDRESS', true),
         'require_user_agent' => env('REQUIRE_USER_AGENT', true),
+    ],
+
+    'pix' => [
+        'key' => env('PIX_KEY', 'testeconectividadeapi10@santander.com.br'),
+        'merchant_name' => env('PIX_MERCHANT_NAME', 'WiFi Tocantins Express'),
+        'merchant_city' => env('PIX_MERCHANT_CITY', 'Palmas'),
+        'base_url' => env('PIX_BASE_URL', 'pix.tocantins.com.br'),
     ],
 
     'features' => [

@@ -6,7 +6,7 @@
     <title>WiFi Tocantins - Conecte-se à Internet</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -17,23 +17,16 @@
                         'tocantins-light-cream': '#FFF8DC',
                         'tocantins-dark-green': '#006400',
                         'tocantins-light-yellow': '#FFE55C',
-                        'tocantins-gray-green': '#2F4F2F',
-                        'modern-purple': '#7C3AED',
-                        'modern-cyan': '#06B6D4',
-                        'modern-pink': '#EC4899'
+                        'tocantins-gray-green': '#2F4F2F'
                     },
                     fontFamily: {
-                        'jakarta': ['Plus Jakarta Sans', 'sans-serif'],
-                        'space': ['Space Grotesk', 'sans-serif']
+                        'inter': ['Inter', 'sans-serif']
                     },
                     animation: {
                         'pulse-slow': 'pulse 3s infinite',
                         'bounce-slow': 'bounce 2s infinite',
                         'fade-in': 'fadeIn 0.5s ease-in',
-                        'slide-up': 'slideUp 0.6s ease-out',
-                        'gradient-x': 'gradient-x 15s ease infinite',
-                        'gradient-y': 'gradient-y 15s ease infinite',
-                        'gradient-xy': 'gradient-xy 15s ease infinite'
+                        'slide-up': 'slideUp 0.6s ease-out'
                     }
                 }
             }
@@ -73,33 +66,15 @@
                 box-shadow: 0 12px 35px rgba(34, 139, 34, 0.8), 0 0 50px rgba(255, 215, 0, 0.7);
             }
         }
-        @keyframes gradient-x {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        @keyframes gradient-y {
-            0%, 100% { background-position: 50% 0%; }
-            50% { background-position: 50% 100%; }
-        }
-        @keyframes gradient-xy {
-            0%, 100% { background-position: 0% 0%; }
-            25% { background-position: 100% 0%; }
-            50% { background-position: 100% 100%; }
-            75% { background-position: 0% 100%; }
-        }
         .animate-pulse-scale {
             animation: pulse-glow-scale 1s ease-in-out infinite !important;
         }
         .elegant-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.95) 100%);
-            backdrop-filter: blur(40px) saturate(180%);
-            -webkit-backdrop-filter: blur(40px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 
-                        0 2px 8px rgba(0, 0, 0, 0.04),
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1), 0 8px 25px rgba(34, 139, 34, 0.1);
             position: relative;
-            overflow: hidden;
         }
         .elegant-card::before {
             content: '';
@@ -107,58 +82,39 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(124, 58, 237, 0.5), 
-                rgba(6, 182, 212, 0.5), 
-                rgba(34, 139, 34, 0.5), 
-                transparent);
-            animation: gradient-x 3s ease infinite;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
         }
         .floating-shapes::before {
-            content: '';
+            content: '🚌';
             position: absolute;
-            top: 10%;
+            top: 15%;
             left: 5%;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
-            animation: float 20s ease-in-out infinite;
-            filter: blur(40px);
+            font-size: 2rem;
+            opacity: 0.1;
+            animation: float 8s ease-in-out infinite;
         }
         .floating-shapes::after {
-            content: '';
+            content: '📶';
             position: absolute;
-            bottom: 10%;
+            bottom: 15%;
             right: 5%;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
-            animation: float 15s ease-in-out infinite reverse;
-            filter: blur(40px);
+            font-size: 1.5rem;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite reverse;
         }
         .connect-button {
-            background: linear-gradient(135deg, #10B981 0%, #059669 50%, #047857 100%);
-            background-size: 200% 200%;
+            background: linear-gradient(135deg, #228B22 0%, #006400 30%, #228B22 70%, #20B2AA 100%);
+            background-size: 300% 300%;
             position: relative;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4), 
-                        0 1px 3px rgba(0, 0, 0, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            font-family: 'Space Grotesk', sans-serif;
-            letter-spacing: 0.025em;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(34, 139, 34, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
         .connect-button:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.5), 
-                        0 3px 8px rgba(0, 0, 0, 0.15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            background-position: 100% 100%;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(34, 139, 34, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            background-position: 100% 50%;
         }
         .connect-button::before {
             content: '';
@@ -186,41 +142,30 @@
             100% { left: 100%; }
         }
         .service-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.9));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
         }
         .service-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 
-                        0 10px 20px rgba(124, 58, 237, 0.1);
-            border-color: rgba(124, 58, 237, 0.3);
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(34, 139, 34, 0.2), 0 8px 20px rgba(255, 215, 0, 0.1);
         }
         .service-card::before {
             content: '';
             position: absolute;
-            inset: -2px;
-            background: linear-gradient(45deg, #7C3AED, #06B6D4, #10B981);
+            inset: 0;
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.1), rgba(34, 139, 34, 0.1));
             border-radius: inherit;
             opacity: 0;
             transition: opacity 0.3s ease;
-            z-index: -1;
-            filter: blur(10px);
         }
         .service-card:hover::before {
-            opacity: 0.3;
+            opacity: 1;
         }
         .glass-effect {
-            background: linear-gradient(135deg, 
-                        rgba(255, 255, 255, 0.7), 
-                        rgba(255, 255, 255, 0.3));
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06),
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             position: relative;
         }
         .glass-effect::before {
@@ -230,16 +175,12 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, 
-                        transparent, 
-                        rgba(255, 255, 255, 0.8), 
-                        transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
         }
         
         /* Novos efeitos modernos */
         .modern-glow {
-            box-shadow: 0 0 30px rgba(124, 58, 237, 0.2), 
-                        0 0 60px rgba(6, 182, 212, 0.1);
+            box-shadow: 0 0 20px rgba(34, 139, 34, 0.3), 0 0 40px rgba(255, 215, 0, 0.2);
         }
         
         .floating-animation {
@@ -247,60 +188,28 @@
         }
         
         .gradient-text {
-            background: linear-gradient(135deg, #7C3AED, #06B6D4, #10B981);
+            background: linear-gradient(135deg, #228B22, #006400, #FFD700);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-        
-        .neo-brutalist {
-            border: 3px solid #000;
-            box-shadow: 6px 6px 0 #000;
-            transition: all 0.2s ease;
-        }
-        
-        .neo-brutalist:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 8px 8px 0 #000;
-        }
-        
-        .aurora-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #ffc0cb 75%, #667eea 100%);
-            background-size: 400% 400%;
-            animation: gradient-xy 15s ease infinite;
         }
     </style>
 </head>
-<body class="font-jakarta min-h-screen floating-shapes relative overflow-x-hidden bg-gradient-to-br from-gray-50 via-purple-50/20 to-cyan-50/20">
+<body class="font-inter min-h-screen floating-shapes relative overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/40">
     <!-- Modern Background Pattern -->
     <div class="fixed inset-0 -z-10">
-        <div class="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-white"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(124,58,237,0.1)_0%,transparent_50%)]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(6,182,212,0.1)_0%,transparent_50%)]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.05)_0%,transparent_70%)]"></div>
-        
-        <!-- Mesh gradient overlay -->
-        <svg class="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
-                </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
+        <div class="absolute inset-0 bg-gradient-to-br from-tocantins-light-cream/80 via-white/90 to-tocantins-light-yellow/70"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(34,139,34,0.05)_0%,transparent_50%)] "></div>
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(255,215,0,0.05)_0%,transparent_50%)]"></div>
+        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_25%,rgba(255,255,255,0.1)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.1)_75%)] bg-[length:20px_20px] opacity-30"></div>
     </div>
     
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden">
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
         <div class="flex items-center justify-center h-full">
-            <div class="bg-white rounded-2xl p-8 text-center shadow-2xl border border-gray-100">
-                <div class="relative">
-                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-modern-purple mx-auto mb-4"></div>
-                    <div class="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-modern-purple opacity-20 mx-auto"></div>
-                </div>
-                <p class="text-gray-800 font-semibold">Processando pagamento...</p>
-                <p class="text-gray-500 text-sm mt-1">Por favor, aguarde</p>
+            <div class="bg-white rounded-lg p-8 text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-tocantins-gold mx-auto mb-4"></div>
+                <p class="text-tocantins-gray-green font-medium">Processando pagamento...</p>
             </div>
         </div>
     </div>
@@ -308,33 +217,25 @@
     <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
         
         <!-- Header -->
-        <div class="text-center mb-10 animate-fade-in">
+        <div class="text-center mb-8 animate-fade-in">
             <!-- Logo -->
             <div class="mb-6 flex justify-center">
-                <div class="relative group">
-                    <div class="absolute -inset-4 bg-gradient-to-r from-modern-purple/20 via-modern-cyan/20 to-tocantins-green/20 rounded-full blur-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="relative mx-auto h-10 sm:h-12 md:h-14 w-auto drop-shadow-xl transform group-hover:scale-105 transition-transform duration-300">
+                <div class="relative">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="mx-auto h-8 sm:h-10 md:h-12 w-auto drop-shadow-xl">
+                    <div class="absolute -inset-2 bg-gradient-to-r from-tocantins-gold/20 to-tocantins-green/20 rounded-full blur-lg -z-10"></div>
                 </div>
             </div>
-            <div class="space-y-3">
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold font-space">
-                    <span class="bg-gradient-to-r from-modern-purple via-modern-cyan to-tocantins-green bg-clip-text text-transparent">
-                        CONECTE-SE À INTERNET
-                    </span>
+            <div class="space-y-2">
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-tocantins-gray-green via-tocantins-dark-green to-tocantins-green bg-clip-text text-transparent mb-3">
+                    🌐 CONECTE-SE À INTERNET
                 </h1>
-                <p class="text-gray-600 font-medium text-base sm:text-lg">WiFi Tocantins Express</p>
-                <div class="flex justify-center items-center gap-3 flex-wrap">
-                    <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <span class="text-yellow-500">⚡</span>
-                        <span class="text-sm font-medium text-gray-700">Alta Velocidade</span>
+                <p class="text-tocantins-green font-semibold text-sm sm:text-base tracking-wide">WiFi Tocantins Express</p>
+                <div class="flex justify-center items-center space-x-2 text-xs sm:text-sm text-gray-600">
+                    <span class="bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border border-tocantins-gold/30 shadow-sm">
+                        ⚡ Alta Velocidade
                     </span>
-                    <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <span class="text-green-500">🔒</span>
-                        <span class="text-sm font-medium text-gray-700">100% Seguro</span>
-                    </span>
-                    <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <span class="text-blue-500">🚌</span>
-                        <span class="text-sm font-medium text-gray-700">WiFi a Bordo</span>
+                    <span class="bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border border-tocantins-gold/30 shadow-sm">
+                        🔒 Seguro
                     </span>
                 </div>
             </div>

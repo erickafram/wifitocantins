@@ -105,11 +105,18 @@ class WiFiPortal {
             manageBtn.addEventListener('click', () => this.showConnectionManager());
         }
 
-        // Máscara de telefone
+        // Máscara de telefone e verificação de usuário
         const phoneInput = document.getElementById('user_phone');
         if (phoneInput) {
             phoneInput.addEventListener('input', (e) => this.applyPhoneMask(e));
             phoneInput.addEventListener('keydown', (e) => this.handlePhoneKeydown(e));
+            phoneInput.addEventListener('blur', (e) => this.checkExistingUser('phone', e.target.value));
+        }
+
+        // Verificação de usuário por email
+        const emailInput = document.getElementById('user_email');
+        if (emailInput) {
+            emailInput.addEventListener('blur', (e) => this.checkExistingUser('email', e.target.value));
         }
 
         // Fechar modais clicando fora
@@ -293,8 +300,36 @@ class WiFiPortal {
      */
     showRegistrationModal() {
         if (this.registrationModal) {
+            this.resetRegistrationForm();
             this.registrationModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+        }
+    }
+
+    /**
+     * Reseta o formulário de registro
+     */
+    resetRegistrationForm() {
+        this.currentUserId = null;
+        
+        const nameInput = document.getElementById('full_name');
+        const emailInput = document.getElementById('user_email');
+        const phoneInput = document.getElementById('user_phone');
+        const submitBtn = document.getElementById('registration-submit-btn');
+        const errorDiv = document.getElementById('registration-errors');
+
+        if (nameInput) nameInput.value = '';
+        if (emailInput) emailInput.value = '';
+        if (phoneInput) phoneInput.value = '';
+        
+        if (submitBtn) {
+            submitBtn.innerHTML = '✅ CONTINUAR PARA PAGAMENTO';
+            submitBtn.disabled = false;
+        }
+
+        if (errorDiv) {
+            errorDiv.classList.add('hidden');
+            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
         }
     }
 
@@ -339,7 +374,8 @@ class WiFiPortal {
         const data = {
             name: formData.get('name'),
             email: formData.get('email'),
-            phone: formData.get('phone').replace(/\D/g, '') // Remove formatação para enviar apenas números
+            phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
+            user_id: this.currentUserId // Incluir ID se for usuário existente
         };
 
         // Validação básica
@@ -364,11 +400,11 @@ class WiFiPortal {
         // Mostrar loading no botão
         const submitBtn = document.getElementById('registration-submit-btn');
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'CADASTRANDO...';
+        submitBtn.textContent = this.currentUserId ? 'ATUALIZANDO...' : 'CADASTRANDO...';
         submitBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/register', {
+            const response = await fetch('/api/register-for-payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -383,11 +419,18 @@ class WiFiPortal {
                 this.currentUserId = result.user_id;
                 this.hideRegistrationModal();
                 this.showPaymentModal();
-                this.showSuccessMessage('Cadastro realizado com sucesso!');
+                const message = result.existing_user ? 
+                    'Dados atualizados com sucesso!' : 
+                    'Cadastro realizado com sucesso!';
+                this.showSuccessMessage(message);
             } else {
                 if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
                     this.showRegistrationError(errorMessages.join('<br>'));
+                } else if (result.existing_user_data) {
+                    // Usuário já existe, preencher dados automaticamente
+                    this.fillUserData(result.existing_user_data);
+                    this.showRegistrationError('Usuário já cadastrado! Dados preenchidos automaticamente. Verifique e prossiga para o pagamento.');
                 } else {
                     this.showRegistrationError(result.message || 'Erro no cadastro.');
                 }
@@ -400,6 +443,112 @@ class WiFiPortal {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
         }
+    }
+
+    /**
+     * Verifica se usuário já existe por email ou telefone
+     */
+    async checkExistingUser(field, value) {
+        if (!value || value.length < 3) return;
+
+        // Limpar valor dependendo do campo
+        let cleanValue = value;
+        if (field === 'phone') {
+            cleanValue = value.replace(/\D/g, '');
+            if (cleanValue.length < 10) return;
+        }
+
+        if (field === 'email') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(cleanValue)) return;
+        }
+
+        try {
+            const payload = {};
+            payload[field] = cleanValue;
+
+            const response = await fetch('/api/check-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.exists && result.user) {
+                this.fillUserData(result.user);
+                this.showUserFoundMessage(result.user.name);
+            }
+        } catch (error) {
+            console.error('Erro ao verificar usuário:', error);
+        }
+    }
+
+    /**
+     * Preenche os dados do usuário no formulário
+     */
+    fillUserData(userData) {
+        this.currentUserId = userData.id;
+
+        const nameInput = document.getElementById('full_name');
+        const emailInput = document.getElementById('user_email');
+        const phoneInput = document.getElementById('user_phone');
+
+        if (nameInput && userData.name) {
+            nameInput.value = userData.name;
+        }
+
+        if (emailInput && userData.email) {
+            emailInput.value = userData.email;
+        }
+
+        if (phoneInput && userData.phone) {
+            // Aplicar formatação ao telefone
+            const formattedPhone = this.formatPhoneNumber(userData.phone);
+            phoneInput.value = formattedPhone;
+        }
+
+        // Atualizar botão para indicar atualização
+        const submitBtn = document.getElementById('registration-submit-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = '✅ ATUALIZAR E PAGAR';
+        }
+    }
+
+    /**
+     * Mostra mensagem de usuário encontrado
+     */
+    showUserFoundMessage(name) {
+        const errorDiv = document.getElementById('registration-errors');
+        if (errorDiv) {
+            errorDiv.innerHTML = `👋 Olá ${name}! Seus dados foram preenchidos automaticamente. Você pode editar se necessário.`;
+            errorDiv.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-sm';
+            errorDiv.classList.remove('hidden');
+            
+            // Esconder após 5 segundos
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+                errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
+            }, 5000);
+        }
+    }
+
+    /**
+     * Formata número de telefone brasileiro
+     */
+    formatPhoneNumber(phone) {
+        const cleanPhone = phone.replace(/\D/g, '');
+        
+        if (cleanPhone.length === 11) {
+            return `(${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 3)} ${cleanPhone.substring(3, 7)}-${cleanPhone.substring(7)}`;
+        } else if (cleanPhone.length === 10) {
+            return `(${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 6)}-${cleanPhone.substring(6)}`;
+        }
+        
+        return phone;
     }
 
     /**
@@ -433,7 +582,7 @@ class WiFiPortal {
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    amount: 4.99,
+                    amount: 5.99,
                     mac_address: this.deviceMac,
                     user_id: this.currentUserId
                 })
@@ -441,23 +590,153 @@ class WiFiPortal {
 
             const result = await response.json();
 
-            if (result.success) {
-                this.showSuccessMessage('Pagamento PIX aprovado! Conectando...');
-                const allowed = await this.allowDevice(this.deviceMac);
-                
-                if (allowed) {
-                    setTimeout(() => {
-                        this.checkConnectionStatus();
-                    }, 2000);
-                }
+            if (result.success && result.qr_code) {
+                this.hideLoading();
+                this.showPixQRCode(result);
             } else {
-                this.showErrorMessage(result.message || 'Erro no pagamento PIX.');
+                this.showErrorMessage(result.message || 'Erro ao gerar QR Code PIX.');
             }
         } catch (error) {
             console.error('Erro no pagamento PIX:', error);
             this.showErrorMessage('Erro de conexão. Verifique sua internet.');
         } finally {
             this.hideLoading();
+        }
+    }
+
+    /**
+     * Exibe modal com QR Code PIX
+     */
+    showPixQRCode(data) {
+        const modal = document.createElement('div');
+        modal.id = 'pix-qr-modal';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-60 z-50 backdrop-blur-sm';
+        
+        modal.innerHTML = `
+            <div class="flex items-center justify-center h-full p-4">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">💳 PIX QR Code</h3>
+                        <button id="close-pix-modal" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+                    </div>
+                    
+                    <div class="text-center mb-4">
+                        <div class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-4">
+                            <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-48 h-48 mx-auto">
+                        </div>
+                        
+                        <div class="bg-green-50 rounded-xl p-4 mb-4">
+                            <p class="text-green-800 font-bold text-xl">R$ ${data.qr_code.amount}</p>
+                            <p class="text-green-600 text-sm">Escaneie o código ou use copia e cola</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-xl p-3 mb-4">
+                            <p class="text-xs text-gray-600 mb-2">Código PIX:</p>
+                            <div class="bg-white border rounded-lg p-2 text-xs break-all" id="pix-code">
+                                ${data.qr_code.emv_string}
+                            </div>
+                            <button id="copy-pix-code" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-xs hover:bg-blue-600 transition-colors">
+                                📋 Copiar Código
+                            </button>
+                        </div>
+                        
+                        <div class="text-xs text-gray-500 mb-4">
+                            <p>✅ Após o pagamento, sua internet será liberada automaticamente</p>
+                            <p>⏱️ Aguardando confirmação do pagamento...</p>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button id="check-payment-status" class="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg text-sm hover:bg-green-600 transition-colors">
+                                🔄 Verificar Status
+                            </button>
+                            <button id="cancel-payment" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg text-sm hover:bg-gray-600 transition-colors">
+                                ❌ Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Event listeners
+        document.getElementById('close-pix-modal').addEventListener('click', () => {
+            this.closePixModal();
+        });
+        
+        document.getElementById('copy-pix-code').addEventListener('click', () => {
+            this.copyPixCode(data.qr_code.emv_string);
+        });
+        
+        document.getElementById('check-payment-status').addEventListener('click', () => {
+            this.checkPaymentStatus(data.payment_id);
+        });
+        
+        document.getElementById('cancel-payment').addEventListener('click', () => {
+            this.closePixModal();
+        });
+        
+        // Auto-verificar status a cada 5 segundos
+        this.paymentCheckInterval = setInterval(() => {
+            this.checkPaymentStatus(data.payment_id);
+        }, 5000);
+    }
+
+    /**
+     * Copia código PIX para a área de transferência
+     */
+    async copyPixCode(code) {
+        try {
+            await navigator.clipboard.writeText(code);
+            this.showSuccessMessage('Código PIX copiado! Cole no seu app de pagamento.');
+        } catch (error) {
+            // Fallback para navegadores mais antigos
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.showSuccessMessage('Código PIX copiado!');
+        }
+    }
+
+    /**
+     * Verifica status do pagamento
+     */
+    async checkPaymentStatus(paymentId) {
+        try {
+            const response = await fetch(`/api/payment/pix/status?payment_id=${paymentId}`);
+            const result = await response.json();
+            
+            if (result.success && result.payment.status === 'completed') {
+                clearInterval(this.paymentCheckInterval);
+                this.closePixModal();
+                this.showSuccessMessage('Pagamento confirmado! Conectando...');
+                
+                const allowed = await this.allowDevice(this.deviceMac);
+                if (allowed) {
+                    setTimeout(() => {
+                        this.checkConnectionStatus();
+                    }, 2000);
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao verificar status do pagamento:', error);
+        }
+    }
+
+    /**
+     * Fecha modal do PIX
+     */
+    closePixModal() {
+        const modal = document.getElementById('pix-qr-modal');
+        if (modal) {
+            if (this.paymentCheckInterval) {
+                clearInterval(this.paymentCheckInterval);
+            }
+            modal.remove();
         }
     }
 
@@ -476,7 +755,7 @@ class WiFiPortal {
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    amount: 4.99,
+                    amount: 5.99,
                     mac_address: this.deviceMac,
                     user_id: this.currentUserId
                 })

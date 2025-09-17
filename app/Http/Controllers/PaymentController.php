@@ -9,17 +9,19 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\Session;
+use App\Services\PixQRCodeService;
+use App\Services\SantanderPixService;
 
 class PaymentController extends Controller
 {
 
     /**
-     * Processa pagamento PIX
+     * Gera QR Code PIX para pagamento
      */
-    public function processPix(Request $request)
+    public function generatePixQRCode(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:4.99',
+            'amount' => 'required|numeric|min:5.99',
             'mac_address' => 'required|string'
         ]);
 
@@ -35,61 +37,87 @@ class PaymentController extends Controller
                 'amount' => $request->amount,
                 'method' => 'pix',
                 'status' => 'pending',
-                'payment_gateway' => 'mercadopago', // ou outro gateway
+                'payment_gateway' => 'santander',
                 'transaction_id' => $this->generateTransactionId()
             ]);
 
-            // Simular aprovação do PIX (em produção, aguardar webhook)
-            $pixApproved = $this->simulatePixPayment($payment);
+            // Verificar se deve usar Santander ou gerador manual
+            $gateway = config('wifi.payment_gateways.pix.gateway');
+            
+            if ($gateway === 'santander' && config('wifi.payment_gateways.pix.client_id')) {
+                // Usar API do Santander
+                $santanderService = new SantanderPixService();
+                $qrData = $santanderService->createPixPayment(
+                    $request->amount,
+                    'WiFi Tocantins Express - Internet',
+                    $payment->transaction_id
+                );
 
-            if ($pixApproved) {
+                if (!$qrData['success']) {
+                    throw new \Exception($qrData['message']);
+                }
+
+                // Atualizar payment com dados do Santander
                 $payment->update([
-                    'status' => 'completed',
-                    'paid_at' => now()
+                    'pix_emv_string' => $qrData['qr_code_text'],
+                    'pix_location' => $qrData['external_id'],
+                    'gateway_payment_id' => $qrData['payment_id']
                 ]);
 
-                // Criar sessão ativa
-                $session = Session::create([
-                    'user_id' => $user->id,
-                    'payment_id' => $payment->id,
-                    'started_at' => now(),
-                    'session_status' => 'active'
-                ]);
-
-                // Atualizar status do usuário
-                $user->update([
-                    'status' => 'connected',
-                    'connected_at' => now(),
-                    'expires_at' => now()->addHours(24) // 24h de acesso
-                ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Pagamento PIX aprovado!',
-                    'payment_id' => $payment->id,
-                    'session_id' => $session->id
-                ]);
+                $response = [
+                    'emv_string' => $qrData['qr_code_text'],
+                    'image_url' => $santanderService->generateQRCodeImageUrl($qrData['qr_code_text']),
+                    'amount' => number_format($qrData['amount'], 2, '.', ''),
+                    'transaction_id' => $qrData['external_id'],
+                    'payment_id' => $qrData['payment_id']
+                ];
             } else {
-                $payment->update(['status' => 'failed']);
-                DB::rollback();
+                // Fallback: Usar gerador EMV manual
+                $pixService = new PixQRCodeService();
+                $qrData = $pixService->generatePixQRCode($request->amount, $payment->transaction_id);
 
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Pagamento PIX não foi aprovado. Tente novamente.'
-                ], 400);
+                // Atualizar payment com dados do PIX
+                $payment->update([
+                    'pix_emv_string' => $qrData['emv_string'],
+                    'pix_location' => $qrData['location']
+                ]);
+
+                $response = [
+                    'emv_string' => $qrData['emv_string'],
+                    'image_url' => $pixService->generateQRCodeImageUrl($qrData['emv_string']),
+                    'amount' => $qrData['amount'],
+                    'transaction_id' => $qrData['transaction_id']
+                ];
             }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'QR Code PIX gerado com sucesso!',
+                'payment_id' => $payment->id,
+                'gateway' => $gateway,
+                'qr_code' => $response
+            ]);
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Erro no pagamento PIX: ' . $e->getMessage());
+            Log::error('Erro ao gerar QR Code PIX: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno. Tente novamente.'
+                'message' => 'Erro ao gerar QR Code PIX: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Processa pagamento PIX (mantido para compatibilidade)
+     */
+    public function processPix(Request $request)
+    {
+        // Redirecionar para geração de QR Code
+        return $this->generatePixQRCode($request);
     }
 
     /**
@@ -98,7 +126,7 @@ class PaymentController extends Controller
     public function processCard(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:4.99',
+            'amount' => 'required|numeric|min:5.99',
             'mac_address' => 'required|string'
         ]);
 
@@ -264,5 +292,93 @@ class PaymentController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Verificar status do pagamento PIX
+     */
+    public function checkPixStatus(Request $request)
+    {
+        $request->validate([
+            'payment_id' => 'required|exists:payments,id'
+        ]);
+
+        $payment = Payment::find($request->payment_id);
+        
+        return response()->json([
+            'success' => true,
+            'payment' => [
+                'id' => $payment->id,
+                'status' => $payment->status,
+                'amount' => $payment->amount,
+                'created_at' => $payment->created_at,
+                'paid_at' => $payment->paid_at
+            ]
+        ]);
+    }
+
+    /**
+     * Webhook específico do Santander
+     */
+    public function santanderWebhook(Request $request)
+    {
+        try {
+            $webhookData = $request->all();
+            
+            $santanderService = new SantanderPixService();
+            $result = $santanderService->processWebhook($webhookData);
+            
+            if ($result['success'] && $result['payment_approved']) {
+                // Buscar pagamento pelo gateway_payment_id
+                $payment = Payment::where('gateway_payment_id', $result['payment_id'])->first();
+                
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'completed',
+                        'paid_at' => $result['paid_at']
+                    ]);
+
+                    // Criar sessão ativa
+                    Session::create([
+                        'user_id' => $payment->user_id,
+                        'payment_id' => $payment->id,
+                        'started_at' => now(),
+                        'session_status' => 'active'
+                    ]);
+
+                    // Liberar acesso do usuário
+                    $payment->user->update([
+                        'status' => 'connected',
+                        'connected_at' => now(),
+                        'expires_at' => now()->addHours(24)
+                    ]);
+                }
+            }
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro no webhook Santander: ' . $e->getMessage());
+            return response()->json(['success' => false], 500);
+        }
+    }
+
+    /**
+     * Testar conexão com Santander
+     */
+    public function testSantanderConnection()
+    {
+        try {
+            $santanderService = new SantanderPixService();
+            $result = $santanderService->testConnection();
+            
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao testar conexão: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

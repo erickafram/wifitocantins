@@ -20,7 +20,7 @@ class PortalController extends Controller
         return view('portal.index', [
             'client_info' => $clientInfo,
             'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
-            'price' => 4.99,
+            'price' => 5.99,
             'speed' => '100+ Mbps'
         ]);
     }
