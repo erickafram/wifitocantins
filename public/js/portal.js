@@ -7,6 +7,7 @@ class WiFiPortal {
     constructor() {
         this.deviceMac = '';
         this.connectionCheckInterval = null;
+        this.paymentCheckInterval = null;
         this.loadingOverlay = null;
         this.paymentModal = null;
         this.registrationModal = null;
