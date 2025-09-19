@@ -15,7 +15,7 @@ echo "=============================\n";
 
 // Simular dados de uma requisição
 $macAddress = '02:TEST:' . strtoupper(substr(md5(time()), 0, 8));
-$amount = 5.99;
+$amount = 0.05;
 $ipAddress = '127.0.0.1';
 
 echo "MAC Address: {$macAddress}\n";

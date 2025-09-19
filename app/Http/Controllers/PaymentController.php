@@ -22,7 +22,7 @@ class PaymentController extends Controller
     public function generatePixQRCode(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:5.99',
+            'amount' => 'required|numeric|min:0.05',
             'mac_address' => 'required|string'
         ]);
 
@@ -176,7 +176,7 @@ class PaymentController extends Controller
     public function processCard(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:5.99',
+            'amount' => 'required|numeric|min:0.05',
             'mac_address' => 'required|string'
         ]);
 

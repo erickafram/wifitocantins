@@ -582,7 +582,7 @@ class WiFiPortal {
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    amount: 5.99,
+                    amount: 0.05,
                     mac_address: this.deviceMac,
                     user_id: this.currentUserId
                 })
@@ -755,7 +755,7 @@ class WiFiPortal {
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    amount: 5.99,
+                    amount: 0.05,
                     mac_address: this.deviceMac,
                     user_id: this.currentUserId
                 })

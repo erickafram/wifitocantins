@@ -852,7 +852,7 @@
                 </div>
                 
                 <div class="bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 rounded-2xl p-3 sm:p-4 md:p-6 mb-4 border border-green-200 shadow-inner">
-                    <p class="text-center text-xl sm:text-2xl md:text-3xl font-bold text-green-700">R$ 5,99</p>
+                    <p class="text-center text-xl sm:text-2xl md:text-3xl font-bold text-green-700">R$ 0,05</p>
                     <p class="text-center text-xs sm:text-sm text-gray-600">Internet durante toda a viagem</p>
                 </div>
                 
