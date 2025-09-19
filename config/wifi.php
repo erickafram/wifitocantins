@@ -39,7 +39,52 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | PIX Configuration
+    |--------------------------------------------------------------------------
+    */
+    
+    'pix' => [
+        'key' => env('PIX_KEY', 'pix@tocantinstransportewifi.com.br'),
+        'merchant_name' => env('PIX_MERCHANT_NAME', 'TocantinsTransportWiFi'),
+        'merchant_city' => env('PIX_MERCHANT_CITY', 'Palmas'),
+        'base_url' => env('PIX_BASE_URL', 'pix.tocantins.com.br'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Payment Gateway Configuration
+    |--------------------------------------------------------------------------
+    */
+    
+    'payment_gateways' => [
+        'pix' => [
+            'enabled' => env('PIX_ENABLED', true),
+            'gateway' => env('PIX_GATEWAY', 'woovi'), // woovi, santander, manual
+            
+            // Configurações Woovi
+            'woovi_app_id' => env('WOOVI_APP_ID', ''),
+            'woovi_app_secret' => env('WOOVI_APP_SECRET', ''),
+            
+            // Configurações Santander
+            'client_id' => env('SANTANDER_CLIENT_ID', ''),
+            'client_secret' => env('SANTANDER_CLIENT_SECRET', ''),
+            'workspace_id' => env('SANTANDER_WORKSPACE_ID', ''),
+            'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'storage/certificates/santander.pfx'),
+            'certificate_password' => env('SANTANDER_CERTIFICATE_PASSWORD', ''),
+            
+            'environment' => env('PIX_ENVIRONMENT', 'sandbox'), // sandbox ou production
+        ],
+        'card' => [
+            'enabled' => env('CARD_ENABLED', true),
+            'gateway' => env('CARD_GATEWAY', 'stripe'), // stripe, mercadopago, pagseguro
+            'key' => env('CARD_API_KEY', ''),
+            'secret' => env('CARD_API_SECRET', ''),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Gateway Configuration (Alternative)
     |--------------------------------------------------------------------------
     */
     
