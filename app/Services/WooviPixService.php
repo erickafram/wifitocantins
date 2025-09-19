@@ -56,12 +56,26 @@ class WooviPixService
             if ($response->successful()) {
                 $data = $response->json();
                 
+                // Validar e limpar a imagem base64
+                $qrCodeImage = $data['charge']['qrCodeImage'] ?? '';
+                
+                // Remover prefixo data:image se existir
+                if (strpos($qrCodeImage, 'data:image') === 0) {
+                    $qrCodeImage = explode(',', $qrCodeImage, 2)[1] ?? $qrCodeImage;
+                }
+                
+                // Validar se é base64 válido
+                if (!base64_decode($qrCodeImage, true)) {
+                    Log::warning('QR Code image inválida da Woovi, usando fallback');
+                    $qrCodeImage = '';
+                }
+
                 return [
                     'success' => true,
                     'charge_id' => $data['charge']['correlationID'],
                     'woovi_id' => $data['charge']['globalID'],
                     'qr_code_text' => $data['charge']['brCode'], // String EMV
-                    'qr_code_image' => $data['charge']['qrCodeImage'], // Base64 da imagem
+                    'qr_code_image' => $qrCodeImage, // Base64 limpo da imagem
                     'amount' => $amount,
                     'status' => strtolower($data['charge']['status']), // ACTIVE, COMPLETED, etc
                     'correlation_id' => $data['charge']['correlationID'],

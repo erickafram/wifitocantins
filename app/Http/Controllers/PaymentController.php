@@ -65,9 +65,20 @@ class PaymentController extends Controller
                     'gateway_payment_id' => $qrData['woovi_id']
                 ]);
 
+                // Gerar image_url com fallback
+                $imageUrl = '';
+                if (!empty($qrData['qr_code_image'])) {
+                    $imageUrl = 'data:image/png;base64,' . $qrData['qr_code_image'];
+                } else {
+                    // Fallback: usar API externa para gerar QR Code
+                    $encodedEmv = urlencode($qrData['qr_code_text']);
+                    $imageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={$encodedEmv}";
+                    Log::info('Usando fallback para QR Code image: ' . $imageUrl);
+                }
+
                 $response = [
                     'emv_string' => $qrData['qr_code_text'],
-                    'image_url' => 'data:image/png;base64,' . $qrData['qr_code_image'],
+                    'image_url' => $imageUrl,
                     'amount' => number_format($qrData['amount'], 2, '.', ''),
                     'transaction_id' => $qrData['correlation_id'],
                     'payment_id' => $qrData['woovi_id'],

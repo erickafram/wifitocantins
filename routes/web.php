@@ -12,6 +12,11 @@ use App\Http\Controllers\AuthController;
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
 
+// Rota alternativa para /portal (redireciona para raiz)
+Route::get('/portal', function () {
+    return redirect('/');
+})->name('portal.redirect');
+
 // Rotas de Autenticação
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
