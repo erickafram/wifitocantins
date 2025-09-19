@@ -40,10 +40,10 @@ class WooviPixService
                 'comment' => $description,
                 'expiresIn' => 3600, // 1 hora em segundos
                 'customer' => [
-                    'name' => 'Cliente WiFi',
+                    'name' => 'ERICK VINICIUS RODRIGUES',
                     'email' => 'cliente@wifitocantins.com.br',
                     'phone' => '6399999999',
-                    'taxID' => '12345678901'
+                    'taxID' => '57732545000100'
                 ]
             ];
 
