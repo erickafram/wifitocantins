@@ -28,7 +28,7 @@ class WooviPixService
     /**
      * Criar cobrança PIX na Woovi
      */
-    public function createPixPayment(float $amount, string $description, string $correlationId = null): array
+    public function createPixPayment(float $amount, string $description, ?string $correlationId = null): array
     {
         try {
             // Converter valor para centavos
@@ -43,15 +43,12 @@ class WooviPixService
                     'name' => 'Cliente WiFi',
                     'email' => 'cliente@wifitocantins.com.br',
                     'phone' => '6399999999',
-                    'taxID' => [
-                        'taxID' => '12345678901',
-                        'type' => 'BR:CPF'
-                    ]
+                    'taxID' => '12345678901'
                 ]
             ];
 
             $response = Http::withHeaders([
-                'Authorization' => $this->appSecret,
+                'Authorization' => $this->appId,
                 'Content-Type' => 'application/json',
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->post($this->baseUrl . '/api/v1/charge', $payload);
@@ -92,7 +89,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appSecret,
+                'Authorization' => $this->appId,
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->get($this->baseUrl . '/api/v1/charge/' . $correlationId);
 
@@ -132,7 +129,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appSecret,
+                'Authorization' => $this->appId,
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->get($this->baseUrl . '/api/v1/charge', [
                 'skip' => $skip,
@@ -222,7 +219,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appSecret,
+                'Authorization' => $this->appId,
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->get($this->baseUrl . '/api/v1/charge?limit=1');
             
@@ -265,7 +262,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appSecret,
+                'Authorization' => $this->appId,
                 'Content-Type' => 'application/json',
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->delete($this->baseUrl . '/api/v1/charge/' . $correlationId);
