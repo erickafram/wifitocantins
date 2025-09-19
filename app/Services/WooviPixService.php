@@ -56,18 +56,25 @@ class WooviPixService
             if ($response->successful()) {
                 $data = $response->json();
                 
-                // Validar e limpar a imagem base64
+                // Processar imagem do QR Code da Woovi
                 $qrCodeImage = $data['charge']['qrCodeImage'] ?? '';
+                $isImageUrl = false;
                 
-                // Remover prefixo data:image se existir
-                if (strpos($qrCodeImage, 'data:image') === 0) {
-                    $qrCodeImage = explode(',', $qrCodeImage, 2)[1] ?? $qrCodeImage;
-                }
-                
-                // Validar se é base64 válido
-                if (!base64_decode($qrCodeImage, true)) {
-                    Log::warning('QR Code image inválida da Woovi, usando fallback');
-                    $qrCodeImage = '';
+                // Verificar se é uma URL ao invés de base64
+                if (filter_var($qrCodeImage, FILTER_VALIDATE_URL)) {
+                    Log::info('Woovi retornou URL de imagem: ' . $qrCodeImage);
+                    $isImageUrl = true;
+                } else {
+                    // Remover prefixo data:image se existir
+                    if (strpos($qrCodeImage, 'data:image') === 0) {
+                        $qrCodeImage = explode(',', $qrCodeImage, 2)[1] ?? $qrCodeImage;
+                    }
+                    
+                    // Validar se é base64 válido
+                    if (!base64_decode($qrCodeImage, true)) {
+                        Log::warning('QR Code image inválida da Woovi, usando fallback');
+                        $qrCodeImage = '';
+                    }
                 }
 
                 return [
@@ -75,7 +82,8 @@ class WooviPixService
                     'charge_id' => $data['charge']['correlationID'],
                     'woovi_id' => $data['charge']['globalID'],
                     'qr_code_text' => $data['charge']['brCode'], // String EMV
-                    'qr_code_image' => $qrCodeImage, // Base64 limpo da imagem
+                    'qr_code_image' => $qrCodeImage, // Base64 limpo da imagem ou URL
+                    'qr_code_is_url' => $isImageUrl, // Indica se é URL ou base64
                     'amount' => $amount,
                     'status' => strtolower($data['charge']['status']), // ACTIVE, COMPLETED, etc
                     'correlation_id' => $data['charge']['correlationID'],

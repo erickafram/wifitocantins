@@ -65,10 +65,18 @@ class PaymentController extends Controller
                     'gateway_payment_id' => $qrData['woovi_id']
                 ]);
 
-                // Gerar image_url com fallback
+                // Gerar image_url baseado no tipo retornado pela Woovi
                 $imageUrl = '';
                 if (!empty($qrData['qr_code_image'])) {
-                    $imageUrl = 'data:image/png;base64,' . $qrData['qr_code_image'];
+                    if (!empty($qrData['qr_code_is_url']) && $qrData['qr_code_is_url']) {
+                        // Woovi retornou uma URL direta para a imagem
+                        $imageUrl = $qrData['qr_code_image'];
+                        Log::info('Usando URL da Woovi para QR Code: ' . $imageUrl);
+                    } else {
+                        // Woovi retornou base64
+                        $imageUrl = 'data:image/png;base64,' . $qrData['qr_code_image'];
+                        Log::info('Usando base64 da Woovi para QR Code');
+                    }
                 } else {
                     // Fallback: usar API externa para gerar QR Code
                     $encodedEmv = urlencode($qrData['qr_code_text']);
