@@ -32,6 +32,9 @@ class PaymentController extends Controller
             // Buscar ou criar usuário
             $user = $this->findOrCreateUser($request->mac_address, $request->ip());
 
+            // Verificar qual gateway usar
+            $gateway = config('wifi.payment_gateways.pix.gateway');
+
             // Criar registro de pagamento
             $payment = Payment::create([
                 'user_id' => $user->id,
@@ -41,9 +44,6 @@ class PaymentController extends Controller
                 'payment_gateway' => $gateway,
                 'transaction_id' => $this->generateTransactionId()
             ]);
-
-            // Verificar qual gateway usar
-            $gateway = config('wifi.payment_gateways.pix.gateway');
             
             if ($gateway === 'woovi' && config('wifi.payment_gateways.pix.woovi_app_id')) {
                 // Usar API da Woovi
