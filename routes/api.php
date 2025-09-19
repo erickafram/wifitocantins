@@ -67,7 +67,7 @@ Route::prefix('mikrotik')->group(function () {
 // MikroTik Sync (New - HTTP Polling)
 Route::prefix('mikrotik-sync')->group(function () {
     Route::get('/ping', [MikrotikSyncController::class, 'ping']);
-    Route::get('/pending-users', [MikrotikSyncController::class, 'getPendingUsers']);
+    Route::match(['GET', 'POST'], '/pending-users', [MikrotikSyncController::class, 'getPendingUsers']);
     Route::post('/check-access', [MikrotikSyncController::class, 'checkUserAccess']);
     Route::post('/report-status', [MikrotikSyncController::class, 'reportUserStatus']);
     Route::get('/stats', [MikrotikSyncController::class, 'getStats']);
