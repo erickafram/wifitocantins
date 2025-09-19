@@ -276,7 +276,7 @@ class MikrotikController extends Controller
                 $this->registerDevice($user->mac_address, null);
 
                 Log::info("Dispositivo {$user->mac_address} liberado com sucesso");
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Dispositivo liberado com sucesso'
@@ -435,8 +435,8 @@ class MikrotikController extends Controller
                     $sessionTime = $this->parseUptime(substr($line, 8));
                 }
             }
-            
-            return [
+        
+        return [
                 'online' => $isOnline,
                 'bytes_in' => $bytesIn,
                 'bytes_out' => $bytesOut,
@@ -452,7 +452,7 @@ class MikrotikController extends Controller
                 'bytes_out' => 0,
                 'session_time' => 0,
                 'idle_time' => 0
-            ];
+        ];
         }
     }
 
@@ -612,7 +612,7 @@ class MikrotikController extends Controller
             
         } catch (\Exception $e) {
             Log::error("Erro ao obter dados de uso para {$macAddress}: " . $e->getMessage());
-            return [
+        return [
                 'bytes_in' => 0,
                 'bytes_out' => 0,
                 'download_speed' => 0,

@@ -6,6 +6,7 @@ use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\MikrotikController;
+use App\Http\Controllers\MikrotikSyncController;
 use App\Http\Controllers\RegistrationController;
 
 /*
@@ -55,10 +56,19 @@ Route::prefix('voucher')->group(function () {
 // Instagram Free Access
 Route::post('/instagram/free-access', [PortalController::class, 'instagramFreeAccess']);
 
-// MikroTik Integration
+// MikroTik Integration (Legacy - Direct API)
 Route::prefix('mikrotik')->group(function () {
     Route::get('/status/{mac}', [MikrotikController::class, 'getStatus']);
     Route::post('/allow', [MikrotikController::class, 'allowDevice']);
     Route::post('/block', [MikrotikController::class, 'blockDevice']);
     Route::get('/usage/{mac}', [MikrotikController::class, 'getUsage']);
+});
+
+// MikroTik Sync (New - HTTP Polling)
+Route::prefix('mikrotik-sync')->group(function () {
+    Route::get('/ping', [MikrotikSyncController::class, 'ping']);
+    Route::get('/pending-users', [MikrotikSyncController::class, 'getPendingUsers']);
+    Route::post('/check-access', [MikrotikSyncController::class, 'checkUserAccess']);
+    Route::post('/report-status', [MikrotikSyncController::class, 'reportUserStatus']);
+    Route::get('/stats', [MikrotikSyncController::class, 'getStats']);
 });
