@@ -707,13 +707,20 @@ class WiFiPortal {
      * Verifica status do pagamento
      */
     async checkPaymentStatus(paymentId) {
-        console.log('🔄 Verificando status do pagamento ID:', paymentId);
+        console.log('🔄 Verificando status do pagamento:', paymentId);
+        
+        // Feedback visual
+        const checkButton = document.getElementById('check-payment-status');
+        if (checkButton) {
+            checkButton.innerHTML = '⏳ Verificando...';
+            checkButton.disabled = true;
+        }
         
         try {
             const response = await fetch(`/api/payment/pix/status?payment_id=${paymentId}`);
             const result = await response.json();
             
-            console.log('📊 Resposta da API:', result);
+            console.log('📊 Resultado da verificação:', result);
             
             if (result.success && result.payment.status === 'completed') {
                 console.log('✅ Pagamento confirmado!');
@@ -728,12 +735,26 @@ class WiFiPortal {
                     }, 2000);
                 }
             } else {
-                console.log('⏱️ Pagamento ainda pendente:', result.payment?.status);
+                console.log('⏱️ Pagamento ainda pendente');
                 this.showInfoMessage('Pagamento ainda não confirmado. Aguarde...');
+                
+                // Restaurar botão
+                if (checkButton) {
+                    setTimeout(() => {
+                        checkButton.innerHTML = '🔄 Verificar Status';
+                        checkButton.disabled = false;
+                    }, 2000);
+                }
             }
         } catch (error) {
             console.error('❌ Erro ao verificar status do pagamento:', error);
             this.showErrorMessage('Erro ao verificar status. Tente novamente.');
+            
+            // Restaurar botão
+            if (checkButton) {
+                checkButton.innerHTML = '🔄 Verificar Status';
+                checkButton.disabled = false;
+            }
         }
     }
 
@@ -1116,13 +1137,22 @@ Clique OK se SIM, Cancelar se NÃO.`);
     }
 
     /**
+     * Exibe mensagem informativa
+     */
+    showInfoMessage(message) {
+        this.showToast(message, 'info');
+    }
+
+    /**
      * Exibe toast notification
      */
     showToast(message, type) {
         const toast = document.createElement('div');
-        toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium animate-slide-up ${
-            type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`;
+        let bgColor = 'bg-red-500';
+        if (type === 'success') bgColor = 'bg-green-500';
+        if (type === 'info') bgColor = 'bg-blue-500';
+        
+        toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium animate-slide-up ${bgColor}`;
         toast.textContent = message;
 
         document.body.appendChild(toast);
