@@ -51,7 +51,7 @@ class WooviPixService
             ];
 
             $response = Http::withHeaders([
-                'Authorization' => $this->appId,
+                'Authorization' => $this->appSecret,
                 'Content-Type' => 'application/json',
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->post($this->baseUrl . '/api/v1/charge', $payload);
@@ -92,7 +92,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appId,
+                'Authorization' => $this->appSecret,
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->get($this->baseUrl . '/api/v1/charge/' . $correlationId);
 
@@ -132,7 +132,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appId,
+                'Authorization' => $this->appSecret,
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->get($this->baseUrl . '/api/v1/charge', [
                 'skip' => $skip,
@@ -222,7 +222,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appId,
+                'Authorization' => $this->appSecret,
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->get($this->baseUrl . '/api/v1/charge?limit=1');
             
@@ -265,7 +265,7 @@ class WooviPixService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => $this->appId,
+                'Authorization' => $this->appSecret,
                 'Content-Type' => 'application/json',
                 'User-Agent' => 'WiFi-Tocantins-Express/1.0',
             ])->delete($this->baseUrl . '/api/v1/charge/' . $correlationId);
