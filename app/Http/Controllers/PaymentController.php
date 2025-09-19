@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\Session;
 use App\Services\PixQRCodeService;
 use App\Services\SantanderPixService;
+use App\Services\WooviPixService;
 
 class PaymentController extends Controller
 {
@@ -37,14 +38,44 @@ class PaymentController extends Controller
                 'amount' => $request->amount,
                 'method' => 'pix',
                 'status' => 'pending',
-                'payment_gateway' => 'santander',
+                'payment_gateway' => $gateway,
                 'transaction_id' => $this->generateTransactionId()
             ]);
 
-            // Verificar se deve usar Santander ou gerador manual
+            // Verificar qual gateway usar
             $gateway = config('wifi.payment_gateways.pix.gateway');
             
-            if ($gateway === 'santander' && config('wifi.payment_gateways.pix.client_id')) {
+            if ($gateway === 'woovi' && config('wifi.payment_gateways.pix.woovi_app_id')) {
+                // Usar API da Woovi
+                $wooviService = new WooviPixService();
+                $qrData = $wooviService->createPixPayment(
+                    $request->amount,
+                    'WiFi Tocantins Express - Internet Premium',
+                    $payment->transaction_id
+                );
+
+                if (!$qrData['success']) {
+                    throw new \Exception($qrData['message']);
+                }
+
+                // Atualizar payment com dados da Woovi
+                $payment->update([
+                    'pix_emv_string' => $qrData['qr_code_text'],
+                    'pix_location' => $qrData['correlation_id'],
+                    'gateway_payment_id' => $qrData['woovi_id']
+                ]);
+
+                $response = [
+                    'emv_string' => $qrData['qr_code_text'],
+                    'image_url' => 'data:image/png;base64,' . $qrData['qr_code_image'],
+                    'amount' => number_format($qrData['amount'], 2, '.', ''),
+                    'transaction_id' => $qrData['correlation_id'],
+                    'payment_id' => $qrData['woovi_id'],
+                    'payment_link' => $qrData['payment_link'],
+                    'expires_at' => $qrData['expires_at']
+                ];
+                
+            } elseif ($gateway === 'santander' && config('wifi.payment_gateways.pix.client_id')) {
                 // Usar API do Santander
                 $santanderService = new SantanderPixService();
                 $qrData = $santanderService->createPixPayment(
@@ -71,6 +102,7 @@ class PaymentController extends Controller
                     'transaction_id' => $qrData['external_id'],
                     'payment_id' => $qrData['payment_id']
                 ];
+                
             } else {
                 // Fallback: Usar gerador EMV manual
                 $pixService = new PixQRCodeService();
@@ -364,6 +396,54 @@ class PaymentController extends Controller
     }
 
     /**
+     * Webhook específico da Woovi
+     */
+    public function wooviWebhook(Request $request)
+    {
+        try {
+            $webhookData = $request->all();
+            
+            $wooviService = new WooviPixService();
+            $result = $wooviService->processWebhook($webhookData);
+            
+            if ($result['success'] && $result['payment_approved']) {
+                // Buscar pagamento pelo correlation_id
+                $payment = Payment::where('pix_location', $result['correlation_id'])
+                    ->orWhere('gateway_payment_id', $result['woovi_id'])
+                    ->first();
+                
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'completed',
+                        'paid_at' => $result['paid_at']
+                    ]);
+
+                    // Criar sessão ativa
+                    Session::create([
+                        'user_id' => $payment->user_id,
+                        'payment_id' => $payment->id,
+                        'started_at' => now(),
+                        'session_status' => 'active'
+                    ]);
+
+                    // Liberar acesso do usuário
+                    $payment->user->update([
+                        'status' => 'connected',
+                        'connected_at' => now(),
+                        'expires_at' => now()->addHours(24)
+                    ]);
+                }
+            }
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro no webhook Woovi: ' . $e->getMessage());
+            return response()->json(['success' => false], 500);
+        }
+    }
+
+    /**
      * Testar conexão com Santander
      */
     public function testSantanderConnection()
@@ -371,6 +451,25 @@ class PaymentController extends Controller
         try {
             $santanderService = new SantanderPixService();
             $result = $santanderService->testConnection();
+            
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao testar conexão: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Testar conexão com Woovi
+     */
+    public function testWooviConnection()
+    {
+        try {
+            $wooviService = new WooviPixService();
+            $result = $wooviService->testConnection();
             
             return response()->json($result);
 

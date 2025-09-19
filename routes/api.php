@@ -41,7 +41,9 @@ Route::prefix('payment')->group(function () {
     Route::post('/process', [PaymentController::class, 'process']);
     Route::post('/webhook', [PaymentController::class, 'webhook']);
     Route::post('/webhook/santander', [PaymentController::class, 'santanderWebhook']);
+    Route::post('/webhook/woovi', [PaymentController::class, 'wooviWebhook']);
     Route::get('/test-santander', [PaymentController::class, 'testSantanderConnection']);
+    Route::get('/test-woovi', [PaymentController::class, 'testWooviConnection']);
 });
 
 // Vouchers
