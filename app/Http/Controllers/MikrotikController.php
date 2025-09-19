@@ -18,51 +18,166 @@ class MikrotikController extends Controller
     public function __construct()
     {
         $this->mikrotikHost = config('wifi.mikrotik.host', '192.168.10.1');
-        $this->mikrotikUser = config('wifi.mikrotik.username', 'api-laravel');
-        $this->mikrotikPass = config('wifi.mikrotik.password', '');
+        $this->mikrotikUser = config('wifi.mikrotik.username', 'api-tocantins');
+        $this->mikrotikPass = config('wifi.mikrotik.password', 'TocantinsWiFi2024!');
         $this->mikrotikPort = config('wifi.mikrotik.port', 8728);
     }
 
     /**
-     * Conecta à API do MikroTik
+     * Conecta à API do MikroTik usando RouterOS API
      */
     private function connectToMikroTik()
     {
+        if (!config('wifi.mikrotik.api_enabled', true)) {
+            throw new \Exception('API MikroTik desabilitada');
+        }
+
         $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         
         if (!$socket) {
-            throw new \Exception('Erro ao criar socket');
+            throw new \Exception('Erro ao criar socket: ' . socket_strerror(socket_last_error()));
         }
+
+        socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => 5, 'usec' => 0]);
+        socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, ['sec' => 5, 'usec' => 0]);
 
         $result = socket_connect($socket, $this->mikrotikHost, $this->mikrotikPort);
         
         if (!$result) {
-            throw new \Exception('Erro ao conectar ao MikroTik');
+            socket_close($socket);
+            throw new \Exception('Erro ao conectar ao MikroTik: ' . socket_strerror(socket_last_error()));
         }
+
+        // Fazer login na API
+        $this->loginToAPI($socket);
 
         return $socket;
     }
 
     /**
-     * Envia comando para MikroTik
+     * Faz login na API do RouterOS
      */
-    private function sendCommand($socket, $command, $attributes = [])
+    private function loginToAPI($socket)
     {
-        // Implementação básica da API RouterOS
-        $data = "/api/" . $command . "\n";
+        // Enviar comando de login
+        $this->writeCommand($socket, '/login');
+        $response = $this->readResponse($socket);
+
+        if (!isset($response[0]) || $response[0] !== '!done') {
+            throw new \Exception('Erro no handshake de login');
+        }
+
+        // Extrair challenge
+        $challenge = '';
+        foreach ($response as $line) {
+            if (strpos($line, '=ret=') === 0) {
+                $challenge = substr($line, 5);
+                break;
+            }
+        }
+
+        if (empty($challenge)) {
+            throw new \Exception('Challenge não recebido');
+        }
+
+        // Calcular resposta MD5
+        $md5 = md5(chr(0) . $this->mikrotikPass . pack('H*', $challenge));
+        
+        // Enviar credenciais
+        $this->writeCommand($socket, '/login', [
+            'name' => $this->mikrotikUser,
+            'response' => '00' . $md5
+        ]);
+
+        $loginResponse = $this->readResponse($socket);
+        
+        if (!isset($loginResponse[0]) || $loginResponse[0] !== '!done') {
+            throw new \Exception('Falha na autenticação: ' . implode(' ', $loginResponse));
+        }
+    }
+
+    /**
+     * Escreve comando para a API RouterOS
+     */
+    private function writeCommand($socket, $command, $attributes = [])
+    {
+        $data = $this->encodeLength(strlen($command)) . $command;
         
         foreach ($attributes as $key => $value) {
-            $data .= "=" . $key . "=" . $value . "\n";
+            $param = "=$key=$value";
+            $data .= $this->encodeLength(strlen($param)) . $param;
         }
         
-        $data .= "\n";
+        $data .= $this->encodeLength(0); // End of command
         
-        socket_write($socket, $data, strlen($data));
+        socket_write($socket, $data);
+    }
+
+    /**
+     * Lê resposta da API RouterOS
+     */
+    private function readResponse($socket)
+    {
+        $response = [];
         
-        // Ler resposta (implementação simplificada)
-        $response = socket_read($socket, 2048);
+        while (true) {
+            $length = $this->readLength($socket);
+            if ($length === false) break;
+            
+            if ($length === 0) break;
+            
+            $data = socket_read($socket, $length);
+            if ($data === false) break;
+            
+            $response[] = $data;
+        }
         
         return $response;
+    }
+
+    /**
+     * Codifica comprimento para protocolo RouterOS
+     */
+    private function encodeLength($length)
+    {
+        if ($length < 0x80) {
+            return chr($length);
+        } elseif ($length < 0x4000) {
+            return pack('n', $length | 0x8000);
+        } elseif ($length < 0x200000) {
+            return pack('N', $length | 0xC00000) . substr(pack('N', $length), 1);
+        } elseif ($length < 0x10000000) {
+            return pack('N', $length | 0xE0000000);
+        } else {
+            return chr(0xF0) . pack('N', $length);
+        }
+    }
+
+    /**
+     * Decodifica comprimento do protocolo RouterOS
+     */
+    private function readLength($socket)
+    {
+        $byte = socket_read($socket, 1);
+        if ($byte === false) return false;
+        
+        $firstByte = ord($byte);
+        
+        if ($firstByte < 0x80) {
+            return $firstByte;
+        } elseif ($firstByte < 0xC0) {
+            $byte2 = socket_read($socket, 1);
+            return (($firstByte & 0x7F) << 8) + ord($byte2);
+        } elseif ($firstByte < 0xE0) {
+            $bytes = socket_read($socket, 2);
+            return (($firstByte & 0x1F) << 16) + (ord($bytes[0]) << 8) + ord($bytes[1]);
+        } elseif ($firstByte < 0xF0) {
+            $bytes = socket_read($socket, 3);
+            return (($firstByte & 0x0F) << 24) + (ord($bytes[0]) << 16) + (ord($bytes[1]) << 8) + ord($bytes[2]);
+        } else {
+            $bytes = socket_read($socket, 4);
+            return (ord($bytes[0]) << 24) + (ord($bytes[1]) << 16) + (ord($bytes[2]) << 8) + ord($bytes[3]);
+        }
     }
 
     /**
@@ -85,7 +200,7 @@ class MikrotikController extends Controller
                 ]);
             }
 
-            // Em produção, consultar MikroTik via API
+            // Consultar status real no MikroTik
             $mikrotikStatus = $this->getMikrotikDeviceStatus($macAddress);
 
             return response()->json([
@@ -129,8 +244,26 @@ class MikrotikController extends Controller
                 ], 404);
             }
 
+            return $this->allowDeviceByUser($user);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao liberar dispositivo: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno'
+            ], 500);
+        }
+    }
+
+    /**
+     * Libera acesso para um usuário específico
+     */
+    public function allowDeviceByUser(User $user)
+    {
+        try {
             // Liberar no MikroTik
-            $mikrotikResult = $this->allowDeviceInMikrotik($macAddress);
+            $mikrotikResult = $this->allowDeviceInMikrotik($user->mac_address);
 
             if ($mikrotikResult) {
                 // Atualizar status no banco
@@ -139,9 +272,11 @@ class MikrotikController extends Controller
                     'connected_at' => now()
                 ]);
 
-                // Registrar ou atualizar dispositivo
-                $this->registerDevice($macAddress, $request);
+                // Registrar dispositivo
+                $this->registerDevice($user->mac_address, null);
 
+                Log::info("Dispositivo {$user->mac_address} liberado com sucesso");
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Dispositivo liberado com sucesso'
@@ -267,57 +402,133 @@ class MikrotikController extends Controller
      * Métodos privados para integração com MikroTik RouterOS API
      */
 
-
     /**
      * Obtém status do dispositivo no MikroTik
      */
     private function getMikrotikDeviceStatus($macAddress)
     {
-        // Simular consulta ao MikroTik
-        // Em produção: consultar hotspot users ou firewall rules
-        
-        return [
-            'online' => rand(0, 1) ? true : false,
-            'bytes_in' => rand(1000000, 100000000), // bytes
-            'bytes_out' => rand(500000, 50000000),
-            'session_time' => rand(300, 7200), // segundos
-            'idle_time' => rand(0, 300)
-        ];
+        try {
+            $socket = $this->connectToMikroTik();
+            
+            // Consultar usuários ativos do hotspot
+            $this->writeCommand($socket, '/ip/hotspot/active/print', [
+                '?mac-address' => $macAddress
+            ]);
+            
+            $response = $this->readResponse($socket);
+            socket_close($socket);
+            
+            // Processar resposta
+            $isOnline = false;
+            $bytesIn = 0;
+            $bytesOut = 0;
+            $sessionTime = 0;
+            
+            foreach ($response as $line) {
+                if (strpos($line, '!re') === 0) {
+                    $isOnline = true;
+                } elseif (strpos($line, '=bytes-in=') === 0) {
+                    $bytesIn = intval(substr($line, 10));
+                } elseif (strpos($line, '=bytes-out=') === 0) {
+                    $bytesOut = intval(substr($line, 11));
+                } elseif (strpos($line, '=uptime=') === 0) {
+                    $sessionTime = $this->parseUptime(substr($line, 8));
+                }
+            }
+            
+            return [
+                'online' => $isOnline,
+                'bytes_in' => $bytesIn,
+                'bytes_out' => $bytesOut,
+                'session_time' => $sessionTime,
+                'idle_time' => 0
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error("Erro ao consultar status do dispositivo {$macAddress}: " . $e->getMessage());
+            return [
+                'online' => false,
+                'bytes_in' => 0,
+                'bytes_out' => 0,
+                'session_time' => 0,
+                'idle_time' => 0
+            ];
+        }
     }
 
     /**
-     * Libera dispositivo no MikroTik
+     * Libera dispositivo no MikroTik criando usuário do hotspot
      */
     private function allowDeviceInMikrotik($macAddress)
     {
         try {
-            if (!config('wifi.mikrotik.api_enabled')) {
+            if (!config('wifi.mikrotik.api_enabled', true)) {
                 Log::info("API MikroTik desabilitada - simulando liberação para {$macAddress}");
                 return true;
             }
 
             Log::info("Liberando dispositivo {$macAddress} no MikroTik");
             
-            // Conectar ao MikroTik
             $socket = $this->connectToMikroTik();
             
-            // Método 1: Adicionar regra de firewall para permitir o MAC
-            $response = $this->sendCommand($socket, 'ip/firewall/filter/add', [
-                'chain' => 'forward',
-                'action' => 'accept',
-                'src-mac-address' => $macAddress,
-                'comment' => 'Allowed-' . $macAddress
+            // Primeiro, verificar se já existe usuário
+            $this->writeCommand($socket, '/ip/hotspot/user/print', [
+                '?name' => $macAddress
             ]);
+            
+            $response = $this->readResponse($socket);
+            
+            $userExists = false;
+            foreach ($response as $line) {
+                if (strpos($line, '!re') === 0) {
+                    $userExists = true;
+                    break;
+                }
+            }
+            
+            if (!$userExists) {
+                // Criar usuário do hotspot
+                $this->writeCommand($socket, '/ip/hotspot/user/add', [
+                    'name' => $macAddress,
+                    'mac-address' => $macAddress,
+                    'profile' => 'default',
+                    'comment' => 'Auto-created for paid access'
+                ]);
+                
+                $addResponse = $this->readResponse($socket);
+                
+                // Verificar se foi criado com sucesso
+                $success = false;
+                foreach ($addResponse as $line) {
+                    if (strpos($line, '!done') === 0) {
+                        $success = true;
+                        break;
+                    }
+                }
+                
+                if (!$success) {
+                    Log::error("Falha ao criar usuário hotspot para {$macAddress}");
+                    socket_close($socket);
+                    return false;
+                }
+            } else {
+                // Usuário já existe, apenas habilitá-lo
+                $this->writeCommand($socket, '/ip/hotspot/user/set', [
+                    'name' => $macAddress,
+                    'disabled' => 'no'
+                ]);
+                
+                $this->readResponse($socket);
+            }
             
             socket_close($socket);
             
-            Log::info("Dispositivo {$macAddress} liberado no MikroTik");
+            Log::info("Dispositivo {$macAddress} liberado no MikroTik com sucesso");
             return true;
             
         } catch (\Exception $e) {
             Log::error("Erro ao liberar {$macAddress} no MikroTik: " . $e->getMessage());
-            // Em caso de erro, simular sucesso para não quebrar o fluxo
-            return true;
+            return false;
         }
     }
 
@@ -327,30 +538,33 @@ class MikrotikController extends Controller
     private function blockDeviceInMikrotik($macAddress)
     {
         try {
-            if (!config('wifi.mikrotik.api_enabled')) {
+            if (!config('wifi.mikrotik.api_enabled', true)) {
                 Log::info("API MikroTik desabilitada - simulando bloqueio para {$macAddress}");
                 return true;
             }
 
             Log::info("Bloqueando dispositivo {$macAddress} no MikroTik");
             
-            // Conectar ao MikroTik
             $socket = $this->connectToMikroTik();
             
-            // Remover regra de permissão do firewall
-            $response = $this->sendCommand($socket, 'ip/firewall/filter/print', [
-                'comment' => 'Allowed-' . $macAddress
+            // Desabilitar usuário do hotspot
+            $this->writeCommand($socket, '/ip/hotspot/user/set', [
+                'name' => $macAddress,
+                'disabled' => 'yes'
             ]);
             
-            // Aqui você removeria a regra específica
-            // Para simplificar, apenas logamos a ação
+            $response = $this->readResponse($socket);
+            
+            // Desconectar usuário ativo se estiver online
+            $this->writeCommand($socket, '/ip/hotspot/active/remove', [
+                'mac-address' => $macAddress
+            ]);
+            
+            $this->readResponse($socket);
             
             socket_close($socket);
             
             Log::info("Dispositivo {$macAddress} bloqueado no MikroTik");
-            return true;
-            
-            // Simular sucesso
             return true;
             
         } catch (\Exception $e) {
@@ -364,14 +578,75 @@ class MikrotikController extends Controller
      */
     private function getMikrotikUsageData($macAddress)
     {
-        // Simular dados de uso
-        return [
-            'bytes_in' => rand(1000000, 100000000),
-            'bytes_out' => rand(500000, 50000000),
-            'download_speed' => rand(1000, 50000), // kbps
-            'upload_speed' => rand(500, 25000), // kbps
-            'session_time' => rand(300, 7200)
-        ];
+        try {
+            $socket = $this->connectToMikroTik();
+            
+            $this->writeCommand($socket, '/ip/hotspot/active/print', [
+                '?mac-address' => $macAddress
+            ]);
+            
+            $response = $this->readResponse($socket);
+            socket_close($socket);
+            
+            $bytesIn = 0;
+            $bytesOut = 0;
+            $sessionTime = 0;
+            
+            foreach ($response as $line) {
+                if (strpos($line, '=bytes-in=') === 0) {
+                    $bytesIn = intval(substr($line, 10));
+                } elseif (strpos($line, '=bytes-out=') === 0) {
+                    $bytesOut = intval(substr($line, 11));
+                } elseif (strpos($line, '=uptime=') === 0) {
+                    $sessionTime = $this->parseUptime(substr($line, 8));
+                }
+            }
+            
+            return [
+                'bytes_in' => $bytesIn,
+                'bytes_out' => $bytesOut,
+                'download_speed' => $bytesIn > 0 ? round($bytesIn / max($sessionTime, 1) * 8 / 1000) : 0, // kbps
+                'upload_speed' => $bytesOut > 0 ? round($bytesOut / max($sessionTime, 1) * 8 / 1000) : 0, // kbps
+                'session_time' => $sessionTime
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error("Erro ao obter dados de uso para {$macAddress}: " . $e->getMessage());
+            return [
+                'bytes_in' => 0,
+                'bytes_out' => 0,
+                'download_speed' => 0,
+                'upload_speed' => 0,
+                'session_time' => 0
+            ];
+        }
+    }
+
+    /**
+     * Converte uptime do MikroTik para segundos
+     */
+    private function parseUptime($uptime)
+    {
+        // Formato: 1d2h3m4s ou 2h3m4s ou 3m4s ou 4s
+        $seconds = 0;
+        
+        if (preg_match('/(\d+)d/', $uptime, $matches)) {
+            $seconds += intval($matches[1]) * 86400;
+        }
+        
+        if (preg_match('/(\d+)h/', $uptime, $matches)) {
+            $seconds += intval($matches[1]) * 3600;
+        }
+        
+        if (preg_match('/(\d+)m/', $uptime, $matches)) {
+            $seconds += intval($matches[1]) * 60;
+        }
+        
+        if (preg_match('/(\d+)s/', $uptime, $matches)) {
+            $seconds += intval($matches[1]);
+        }
+        
+        return $seconds;
     }
 
     /**
@@ -384,15 +659,16 @@ class MikrotikController extends Controller
         if (!$device) {
             Device::create([
                 'mac_address' => $macAddress,
-                'device_name' => $this->parseDeviceName($request->userAgent()),
-                'device_type' => $this->detectDeviceType($request->userAgent()),
-                'user_agent' => $request->userAgent(),
+                'device_name' => $request ? $this->parseDeviceName($request->userAgent()) : 'Unknown Device',
+                'device_type' => $request ? $this->detectDeviceType($request->userAgent()) : 'unknown',
+                'user_agent' => $request ? $request->userAgent() : null,
                 'first_seen' => now(),
                 'last_seen' => now(),
                 'total_connections' => 1
             ]);
         } else {
-            $device->updateLastSeen();
+            $device->increment('total_connections');
+            $device->update(['last_seen' => now()]);
         }
     }
 

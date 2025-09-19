@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\Session;
@@ -333,11 +334,7 @@ class PaymentController extends Controller
             ]);
 
             // Liberar acesso do usuário
-            $payment->user->update([
-                'status' => 'connected',
-                'connected_at' => now(),
-                'expires_at' => now()->addHours(24)
-            ]);
+            $this->activateUserAccess($payment);
         }
 
         return response()->json(['success' => true]);
@@ -387,20 +384,8 @@ class PaymentController extends Controller
                         'paid_at' => $result['paid_at']
                     ]);
 
-                    // Criar sessão ativa
-                    Session::create([
-                        'user_id' => $payment->user_id,
-                        'payment_id' => $payment->id,
-                        'started_at' => now(),
-                        'session_status' => 'active'
-                    ]);
-
-                    // Liberar acesso do usuário
-                    $payment->user->update([
-                        'status' => 'connected',
-                        'connected_at' => now(),
-                        'expires_at' => now()->addHours(24)
-                    ]);
+                    // Liberar acesso do usuário automaticamente
+                    $this->activateUserAccess($payment);
                 }
             }
 
@@ -436,20 +421,8 @@ class PaymentController extends Controller
                         'paid_at' => $result['paid_at']
                     ]);
 
-                    // Criar sessão ativa
-                    Session::create([
-                        'user_id' => $payment->user_id,
-                        'payment_id' => $payment->id,
-                        'started_at' => now(),
-                        'session_status' => 'active'
-                    ]);
-
-                    // Liberar acesso do usuário
-                    $payment->user->update([
-                        'status' => 'connected',
-                        'connected_at' => now(),
-                        'expires_at' => now()->addHours(24)
-                    ]);
+                    // Liberar acesso do usuário automaticamente
+                    $this->activateUserAccess($payment);
                 }
             }
 
@@ -496,6 +469,42 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => 'Erro ao testar conexão: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Ativa o acesso do usuário e libera no MikroTik
+     */
+    private function activateUserAccess(Payment $payment)
+    {
+        try {
+            // Criar sessão ativa
+            Session::create([
+                'user_id' => $payment->user_id,
+                'payment_id' => $payment->id,
+                'started_at' => now(),
+                'session_status' => 'active'
+            ]);
+
+            // Atualizar status do usuário
+            $payment->user->update([
+                'status' => 'connected',
+                'connected_at' => now(),
+                'expires_at' => now()->addHours(config('wifi.pricing.session_duration_hours', 24))
+            ]);
+
+            // Liberar acesso no MikroTik
+            $mikrotikController = new \App\Http\Controllers\MikrotikController();
+            $result = $mikrotikController->allowDeviceByUser($payment->user);
+
+            if ($result) {
+                Log::info("Usuário {$payment->user->mac_address} liberado no MikroTik após pagamento aprovado");
+            } else {
+                Log::error("Falha ao liberar usuário {$payment->user->mac_address} no MikroTik");
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao ativar acesso do usuário: ' . $e->getMessage());
         }
     }
 }
