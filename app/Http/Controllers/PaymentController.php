@@ -39,9 +39,8 @@ class PaymentController extends Controller
             $payment = Payment::create([
                 'user_id' => $user->id,
                 'amount' => $request->amount,
-                'method' => 'pix',
+                'payment_type' => 'pix',
                 'status' => 'pending',
-                'payment_gateway' => $gateway,
                 'transaction_id' => $this->generateTransactionId()
             ]);
             
@@ -191,9 +190,8 @@ class PaymentController extends Controller
             $payment = Payment::create([
                 'user_id' => $user->id,
                 'amount' => $request->amount,
-                'method' => 'card',
+                'payment_type' => 'card',
                 'status' => 'pending',
-                'payment_gateway' => 'stripe', // ou outro gateway
                 'transaction_id' => $this->generateTransactionId()
             ]);
 

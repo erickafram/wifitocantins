@@ -13,6 +13,9 @@ class Payment extends Model
         'status',
         'payment_id',
         'transaction_id',
+        'pix_emv_string',
+        'pix_location',
+        'gateway_payment_id',
         'payment_data',
         'paid_at',
     ];
