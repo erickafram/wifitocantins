@@ -410,6 +410,7 @@ class PaymentController extends Controller
                 // Buscar pagamento pelo correlation_id
                 $payment = Payment::where('pix_location', $result['correlation_id'])
                     ->orWhere('gateway_payment_id', $result['woovi_id'])
+                    ->orWhere('transaction_id', $result['correlation_id'])
                     ->first();
                 
                 if ($payment) {
