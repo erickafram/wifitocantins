@@ -14,7 +14,7 @@ return [
     ],
 
     'pricing' => [
-        'default_price' => env('WIFI_DEFAULT_PRICE', 5.00),
+        'default_price' => env('WIFI_DEFAULT_PRICE', 0.05),
         'session_duration_hours' => env('WIFI_SESSION_DURATION', 24),
         'currency' => 'BRL',
     ],
