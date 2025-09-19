@@ -707,11 +707,16 @@ class WiFiPortal {
      * Verifica status do pagamento
      */
     async checkPaymentStatus(paymentId) {
+        console.log('🔄 Verificando status do pagamento ID:', paymentId);
+        
         try {
             const response = await fetch(`/api/payment/pix/status?payment_id=${paymentId}`);
             const result = await response.json();
             
+            console.log('📊 Resposta da API:', result);
+            
             if (result.success && result.payment.status === 'completed') {
+                console.log('✅ Pagamento confirmado!');
                 clearInterval(this.paymentCheckInterval);
                 this.closePixModal();
                 this.showSuccessMessage('Pagamento confirmado! Conectando...');
@@ -722,9 +727,13 @@ class WiFiPortal {
                         this.checkConnectionStatus();
                     }, 2000);
                 }
+            } else {
+                console.log('⏱️ Pagamento ainda pendente:', result.payment?.status);
+                this.showInfoMessage('Pagamento ainda não confirmado. Aguarde...');
             }
         } catch (error) {
-            console.error('Erro ao verificar status do pagamento:', error);
+            console.error('❌ Erro ao verificar status do pagamento:', error);
+            this.showErrorMessage('Erro ao verificar status. Tente novamente.');
         }
     }
 
