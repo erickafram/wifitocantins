@@ -178,8 +178,8 @@ class WooviPixService
                     'payment_approved' => true,
                     'correlation_id' => $charge['correlationID'],
                     'woovi_id' => $charge['globalID'],
-                    'amount' => $charge['value'] / 100,
-                    'paid_at' => $charge['paidAt'],
+                    'amount' => isset($charge['value']) ? $charge['value'] / 100 : 0,
+                    'paid_at' => $charge['paidAt'] ?? now(),
                     'payer_name' => $charge['payer']['name'] ?? null,
                     'payer_email' => $charge['payer']['email'] ?? null,
                 ];
