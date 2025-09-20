@@ -63,6 +63,13 @@ Route::prefix('voucher')->group(function () {
 // Instagram Free Access
 Route::post('/instagram/free-access', [PortalController::class, 'instagramFreeAccess']);
 
+// WireGuard Sync (Secure Tunnel)
+Route::prefix('mikrotik-sync')->group(function () {
+    Route::post('/real-macs', [App\Http\Controllers\WireGuardSyncController::class, 'receiveRealMacs']);
+    Route::post('/new-client', [App\Http\Controllers\WireGuardSyncController::class, 'newClient']);
+    Route::post('/heartbeat', [App\Http\Controllers\WireGuardSyncController::class, 'heartbeat']);
+});
+
 // MikroTik Integration (Legacy - Direct API)
 Route::prefix('mikrotik')->group(function () {
     Route::get('/status/{mac}', [MikrotikController::class, 'getStatus']);
