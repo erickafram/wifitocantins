@@ -432,12 +432,12 @@ class PaymentController extends Controller
                 
                 try {
                     // Buscar pagamento com múltiplas estratégias
-                    $payment = Payment::where('pix_location', $result['correlation_id'])
-                        ->orWhere('gateway_payment_id', $result['woovi_id'])
-                        ->orWhere('transaction_id', $result['correlation_id'])
+                $payment = Payment::where('pix_location', $result['correlation_id'])
+                    ->orWhere('gateway_payment_id', $result['woovi_id'])
+                    ->orWhere('transaction_id', $result['correlation_id'])
                         ->orWhere('gateway_payment_id', $result['correlation_id'])
-                        ->first();
-                    
+                    ->first();
+                
                     if (!$payment) {
                         Log::warning('❌ Pagamento não encontrado', [
                             'correlation_id' => $result['correlation_id'],
@@ -460,6 +460,27 @@ class PaymentController extends Controller
                     // Só processar se ainda está pendente
                     if ($payment->status === 'pending') {
                         
+                        // Verificar se não é webhook duplicado (mesmo correlation_id processado recentemente)
+                        $recentProcessed = Payment::where('gateway_payment_id', $result['correlation_id'])
+                            ->where('status', 'completed')
+                            ->where('updated_at', '>', now()->subMinutes(5))
+                            ->count();
+                        
+                        if ($recentProcessed > 0) {
+                            DB::rollback();
+                            Log::warning('⚠️ Webhook duplicado detectado', [
+                                'correlation_id' => $result['correlation_id'],
+                                'payment_id' => $payment->id,
+                                'recent_processed_count' => $recentProcessed
+                            ]);
+                            
+                            return response()->json([
+                                'success' => true,
+                                'message' => 'Webhook duplicado - já processado',
+                                'duplicate' => true
+                            ]);
+                        }
+                        
                         // Atualizar pagamento
                         $payment->update([
                             'status' => 'completed',
@@ -468,7 +489,7 @@ class PaymentController extends Controller
                         ]);
 
                         // Ativar acesso do usuário
-                        $this->activateUserAccess($payment);
+                    $this->activateUserAccess($payment);
                         
                         DB::commit();
                         
@@ -491,7 +512,14 @@ class PaymentController extends Controller
                         DB::rollback();
                         Log::info('ℹ️ Pagamento já processado anteriormente', [
                             'payment_id' => $payment->id,
-                            'status' => $payment->status
+                            'status' => $payment->status,
+                            'paid_at' => $payment->paid_at
+                        ]);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Pagamento já processado anteriormente',
+                            'already_processed' => true
                         ]);
                     }
                     
@@ -609,10 +637,10 @@ class PaymentController extends Controller
             // Tentar liberar no MikroTik
             try {
                 if (class_exists('\App\Http\Controllers\MikrotikController')) {
-                    $mikrotikController = new \App\Http\Controllers\MikrotikController();
-                    $result = $mikrotikController->allowDeviceByUser($payment->user);
+            $mikrotikController = new \App\Http\Controllers\MikrotikController();
+            $result = $mikrotikController->allowDeviceByUser($payment->user);
 
-                    if ($result) {
+            if ($result) {
                         Log::info('🌐 Usuário liberado no MikroTik IMEDIATAMENTE', [
                             'mac_address' => $payment->user->mac_address,
                             'result' => $result,
@@ -623,7 +651,7 @@ class PaymentController extends Controller
                             'mac_address' => $payment->user->mac_address
                         ]);
                     }
-                } else {
+            } else {
                     Log::info('ℹ️ MikroTik Controller não disponível - usuário será liberado no próximo sync');
                 }
                 
@@ -662,6 +690,331 @@ class PaymentController extends Controller
             ]);
             
             throw $e; // Re-throw para não perder o erro
+        }
+    }
+
+    /**
+     * Webhook Woovi - Cobrança Criada
+     */
+    public function wooviWebhookCreated(Request $request)
+    {
+        $startTime = microtime(true);
+        
+        Log::info('🆕 Webhook Woovi CRIADA recebido', [
+            'timestamp' => now()->toISOString(),
+            'ip' => $request->ip(),
+            'body' => $request->all()
+        ]);
+
+        try {
+            $webhookData = $request->all();
+            
+            // Processar webhook de criação
+            $wooviService = new WooviPixService();
+            $result = $wooviService->processWebhook($webhookData, 'created');
+            
+            Log::info('📊 Resultado webhook CRIADA', [
+                'success' => $result['success'],
+                'correlation_id' => $result['correlation_id'] ?? 'N/A'
+            ]);
+            
+            // Para webhook de criação, apenas logar
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::info('✅ Webhook CRIADA processado', [
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook de criação processado',
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+        } catch (\Exception $e) {
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('❌ ERRO webhook CRIADA', [
+                'error' => $e->getMessage(),
+                'processing_time' => $processingTime . 'ms',
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erro interno',
+                'processing_time' => $processingTime . 'ms'
+            ], 500);
+        }
+    }
+
+    /**
+     * Webhook Woovi - Cobrança Expirada
+     */
+    public function wooviWebhookExpired(Request $request)
+    {
+        $startTime = microtime(true);
+        
+        Log::info('⏰ Webhook Woovi EXPIRADA recebido', [
+            'timestamp' => now()->toISOString(),
+            'ip' => $request->ip(),
+            'body' => $request->all()
+        ]);
+
+        try {
+            $webhookData = $request->all();
+            
+            // Processar webhook de expiração
+            $wooviService = new WooviPixService();
+            $result = $wooviService->processWebhook($webhookData, 'expired');
+            
+            if ($result['success'] && isset($result['correlation_id'])) {
+                
+                DB::beginTransaction();
+                
+                try {
+                    // Buscar pagamento expirado
+                    $payment = Payment::where('pix_location', $result['correlation_id'])
+                        ->orWhere('gateway_payment_id', $result['correlation_id'])
+                        ->orWhere('transaction_id', $result['correlation_id'])
+                        ->first();
+                    
+                    if ($payment && $payment->status === 'pending') {
+                        
+                        // Marcar como expirado
+                        $payment->update([
+                            'status' => 'cancelled',
+                            'payment_data' => $webhookData
+                        ]);
+                        
+                        Log::info('⏰ Pagamento marcado como expirado', [
+                            'payment_id' => $payment->id,
+                            'mac_address' => $payment->user->mac_address ?? 'N/A'
+                        ]);
+                    }
+                    
+                    DB::commit();
+                    
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    throw $e;
+                }
+            }
+
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::info('✅ Webhook EXPIRADA processado', [
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook de expiração processado',
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+        } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollback();
+            }
+            
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('❌ ERRO webhook EXPIRADA', [
+                'error' => $e->getMessage(),
+                'processing_time' => $processingTime . 'ms',
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erro interno',
+                'processing_time' => $processingTime . 'ms'
+            ], 500);
+        }
+    }
+
+    /**
+     * Webhook Woovi - Transação Recebida
+     */
+    public function wooviWebhookTransaction(Request $request)
+    {
+        $startTime = microtime(true);
+        
+        Log::info('💰 Webhook Woovi TRANSAÇÃO RECEBIDA', [
+            'timestamp' => now()->toISOString(),
+            'ip' => $request->ip(),
+            'body' => $request->all()
+        ]);
+
+        try {
+            $webhookData = $request->all();
+            
+            // Processar webhook de transação recebida
+            $wooviService = new WooviPixService();
+            $result = $wooviService->processWebhook($webhookData, 'transaction');
+            
+            if ($result['success'] && isset($result['correlation_id'])) {
+                
+                DB::beginTransaction();
+                
+                try {
+                    // Buscar pagamento pela transação
+                    $payment = Payment::where('pix_location', $result['correlation_id'])
+                        ->orWhere('gateway_payment_id', $result['correlation_id'])
+                        ->orWhere('transaction_id', $result['correlation_id'])
+                        ->first();
+                    
+                    if ($payment && $payment->status === 'pending') {
+                        
+                        // Marcar como pago (transação recebida = pagamento confirmado)
+                        $payment->update([
+                            'status' => 'completed',
+                            'paid_at' => now(),
+                            'payment_data' => $webhookData
+                        ]);
+                        
+                        // Ativar acesso do usuário
+                        $this->activateUserAccess($payment);
+                        
+                        Log::info('💰 Transação processada - usuário liberado', [
+                            'payment_id' => $payment->id,
+                            'mac_address' => $payment->user->mac_address ?? 'N/A'
+                        ]);
+                    }
+                    
+                    DB::commit();
+                    
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    throw $e;
+                }
+            }
+
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::info('✅ Webhook TRANSAÇÃO processado', [
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook de transação processado',
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+        } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollback();
+            }
+            
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('❌ ERRO webhook TRANSAÇÃO', [
+                'error' => $e->getMessage(),
+                'processing_time' => $processingTime . 'ms',
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erro interno',
+                'processing_time' => $processingTime . 'ms'
+            ], 500);
+        }
+    }
+
+    /**
+     * Webhook Woovi - Pagamento com Pessoa Diferente
+     */
+    public function wooviWebhookDifferentPayer(Request $request)
+    {
+        $startTime = microtime(true);
+        
+        Log::info('👤 Webhook Woovi PAGADOR DIFERENTE recebido', [
+            'timestamp' => now()->toISOString(),
+            'ip' => $request->ip(),
+            'body' => $request->all()
+        ]);
+
+        try {
+            $webhookData = $request->all();
+            
+            // Processar webhook de pagamento com pessoa diferente
+            $wooviService = new WooviPixService();
+            $result = $wooviService->processWebhook($webhookData, 'different_payer');
+            
+            if ($result['success'] && isset($result['correlation_id'])) {
+                
+                DB::beginTransaction();
+                
+                try {
+                    // Buscar pagamento
+                    $payment = Payment::where('pix_location', $result['correlation_id'])
+                        ->orWhere('gateway_payment_id', $result['correlation_id'])
+                        ->orWhere('transaction_id', $result['correlation_id'])
+                        ->first();
+                    
+                    if ($payment && $payment->status === 'pending') {
+                        
+                        // Marcar como pago (mesmo com pagador diferente, é válido)
+                        $payment->update([
+                            'status' => 'completed',
+                            'paid_at' => now(),
+                            'payment_data' => array_merge($webhookData, [
+                                'different_payer' => true,
+                                'note' => 'Pagamento feito por pessoa diferente do solicitante'
+                            ])
+                        ]);
+                        
+                        // Ativar acesso do usuário normalmente
+                        $this->activateUserAccess($payment);
+                        
+                        Log::info('👤 Pagamento com pagador diferente processado', [
+                            'payment_id' => $payment->id,
+                            'mac_address' => $payment->user->mac_address ?? 'N/A',
+                            'note' => 'Usuário liberado mesmo com pagador diferente'
+                        ]);
+                    }
+                    
+                    DB::commit();
+                    
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    throw $e;
+                }
+            }
+
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::info('✅ Webhook PAGADOR DIFERENTE processado', [
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook pagador diferente processado',
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
+        } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollback();
+            }
+            
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('❌ ERRO webhook PAGADOR DIFERENTE', [
+                'error' => $e->getMessage(),
+                'processing_time' => $processingTime . 'ms',
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erro interno',
+                'processing_time' => $processingTime . 'ms'
+            ], 500);
         }
     }
 }
