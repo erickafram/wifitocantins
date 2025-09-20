@@ -143,6 +143,17 @@ class WiFiPortal {
      */
     async detectDevice() {
         try {
+            // 🎯 PRIORIDADE: Verificar se MAC está na URL (MikroTik)
+            const urlParams = new URLSearchParams(window.location.search);
+            const macFromUrl = urlParams.get('mac') || urlParams.get('mikrotik_mac') || urlParams.get('client_mac');
+            
+            if (macFromUrl && this.isValidMacAddress(macFromUrl)) {
+                this.deviceMac = macFromUrl.toUpperCase();
+                console.log('🎯 MAC REAL capturado da URL:', this.deviceMac);
+                return;
+            }
+
+            // Se não tem MAC na URL, fazer requisição para detectar
             const response = await fetch('/api/detect-device', {
                 method: 'POST',
                 headers: {
@@ -154,12 +165,21 @@ class WiFiPortal {
             const data = await response.json();
             this.deviceMac = data.mac_address || '';
             
-            console.log('Dispositivo detectado:', this.deviceMac);
+            console.log('📱 Dispositivo detectado via API:', this.deviceMac);
         } catch (error) {
-            console.error('Erro ao detectar dispositivo:', error);
+            console.error('❌ Erro ao detectar dispositivo:', error);
             // Simular MAC para desenvolvimento
             this.deviceMac = this.generateMockMac();
+            console.log('⚠️ MAC mock gerado:', this.deviceMac);
         }
+    }
+
+    /**
+     * Valida formato do MAC address
+     */
+    isValidMacAddress(mac) {
+        const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+        return macRegex.test(mac);
     }
 
     /**
