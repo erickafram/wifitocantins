@@ -398,39 +398,133 @@ class PaymentController extends Controller
     }
 
     /**
-     * Webhook específico da Woovi
+     * Webhook específico da Woovi - MELHORADO
      */
     public function wooviWebhook(Request $request)
     {
+        $startTime = microtime(true);
+        
+        Log::info('🔔 Webhook Woovi MELHORADO recebido', [
+            'timestamp' => now()->toISOString(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'headers' => $request->headers->all(),
+            'body' => $request->all()
+        ]);
+
         try {
             $webhookData = $request->all();
             
+            // Processar webhook com serviço melhorado
             $wooviService = new WooviPixService();
             $result = $wooviService->processWebhook($webhookData);
             
+            Log::info('📊 Resultado do processamento Woovi', [
+                'success' => $result['success'],
+                'payment_approved' => $result['payment_approved'] ?? false,
+                'correlation_id' => $result['correlation_id'] ?? 'N/A',
+                'woovi_id' => $result['woovi_id'] ?? 'N/A'
+            ]);
+            
             if ($result['success'] && $result['payment_approved']) {
-                // Buscar pagamento pelo correlation_id
-                $payment = Payment::where('pix_location', $result['correlation_id'])
-                    ->orWhere('gateway_payment_id', $result['woovi_id'])
-                    ->orWhere('transaction_id', $result['correlation_id'])
-                    ->first();
                 
-                if ($payment) {
-                    $payment->update([
-                        'status' => 'completed',
-                        'paid_at' => $result['paid_at']
+                DB::beginTransaction();
+                
+                try {
+                    // Buscar pagamento com múltiplas estratégias
+                    $payment = Payment::where('pix_location', $result['correlation_id'])
+                        ->orWhere('gateway_payment_id', $result['woovi_id'])
+                        ->orWhere('transaction_id', $result['correlation_id'])
+                        ->orWhere('gateway_payment_id', $result['correlation_id'])
+                        ->first();
+                    
+                    if (!$payment) {
+                        Log::warning('❌ Pagamento não encontrado', [
+                            'correlation_id' => $result['correlation_id'],
+                            'woovi_id' => $result['woovi_id']
+                        ]);
+                        
+                        DB::rollback();
+                        return response()->json([
+                            'success' => false, 
+                            'message' => 'Pagamento não encontrado'
+                        ], 404);
+                    }
+
+                    Log::info('💳 Pagamento encontrado', [
+                        'payment_id' => $payment->id,
+                        'current_status' => $payment->status,
+                        'user_mac' => $payment->user->mac_address ?? 'N/A'
                     ]);
 
-                    // Liberar acesso do usuário automaticamente
-                    $this->activateUserAccess($payment);
+                    // Só processar se ainda está pendente
+                    if ($payment->status === 'pending') {
+                        
+                        // Atualizar pagamento
+                        $payment->update([
+                            'status' => 'completed',
+                            'paid_at' => $result['paid_at'] ?? now(),
+                            'payment_data' => $webhookData
+                        ]);
+
+                        // Ativar acesso do usuário
+                        $this->activateUserAccess($payment);
+                        
+                        DB::commit();
+                        
+                        $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+
+                        Log::info('✅ Pagamento Woovi processado com SUCESSO', [
+                            'payment_id' => $payment->id,
+                            'user_mac' => $payment->user->mac_address,
+                            'expires_at' => $payment->user->expires_at,
+                            'total_processing_time' => $processingTime . 'ms'
+                        ]);
+
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Pagamento processado com sucesso',
+                            'processing_time' => $processingTime . 'ms'
+                        ]);
+                        
+                    } else {
+                        DB::rollback();
+                        Log::info('ℹ️ Pagamento já processado anteriormente', [
+                            'payment_id' => $payment->id,
+                            'status' => $payment->status
+                        ]);
+                    }
+                    
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    throw $e;
                 }
             }
 
-            return response()->json(['success' => true]);
+            // Webhook recebido mas não processado
+            return response()->json(['success' => true, 'message' => 'Webhook recebido']);
 
         } catch (\Exception $e) {
-            Log::error('Erro no webhook Woovi: ' . $e->getMessage());
-            return response()->json(['success' => false], 500);
+            if (DB::transactionLevel() > 0) {
+                DB::rollback();
+            }
+            
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('❌ ERRO CRÍTICO no webhook Woovi', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'processing_time' => $processingTime . 'ms',
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erro interno do servidor',
+                'processing_time' => $processingTime . 'ms'
+            ], 500);
         }
     }
 
@@ -473,38 +567,101 @@ class PaymentController extends Controller
     }
 
     /**
-     * Ativa o acesso do usuário e libera no MikroTik
+     * Ativa o acesso do usuário e libera no MikroTik - MELHORADO
      */
     private function activateUserAccess(Payment $payment)
     {
+        $startTime = microtime(true);
+        
         try {
+            Log::info('🔓 Iniciando ativação de acesso do usuário', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'mac_address' => $payment->user->mac_address
+            ]);
+
             // Criar sessão ativa
-            Session::create([
+            $session = Session::create([
                 'user_id' => $payment->user_id,
                 'payment_id' => $payment->id,
                 'started_at' => now(),
                 'session_status' => 'active'
             ]);
 
-            // Atualizar status do usuário
+            Log::info('✅ Sessão criada', ['session_id' => $session->id]);
+
+            // Atualizar status do usuário com duração configurável
+            $sessionDurationHours = config('wifi.pricing.session_duration_hours', 24);
+            $expiresAt = now()->addHours($sessionDurationHours);
+            
             $payment->user->update([
                 'status' => 'connected',
                 'connected_at' => now(),
-                'expires_at' => now()->addHours(config('wifi.pricing.session_duration_hours', 24))
+                'expires_at' => $expiresAt
             ]);
 
-            // Liberar acesso no MikroTik
-            $mikrotikController = new \App\Http\Controllers\MikrotikController();
-            $result = $mikrotikController->allowDeviceByUser($payment->user);
+            Log::info('✅ Status do usuário atualizado', [
+                'status' => 'connected',
+                'expires_at' => $expiresAt->toISOString(),
+                'duration_hours' => $sessionDurationHours
+            ]);
 
-            if ($result) {
-                Log::info("Usuário {$payment->user->mac_address} liberado no MikroTik após pagamento aprovado");
-            } else {
-                Log::error("Falha ao liberar usuário {$payment->user->mac_address} no MikroTik");
+            // Tentar liberar no MikroTik
+            try {
+                if (class_exists('\App\Http\Controllers\MikrotikController')) {
+                    $mikrotikController = new \App\Http\Controllers\MikrotikController();
+                    $result = $mikrotikController->allowDeviceByUser($payment->user);
+
+                    if ($result) {
+                        Log::info('🌐 Usuário liberado no MikroTik IMEDIATAMENTE', [
+                            'mac_address' => $payment->user->mac_address,
+                            'result' => $result,
+                            'success' => true
+                        ]);
+                    } else {
+                        Log::warning('⚠️ Falha ao liberar no MikroTik - será liberado no próximo sync', [
+                            'mac_address' => $payment->user->mac_address
+                        ]);
+                    }
+                } else {
+                    Log::info('ℹ️ MikroTik Controller não disponível - usuário será liberado no próximo sync');
+                }
+                
+            } catch (\Exception $e) {
+                Log::warning('⚠️ Falha ao liberar no MikroTik imediatamente', [
+                    'error' => $e->getMessage(),
+                    'mac_address' => $payment->user->mac_address,
+                    'note' => 'Usuário será liberado no próximo sync automático (1 minuto)'
+                ]);
+                // Não falhar a ativação por causa do MikroTik
             }
 
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            Log::info('🎉 Acesso do usuário ativado com SUCESSO', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'mac_address' => $payment->user->mac_address,
+                'session_id' => $session->id,
+                'expires_at' => $expiresAt->toISOString(),
+                'processing_time' => $processingTime . 'ms'
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('Erro ao ativar acesso do usuário: ' . $e->getMessage());
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('❌ ERRO CRÍTICO ao ativar acesso do usuário', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'mac_address' => $payment->user->mac_address ?? 'N/A',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'processing_time' => $processingTime . 'ms',
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            throw $e; // Re-throw para não perder o erro
         }
     }
 }
