@@ -64,26 +64,50 @@ class PortalController extends Controller
      */
     private function getMacAddressFromMikrotik(Request $request, $ip)
     {
-        // 1. TENTAR OBTER MAC DE HEADERS DO MIKROTIK
-        $mikrotikMac = $request->header('X-Real-MAC') ?: 
-                      $request->header('X-Mikrotik-MAC') ?: 
-                      $request->header('X-Client-MAC');
-        
-        if ($mikrotikMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mikrotikMac)) {
-            Log::info('MAC obtido do MikroTik via header', ['mac' => $mikrotikMac, 'ip' => $ip]);
-            return strtoupper(str_replace('-', ':', $mikrotikMac));
+        Log::info('🔍 INICIANDO DETECÇÃO DE MAC', [
+            'ip' => $ip,
+            'user_agent' => $request->userAgent(),
+            'headers' => $request->headers->all()
+        ]);
+
+        // 1. PRIORIDADE: MAC VIA PARÂMETROS URL (MikroTik redirect)
+        $macViaUrl = $request->get('mac') ?: 
+                    $request->get('mikrotik_mac') ?: 
+                    $request->get('client_mac');
+
+        if ($macViaUrl && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $macViaUrl)) {
+            $cleanMac = strtoupper(str_replace('-', ':', $macViaUrl));
+            Log::info('🎯 MAC REAL capturado via URL do MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
+            return $cleanMac;
         }
 
-        // 2. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
+        // 2. TENTAR OBTER MAC DE HEADERS DO MIKROTIK
+        $mikrotikMac = $request->header('X-Real-MAC') ?: 
+                      $request->header('X-Mikrotik-MAC') ?: 
+                      $request->header('X-Client-MAC') ?:
+                      $request->header('HTTP_X_REAL_MAC') ?:
+                      $request->header('HTTP_X_MIKROTIK_MAC');
+        
+        if ($mikrotikMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mikrotikMac)) {
+            $cleanMac = strtoupper(str_replace('-', ':', $mikrotikMac));
+            Log::info('✅ MAC REAL obtido via header MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
+            return $cleanMac;
+        }
+
+        // 3. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
         $macFromMikrotik = $this->queryMacByIpFromMikrotik($ip);
-        if ($macFromMikrotik) {
-            Log::info('MAC obtido consultando MikroTik por IP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
+        if ($macFromMikrotik && $macFromMikrotik !== null) {
+            Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
             return $macFromMikrotik;
         }
 
-        // 3. FALLBACK: GERAR MAC CONSISTENTE BASEADO NO IP (PARA DESENVOLVIMENTO)
+        // 4. ÚLTIMO RECURSO: GERAR MAC CONSISTENTE BASEADO NO IP 
         $macAddress = $this->generateMacFromIp($ip);
-        Log::info('MAC gerado como fallback baseado no IP', ['mac' => $macAddress, 'ip' => $ip]);
+        Log::warning('⚠️ MAC MOCK gerado como fallback', [
+            'mac_mock' => $macAddress, 
+            'ip' => $ip,
+            'nota' => 'MikroTik não enviou MAC real nem respondeu consulta ARP'
+        ]);
         
         return $macAddress;
     }
