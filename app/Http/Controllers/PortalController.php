@@ -48,9 +48,8 @@ class PortalController extends Controller
         $ip = $request->ip();
         $userAgent = $request->userAgent();
         
-        // Em produção, o MAC address viria do MikroTik
-        // Por enquanto, simular baseado no IP
-        $macAddress = $this->generateMacFromIp($ip);
+        // PRODUÇÃO: Em hotspot MikroTik, o MAC vem via headers especiais
+        $macAddress = $this->getMacAddressFromMikrotik($request, $ip);
         
         return [
             'ip_address' => $ip,
@@ -58,6 +57,59 @@ class PortalController extends Controller
             'user_agent' => $userAgent,
             'device_type' => $this->detectDeviceType($userAgent)
         ];
+    }
+
+    /**
+     * Obtém MAC address real do MikroTik ou gera baseado no IP
+     */
+    private function getMacAddressFromMikrotik(Request $request, $ip)
+    {
+        // 1. TENTAR OBTER MAC DE HEADERS DO MIKROTIK
+        $mikrotikMac = $request->header('X-Real-MAC') ?: 
+                      $request->header('X-Mikrotik-MAC') ?: 
+                      $request->header('X-Client-MAC');
+        
+        if ($mikrotikMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mikrotikMac)) {
+            Log::info('MAC obtido do MikroTik via header', ['mac' => $mikrotikMac, 'ip' => $ip]);
+            return strtoupper(str_replace('-', ':', $mikrotikMac));
+        }
+
+        // 2. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
+        $macFromMikrotik = $this->queryMacByIpFromMikrotik($ip);
+        if ($macFromMikrotik) {
+            Log::info('MAC obtido consultando MikroTik por IP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
+            return $macFromMikrotik;
+        }
+
+        // 3. FALLBACK: GERAR MAC CONSISTENTE BASEADO NO IP (PARA DESENVOLVIMENTO)
+        $macAddress = $this->generateMacFromIp($ip);
+        Log::info('MAC gerado como fallback baseado no IP', ['mac' => $macAddress, 'ip' => $ip]);
+        
+        return $macAddress;
+    }
+
+    /**
+     * Consulta MAC address no MikroTik baseado no IP
+     */
+    private function queryMacByIpFromMikrotik($ip)
+    {
+        try {
+            if (!config('wifi.mikrotik.enabled', false)) {
+                return null;
+            }
+
+            // Consultar ARP table do MikroTik para obter MAC por IP
+            $mikrotikController = new \App\Http\Controllers\MikrotikController();
+            $macAddress = $mikrotikController->getMacByIp($ip);
+            
+            return $macAddress;
+        } catch (\Exception $e) {
+            Log::error('Erro ao consultar MAC no MikroTik', [
+                'ip' => $ip,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 
     /**

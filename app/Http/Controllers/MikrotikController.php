@@ -457,6 +457,44 @@ class MikrotikController extends Controller
     }
 
     /**
+     * Obtém MAC address consultando ARP table do MikroTik por IP
+     */
+    public function getMacByIp($ipAddress)
+    {
+        try {
+            if (!config('wifi.mikrotik.enabled', false)) {
+                return null;
+            }
+
+            $socket = $this->connectToMikroTik();
+            
+            // Consultar ARP table
+            $this->writeCommand($socket, '/ip/arp/print', [
+                '?address' => $ipAddress
+            ]);
+            
+            $response = $this->readResponse($socket);
+            socket_close($socket);
+            
+            // Processar resposta para encontrar MAC
+            foreach ($response as $line) {
+                if (strpos($line, '=mac-address=') === 0) {
+                    $macAddress = substr($line, 13);
+                    if (preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $macAddress)) {
+                        return strtoupper(str_replace('-', ':', $macAddress));
+                    }
+                }
+            }
+            
+            return null;
+            
+        } catch (\Exception $e) {
+            Log::error("Erro ao consultar MAC por IP {$ipAddress}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Libera dispositivo no MikroTik criando usuário do hotspot
      */
     private function allowDeviceInMikrotik($macAddress)
