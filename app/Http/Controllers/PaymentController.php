@@ -608,6 +608,15 @@ class PaymentController extends Controller
                 'mac_address' => $payment->user->mac_address
             ]);
 
+            // ADICIONAR MAC DO PAGAMENTO (SUGESTÃO DO USUÁRIO)
+            if (!$payment->user->mac_address && $payment->mac_address_from_request) {
+                $payment->user->update(['mac_address' => $payment->mac_address_from_request]);
+                Log::info('✅ MAC address atualizado no usuário', [
+                    'user_id' => $payment->user_id,
+                    'mac_address' => $payment->mac_address_from_request
+                ]);
+            }
+
             // Criar sessão ativa
             $session = Session::create([
                 'user_id' => $payment->user_id,
@@ -631,7 +640,8 @@ class PaymentController extends Controller
             Log::info('✅ Status do usuário atualizado', [
                 'status' => 'connected',
                 'expires_at' => $expiresAt->toISOString(),
-                'duration_hours' => $sessionDurationHours
+                'duration_hours' => $sessionDurationHours,
+                'mac_address' => $payment->user->mac_address
             ]);
 
             // Tentar liberar no MikroTik
