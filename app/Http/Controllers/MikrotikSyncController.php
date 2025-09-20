@@ -18,19 +18,24 @@ class MikrotikSyncController extends Controller
     public function getPendingUsers(Request $request)
     {
         try {
-            // Validar token de segurança (opcional)
-            $token = $request->header('Authorization');
-            $expectedToken = 'Bearer ' . config('wifi.mikrotik.sync_token', 'mikrotik-sync-2024');
+            // Verificar autenticação com token mais flexível
+            $token = $request->bearerToken() ?? 
+                     $request->get('authorization') ?? 
+                     str_replace('Bearer ', '', $request->header('Authorization', ''));
             
-            // Se não há token ou token inválido, continuar sem autorização por enquanto
-            // Em produção, você pode descomentar para exigir autorização
-            /*
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
             if ($token !== $expectedToken) {
+                Log::warning('MikroTik Sync: Token inválido', [
+                    'provided_token' => substr($token, 0, 8) . '...',
+                    'expected_token' => substr($expectedToken, 0, 8) . '...',
+                    'ip' => $request->ip()
+                ]);
+                
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
-            */
 
-            // Buscar usuários que devem ser liberados
+            // BUSCA OTIMIZADA - Usuários que devem ser liberados
             $usersToAllow = User::where('status', 'connected')
                 ->whereNotNull('mac_address')
                 ->whereNotNull('expires_at')
@@ -38,7 +43,7 @@ class MikrotikSyncController extends Controller
                 ->select('id', 'mac_address', 'expires_at', 'connected_at')
                 ->get();
 
-            // Buscar usuários que devem ser bloqueados (expirados)
+            // BUSCA OTIMIZADA - Usuários que devem ser bloqueados (expirados)
             $usersToBlock = User::where('status', 'connected')
                 ->whereNotNull('mac_address')
                 ->where('expires_at', '<=', now())
@@ -61,41 +66,54 @@ class MikrotikSyncController extends Controller
                 }
             }
 
+            // Extrair apenas os MACs para o MikroTik (formato simplificado)
+            $allowMacs = $usersToAllow->pluck('mac_address')->toArray();
+            $blockMacs = $usersToBlock->pluck('mac_address')->toArray();
+
             $response = [
                 'success' => true,
                 'timestamp' => now()->toISOString(),
-                'allow_users' => $usersToAllow->map(function ($user) {
+                'server_time' => now()->format('Y-m-d H:i:s'),
+                'allow_count' => count($allowMacs),
+                'allow_users' => $allowMacs,
+                'block_count' => count($blockMacs),
+                'block_users' => $blockMacs,
+                'detailed_users' => $usersToAllow->map(function ($user) {
                     return [
+                        'id' => $user->id,
                         'mac_address' => $user->mac_address,
                         'expires_at' => $user->expires_at->toISOString(),
-                        'connected_at' => $user->connected_at ? $user->connected_at->toISOString() : null
-                    ];
-                }),
-                'block_users' => $usersToBlock->map(function ($user) {
-                    return [
-                        'mac_address' => $user->mac_address,
-                        'expired_at' => $user->expires_at->toISOString()
+                        'connected_at' => $user->connected_at ? $user->connected_at->toISOString() : null,
+                        'time_left' => $user->expires_at->diffForHumans()
                     ];
                 }),
                 'stats' => [
-                    'allow_count' => $usersToAllow->count(),
-                    'block_count' => $usersToBlock->count(),
-                    'total_active' => $usersToAllow->count()
+                    'allow_count' => count($allowMacs),
+                    'block_count' => count($blockMacs),
+                    'total_active' => count($allowMacs)
                 ]
             ];
 
-            Log::info('MikroTik sync request', [
+            // Log detalhado para debug
+            Log::info('MikroTik Sync Request Processado', [
                 'method' => $request->method(),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'allow_count' => $usersToAllow->count(),
-                'block_count' => $usersToBlock->count()
+                'allow_count' => count($allowMacs),
+                'allow_macs' => $allowMacs,
+                'block_count' => count($blockMacs),
+                'block_macs' => $blockMacs,
+                'timestamp' => now()->toISOString()
             ]);
 
             return response()->json($response);
 
         } catch (\Exception $e) {
-            Log::error('Erro no sync MikroTik: ' . $e->getMessage());
+            Log::error('Erro no sync MikroTik', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
             
             return response()->json([
                 'success' => false,

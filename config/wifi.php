@@ -24,6 +24,9 @@ return [
         'enabled' => env('MIKROTIK_ENABLED', true),
         'sync_token' => env('MIKROTIK_SYNC_TOKEN', 'mikrotik-sync-2024'),
     ],
+    
+    'mikrotik_sync_token' => env('MIKROTIK_SYNC_TOKEN', 'mikrotik-sync-2024'),
+    'server_url' => env('APP_URL', 'https://www.tocantinstransportewifi.com.br'),
 
     /*
     |--------------------------------------------------------------------------
