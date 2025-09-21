@@ -20,6 +20,7 @@ class MikrotikSyncController extends Controller
         try {
             // Verificar autenticação com token mais flexível
             $token = $request->bearerToken() ?? 
+                     $request->get('token') ?? 
                      $request->get('authorization') ?? 
                      str_replace('Bearer ', '', $request->header('Authorization', ''));
             
