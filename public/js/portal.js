@@ -147,31 +147,73 @@ class WiFiPortal {
             const urlParams = new URLSearchParams(window.location.search);
             const macFromUrl = urlParams.get('mac') || urlParams.get('mikrotik_mac') || urlParams.get('client_mac');
             
-            if (macFromUrl && this.isValidMacAddress(macFromUrl)) {
+            if (macFromUrl && this.isValidMacAddress(macFromUrl) && !macFromUrl.startsWith('02:')) {
                 this.deviceMac = macFromUrl.toUpperCase();
                 console.log('🎯 MAC REAL capturado da URL:', this.deviceMac);
                 return;
             }
 
-            // Se não tem MAC na URL, fazer requisição para detectar
-            const response = await fetch('/api/detect-device', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': this.getCSRFToken()
-                }
-            });
-
-            const data = await response.json();
-            this.deviceMac = data.mac_address || '';
+            // Se não tem MAC real na URL, tentar aguardar MAC real
+            await this.waitForRealMac();
             
-            console.log('📱 Dispositivo detectado via API:', this.deviceMac);
         } catch (error) {
             console.error('❌ Erro ao detectar dispositivo:', error);
-            // Simular MAC para desenvolvimento
+            // Usar MAC mock como fallback
             this.deviceMac = this.generateMockMac();
-            console.log('⚠️ MAC mock gerado:', this.deviceMac);
+            console.log('⚠️ MAC mock gerado como fallback:', this.deviceMac);
         }
+    }
+
+    /**
+     * Aguarda MAC real ser detectado (máximo 30 segundos)
+     */
+    async waitForRealMac() {
+        console.log('🔍 Aguardando MAC real...');
+        const maxAttempts = 6; // 30 segundos total
+        
+        for (let i = 0; i < maxAttempts; i++) {
+            try {
+                // Fazer requisição para detectar MAC
+                const response = await fetch('/api/detect-device', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.getCSRFToken()
+                    }
+                });
+
+                const data = await response.json();
+                const mac = data.mac_address || '';
+                
+                // Se encontrou MAC real (não começa com 02:)
+                if (mac && !mac.startsWith('02:')) {
+                    this.deviceMac = mac.toUpperCase();
+                    console.log('✅ MAC REAL detectado:', this.deviceMac);
+                    return;
+                }
+                
+                console.log(`⏳ Tentativa ${i + 1}/${maxAttempts} - MAC mock detectado, aguardando real...`);
+                
+                // Aguardar 5 segundos antes da próxima tentativa
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                
+            } catch (error) {
+                console.error('Erro na tentativa', i + 1, ':', error);
+            }
+        }
+        
+        // Se não encontrou MAC real, usar o último obtido
+        console.warn('⚠️ Timeout: Usando último MAC obtido');
+        const response = await fetch('/api/detect-device', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': this.getCSRFToken()
+            }
+        });
+        const data = await response.json();
+        this.deviceMac = data.mac_address || this.generateMockMac();
+        console.log('📱 MAC final:', this.deviceMac);
     }
 
     /**

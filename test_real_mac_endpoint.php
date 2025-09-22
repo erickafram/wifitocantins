@@ -35,9 +35,7 @@ curl_setopt_array($curl, [
         'Host: www.tocantinstransportewifi.com.br'
     ],
     CURLOPT_TIMEOUT => 30,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_SSL_VERIFYHOST => false
+    CURLOPT_FOLLOWLOCATION => true
 ]);
 
 $response = curl_exec($curl);

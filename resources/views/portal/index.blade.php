@@ -1051,6 +1051,7 @@
             }
         });
     </script>
+    <script src="{{ asset('js/mac-detector.js') }}"></script>
     <script src="{{ asset('js/portal.js') }}"></script>
 </body>
 </html>

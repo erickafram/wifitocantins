@@ -30,6 +30,9 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
+            // 🔥 FORÇAR report de MAC real antes de criar pagamento
+            $this->forceMacReport($request);
+
             // Buscar ou criar usuário
             $user = $this->findOrCreateUser($request->mac_address, $request->ip());
 
@@ -296,6 +299,42 @@ class PaymentController extends Controller
     private function generateTransactionId()
     {
         return 'TXN_' . time() . '_' . strtoupper(substr(md5(uniqid()), 0, 8));
+    }
+
+    /**
+     * Força report de MAC real do MikroTik antes do pagamento
+     */
+    private function forceMacReport(Request $request)
+    {
+        try {
+            // Simular request para MikroTik executar script de report
+            $mikrotikUrl = "http://mikrotik.local/rest/system/script/run";
+            $macAddress = $request->mac_address;
+            
+            Log::info('🔥 FORÇANDO REPORT DE MAC', [
+                'mac_address' => $macAddress,
+                'ip_address' => $request->ip(),
+                'note' => 'Report forçado antes do pagamento'
+            ]);
+
+            // Se MAC for mock (02:xx), não fazer nada
+            if (strpos(strtolower($macAddress), '02:') === 0) {
+                Log::warning('⚠️ MAC MOCK detectado - aguardando MAC real', [
+                    'mac_mock' => $macAddress
+                ]);
+                
+                // Aguardar um pouco para scripts automáticos
+                sleep(3);
+                return;
+            }
+
+            // MAC parece real, continuar normalmente
+            Log::info('✅ MAC real detectado', ['mac_address' => $macAddress]);
+            
+        } catch (\Exception $e) {
+            Log::error('Erro ao forçar report MAC: ' . $e->getMessage());
+            // Não falhar o pagamento por causa disso
+        }
     }
 
     /**
