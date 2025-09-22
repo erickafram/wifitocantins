@@ -292,13 +292,21 @@ class PaymentController extends Controller
             return $user;
         }
 
-        // 2. SEGUNDA CHANCE: Buscar usuário pendente sem MAC pelo IP recente
-        $pendingUser = User::where('ip_address', $ipAddress)
-            ->whereNull('mac_address')
-            ->where('status', 'pending')
+        // 2. SEGUNDA CHANCE: Buscar usuário pendente sem MAC (qualquer IP recente)
+        $pendingUser = User::whereNull('mac_address')
+            ->where('status', 'pending') 
             ->where('created_at', '>', now()->subMinutes(10))
             ->orderBy('created_at', 'desc')
             ->first();
+            
+        // 3. TERCEIRA CHANCE: Buscar usuário pendente pelo IP (mesmo com MAC diferente)
+        if (!$pendingUser) {
+            $pendingUser = User::where('ip_address', $ipAddress)
+                ->where('status', 'pending')
+                ->where('created_at', '>', now()->subMinutes(10))
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
 
         if ($pendingUser) {
             // Atualizar usuário existente com o MAC
@@ -315,7 +323,7 @@ class PaymentController extends Controller
             return $pendingUser;
         }
 
-        // 3. ÚLTIMA OPÇÃO: Criar novo usuário
+        // 4. ÚLTIMA OPÇÃO: Criar novo usuário
         $user = User::create([
             'mac_address' => $macAddress,
             'ip_address' => $ipAddress,
