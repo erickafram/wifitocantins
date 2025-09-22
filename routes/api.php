@@ -84,5 +84,6 @@ Route::prefix('mikrotik-sync')->group(function () {
     Route::match(['GET', 'POST'], '/pending-users', [MikrotikSyncController::class, 'getPendingUsers']);
     Route::post('/check-access', [MikrotikSyncController::class, 'checkUserAccess']);
     Route::post('/report-status', [MikrotikSyncController::class, 'reportUserStatus']);
+    Route::post('/report-real-mac', [MikrotikSyncController::class, 'reportRealMac']);
     Route::get('/stats', [MikrotikSyncController::class, 'getStats']);
 });

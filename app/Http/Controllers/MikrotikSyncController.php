@@ -245,6 +245,148 @@ class MikrotikSyncController extends Controller
     }
 
     /**
+     * Endpoint para MikroTik reportar MAC addresses reais dos dispositivos conectados
+     */
+    public function reportRealMac(Request $request)
+    {
+        try {
+            // Verificar autenticação
+            $token = $request->bearerToken() ?? 
+                     $request->get('token') ?? 
+                     $request->get('authorization') ?? 
+                     str_replace('Bearer ', '', $request->header('Authorization', ''));
+            
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if ($token !== $expectedToken) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $request->validate([
+                'mac_address' => 'required|string|size:17', // MAC real do dispositivo
+                'ip_address' => 'required|ip',              // IP atribuído pelo DHCP
+                'transaction_id' => 'nullable|string'       // ID de transação se fornecido
+            ]);
+
+            $macAddress = strtolower($request->mac_address);
+            $ipAddress = $request->ip_address;
+            $transactionId = $request->transaction_id;
+
+            Log::info('MikroTik reportou MAC real', [
+                'mac_address' => $macAddress,
+                'ip_address' => $ipAddress,
+                'transaction_id' => $transactionId,
+                'mikrotik_ip' => $request->ip()
+            ]);
+
+            // Buscar usuário por MAC address (pode ser virtual inicialmente)
+            $user = null;
+
+            // 1. Primeiro tentar encontrar por MAC exato
+            $user = User::where('mac_address', $macAddress)->first();
+
+            // 2. Se não encontrar e temos transaction_id, buscar por payment
+            if (!$user && $transactionId) {
+                $payment = Payment::where('transaction_id', $transactionId)
+                    ->where('status', 'completed')
+                    ->first();
+                
+                if ($payment) {
+                    $user = User::find($payment->user_id);
+                }
+            }
+
+            // 3. Se ainda não encontrar, procurar por IP address recente
+            if (!$user) {
+                $user = User::where('ip_address', $ipAddress)
+                    ->where('status', '!=', 'offline')
+                    ->orderBy('updated_at', 'desc')
+                    ->first();
+            }
+
+            // 4. Última tentativa: usuário com pagamento recente sem MAC correto
+            if (!$user) {
+                $user = User::whereHas('payments', function($query) {
+                    $query->where('status', 'completed')
+                          ->where('paid_at', '>=', now()->subHours(2));
+                })
+                ->where('ip_address', $ipAddress)
+                ->orderBy('updated_at', 'desc')
+                ->first();
+            }
+
+            if ($user) {
+                // Atualizar com MAC real se diferente
+                $updated = false;
+                if ($user->mac_address !== $macAddress) {
+                    $user->mac_address = $macAddress;
+                    $updated = true;
+                    Log::info('MAC address corrigido', [
+                        'user_id' => $user->id,
+                        'old_mac' => $user->getOriginal('mac_address'),
+                        'new_mac' => $macAddress
+                    ]);
+                }
+
+                if ($user->ip_address !== $ipAddress) {
+                    $user->ip_address = $ipAddress;
+                    $updated = true;
+                }
+
+                if ($updated) {
+                    $user->save();
+                }
+
+                // Verificar se tem acesso válido
+                $hasAccess = $user->status === 'connected' && 
+                            $user->expires_at && 
+                            $user->expires_at > now();
+
+                return response()->json([
+                    'success' => true,
+                    'user_found' => true,
+                    'user_id' => $user->id,
+                    'mac_address' => $macAddress,
+                    'ip_address' => $ipAddress,
+                    'has_access' => $hasAccess,
+                    'expires_at' => $user->expires_at ? $user->expires_at->toISOString() : null,
+                    'status' => $user->status,
+                    'message' => $hasAccess ? 'Usuário deve ser liberado' : 'Usuário não tem acesso válido'
+                ]);
+
+            } else {
+                // Usuário não encontrado - criar entrada temporária para tracking
+                Log::warning('MAC real reportado mas usuário não encontrado', [
+                    'mac_address' => $macAddress,
+                    'ip_address' => $ipAddress,
+                    'transaction_id' => $transactionId
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'user_found' => false,
+                    'mac_address' => $macAddress,
+                    'ip_address' => $ipAddress,
+                    'has_access' => false,
+                    'message' => 'Usuário não encontrado - aguardando pagamento'
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao reportar MAC real', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Erro interno do servidor'
+            ], 500);
+        }
+    }
+
+    /**
      * Endpoint de teste para verificar conectividade
      */
     public function ping(Request $request)
