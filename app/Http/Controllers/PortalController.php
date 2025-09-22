@@ -84,27 +84,48 @@ class PortalController extends Controller
             
             if ($reportedMac) {
                 $cleanMac = strtoupper($reportedMac->mac_address);
-                Log::info('🚀 MAC REAL obtido via REPORT do MikroTik', [
-                    'mac' => $cleanMac, 
-                    'ip_externo' => $ip,
-                    'ip_interno' => $internalIp,
-                    'reportado_em' => $reportedMac->reported_at->format('Y-m-d H:i:s')
-                ]);
-                return $cleanMac;
+                
+                // ✅ VERIFICAR SE É MAC REAL (não começa com 02: ou virtual)
+                if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
+                    Log::info('🚀 MAC REAL WiFi obtido via REPORT do MikroTik', [
+                        'mac' => $cleanMac, 
+                        'ip_externo' => $ip,
+                        'ip_interno' => $internalIp,
+                        'reportado_em' => $reportedMac->reported_at->format('Y-m-d H:i:s'),
+                        'tipo' => 'MAC_REAL_WIFI'
+                    ]);
+                    return $cleanMac;
+                } else {
+                    Log::warning('🚨 MAC virtual/mock reportado - continuando busca', [
+                        'mac_virtual' => $cleanMac
+                    ]);
+                }
             }
         } catch (\Exception $e) {
             Log::error('Erro ao consultar MACs reportados', ['error' => $e->getMessage()]);
         }
 
-        // 1. PRIORIDADE: MAC VIA PARÂMETROS URL (MikroTik redirect)
+        // 1. PRIORIDADE: MAC VIA PARÂMETROS URL (MikroTik redirect) - FILTRAR MOCKS
         $macViaUrl = $request->get('mac') ?: 
                     $request->get('mikrotik_mac') ?: 
                     $request->get('client_mac');
 
         if ($macViaUrl && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $macViaUrl)) {
             $cleanMac = strtoupper(str_replace('-', ':', $macViaUrl));
-            Log::info('🎯 MAC REAL capturado via URL do MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
-            return $cleanMac;
+            
+            // ✅ VERIFICAR SE É MAC REAL (não virtual/mock)
+            if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
+                Log::info('🎯 MAC REAL WiFi capturado via URL do MikroTik', [
+                    'mac' => $cleanMac, 
+                    'ip' => $ip,
+                    'tipo' => 'MAC_REAL_URL'
+                ]);
+                return $cleanMac;
+            } else {
+                Log::warning('🚨 MAC virtual/mock via URL - ignorado', [
+                    'mac_virtual' => $cleanMac
+                ]);
+            }
         }
 
         // 2. TENTAR OBTER MAC DE HEADERS DO MIKROTIK
