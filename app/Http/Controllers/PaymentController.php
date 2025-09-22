@@ -273,23 +273,56 @@ class PaymentController extends Controller
     }
 
     /**
-     * Busca ou cria usuário baseado no MAC address
+     * Busca ou cria usuário baseado no MAC address - CORRIGIDO PARA EVITAR DUPLICATAS
      */
     private function findOrCreateUser($macAddress, $ipAddress)
     {
+        Log::info('🔍 BUSCAR/CRIAR USUÁRIO', [
+            'mac_address' => $macAddress,
+            'ip_address' => $ipAddress
+        ]);
+
+        // 1. PRIORIDADE: Buscar usuário por MAC address
         $user = User::where('mac_address', $macAddress)->first();
 
-        if (!$user) {
-            $user = User::create([
+        if ($user) {
+            // Usuário já existe com este MAC - atualizar IP
+            $user->update(['ip_address' => $ipAddress]);
+            Log::info('✅ Usuário encontrado por MAC', ['user_id' => $user->id, 'name' => $user->name]);
+            return $user;
+        }
+
+        // 2. SEGUNDA CHANCE: Buscar usuário pendente sem MAC pelo IP recente
+        $pendingUser = User::where('ip_address', $ipAddress)
+            ->whereNull('mac_address')
+            ->where('status', 'pending')
+            ->where('created_at', '>', now()->subMinutes(10))
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($pendingUser) {
+            // Atualizar usuário existente com o MAC
+            $pendingUser->update([
                 'mac_address' => $macAddress,
                 'ip_address' => $ipAddress,
                 'status' => 'offline'
             ]);
-        } else {
-            // Atualizar IP se mudou
-            $user->update(['ip_address' => $ipAddress]);
+            Log::info('✅ Usuário pendente atualizado com MAC', [
+                'user_id' => $pendingUser->id, 
+                'name' => $pendingUser->name,
+                'mac_added' => $macAddress
+            ]);
+            return $pendingUser;
         }
 
+        // 3. ÚLTIMA OPÇÃO: Criar novo usuário
+        $user = User::create([
+            'mac_address' => $macAddress,
+            'ip_address' => $ipAddress,
+            'status' => 'offline'
+        ]);
+
+        Log::info('🆕 Novo usuário criado', ['user_id' => $user->id, 'mac_address' => $macAddress]);
         return $user;
     }
 

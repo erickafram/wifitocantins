@@ -95,3 +95,4 @@ if ($latestPayment) {
 }
 
 echo "\n=== FIM VERIFICAÇÃO ===\n";
+
