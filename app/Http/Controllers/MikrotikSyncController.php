@@ -68,8 +68,40 @@ class MikrotikSyncController extends Controller
                 }
             }
 
-            // Extrair apenas os MACs para o MikroTik (formato simplificado)
-            $allowMacs = $usersToAllow->pluck('mac_address')->toArray();
+            // 🔥 SOLUÇÃO DEFINITIVA: Múltiplos MACs + IP Binding
+            $allowMacs = collect();
+            $ipBindings = collect();
+
+            foreach ($usersToAllow as $user) {
+                // 1. MAC original do pagamento
+                if ($user->mac_address) {
+                    $allowMacs->push($user->mac_address);
+                }
+
+                // 2. 🚀 TODOS os MACs recentes do mesmo IP (MAC RANDOMIZATION)
+                if ($user->ip_address) {
+                    $recentMacs = MikrotikMacReport::where('ip_address', $user->ip_address)
+                        ->where('reported_at', '>', now()->subHours(6)) // 6 horas de janela
+                        ->pluck('mac_address')
+                        ->filter(function($mac) {
+                            // Filtrar MACs válidos (não mock)
+                            return !preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $mac);
+                        });
+                    
+                    $allowMacs = $allowMacs->merge($recentMacs);
+
+                    // 3. 🎯 IP-BINDING para BYPASS TOTAL (solução mais robusta)
+                    $ipBindings->push([
+                        'ip' => $user->ip_address,
+                        'user_id' => $user->id,
+                        'expires_at' => $user->expires_at->toISOString(),
+                        'macs' => $recentMacs->toArray(),
+                        'main_mac' => $user->mac_address
+                    ]);
+                }
+            }
+
+            $allowMacs = $allowMacs->filter()->unique()->values()->toArray();
             $blockMacs = $usersToBlock->pluck('mac_address')->toArray();
 
             $response = [
@@ -78,12 +110,14 @@ class MikrotikSyncController extends Controller
                 'server_time' => now()->format('Y-m-d H:i:s'),
                 'allow_count' => count($allowMacs),
                 'allow_users' => $allowMacs,
+                'ip_bindings' => $ipBindings->toArray(), // 🚀 NOVO: IPs para bypass total
                 'block_count' => count($blockMacs),
                 'block_users' => $blockMacs,
                 'detailed_users' => $usersToAllow->map(function ($user) {
                     return [
                         'id' => $user->id,
                         'mac_address' => $user->mac_address,
+                        'ip_address' => $user->ip_address,
                         'expires_at' => $user->expires_at->toISOString(),
                         'connected_at' => $user->connected_at ? $user->connected_at->toISOString() : null,
                         'time_left' => $user->expires_at->diffForHumans()
@@ -91,18 +125,21 @@ class MikrotikSyncController extends Controller
                 }),
                 'stats' => [
                     'allow_count' => count($allowMacs),
+                    'ip_bindings_count' => $ipBindings->count(),
                     'block_count' => count($blockMacs),
                     'total_active' => count($allowMacs)
                 ]
             ];
 
             // Log detalhado para debug
-            Log::info('MikroTik Sync Request Processado', [
+            Log::info('🔥 MikroTik Sync - Múltiplos MACs + IP Binding', [
                 'method' => $request->method(),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'allow_count' => count($allowMacs),
                 'allow_macs' => $allowMacs,
+                'ip_bindings_count' => $ipBindings->count(),
+                'ip_bindings' => $ipBindings->toArray(),
                 'block_count' => count($blockMacs),
                 'block_macs' => $blockMacs,
                 'timestamp' => now()->toISOString()
