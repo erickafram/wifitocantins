@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\Session;
+use App\Models\MikrotikMacReport;
 use Carbon\Carbon;
 
 class MikrotikSyncController extends Controller
@@ -278,6 +279,32 @@ class MikrotikSyncController extends Controller
                 'transaction_id' => $transactionId,
                 'mikrotik_ip' => $request->ip()
             ]);
+
+            // 🔥 ARMAZENAR MAPEAMENTO IP→MAC para consulta posterior
+            try {
+                MikrotikMacReport::updateOrCreate(
+                    [
+                        'ip_address' => $ipAddress,
+                        'mac_address' => $macAddress,
+                    ],
+                    [
+                        'transaction_id' => $transactionId,
+                        'mikrotik_ip' => $request->ip(),
+                        'reported_at' => now(),
+                    ]
+                );
+                
+                Log::info('✅ Mapeamento IP→MAC armazenado', [
+                    'ip_address' => $ipAddress,
+                    'mac_address' => $macAddress
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erro ao armazenar mapeamento MAC', [
+                    'error' => $e->getMessage(),
+                    'ip_address' => $ipAddress,
+                    'mac_address' => $macAddress
+                ]);
+            }
 
             // Buscar usuário por MAC address (pode ser virtual inicialmente)
             $user = null;

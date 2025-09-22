@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Models\MikrotikMacReport;
 
 class PortalController extends Controller
 {
@@ -69,6 +70,31 @@ class PortalController extends Controller
             'user_agent' => $request->userAgent(),
             'headers' => $request->headers->all()
         ]);
+
+        // 0. 🔥 PRIORIDADE MÁXIMA: CONSULTAR MACS REPORTADOS PELO MIKROTIK
+        try {
+            // Converter IP externo para IP interno do hotspot
+            $internalIp = $this->getInternalIpFromHeaders($request);
+            
+            // Verificar se temos MAC reportado para este IP (interno ou externo)
+            $reportedMac = MikrotikMacReport::getLatestMacForIp($internalIp);
+            if (!$reportedMac && $internalIp !== $ip) {
+                $reportedMac = MikrotikMacReport::getLatestMacForIp($ip);
+            }
+            
+            if ($reportedMac) {
+                $cleanMac = strtoupper($reportedMac->mac_address);
+                Log::info('🚀 MAC REAL obtido via REPORT do MikroTik', [
+                    'mac' => $cleanMac, 
+                    'ip_externo' => $ip,
+                    'ip_interno' => $internalIp,
+                    'reportado_em' => $reportedMac->reported_at->format('Y-m-d H:i:s')
+                ]);
+                return $cleanMac;
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro ao consultar MACs reportados', ['error' => $e->getMessage()]);
+        }
 
         // 1. PRIORIDADE: MAC VIA PARÂMETROS URL (MikroTik redirect)
         $macViaUrl = $request->get('mac') ?: 
@@ -164,6 +190,35 @@ class PortalController extends Controller
             rand(0, 255),
             rand(0, 255)
         );
+    }
+
+    /**
+     * Extrai IP interno do hotspot dos headers (10.10.10.x)
+     */
+    private function getInternalIpFromHeaders(Request $request)
+    {
+        // O MikroTik envia o IP interno via X-Forwarded-For
+        $forwardedFor = $request->header('X-Forwarded-For');
+        
+        if ($forwardedFor) {
+            $ips = array_map('trim', explode(',', $forwardedFor));
+            
+            // Procurar por IP da rede do hotspot (10.10.10.x)
+            foreach ($ips as $ip) {
+                if (preg_match('/^10\.10\.10\.\d+$/', $ip)) {
+                    return $ip;
+                }
+            }
+        }
+        
+        // Fallback: verificar se o IP atual já é interno
+        $currentIp = $request->ip();
+        if (preg_match('/^10\.10\.10\.\d+$/', $currentIp)) {
+            return $currentIp;
+        }
+        
+        // Se não encontrou IP interno, retornar o IP atual
+        return $currentIp;
     }
 
     /**
