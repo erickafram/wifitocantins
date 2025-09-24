@@ -473,16 +473,14 @@ class WiFiPortal {
         }
 
         // 🚀 VALIDAR SE MAC FOI DETECTADO
-        if (!data.mac_address || data.mac_address.length < 17) {
-            this.showRegistrationError('Aguarde a detecção do dispositivo...');
-            await this.detectDevice(); // Tentar detectar novamente
-            data.mac_address = this.deviceMac;
-            
-            if (!data.mac_address) {
-                this.showRegistrationError('Erro ao detectar dispositivo. Tente novamente.');
-                return;
-            }
+        const identifiersOk = await this.ensureRealIdentifiers();
+        if (!identifiersOk) {
+            this.showRegistrationError('Não foi possível detectar o dispositivo. Siga as instruções e tente novamente.');
+            return;
         }
+
+        data.mac_address = this.deviceMac;
+        data.ip_address = this.deviceIp;
 
         // Validar email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -579,6 +577,7 @@ class WiFiPortal {
             const result = await response.json();
 
             if (result.exists && result.user) {
+                await this.ensureRealIdentifiers();
                 this.fillUserData(result.user);
                 this.showUserFoundMessage(result.user.name);
             }
@@ -615,6 +614,10 @@ class WiFiPortal {
         const submitBtn = document.getElementById('registration-submit-btn');
         if (submitBtn) {
             submitBtn.innerHTML = '✅ ATUALIZAR E PAGAR';
+        }
+
+        if (!this.hasRealIdentifiers()) {
+            this.ensureRealIdentifiers();
         }
     }
 
@@ -676,14 +679,9 @@ class WiFiPortal {
 
         try {
             // 🎯 VALIDAR SE TEMOS MAC E USER_ID
-            if (!this.deviceMac || this.deviceMac.length < 17) {
-                this.showErrorMessage('Erro: MAC address não detectado. Aguarde...');
-                await this.detectDevice(); // Tentar detectar novamente
-                
-                if (!this.deviceMac) {
-                    this.showErrorMessage('Não foi possível detectar seu dispositivo. Tente recarregar a página.');
-                    return;
-                }
+            const identifiersOk = await this.ensureRealIdentifiers();
+            if (!identifiersOk) {
+                return;
             }
 
             if (!this.currentUserId) {
@@ -1094,6 +1092,12 @@ Clique OK se SIM, Cancelar se NÃO.`);
         this.showLoading();
 
         try {
+            const identifiersOk = await this.ensureRealIdentifiers();
+            if (!identifiersOk) {
+                this.hideLoading();
+                return;
+            }
+
             const response = await fetch('/api/instagram/free-access', {
                 method: 'POST',
                 headers: {
@@ -1102,6 +1106,7 @@ Clique OK se SIM, Cancelar se NÃO.`);
                 },
                 body: JSON.stringify({
                     mac_address: this.deviceMac,
+                    ip_address: this.deviceIp,
                     source: 'instagram'
                 })
             });
@@ -1143,6 +1148,12 @@ Clique OK se SIM, Cancelar se NÃO.`);
         this.showLoading();
 
         try {
+            const identifiersOk = await this.ensureRealIdentifiers();
+            if (!identifiersOk) {
+                this.hideLoading();
+                return;
+            }
+
             const response = await fetch('/api/voucher/apply', {
                 method: 'POST',
                 headers: {
@@ -1151,7 +1162,8 @@ Clique OK se SIM, Cancelar se NÃO.`);
                 },
                 body: JSON.stringify({
                     code: code,
-                    mac_address: this.deviceMac
+                    mac_address: this.deviceMac,
+                    ip_address: this.deviceIp
                 })
             });
 
@@ -1372,6 +1384,30 @@ Clique OK se SIM, Cancelar se NÃO.`);
     getCSRFToken() {
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         return token || '';
+    }
+
+    hasRealIdentifiers() {
+        return (
+            this.deviceMac &&
+            this.deviceMac.length === 17 &&
+            !this.deviceMac.startsWith('02:') &&
+            this.deviceIp
+        );
+    }
+
+    async ensureRealIdentifiers() {
+        if (this.hasRealIdentifiers()) {
+            return true;
+        }
+
+        await this.detectDevice();
+
+        if (this.hasRealIdentifiers()) {
+            return true;
+        }
+
+        this.showErrorMessage('Não conseguimos identificar seu dispositivo. Reabra o aviso "Rede requer login" ou acesse http://login.tocantinswifi.local e volte a esta tela.');
+        return false;
     }
 }
 

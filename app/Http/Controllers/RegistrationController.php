@@ -236,9 +236,9 @@ class RegistrationController extends Controller
 
             // Criar novo usuário
             $userData = [
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
+                'name' => $request->name ?? 'Visitante WiFi',
+                'email' => $request->email ?? ('guest+' . uniqid() . '@wifitocantins.com.br'),
+                'phone' => $request->phone ?? '0000000000',
                 'password' => Hash::make('default_password_' . time()),
                 'registered_at' => now(),
                 'status' => 'pending'
