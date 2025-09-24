@@ -438,13 +438,26 @@ class WiFiPortal {
             name: formData.get('name'),
             email: formData.get('email'),
             phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
-            user_id: this.currentUserId // Incluir ID se for usuário existente
+            user_id: this.currentUserId, // Incluir ID se for usuário existente
+            mac_address: this.deviceMac // 🎯 ADICIONAR MAC ADDRESS
         };
 
         // Validação básica
         if (!data.name || !data.email || !data.phone) {
             this.showRegistrationError('Todos os campos são obrigatórios.');
             return;
+        }
+
+        // 🚀 VALIDAR SE MAC FOI DETECTADO
+        if (!data.mac_address || data.mac_address.length < 17) {
+            this.showRegistrationError('Aguarde a detecção do dispositivo...');
+            await this.detectDevice(); // Tentar detectar novamente
+            data.mac_address = this.deviceMac;
+            
+            if (!data.mac_address) {
+                this.showRegistrationError('Erro ao detectar dispositivo. Tente novamente.');
+                return;
+            }
         }
 
         // Validar email
@@ -638,14 +651,30 @@ class WiFiPortal {
         this.hidePaymentModal();
 
         try {
-            const response = await fetch('/api/payment/pix', {
+            // 🎯 VALIDAR SE TEMOS MAC E USER_ID
+            if (!this.deviceMac || this.deviceMac.length < 17) {
+                this.showErrorMessage('Erro: MAC address não detectado. Aguarde...');
+                await this.detectDevice(); // Tentar detectar novamente
+                
+                if (!this.deviceMac) {
+                    this.showErrorMessage('Não foi possível detectar seu dispositivo. Tente recarregar a página.');
+                    return;
+                }
+            }
+
+            if (!this.currentUserId) {
+                this.showErrorMessage('Erro: Dados do usuário não encontrados. Faça o registro novamente.');
+                return;
+            }
+
+            const response = await fetch('/api/payment/pix/generate-qr', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    amount: 0.05,
+                    amount: 5.99, // 🎯 VALOR ATUALIZADO
                     mac_address: this.deviceMac,
                     user_id: this.currentUserId
                 })
@@ -656,6 +685,14 @@ class WiFiPortal {
             if (result.success && result.qr_code) {
                 this.hideLoading();
                 this.showPixQRCode(result);
+                
+                // 🎯 LOG PARA DEBUG
+                console.log('💳 Pagamento PIX criado:', {
+                    payment_id: result.payment_id,
+                    mac_address: this.deviceMac,
+                    user_id: this.currentUserId,
+                    gateway: result.gateway
+                });
             } else {
                 this.showErrorMessage(result.message || 'Erro ao gerar QR Code PIX.');
             }

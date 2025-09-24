@@ -25,7 +25,8 @@ class PaymentController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:0.05',
-            'mac_address' => 'required|string'
+            'mac_address' => 'required|string',
+            'user_id' => 'nullable|exists:users,id' // 🎯 ADICIONAR VALIDAÇÃO USER_ID
         ]);
 
         try {
@@ -34,8 +35,32 @@ class PaymentController extends Controller
             // 🔥 FORÇAR report de MAC real antes de criar pagamento
             $this->forceMacReport($request);
 
-            // Buscar ou criar usuário
-            $user = $this->findOrCreateUser($request->mac_address, $request->ip());
+            // 🎯 BUSCAR OU CRIAR USUÁRIO COM MAC
+            $macAddress = strtoupper(str_replace('-', ':', $request->mac_address));
+            $ipAddress = $request->ip();
+            
+            // Se tem user_id, usar usuário existente
+            if ($request->user_id) {
+                $user = User::find($request->user_id);
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Usuário não encontrado'
+                    ], 404);
+                }
+                
+                // Atualizar MAC e IP do usuário se ainda não tem
+                if (!$user->mac_address || !$user->ip_address) {
+                    $user->update([
+                        'mac_address' => $macAddress,
+                        'ip_address' => $ipAddress,
+                        'status' => 'offline'
+                    ]);
+                }
+            } else {
+                // Buscar ou criar usuário pelo MAC
+                $user = $this->findOrCreateUser($macAddress, $ipAddress);
+            }
 
             // Verificar qual gateway usar
             $gateway = config('wifi.payment_gateways.pix.gateway');
@@ -146,6 +171,17 @@ class PaymentController extends Controller
             }
 
             DB::commit();
+
+            // 🎯 LOG COMPLETO DO PAGAMENTO CRIADO
+            Log::info('💳 PAGAMENTO PIX CRIADO COM SUCESSO', [
+                'payment_id' => $payment->id,
+                'user_id' => $user->id,
+                'mac_address' => $user->mac_address,
+                'ip_address' => $user->ip_address,
+                'amount' => $request->amount,
+                'gateway' => $gateway,
+                'transaction_id' => $payment->transaction_id
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -689,13 +725,51 @@ class PaymentController extends Controller
                 'mac_address' => $payment->user->mac_address
             ]);
 
-            // ADICIONAR MAC DO PAGAMENTO (SUGESTÃO DO USUÁRIO)
-            if (!$payment->user->mac_address && $payment->mac_address_from_request) {
-                $payment->user->update(['mac_address' => $payment->mac_address_from_request]);
-                Log::info('✅ MAC address atualizado no usuário', [
+            // 🎯 REGISTRAR MAC NA TABELA MIKROTIK_MAC_REPORTS AUTOMATICAMENTE
+            if ($payment->user->mac_address && $payment->user->ip_address) {
+                try {
+                    MikrotikMacReport::updateOrCreate(
+                        [
+                            'ip_address' => $payment->user->ip_address,
+                            'mac_address' => $payment->user->mac_address,
+                        ],
+                        [
+                            'transaction_id' => $payment->transaction_id,
+                            'mikrotik_ip' => null, // Será preenchido quando MikroTik reportar
+                            'reported_at' => now(),
+                        ]
+                    );
+                    
+                    Log::info('✅ MAC registrado automaticamente na tabela mikrotik_mac_reports', [
+                        'mac_address' => $payment->user->mac_address,
+                        'ip_address' => $payment->user->ip_address,
+                        'transaction_id' => $payment->transaction_id,
+                        'reason' => 'payment_approved'
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('❌ Erro ao registrar MAC automaticamente', [
+                        'error' => $e->getMessage(),
+                        'mac_address' => $payment->user->mac_address,
+                        'ip_address' => $payment->user->ip_address
+                    ]);
+                }
+            } else {
+                Log::warning('⚠️ Usuário sem MAC ou IP - não é possível registrar no mikrotik_mac_reports', [
                     'user_id' => $payment->user_id,
-                    'mac_address' => $payment->mac_address_from_request
+                    'mac_address' => $payment->user->mac_address,
+                    'ip_address' => $payment->user->ip_address
                 ]);
+                
+                // 🔥 TENTAR RECUPERAR MAC DOS DADOS DO PAGAMENTO
+                if (!$payment->user->mac_address && isset($payment->payment_data['mac_address'])) {
+                    $recoveredMac = $payment->payment_data['mac_address'];
+                    $payment->user->update(['mac_address' => $recoveredMac]);
+                    
+                    Log::info('🔧 MAC recuperado dos dados do pagamento', [
+                        'user_id' => $payment->user_id,
+                        'recovered_mac' => $recoveredMac
+                    ]);
+                }
             }
 
             // Criar sessão ativa
@@ -709,7 +783,7 @@ class PaymentController extends Controller
             Log::info('✅ Sessão criada', ['session_id' => $session->id]);
 
             // Atualizar status do usuário com duração configurável
-            $sessionDurationHours = config('wifi.pricing.session_duration_hours', 24);
+            $sessionDurationHours = config('wifi.pricing.session_duration_hours', 12); // 🎯 PADRÃO 12 HORAS
             $expiresAt = now()->addHours($sessionDurationHours);
             
             $payment->user->update([
@@ -725,61 +799,40 @@ class PaymentController extends Controller
                 'mac_address' => $payment->user->mac_address
             ]);
 
-            // 🎯 REGISTRAR MAC PARA O MIKROTIK CONSULTAR
-            if ($payment->user->mac_address && $payment->user->ip_address) {
-                try {
-                    MikrotikMacReport::updateOrCreate(
-                        [
-                            'ip_address' => $payment->user->ip_address,
-                            'mac_address' => $payment->user->mac_address,
-                        ],
-                        [
-                            'transaction_id' => $payment->transaction_id,
-                            'mikrotik_ip' => null,
-                            'reported_at' => now(),
-                        ]
-                    );
-                    
-                    Log::info('✅ MAC registrado para consulta do MikroTik', [
-                        'mac_address' => $payment->user->mac_address,
-                        'ip_address' => $payment->user->ip_address,
-                        'transaction_id' => $payment->transaction_id
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('❌ Erro ao registrar MAC', [
-                        'error' => $e->getMessage(),
-                        'mac_address' => $payment->user->mac_address
-                    ]);
-                }
-            }
-
-            // ⚡ LIBERAÇÃO ULTRA-RÁPIDA VIA POLLING (10s max)
+            // 🚀 LIBERAÇÃO IMEDIATA NO MIKROTIK VIA WEBHOOK
             try {
-                // ⚠️ DESABILITADO: Conexão direta falha (rede isolada)
-                // $webhookService = new \App\Services\MikrotikWebhookService();
-                // $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
-                $liberado = false; // Forçar uso do polling
+                // Usar o novo serviço de webhook
+                $webhookService = new \App\Services\MikrotikWebhookService();
+                $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
                 
                 if ($liberado) {
-                    Log::info('⚡ REGISTRO PARA LIBERAÇÃO ULTRA-RÁPIDA', [
+                    Log::info('🎉 ACESSO LIBERADO NO MIKROTIK VIA WEBHOOK COM SUCESSO!', [
                         'user_id' => $payment->user_id,
                         'mac_address' => $payment->user->mac_address,
                         'expires_at' => $expiresAt->toISOString(),
-                        'method' => 'polling_10s',
-                        'estimated_liberation' => '5-10_segundos'
+                        'method' => 'webhook_direct'
                     ]);
                 } else {
-                    // ⚡ USAR POLLING ULTRA-RÁPIDO (sem conexão direta)
-                    Log::info('⚡ PAGAMENTO CONFIRMADO - Aguardando polling ultra-rápido', [
-                        'user_id' => $payment->user_id,
-                        'mac_address' => $payment->user->mac_address,
-                        'method' => 'polling_10s',
-                        'note' => 'MAC já registrado, MikroTik consulta a cada 10 segundos'
-                    ]);
-                    
-                    // Não tentar conexões diretas (rede isolada)
-                    // O MAC já está registrado na tabela mikrotik_mac_reports
-                    // MikroTik libera automaticamente no próximo polling
+                    // Tentar método antigo como fallback
+                    try {
+                        $liberacaoController = new \App\Http\Controllers\MikrotikLiberacaoController();
+                        $liberado = $liberacaoController->liberarAcessoImediato($payment->user_id);
+                        
+                        if ($liberado) {
+                            Log::info('✅ Liberado via método fallback', [
+                                'user_id' => $payment->user_id
+                            ]);
+                        } else {
+                            Log::warning('⚠️ Falha na liberação automática do MikroTik', [
+                                'user_id' => $payment->user_id,
+                                'note' => 'O acesso será liberado na próxima sincronização'
+                            ]);
+                        }
+                    } catch (\Exception $fallbackError) {
+                        Log::warning('⚠️ Métodos de liberação falharam', [
+                            'error' => $fallbackError->getMessage()
+                        ]);
+                    }
                 }
             } catch (\Exception $e) {
                 Log::error('❌ Erro ao liberar no MikroTik via webhook', [

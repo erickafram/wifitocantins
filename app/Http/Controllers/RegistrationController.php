@@ -124,11 +124,13 @@ class RegistrationController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
                 'phone' => 'required|string|max:20',
+                'mac_address' => 'nullable|string|max:17', // 🎯 ADICIONAR VALIDAÇÃO MAC
             ], [
                 'name.required' => 'Nome completo é obrigatório',
                 'email.required' => 'E-mail é obrigatório',
                 'email.email' => 'E-mail deve ter um formato válido',
                 'phone.required' => 'Telefone é obrigatório',
+                'mac_address.string' => 'MAC address deve ser uma string válida',
             ]);
 
             if ($validator->fails()) {
@@ -138,6 +140,10 @@ class RegistrationController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
+
+            // 🎯 PROCESSAR MAC ADDRESS
+            $macAddress = $request->mac_address ? strtoupper(str_replace('-', ':', $request->mac_address)) : null;
+            $ipAddress = $request->ip();
 
             // Se tem user_id, é um usuário existente
             if ($request->user_id) {
@@ -151,11 +157,21 @@ class RegistrationController extends Controller
                 }
 
                 // Atualizar dados se necessário
-                $user->update([
+                $updateData = [
                     'name' => $request->name,
                     'email' => $request->email,
                     'phone' => $request->phone,
-                ]);
+                ];
+
+                // 🎯 ATUALIZAR MAC E IP SE FORNECIDOS
+                if ($macAddress) {
+                    $updateData['mac_address'] = $macAddress;
+                }
+                if ($ipAddress) {
+                    $updateData['ip_address'] = $ipAddress;
+                }
+
+                $user->update($updateData);
 
                 return response()->json([
                     'success' => true,
@@ -172,6 +188,14 @@ class RegistrationController extends Controller
                                 ->first();
 
             if ($existingUser) {
+                // 🎯 SE USUÁRIO EXISTE, ATUALIZAR COM MAC ATUAL
+                if ($macAddress && !$existingUser->mac_address) {
+                    $existingUser->update([
+                        'mac_address' => $macAddress,
+                        'ip_address' => $ipAddress
+                    ]);
+                }
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Já existe um usuário cadastrado com este e-mail ou telefone',
@@ -185,14 +209,24 @@ class RegistrationController extends Controller
             }
 
             // Criar novo usuário
-            $user = User::create([
+            $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => Hash::make('default_password_' . time()),
                 'registered_at' => now(),
                 'status' => 'pending'
-            ]);
+            ];
+
+            // 🎯 ADICIONAR MAC E IP SE FORNECIDOS
+            if ($macAddress) {
+                $userData['mac_address'] = $macAddress;
+            }
+            if ($ipAddress) {
+                $userData['ip_address'] = $ipAddress;
+            }
+
+            $user = User::create($userData);
 
             return response()->json([
                 'success' => true,

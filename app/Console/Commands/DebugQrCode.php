@@ -3,122 +3,149 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\WooviPixService;
-use App\Services\PixQRCodeService;
+use App\Models\User;
+use App\Models\Payment;
+use App\Models\MikrotikMacReport;
+use App\Http\Controllers\PaymentController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DebugQrCode extends Command
 {
-    protected $signature = 'debug:qrcode {--test-payment : Criar um pagamento de teste}';
-    protected $description = 'Debug da geração de QR Code PIX';
+    /**
+     * The name and signature of the console command.
+     */
+    protected $signature = 'debug:qr-code {--mac=} {--test-payment}';
 
+    /**
+     * The console command description.
+     */
+    protected $description = 'Debug QR Code generation and MAC address flow';
+
+    /**
+     * Execute the console command.
+     */
     public function handle()
     {
-        $this->info('=== DEBUG QR CODE PIX ===');
-        $this->line('Ambiente: ' . config('app.env'));
-        $this->line('URL da App: ' . config('app.url'));
-        $this->line('PIX Habilitado: ' . (config('wifi.payment_gateways.pix.enabled') ? 'SIM' : 'NÃO'));
-        $this->line('Gateway PIX: ' . config('wifi.payment_gateways.pix.gateway'));
-        $this->line('Ambiente PIX: ' . config('wifi.payment_gateways.pix.environment'));
-        $this->line('Woovi App ID: ' . substr(config('wifi.payment_gateways.pix.woovi_app_id'), 0, 20) . '...');
-        $this->line('Woovi App Secret: ' . (config('wifi.payment_gateways.pix.woovi_app_secret') ? 'CONFIGURADO' : 'NÃO CONFIGURADO'));
+        $this->info('🔍 DEBUG: Fluxo completo de MAC address e pagamento');
         $this->newLine();
 
-        // Testar conexão com Woovi
-        $this->info('=== TESTANDO CONEXÃO WOOVI ===');
-        $wooviService = new WooviPixService();
-        $connectionTest = $wooviService->testConnection();
-
-        if ($connectionTest['success']) {
-            $this->info('✅ Status: SUCESSO');
-            $this->line('Mensagem: ' . $connectionTest['message']);
-            if (isset($connectionTest['status_code'])) {
-                $this->line('Status Code: ' . $connectionTest['status_code']);
-            }
-        } else {
-            $this->error('❌ Status: ERRO');
-            $this->line('Mensagem: ' . $connectionTest['message']);
-        }
+        // 1. Simular MAC address
+        $macAddress = $this->option('mac') ?: $this->generateMockMac();
+        $ipAddress = '192.168.1.100';
+        
+        $this->info("📱 MAC Simulado: {$macAddress}");
+        $this->info("🌐 IP Simulado: {$ipAddress}");
         $this->newLine();
 
-        if ($connectionTest['success'] && $this->option('test-payment')) {
-            // Testar criação de pagamento
-            $this->info('=== TESTANDO CRIAÇÃO DE PAGAMENTO ===');
+        // 2. Simular registro de usuário
+        $this->info('👤 Criando usuário de teste...');
+        
+        $user = User::create([
+            'name' => 'Usuario Teste Debug',
+            'email' => 'teste.debug.' . time() . '@example.com',
+            'phone' => '63999999999',
+            'mac_address' => $macAddress,
+            'ip_address' => $ipAddress,
+            'password' => bcrypt('password'),
+            'status' => 'pending'
+        ]);
+
+        $this->info("✅ Usuário criado: ID {$user->id}");
+        $this->newLine();
+
+        // 3. Simular criação de pagamento
+        if ($this->option('test-payment')) {
+            $this->info('💳 Criando pagamento de teste...');
             
-            $testAmount = 5.99;
-            $testDescription = 'Teste QR Code - Debug Artisan';
-            $testCorrelationId = 'DEBUG_ARTISAN_' . time();
-            
-            $this->line('Valor: R$ ' . number_format($testAmount, 2, ',', '.'));
-            $this->line('Descrição: ' . $testDescription);
-            $this->line('Correlation ID: ' . $testCorrelationId);
+            $payment = Payment::create([
+                'user_id' => $user->id,
+                'amount' => 5.99,
+                'payment_type' => 'pix',
+                'status' => 'pending',
+                'transaction_id' => 'TXN_DEBUG_' . time()
+            ]);
+
+            $this->info("✅ Pagamento criado: ID {$payment->id}");
             $this->newLine();
+
+            // 4. Simular aprovação do pagamento
+            $this->info('🎯 Simulando aprovação do pagamento...');
             
-            $paymentResult = $wooviService->createPixPayment($testAmount, $testDescription, $testCorrelationId);
+            $payment->update([
+                'status' => 'completed',
+                'paid_at' => now()
+            ]);
+
+            // 5. Simular ativação do acesso
+            $this->info('🚀 Simulando ativação do acesso...');
             
-            if ($paymentResult['success']) {
-                $this->info('✅ PAGAMENTO CRIADO COM SUCESSO!');
-                $this->line('Woovi ID: ' . $paymentResult['woovi_id']);
-                $this->line('Correlation ID: ' . $paymentResult['correlation_id']);
-                $this->line('Status: ' . $paymentResult['status']);
-                $this->line('Expira em: ' . $paymentResult['expires_at']);
-                $this->newLine();
-                
-                // Verificar QR Code
-                $this->info('=== VERIFICANDO QR CODE ===');
-                $this->line('EMV String: ' . substr($paymentResult['qr_code_text'], 0, 50) . '...');
-                $this->line('Tamanho EMV: ' . strlen($paymentResult['qr_code_text']) . ' caracteres');
-                
-                if (!empty($paymentResult['qr_code_image'])) {
-                    $this->info('✅ Imagem QR Code: PRESENTE (Base64)');
-                    $this->line('Tamanho da imagem: ' . strlen($paymentResult['qr_code_image']) . ' caracteres');
-                    
-                    // Verificar se é base64 válido
-                    $decodedImage = base64_decode($paymentResult['qr_code_image'], true);
-                    if ($decodedImage !== false) {
-                        $this->info('✅ Base64: VÁLIDO');
-                        $this->line('Tamanho decodificado: ' . strlen($decodedImage) . ' bytes');
-                        
-                        // Verificar se é PNG válido
-                        $imageInfo = @getimagesizefromstring($decodedImage);
-                        if ($imageInfo !== false) {
-                            $this->info('✅ Imagem: VÁLIDA (' . $imageInfo[0] . 'x' . $imageInfo[1] . ' pixels, ' . $imageInfo['mime'] . ')');
-                            
-                            // Salvar imagem para teste
-                            $filename = storage_path('app/debug_qrcode_' . time() . '.png');
-                            if (file_put_contents($filename, $decodedImage)) {
-                                $this->info('✅ Imagem salva como: ' . $filename);
-                            } else {
-                                $this->error('❌ Erro ao salvar imagem');
-                            }
-                        } else {
-                            $this->error('❌ Imagem: INVÁLIDA - Não é uma imagem válida');
-                        }
-                    } else {
-                        $this->error('❌ Base64: INVÁLIDO');
-                    }
-                } else {
-                    $this->error('❌ Imagem QR Code: AUSENTE');
-                }
-                
-                $this->newLine();
-                $this->info('=== URL DATA COMPLETA ===');
-                $dataUrl = 'data:image/png;base64,' . $paymentResult['qr_code_image'];
-                $this->line('Tamanho total da URL: ' . strlen($dataUrl) . ' caracteres');
-                $this->line('Início da URL: ' . substr($dataUrl, 0, 100) . '...');
-                
-            } else {
-                $this->error('❌ ERRO AO CRIAR PAGAMENTO!');
-                $this->line('Mensagem: ' . $paymentResult['message']);
+            $paymentController = new PaymentController();
+            $reflection = new \ReflectionClass($paymentController);
+            $method = $reflection->getMethod('activateUserAccess');
+            $method->setAccessible(true);
+            
+            try {
+                $method->invoke($paymentController, $payment);
+                $this->info('✅ Acesso ativado com sucesso!');
+            } catch (\Exception $e) {
+                $this->error('❌ Erro ao ativar acesso: ' . $e->getMessage());
             }
-        } else if (!$connectionTest['success']) {
-            $this->error('❌ Não foi possível testar criação de pagamento devido ao erro de conexão.');
+            $this->newLine();
+
+            // 6. Verificar registros
+            $this->info('📊 Verificando registros criados...');
+            
+            $user->refresh();
+            $this->table(['Campo', 'Valor'], [
+                ['User ID', $user->id],
+                ['MAC Address', $user->mac_address],
+                ['IP Address', $user->ip_address],
+                ['Status', $user->status],
+                ['Expires At', $user->expires_at],
+                ['Payment Status', $payment->status],
+                ['Transaction ID', $payment->transaction_id]
+            ]);
+
+            // 7. Verificar tabela mikrotik_mac_reports
+            $macReports = MikrotikMacReport::where('mac_address', $macAddress)->get();
+            
+            if ($macReports->count() > 0) {
+                $this->info("✅ MAC registrado na tabela mikrotik_mac_reports ({$macReports->count()} registros)");
+                
+                foreach ($macReports as $report) {
+                    $this->line("   IP: {$report->ip_address} | MAC: {$report->mac_address} | Reported: {$report->reported_at}");
+                }
+            } else {
+                $this->error("❌ MAC NÃO foi registrado na tabela mikrotik_mac_reports!");
+            }
+            $this->newLine();
+
+            // 8. Logs do processo
+            $this->info('📝 Verificando logs recentes...');
+            $this->info('Execute: tail -f storage/logs/laravel.log | grep -E "(MAC|payment|activation)"');
         }
 
         $this->newLine();
-        $this->info('=== FIM DO DEBUG ===');
+        $this->info('🎯 Debug concluído!');
         
         if (!$this->option('test-payment')) {
-            $this->comment('Use --test-payment para criar um pagamento de teste e verificar o QR Code');
+            $this->info('💡 Use --test-payment para testar o fluxo completo de pagamento');
         }
+    }
+
+    /**
+     * Gera MAC address fictício para teste
+     */
+    private function generateMockMac()
+    {
+        $hex = '0123456789ABCDEF';
+        $mac = '';
+        for ($i = 0; $i < 6; $i++) {
+            if ($i > 0) $mac += ':';
+            $mac += $hex[rand(0, 15)];
+            $mac += $hex[rand(0, 15)];
+        }
+        return $mac;
     }
 } 
