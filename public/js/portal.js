@@ -1405,7 +1405,11 @@ Clique OK se SIM, Cancelar se NÃO.`);
             return true;
         }
 
-        await this.detectDevice();
+        try {
+            await this.detectDevice();
+        } catch (error) {
+            console.warn('detecção falhou', error);
+        }
 
         if (this.hasRealIdentifiers()) {
             return true;

@@ -15,6 +15,10 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
+        if (!$this->requestHasMikrotikContext($request)) {
+            return redirect()->away('http://login.tocantinswifi.local/login?dst=http%3A%2F%2Fwww.msftconnecttest.com%2Fredirect');
+        }
+ 
         // Detectar MAC address e outras informações do dispositivo
         $clientInfo = $this->getClientInfo($request);
         
@@ -32,7 +36,14 @@ class PortalController extends Controller
     public function detectDevice(Request $request)
     {
         $clientInfo = $this->getClientInfo($request);
-        
+
+        if (!$this->requestHasMikrotikContext($request) && !$clientInfo['mac_address']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dispositivo não identificado. Conecte-se pela página inicial da rede Wi-Fi.'
+            ], 400);
+        }
+ 
         return response()->json([
             'success' => true,
             'mac_address' => $clientInfo['mac_address'],
@@ -400,5 +411,17 @@ class PortalController extends Controller
                 'message' => 'Erro interno. Tente novamente.'
             ], 500);
         }
+    }
+
+    /**
+     * Verifica se a requisição vem de um contexto do MikroTik
+     */
+    private function requestHasMikrotikContext(Request $request): bool
+    {
+        $hasMacParam = $request->hasAny(['mac', 'mikrotik_mac', 'client_mac']);
+        $hasLoginFlag = $request->boolean('from_login');
+        $hasHeaders = $request->headers->has('X-Mikrotik-MAC') || $request->headers->has('X-Client-MAC');
+
+        return $hasMacParam || $hasLoginFlag || $hasHeaders;
     }
 }
