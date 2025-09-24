@@ -34,7 +34,7 @@ class PagamentoLimpoController extends Controller
         
         $resultado = $this->sistemaPagamento->gerarQRCodePix(
             $request->mac_address,
-            $request->amount ?? 5.99
+            $request->amount ?? 0.10
         );
         
         return response()->json($resultado);

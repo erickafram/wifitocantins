@@ -18,7 +18,7 @@ class PixQRCodeTest extends TestCase
     /** @test */
     public function pode_gerar_qr_code_pix_valido()
     {
-        $valor = 5.99;
+        $valor = 0.10;
         $transactionId = 'TEST_TXN_123';
 
         $result = $this->pixService->generatePixQRCode($valor, $transactionId);
@@ -33,7 +33,7 @@ class PixQRCodeTest extends TestCase
         $this->assertTrue($this->pixService->validateEMV($result['emv_string']));
         
         // Verificar se valor está correto
-        $this->assertEquals('5.99', $result['amount']);
+        $this->assertEquals('0.10', $result['amount']);
         
         // Verificar se contém campos obrigatórios
         $emvString = $result['emv_string'];

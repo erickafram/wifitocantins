@@ -36,7 +36,7 @@ return [
     */
     
     'pricing' => [
-        'default_price' => env('WIFI_DEFAULT_PRICE', 5.99),
+        'default_price' => env('WIFI_DEFAULT_PRICE', 0.10),
         'session_duration_hours' => env('WIFI_SESSION_DURATION_HOURS', 24),
         'trial_duration_minutes' => env('WIFI_TRIAL_DURATION_MINUTES', 15),
     ],
