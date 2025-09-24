@@ -82,6 +82,7 @@ Route::prefix('mikrotik')->group(function () {
     Route::get('/check-paid-users', [MikrotikApiController::class, 'checkPaidUsers']);
     Route::post('/report-mac', [MikrotikApiController::class, 'reportMacAddress']);
     Route::post('/confirm-liberation', [MikrotikApiController::class, 'confirmMacLiberation']);
+    Route::get('/register-mac', [MikrotikApiController::class, 'registerMac']);
 });
 
 // MikroTik Sync (New - HTTP Polling)

@@ -141,7 +141,7 @@ class PortalController extends Controller
             return $cleanMac;
         }
 
-        // 3. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
+        // 3. 🚀 CONSULTAR DIRETAMENTE NO MIKROTIK POR IP (MÉTODO MELHORADO)
         $macFromMikrotik = $this->queryMacByIpFromMikrotik($ip);
         if ($macFromMikrotik && $macFromMikrotik !== null) {
             Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
@@ -165,20 +165,78 @@ class PortalController extends Controller
     private function queryMacByIpFromMikrotik($ip)
     {
         try {
-            if (!config('wifi.mikrotik.enabled', false)) {
-                return null;
-            }
-
-            // Consultar ARP table do MikroTik para obter MAC por IP
-            $mikrotikController = new \App\Http\Controllers\MikrotikController();
-            $macAddress = $mikrotikController->getMacByIp($ip);
+            // 🚀 NOVA ABORDAGEM: Consultar via API endpoint específico do MikroTik
+            Log::info('🔍 Consultando MAC no MikroTik via API', ['ip' => $ip]);
             
-            return $macAddress;
+            // Consultar endpoint especial que criamos no MikroTik
+            $mikrotikHost = '10.10.10.1'; // IP interno do MikroTik
+            $token = config('wifi.mikrotik.sync_token', 'mikrotik-sync-2024');
+            
+            // URL para consultar DHCP leases por IP
+            $url = "http://{$mikrotikHost}/api/get-mac-by-ip?ip={$ip}&token={$token}";
+            
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 3,
+                    'method' => 'GET'
+                ]
+            ]);
+            
+            $response = @file_get_contents($url, false, $context);
+            
+            if ($response) {
+                $data = json_decode($response, true);
+                if (isset($data['mac_address']) && $data['mac_address']) {
+                    $cleanMac = strtoupper(str_replace('-', ':', $data['mac_address']));
+                    
+                    // Verificar se é MAC real (não mock)
+                    if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
+                        Log::info('✅ MAC REAL obtido via API MikroTik', [
+                            'mac' => $cleanMac, 
+                            'ip' => $ip,
+                            'method' => 'dhcp_lease_api'
+                        ]);
+                        return $cleanMac;
+                    }
+                }
+            }
+            
+            // 🔄 FALLBACK: Tentar método direto via SSH (se disponível)
+            return $this->queryMacViaSshFallback($ip);
+            
         } catch (\Exception $e) {
-            Log::error('Erro ao consultar MAC no MikroTik', [
+            Log::warning('⚠️ Erro ao consultar MAC no MikroTik via API', [
                 'ip' => $ip,
                 'error' => $e->getMessage()
             ]);
+            return null;
+        }
+    }
+    
+    /**
+     * 🆘 MÉTODO FALLBACK: Consultar MAC via logs recentes do MikroTik
+     */
+    private function queryMacViaSshFallback($ip)
+    {
+        try {
+            // Consultar MACs reportados recentemente para este IP
+            $recentMac = MikrotikMacReport::where('ip_address', $ip)
+                                        ->where('reported_at', '>', now()->subMinutes(10))
+                                        ->orderBy('reported_at', 'desc')
+                                        ->first();
+            
+            if ($recentMac && !preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $recentMac->mac_address)) {
+                Log::info('📋 MAC REAL encontrado em reports recentes', [
+                    'mac' => $recentMac->mac_address,
+                    'ip' => $ip,
+                    'reportado_em' => $recentMac->reported_at->format('Y-m-d H:i:s')
+                ]);
+                return strtoupper($recentMac->mac_address);
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Erro no fallback de consulta MAC', ['error' => $e->getMessage()]);
             return null;
         }
     }

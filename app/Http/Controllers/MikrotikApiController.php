@@ -13,6 +13,65 @@ use Carbon\Carbon;
 class MikrotikApiController extends Controller
 {
     /**
+     * Endpoint para MikroTik registrar MACs automaticamente
+     */
+    public function registerMac(Request $request)
+    {
+        try {
+            // Verificar token
+            $token = $request->get('token');
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if ($token !== $expectedToken) {
+                return response()->json(['error' => 'Token inválido'], 401);
+            }
+            
+            $mac = $request->get('mac');
+            $ip = $request->get('ip');
+            $hostname = $request->get('hostname', '');
+            
+            if (!$mac || !$ip) {
+                return response()->json(['error' => 'MAC e IP obrigatórios'], 400);
+            }
+            
+            // Registrar MAC no banco
+            MikrotikMacReport::updateOrCreate(
+                [
+                    'mac_address' => strtoupper($mac),
+                    'ip_address' => $ip
+                ],
+                [
+                    'hostname' => $hostname,
+                    'reported_at' => now(),
+                    'last_seen' => now()
+                ]
+            );
+            
+            Log::info('📡 MAC registrado pelo MikroTik', [
+                'mac' => $mac,
+                'ip' => $ip,
+                'hostname' => $hostname
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'MAC registrado com sucesso',
+                'mac' => $mac,
+                'ip' => $ip
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao registrar MAC', [
+                'error' => $e->getMessage(),
+                'mac' => $request->get('mac'),
+                'ip' => $request->get('ip')
+            ]);
+            
+            return response()->json(['error' => 'Erro interno'], 500);
+        }
+    }
+
+    /**
      * Endpoint ULTRA-RÁPIDO para MikroTik verificar MACs (consulta a cada 10s)
      */
     public function checkPaidUsers(Request $request)
