@@ -753,48 +753,33 @@ class PaymentController extends Controller
                 }
             }
 
-            // 🚀 LIBERAÇÃO IMEDIATA - SEM DESCONECTAR/RECONECTAR
+            // ⚡ LIBERAÇÃO ULTRA-RÁPIDA VIA POLLING (10s max)
             try {
-                // 1. Criar IP binding bypass para liberação instantânea
-                $this->createImmediateIpBinding($payment->user->mac_address);
-                
-                // 2. Forçar atualização do status no hotspot ativo
-                $this->forceHotspotRefresh($payment->user->mac_address);
-                
-                // 3. Usar o novo serviço de webhook para liberação tradicional
-                $webhookService = new \App\Services\MikrotikWebhookService();
-                $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
+                // ⚠️ DESABILITADO: Conexão direta falha (rede isolada)
+                // $webhookService = new \App\Services\MikrotikWebhookService();
+                // $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
+                $liberado = false; // Forçar uso do polling
                 
                 if ($liberado) {
-                    Log::info('🎉 ACESSO LIBERADO INSTANTANEAMENTE - SEM DESCONECTAR!', [
+                    Log::info('⚡ REGISTRO PARA LIBERAÇÃO ULTRA-RÁPIDA', [
                         'user_id' => $payment->user_id,
                         'mac_address' => $payment->user->mac_address,
                         'expires_at' => $expiresAt->toISOString(),
-                        'method' => 'immediate_bypass',
-                        'ip_binding_created' => true,
-                        'hotspot_refreshed' => true
+                        'method' => 'polling_10s',
+                        'estimated_liberation' => '5-10_segundos'
                     ]);
                 } else {
-                    // Tentar método antigo como fallback
-                    try {
-                        $liberacaoController = new \App\Http\Controllers\MikrotikLiberacaoController();
-                        $liberado = $liberacaoController->liberarAcessoImediato($payment->user_id);
-                        
-                        if ($liberado) {
-                            Log::info('✅ Liberado via método fallback', [
-                                'user_id' => $payment->user_id
-                            ]);
-                        } else {
-                            Log::warning('⚠️ Falha na liberação automática do MikroTik', [
-                                'user_id' => $payment->user_id,
-                                'note' => 'O acesso será liberado na próxima sincronização'
-                            ]);
-                        }
-                    } catch (\Exception $fallbackError) {
-                        Log::warning('⚠️ Métodos de liberação falharam', [
-                            'error' => $fallbackError->getMessage()
-                        ]);
-                    }
+                    // ⚡ USAR POLLING ULTRA-RÁPIDO (sem conexão direta)
+                    Log::info('⚡ PAGAMENTO CONFIRMADO - Aguardando polling ultra-rápido', [
+                        'user_id' => $payment->user_id,
+                        'mac_address' => $payment->user->mac_address,
+                        'method' => 'polling_10s',
+                        'note' => 'MAC já registrado, MikroTik consulta a cada 10 segundos'
+                    ]);
+                    
+                    // Não tentar conexões diretas (rede isolada)
+                    // O MAC já está registrado na tabela mikrotik_mac_reports
+                    // MikroTik libera automaticamente no próximo polling
                 }
             } catch (\Exception $e) {
                 Log::error('❌ Erro ao liberar no MikroTik via webhook', [
@@ -1185,124 +1170,6 @@ class PaymentController extends Controller
                 'message' => 'Erro interno',
                 'processing_time' => $processingTime . 'ms'
             ], 500);
-        }
-    }
-
-    /**
-     * Criar IP binding bypass para liberação instantânea
-     */
-    private function createImmediateIpBinding($macAddress)
-    {
-        try {
-            $mikrotikConfig = config('wifi.mikrotik');
-            
-            // Comandos para criar IP binding bypass
-            $commands = [
-                // Remover binding existente se houver
-                '/ip hotspot ip-binding remove [find mac-address="' . $macAddress . '"]',
-                // Criar novo binding bypass
-                '/ip hotspot ip-binding add mac-address="' . $macAddress . '" type=bypassed comment="PAGO-INSTANT - Liberado automaticamente"'
-            ];
-            
-            foreach ($commands as $command) {
-                $this->executeScriptCommand($command);
-            }
-            
-            Log::info('🎯 IP binding bypass criado instantaneamente', [
-                'mac_address' => $macAddress,
-                'type' => 'bypassed'
-            ]);
-            
-            return true;
-        } catch (\Exception $e) {
-            Log::error('❌ Erro ao criar IP binding', [
-                'mac_address' => $macAddress,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Forçar atualização do hotspot para reconhecer liberação instantânea
-     */
-    private function forceHotspotRefresh($macAddress)
-    {
-        try {
-            // Comandos para forçar refresh do hotspot
-            $commands = [
-                // Remover da lista ativa (forçando re-autenticação automatica)
-                '/ip hotspot active remove [find mac-address="' . $macAddress . '"]',
-                // Limpar cache ARP para forçar renovação
-                '/ip arp remove [find mac-address="' . $macAddress . '"]'
-            ];
-            
-            foreach ($commands as $command) {
-                $this->executeScriptCommand($command);
-            }
-            
-            Log::info('🔄 Hotspot atualizado para reconhecer liberação', [
-                'mac_address' => $macAddress,
-                'action' => 'force_refresh'
-            ]);
-            
-            return true;
-        } catch (\Exception $e) {
-            Log::error('❌ Erro ao atualizar hotspot', [
-                'mac_address' => $macAddress,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Executar comando no MikroTik via SSH
-     */
-    private function executeScriptCommand($command)
-    {
-        try {
-            $mikrotikConfig = config('wifi.mikrotik');
-            
-            if (!$mikrotikConfig['enabled']) {
-                Log::info('⚠️ MikroTik desabilitado na configuração');
-                return false;
-            }
-            
-            // SSH connection
-            $ssh_connection = ssh2_connect($mikrotikConfig['host'], $mikrotikConfig['ssh_port']);
-            
-            if (!$ssh_connection) {
-                throw new \Exception('Não foi possível conectar via SSH');
-            }
-            
-            if (!ssh2_auth_password($ssh_connection, $mikrotikConfig['username'], $mikrotikConfig['password'])) {
-                throw new \Exception('Falha na autenticação SSH');
-            }
-            
-            $stream = ssh2_exec($ssh_connection, $command);
-            
-            if ($stream) {
-                stream_set_blocking($stream, true);
-                $output = stream_get_contents($stream);
-                fclose($stream);
-                
-                Log::debug('✅ Comando MikroTik executado', [
-                    'command' => $command,
-                    'output' => $output
-                ]);
-                
-                return true;
-            }
-            
-            return false;
-            
-        } catch (\Exception $e) {
-            Log::error('❌ Erro ao executar comando MikroTik', [
-                'command' => $command,
-                'error' => $e->getMessage()
-            ]);
-            return false;
         }
     }
 }

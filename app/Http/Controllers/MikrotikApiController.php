@@ -13,7 +13,7 @@ use Carbon\Carbon;
 class MikrotikApiController extends Controller
 {
     /**
-     * Endpoint para MikroTik verificar quais MACs devem ser liberados
+     * Endpoint ULTRA-RÁPIDO para MikroTik verificar MACs (consulta a cada 10s)
      */
     public function checkPaidUsers(Request $request)
     {
@@ -29,14 +29,15 @@ class MikrotikApiController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
-            // Buscar usuários que pagaram e devem ter acesso liberado
+            // 🚀 CONSULTA ULTRA-RÁPIDA - Buscar usuários pagos ativos
             $paidUsers = User::where('status', 'connected')
                            ->where('expires_at', '>', now())
                            ->whereNotNull('mac_address')
-                           ->whereHas('payments', function($query) {
+                           ->with(['payments' => function($query) {
                                $query->where('status', 'completed')
-                                     ->where('created_at', '>', now()->subDays(7));
-                           })
+                                     ->latest()
+                                     ->limit(1);
+                           }])
                            ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at']);
 
             // Buscar usuários expirados que devem ser bloqueados
@@ -93,10 +94,12 @@ class MikrotikApiController extends Controller
                 'total_block' => $expiredUsers->count()
             ];
 
-            Log::info('MikroTik consultou usuários pagos', [
+            // 🚀 Log da consulta ultra-rápida (10s)
+            Log::info('⚡ MikroTik consulta ULTRA-RÁPIDA', [
                 'mikrotik_ip' => $request->ip(),
                 'liberate_count' => $paidUsers->count(),
-                'block_count' => $expiredUsers->count()
+                'block_count' => $expiredUsers->count(),
+                'interval' => '10_segundos'
             ]);
 
             return response()->json($response);
