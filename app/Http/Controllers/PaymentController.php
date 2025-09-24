@@ -23,11 +23,21 @@ class PaymentController extends Controller
      */
     public function generatePixQRCode(Request $request)
     {
-        $request->validate([
+        // Validação dos dados
+        $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:0.05',
             'mac_address' => 'required|string',
-            'user_id' => 'nullable|exists:users,id' // 🎯 ADICIONAR VALIDAÇÃO USER_ID
+            'user_id' => 'nullable|exists:users,id',
+            'ip_address' => 'nullable|ip'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dados inválidos',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();
@@ -382,6 +392,30 @@ class PaymentController extends Controller
 
         Log::info('🆕 Novo usuário criado', ['user_id' => $user->id, 'mac_address' => $macAddress]);
         return $user;
+    }
+
+    private function resolveClientIp(Request $request)
+    {
+        $candidates = [
+            $request->input('ip_address'),
+            $request->input('client_ip'),
+            $request->header('X-Client-IP'),
+            $request->header('X-Forwarded-For'),
+            $request->header('X-Real-IP'),
+        ];
+
+        foreach ($candidates as $value) {
+            if (!$value) {
+                continue;
+            }
+
+            $ip = trim(explode(',', $value)[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return $request->ip();
     }
 
     /**

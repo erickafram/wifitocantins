@@ -113,6 +113,30 @@ class RegistrationController extends Controller
         ]);
     }
 
+    private function resolveClientIp(Request $request)
+    {
+        $candidates = [
+            $request->input('ip_address'),
+            $request->input('client_ip'),
+            $request->header('X-Client-IP'),
+            $request->header('X-Forwarded-For'),
+            $request->header('X-Real-IP')
+        ];
+
+        foreach ($candidates as $value) {
+            if (!$value) {
+                continue;
+            }
+
+            $ip = trim(explode(',', $value)[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return $request->ip();
+    }
+
     /**
      * Register or update existing user for payment
      */
@@ -124,13 +148,15 @@ class RegistrationController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
                 'phone' => 'required|string|max:20',
-                'mac_address' => 'nullable|string|max:17', // 🎯 ADICIONAR VALIDAÇÃO MAC
+                'mac_address' => 'nullable|string|max:17',
+                'ip_address' => 'nullable|ip',
             ], [
                 'name.required' => 'Nome completo é obrigatório',
                 'email.required' => 'E-mail é obrigatório',
                 'email.email' => 'E-mail deve ter um formato válido',
                 'phone.required' => 'Telefone é obrigatório',
                 'mac_address.string' => 'MAC address deve ser uma string válida',
+                'ip_address.ip' => 'IP inválido',
             ]);
 
             if ($validator->fails()) {
@@ -143,7 +169,7 @@ class RegistrationController extends Controller
 
             // 🎯 PROCESSAR MAC ADDRESS
             $macAddress = $request->mac_address ? strtoupper(str_replace('-', ':', $request->mac_address)) : null;
-            $ipAddress = $request->ip();
+            $ipAddress = $this->resolveClientIp($request);
 
             // Se tem user_id, é um usuário existente
             if ($request->user_id) {
