@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\Session;
+use App\Models\MikrotikMacReport;
 use App\Services\PixQRCodeService;
 use App\Services\SantanderPixService;
 use App\Services\WooviPixService;
@@ -675,7 +676,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Ativa o acesso do usuário e libera no MikroTik - MELHORADO
+     * Ativa o acesso do usuário e libera no MikroTik - MELHORADO COM LIBERAÇÃO IMEDIATA
      */
     private function activateUserAccess(Payment $payment)
     {
@@ -723,6 +724,77 @@ class PaymentController extends Controller
                 'duration_hours' => $sessionDurationHours,
                 'mac_address' => $payment->user->mac_address
             ]);
+
+            // 🎯 REGISTRAR MAC PARA O MIKROTIK CONSULTAR
+            if ($payment->user->mac_address && $payment->user->ip_address) {
+                try {
+                    MikrotikMacReport::updateOrCreate(
+                        [
+                            'ip_address' => $payment->user->ip_address,
+                            'mac_address' => $payment->user->mac_address,
+                        ],
+                        [
+                            'transaction_id' => $payment->transaction_id,
+                            'mikrotik_ip' => null,
+                            'reported_at' => now(),
+                        ]
+                    );
+                    
+                    Log::info('✅ MAC registrado para consulta do MikroTik', [
+                        'mac_address' => $payment->user->mac_address,
+                        'ip_address' => $payment->user->ip_address,
+                        'transaction_id' => $payment->transaction_id
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('❌ Erro ao registrar MAC', [
+                        'error' => $e->getMessage(),
+                        'mac_address' => $payment->user->mac_address
+                    ]);
+                }
+            }
+
+            // 🚀 LIBERAÇÃO IMEDIATA NO MIKROTIK VIA WEBHOOK
+            try {
+                // Usar o novo serviço de webhook
+                $webhookService = new \App\Services\MikrotikWebhookService();
+                $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
+                
+                if ($liberado) {
+                    Log::info('🎉 ACESSO LIBERADO NO MIKROTIK VIA WEBHOOK COM SUCESSO!', [
+                        'user_id' => $payment->user_id,
+                        'mac_address' => $payment->user->mac_address,
+                        'expires_at' => $expiresAt->toISOString(),
+                        'method' => 'webhook_direct'
+                    ]);
+                } else {
+                    // Tentar método antigo como fallback
+                    try {
+                        $liberacaoController = new \App\Http\Controllers\MikrotikLiberacaoController();
+                        $liberado = $liberacaoController->liberarAcessoImediato($payment->user_id);
+                        
+                        if ($liberado) {
+                            Log::info('✅ Liberado via método fallback', [
+                                'user_id' => $payment->user_id
+                            ]);
+                        } else {
+                            Log::warning('⚠️ Falha na liberação automática do MikroTik', [
+                                'user_id' => $payment->user_id,
+                                'note' => 'O acesso será liberado na próxima sincronização'
+                            ]);
+                        }
+                    } catch (\Exception $fallbackError) {
+                        Log::warning('⚠️ Métodos de liberação falharam', [
+                            'error' => $fallbackError->getMessage()
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('❌ Erro ao liberar no MikroTik via webhook', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $payment->user_id
+                ]);
+                // Não falhar o pagamento por causa disso
+            }
 
             // Tentar liberar no MikroTik
             try {

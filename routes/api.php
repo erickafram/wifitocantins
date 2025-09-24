@@ -7,6 +7,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\MikrotikSyncController;
+use App\Http\Controllers\MikrotikApiController;
 use App\Http\Controllers\RegistrationController;
 
 /*
@@ -76,6 +77,11 @@ Route::prefix('mikrotik')->group(function () {
     Route::post('/allow', [MikrotikController::class, 'allowDevice']);
     Route::post('/block', [MikrotikController::class, 'blockDevice']);
     Route::get('/usage/{mac}', [MikrotikController::class, 'getUsage']);
+    
+    // 🚀 NOVOS ENDPOINTS PARA AUTOMAÇÃO MIKROTIK
+    Route::get('/check-paid-users', [MikrotikApiController::class, 'checkPaidUsers']);
+    Route::post('/report-mac', [MikrotikApiController::class, 'reportMacAddress']);
+    Route::post('/confirm-liberation', [MikrotikApiController::class, 'confirmMacLiberation']);
 });
 
 // MikroTik Sync (New - HTTP Polling)
