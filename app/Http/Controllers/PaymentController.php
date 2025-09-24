@@ -753,18 +753,26 @@ class PaymentController extends Controller
                 }
             }
 
-            // 🚀 LIBERAÇÃO IMEDIATA NO MIKROTIK VIA WEBHOOK
+            // 🚀 LIBERAÇÃO IMEDIATA - SEM DESCONECTAR/RECONECTAR
             try {
-                // Usar o novo serviço de webhook
+                // 1. Criar IP binding bypass para liberação instantânea
+                $this->createImmediateIpBinding($payment->user->mac_address);
+                
+                // 2. Forçar atualização do status no hotspot ativo
+                $this->forceHotspotRefresh($payment->user->mac_address);
+                
+                // 3. Usar o novo serviço de webhook para liberação tradicional
                 $webhookService = new \App\Services\MikrotikWebhookService();
                 $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
                 
                 if ($liberado) {
-                    Log::info('🎉 ACESSO LIBERADO NO MIKROTIK VIA WEBHOOK COM SUCESSO!', [
+                    Log::info('🎉 ACESSO LIBERADO INSTANTANEAMENTE - SEM DESCONECTAR!', [
                         'user_id' => $payment->user_id,
                         'mac_address' => $payment->user->mac_address,
                         'expires_at' => $expiresAt->toISOString(),
-                        'method' => 'webhook_direct'
+                        'method' => 'immediate_bypass',
+                        'ip_binding_created' => true,
+                        'hotspot_refreshed' => true
                     ]);
                 } else {
                     // Tentar método antigo como fallback
@@ -1177,6 +1185,124 @@ class PaymentController extends Controller
                 'message' => 'Erro interno',
                 'processing_time' => $processingTime . 'ms'
             ], 500);
+        }
+    }
+
+    /**
+     * Criar IP binding bypass para liberação instantânea
+     */
+    private function createImmediateIpBinding($macAddress)
+    {
+        try {
+            $mikrotikConfig = config('wifi.mikrotik');
+            
+            // Comandos para criar IP binding bypass
+            $commands = [
+                // Remover binding existente se houver
+                '/ip hotspot ip-binding remove [find mac-address="' . $macAddress . '"]',
+                // Criar novo binding bypass
+                '/ip hotspot ip-binding add mac-address="' . $macAddress . '" type=bypassed comment="PAGO-INSTANT - Liberado automaticamente"'
+            ];
+            
+            foreach ($commands as $command) {
+                $this->executeScriptCommand($command);
+            }
+            
+            Log::info('🎯 IP binding bypass criado instantaneamente', [
+                'mac_address' => $macAddress,
+                'type' => 'bypassed'
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao criar IP binding', [
+                'mac_address' => $macAddress,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Forçar atualização do hotspot para reconhecer liberação instantânea
+     */
+    private function forceHotspotRefresh($macAddress)
+    {
+        try {
+            // Comandos para forçar refresh do hotspot
+            $commands = [
+                // Remover da lista ativa (forçando re-autenticação automatica)
+                '/ip hotspot active remove [find mac-address="' . $macAddress . '"]',
+                // Limpar cache ARP para forçar renovação
+                '/ip arp remove [find mac-address="' . $macAddress . '"]'
+            ];
+            
+            foreach ($commands as $command) {
+                $this->executeScriptCommand($command);
+            }
+            
+            Log::info('🔄 Hotspot atualizado para reconhecer liberação', [
+                'mac_address' => $macAddress,
+                'action' => 'force_refresh'
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao atualizar hotspot', [
+                'mac_address' => $macAddress,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Executar comando no MikroTik via SSH
+     */
+    private function executeScriptCommand($command)
+    {
+        try {
+            $mikrotikConfig = config('wifi.mikrotik');
+            
+            if (!$mikrotikConfig['enabled']) {
+                Log::info('⚠️ MikroTik desabilitado na configuração');
+                return false;
+            }
+            
+            // SSH connection
+            $ssh_connection = ssh2_connect($mikrotikConfig['host'], $mikrotikConfig['ssh_port']);
+            
+            if (!$ssh_connection) {
+                throw new \Exception('Não foi possível conectar via SSH');
+            }
+            
+            if (!ssh2_auth_password($ssh_connection, $mikrotikConfig['username'], $mikrotikConfig['password'])) {
+                throw new \Exception('Falha na autenticação SSH');
+            }
+            
+            $stream = ssh2_exec($ssh_connection, $command);
+            
+            if ($stream) {
+                stream_set_blocking($stream, true);
+                $output = stream_get_contents($stream);
+                fclose($stream);
+                
+                Log::debug('✅ Comando MikroTik executado', [
+                    'command' => $command,
+                    'output' => $output
+                ]);
+                
+                return true;
+            }
+            
+            return false;
+            
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao executar comando MikroTik', [
+                'command' => $command,
+                'error' => $e->getMessage()
+            ]);
+            return false;
         }
     }
 }

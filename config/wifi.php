@@ -20,6 +20,7 @@ return [
         'username' => env('MIKROTIK_USERNAME', 'admin'),
         'password' => env('MIKROTIK_PASSWORD', ''),
         'port' => env('MIKROTIK_PORT', 8728),
+        'ssh_port' => env('MIKROTIK_SSH_PORT', 22),
         'timeout' => env('MIKROTIK_TIMEOUT', 10),
         'enabled' => env('MIKROTIK_ENABLED', true),
         'sync_token' => env('MIKROTIK_SYNC_TOKEN', 'mikrotik-sync-2024'),
