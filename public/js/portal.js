@@ -577,7 +577,6 @@ class WiFiPortal {
             const result = await response.json();
 
             if (result.exists && result.user) {
-                await this.ensureRealIdentifiers();
                 this.fillUserData(result.user);
                 this.showUserFoundMessage(result.user.name);
             }
@@ -1395,6 +1394,12 @@ Clique OK se SIM, Cancelar se NÃO.`);
         );
     }
 
+    redirectToCaptivePortal() {
+        const captiveUrl = 'http://login.tocantinswifi.local';
+        const returnParam = encodeURIComponent(window.location.href);
+        window.location.replace(`${captiveUrl}?return_url=${returnParam}`);
+    }
+
     async ensureRealIdentifiers() {
         if (this.hasRealIdentifiers()) {
             return true;
@@ -1406,7 +1411,8 @@ Clique OK se SIM, Cancelar se NÃO.`);
             return true;
         }
 
-        this.showErrorMessage('Não conseguimos identificar seu dispositivo. Reabra o aviso "Rede requer login" ou acesse http://login.tocantinswifi.local e volte a esta tela.');
+        this.showErrorMessage('Não conseguimos identificar seu dispositivo. Você será redirecionado para a tela de login.');
+        setTimeout(() => this.redirectToCaptivePortal(), 1500);
         return false;
     }
 }
