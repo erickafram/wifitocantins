@@ -6,6 +6,7 @@
 class WiFiPortal {
     constructor() {
         this.deviceMac = '';
+        this.deviceIp = '';
         this.connectionCheckInterval = null;
         this.paymentCheckInterval = null;
         this.loadingOverlay = null;
@@ -146,11 +147,21 @@ class WiFiPortal {
             // 🎯 PRIORIDADE: Verificar se MAC está na URL (MikroTik)
             const urlParams = new URLSearchParams(window.location.search);
             const macFromUrl = urlParams.get('mac') || urlParams.get('mikrotik_mac') || urlParams.get('client_mac');
+            const ipFromUrl = urlParams.get('ip') || urlParams.get('client_ip');
             
             if (macFromUrl && this.isValidMacAddress(macFromUrl) && !macFromUrl.startsWith('02:')) {
                 this.deviceMac = macFromUrl.toUpperCase();
                 console.log('🎯 MAC REAL capturado da URL:', this.deviceMac);
+                if (ipFromUrl) {
+                    this.deviceIp = ipFromUrl;
+                    console.log('🌐 IP do dispositivo capturado da URL:', this.deviceIp);
+                }
                 return;
+            }
+
+            if (ipFromUrl) {
+                this.deviceIp = ipFromUrl;
+                console.log('🌐 IP do dispositivo capturado da URL:', this.deviceIp);
             }
 
             // Se não tem MAC real na URL, tentar aguardar MAC real
@@ -184,11 +195,16 @@ class WiFiPortal {
 
                 const data = await response.json();
                 const mac = data.mac_address || '';
+                const detectedIp = data.client_ip || data.ip_address;
                 
                 // Se encontrou MAC real (não começa com 02:)
                 if (mac && !mac.startsWith('02:')) {
                     this.deviceMac = mac.toUpperCase();
                     console.log('✅ MAC REAL detectado:', this.deviceMac);
+                    if (detectedIp) {
+                        this.deviceIp = detectedIp;
+                        console.log('🌐 IP do dispositivo detectado:', this.deviceIp);
+                    }
                     return;
                 }
                 
@@ -212,7 +228,10 @@ class WiFiPortal {
             }
         });
         const data = await response.json();
-        this.deviceMac = data.mac_address || this.generateMockMac();
+        this.deviceMac = (data.mac_address || this.generateMockMac()).toUpperCase();
+        if (data.client_ip || data.ip_address) {
+            this.deviceIp = data.client_ip || data.ip_address;
+        }
         console.log('📱 MAC final:', this.deviceMac);
     }
 
@@ -249,6 +268,10 @@ class WiFiPortal {
             this.updateConnectionUI(status);
 
             if (status.connected) {
+                if (status.ip_address && status.ip_address !== this.deviceIp) {
+                    this.deviceIp = status.ip_address;
+                    console.log('🌐 IP atualizado pelo status do dispositivo:', this.deviceIp);
+                }
                 this.showManageButton();
                 this.startConnectionMonitoring();
             }
@@ -439,7 +462,8 @@ class WiFiPortal {
             email: formData.get('email'),
             phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
             user_id: this.currentUserId, // Incluir ID se for usuário existente
-            mac_address: this.deviceMac // 🎯 ADICIONAR MAC ADDRESS
+            mac_address: this.deviceMac, // 🎯 ADICIONAR MAC ADDRESS
+            ip_address: this.deviceIp
         };
 
         // Validação básica
@@ -676,7 +700,8 @@ class WiFiPortal {
                 body: JSON.stringify({
                     amount: 0.10, // 🎯 VALOR ATUALIZADO
                     mac_address: this.deviceMac,
-                    user_id: this.currentUserId
+                    user_id: this.currentUserId,
+                    ip_address: this.deviceIp
                 })
             });
 

@@ -37,7 +37,7 @@ class PaymentController extends Controller
 
             // 🎯 BUSCAR OU CRIAR USUÁRIO COM MAC
             $macAddress = strtoupper(str_replace('-', ':', $request->mac_address));
-            $ipAddress = $request->ip();
+            $clientIp = $this->resolveClientIp($request);
             
             // Se tem user_id, usar usuário existente
             if ($request->user_id) {
@@ -50,16 +50,22 @@ class PaymentController extends Controller
                 }
                 
                 // Atualizar MAC e IP do usuário se ainda não tem
-                if (!$user->mac_address || !$user->ip_address) {
+                $userUpdates = [];
+                if (!$user->mac_address) {
+                    $userUpdates['mac_address'] = $macAddress;
+                }
+                if ($clientIp && (!$user->ip_address || $user->ip_address !== $clientIp)) {
+                    $userUpdates['ip_address'] = $clientIp;
+                }
+                if (!empty($userUpdates)) {
                     $user->update([
-                        'mac_address' => $macAddress,
-                        'ip_address' => $ipAddress,
-                        'status' => 'offline'
+                        ...$userUpdates,
+                        'status' => $user->status === 'connected' ? $user->status : 'offline'
                     ]);
                 }
             } else {
                 // Buscar ou criar usuário pelo MAC
-                $user = $this->findOrCreateUser($macAddress, $ipAddress);
+                $user = $this->findOrCreateUser($macAddress, $clientIp);
             }
 
             // Verificar qual gateway usar
@@ -323,8 +329,10 @@ class PaymentController extends Controller
         $user = User::where('mac_address', $macAddress)->first();
 
         if ($user) {
-            // Usuário já existe com este MAC - atualizar IP
-            $user->update(['ip_address' => $ipAddress]);
+            // Usuário já existe com este MAC - atualizar IP se necessário
+            if ($ipAddress && $user->ip_address !== $ipAddress) {
+                $user->update(['ip_address' => $ipAddress]);
+            }
             Log::info('✅ Usuário encontrado por MAC', ['user_id' => $user->id, 'name' => $user->name]);
             return $user;
         }
@@ -361,11 +369,16 @@ class PaymentController extends Controller
         }
 
         // 4. ÚLTIMA OPÇÃO: Criar novo usuário
-        $user = User::create([
+        $userData = [
             'mac_address' => $macAddress,
-            'ip_address' => $ipAddress,
             'status' => 'offline'
-        ]);
+        ];
+
+        if ($ipAddress) {
+            $userData['ip_address'] = $ipAddress;
+        }
+
+        $user = User::create($userData);
 
         Log::info('🆕 Novo usuário criado', ['user_id' => $user->id, 'mac_address' => $macAddress]);
         return $user;
