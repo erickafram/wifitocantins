@@ -137,6 +137,26 @@ class RegistrationController extends Controller
         return $request->ip();
     }
 
+    private function shouldReplaceMac(?string $currentMac, string $newMac): bool
+    {
+        if (!$currentMac) {
+            return true;
+        }
+
+        $isCurrentMock = stripos($currentMac, '02:') === 0;
+        $isNewMock = stripos($newMac, '02:') === 0;
+
+        if ($isCurrentMock && !$isNewMock) {
+            return true;
+        }
+
+        if (!$isCurrentMock && !$isNewMock) {
+            return $currentMac !== $newMac;
+        }
+
+        return false;
+    }
+
     /**
      * Register or update existing user for payment
      */
@@ -174,7 +194,7 @@ class RegistrationController extends Controller
             // Se tem user_id, é um usuário existente
             if ($request->user_id) {
                 $user = User::find($request->user_id);
-                
+
                 if (!$user) {
                     return response()->json([
                         'success' => false,
@@ -190,10 +210,10 @@ class RegistrationController extends Controller
                 ];
 
                 // 🎯 ATUALIZAR MAC E IP SE FORNECIDOS
-                if ($macAddress) {
+                if ($macAddress && ($this->shouldReplaceMac($user->mac_address, $macAddress))) {
                     $updateData['mac_address'] = $macAddress;
                 }
-                if ($ipAddress) {
+                if ($ipAddress && $user->ip_address !== $ipAddress) {
                     $updateData['ip_address'] = $ipAddress;
                 }
 
@@ -214,24 +234,25 @@ class RegistrationController extends Controller
                                 ->first();
 
             if ($existingUser) {
-                // 🎯 SE USUÁRIO EXISTE, ATUALIZAR COM MAC ATUAL
-                if ($macAddress && !$existingUser->mac_address) {
-                    $existingUser->update([
-                        'mac_address' => $macAddress,
-                        'ip_address' => $ipAddress
-                    ]);
+                $updates = [];
+                if ($macAddress && $this->shouldReplaceMac($existingUser->mac_address, $macAddress)) {
+                    $updates['mac_address'] = $macAddress;
+                }
+                if ($ipAddress && $existingUser->ip_address !== $ipAddress) {
+                    $updates['ip_address'] = $ipAddress;
+                }
+
+                if (!empty($updates)) {
+                    $existingUser->update($updates);
                 }
 
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Já existe um usuário cadastrado com este e-mail ou telefone',
-                    'existing_user_data' => [
-                        'id' => $existingUser->id,
-                        'name' => $existingUser->name,
-                        'email' => $existingUser->email,
-                        'phone' => $existingUser->phone
-                    ]
-                ], 409);
+                    'success' => true,
+                    'message' => 'Usuário já existente atualizado.',
+                    'user_id' => $existingUser->id,
+                    'existing_user' => true,
+                    'redirect_to_payment' => true
+                ]);
             }
 
             // Criar novo usuário

@@ -307,6 +307,25 @@
 
     <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
         
+        <!-- Connection Status (Top) -->
+        <div id="connection-status" class="bg-white rounded-xl p-4 mb-4 hidden">
+            <div class="flex items-center justify-center">
+                <div class="flex items-center text-tocantins-green">
+                    <div class="w-3 h-3 bg-tocantins-green rounded-full mr-3"></div>
+                    <span class="font-medium">Status: <span id="status-text">Verificando...</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button 
+                id="manage-connection"
+                class="text-tocantins-green font-medium text-sm hover:text-tocantins-dark-green transition-colors hidden"
+            >
+                ℹ️ Já conectado? Gerencie sua conexão
+            </button>
+        </div>
+
         <!-- Header -->
         <div class="text-center mb-10 animate-fade-in">
             <!-- Logo -->
@@ -733,26 +752,6 @@
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- Connection Status -->
-        <div id="connection-status" class="bg-white rounded-xl p-4 mb-4 hidden">
-            <div class="flex items-center justify-center">
-                <div class="flex items-center text-tocantins-green">
-                    <div class="w-3 h-3 bg-tocantins-green rounded-full mr-3 "></div>
-                    <span class="font-medium">Status: <span id="status-text">Verificando...</span></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Already Connected -->
-        <div class="text-center">
-            <button 
-                id="manage-connection"
-                class="text-tocantins-green font-medium text-sm hover:text-tocantins-dark-green transition-colors hidden"
-            >
-                ℹ️ Já conectado? Gerencie sua conexão
-            </button>
         </div>
 
         <!-- Footer -->

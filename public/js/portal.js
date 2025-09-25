@@ -13,6 +13,9 @@ class WiFiPortal {
         this.paymentModal = null;
         this.registrationModal = null;
         this.currentUserId = null;
+        this.pixTimerInterval = null;
+        this.pixCountdownSeconds = 0;
+        this.pixPaymentConfirmed = false;
         this.init();
     }
 
@@ -726,6 +729,80 @@ class WiFiPortal {
         }
     }
 
+    formatCountdown(seconds) {
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        return `${mins}:${secs}`;
+    }
+
+    updatePixTimerDisplay(message) {
+        const timerText = document.getElementById('pix-timer-text');
+        if (timerText && message) {
+            timerText.textContent = message;
+        } else if (timerText) {
+            timerText.textContent = `⏱️ Tempo restante: ${this.formatCountdown(this.pixCountdownSeconds)}`;
+        }
+    }
+
+    updatePixStatusHint(message) {
+        const statusHint = document.getElementById('pix-status-hint');
+        if (statusHint) {
+            statusHint.textContent = message;
+        }
+    }
+
+    startPixCountdown() {
+        this.stopPixCountdown();
+        this.pixCountdownSeconds = 120;
+        this.pixPaymentConfirmed = false;
+        this.updatePixTimerDisplay();
+        this.updatePixStatusHint('Finalize o pagamento em até 2 minutos.');
+
+        this.pixTimerInterval = setInterval(() => {
+            if (this.pixPaymentConfirmed) {
+                this.stopPixCountdown();
+                return;
+            }
+
+            this.pixCountdownSeconds -= 1;
+            if (this.pixCountdownSeconds <= 0) {
+                this.pixCountdownSeconds = 0;
+                this.updatePixTimerDisplay();
+                this.handlePixTimeout();
+                return;
+            }
+
+            this.updatePixTimerDisplay();
+        }, 1000);
+    }
+
+    stopPixCountdown() {
+        if (this.pixTimerInterval) {
+            clearInterval(this.pixTimerInterval);
+            this.pixTimerInterval = null;
+        }
+    }
+
+    handlePixTimeout() {
+        this.stopPixCountdown();
+        if (this.paymentCheckInterval) {
+            clearInterval(this.paymentCheckInterval);
+            this.paymentCheckInterval = null;
+        }
+
+        this.updatePixTimerDisplay('⏱️ Tempo esgotado');
+        this.updatePixStatusHint('O QR Code expirou. Gere um novo pagamento.');
+
+        const checkButton = document.getElementById('check-payment-status');
+        if (checkButton) {
+            checkButton.innerHTML = 'Tempo esgotado';
+            checkButton.disabled = true;
+            checkButton.classList.add('cursor-not-allowed');
+        }
+
+        this.showErrorMessage('Tempo para pagamento expirou. Gere um novo QR Code.');
+    }
+
     /**
      * Exibe modal com QR Code PIX
      */
@@ -762,9 +839,9 @@ class WiFiPortal {
                             </button>
                         </div>
                         
-                        <div class="text-xs text-gray-500 mb-4">
-                            <p>✅ Após o pagamento, sua internet será liberada automaticamente</p>
-                            <p>⏱️ Aguardando confirmação do pagamento...</p>
+                        <div class="bg-yellow-50 rounded-xl p-3 mb-4">
+                            <p id="pix-timer-text" class="text-sm font-semibold text-yellow-700">⏱️ Tempo restante: 02:00</p>
+                            <p id="pix-status-hint" class="text-xs text-yellow-600 mt-1">Finalize o pagamento em até 2 minutos.</p>
                         </div>
                         
                         <div class="flex space-x-2">
@@ -800,6 +877,7 @@ class WiFiPortal {
         });
         
         // Auto-verificar status a cada 5 segundos
+        this.startPixCountdown();
         this.paymentCheckInterval = setInterval(() => {
             this.checkPaymentStatus(data.payment_id);
         }, 5000);
@@ -845,10 +923,35 @@ class WiFiPortal {
             
             if (result.success && result.payment.status === 'completed') {
                 console.log('✅ Pagamento confirmado!');
-                clearInterval(this.paymentCheckInterval);
-                this.closePixModal();
-                this.showSuccessMessage('Pagamento confirmado! Conectando...');
-                
+                if (this.paymentCheckInterval) {
+                    clearInterval(this.paymentCheckInterval);
+                    this.paymentCheckInterval = null;
+                }
+
+                this.pixPaymentConfirmed = true;
+                this.stopPixCountdown();
+
+                this.updatePixTimerDisplay('✅ Pagamento confirmado!');
+                this.updatePixStatusHint('Aguarde até 2 minutos para liberação automática do acesso.');
+
+                const checkButton = document.getElementById('check-payment-status');
+                if (checkButton) {
+                    checkButton.innerHTML = 'Pagamento confirmado';
+                    checkButton.disabled = true;
+                }
+
+                const cancelButton = document.getElementById('cancel-payment');
+                if (cancelButton) {
+                    cancelButton.innerHTML = 'Fechar';
+                    cancelButton.classList.remove('bg-gray-500');
+                    cancelButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cancelButton.addEventListener('click', () => {
+                        this.closePixModal();
+                    });
+                }
+
+                this.showSuccessMessage('Pagamento confirmado! Aguarde enquanto liberamos seu acesso.');
+
                 const allowed = await this.allowDevice(this.deviceMac);
                 if (allowed) {
                     setTimeout(() => {
@@ -857,8 +960,8 @@ class WiFiPortal {
                 }
             } else {
                 console.log('⏱️ Pagamento ainda pendente');
-                this.showInfoMessage('Pagamento ainda não confirmado. Aguarde...');
-                
+                this.updatePixStatusHint('Ainda aguardando confirmação do pagamento...');
+
                 // Restaurar botão
                 if (checkButton) {
                     setTimeout(() => {
@@ -887,7 +990,11 @@ class WiFiPortal {
         if (modal) {
             if (this.paymentCheckInterval) {
                 clearInterval(this.paymentCheckInterval);
+                this.paymentCheckInterval = null;
             }
+            this.stopPixCountdown();
+            this.pixPaymentConfirmed = false;
+            this.pixCountdownSeconds = 0;
             modal.remove();
         }
     }
