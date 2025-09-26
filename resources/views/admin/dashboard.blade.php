@@ -59,54 +59,64 @@
                     </button>
 
                     <!-- Usuários -->
-                    <button onclick="showSection('users')" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Usuários">
+                    <a href="{{ route('admin.users') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Usuários">
                         <span class="text-xl">👥</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Usuários
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
-                    </button>
+                    </a>
 
                     <!-- Vouchers -->
-                    <button onclick="showSection('vouchers')" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Vouchers">
+                    <a href="{{ route('admin.vouchers') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Vouchers">
                         <span class="text-xl">🎫</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Vouchers
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
-                    </button>
+                    </a>
 
                     <!-- Relatórios -->
-                    <button onclick="showSection('reports')" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Relatórios">
+                    <a href="{{ route('admin.reports') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Relatórios">
                         <span class="text-xl">📈</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Relatórios
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
-                    </button>
+                    </a>
+
+                    <!-- Integrações API -->
+                    <a href="{{ route('admin.api') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.api*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Integrações API">
+                        <span class="text-xl">🔌</span>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.api*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
+                        <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
+                            Integrações API
+                            <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
+                        </div>
+                    </a>
 
                     <!-- Configurações -->
-                    <button onclick="showSection('settings')" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Configurações">
+                    <a href="{{ route('admin.settings') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Configurações">
                         <span class="text-xl">⚙️</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Configurações
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
-                    </button>
+                    </a>
 
-                    <!-- MikroTik -->
-                    <button onclick="showSection('mikrotik')" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="MikroTik">
-                        <span class="text-xl">🌐</span>
+                    <!-- Dispositivos -->
+                    <a href="{{ route('admin.devices') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Dispositivos">
+                        <span class="text-xl">📱</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
-                            MikroTik
+                            Dispositivos
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
-                    </button>
+                    </a>
                 </div>
             </nav>
 
@@ -378,10 +388,10 @@
                         Gerar Vouchers
                     </button>
 
-                                    <button class="w-full bg-tocantins-green text-white py-2 px-3 rounded text-xs hover:bg-tocantins-dark-green transition-colors flex items-center justify-center">
+                                    <a href="{{ route('admin.reports') }}" class="w-full bg-tocantins-green text-white py-2 px-3 rounded text-xs hover:bg-tocantins-dark-green transition-colors flex items-center justify-center">
                         <span class="mr-2">📊</span>
                         Ver Relatórios
-                    </button>
+                    </a>
 
                                     <button class="w-full bg-blue-500 text-white py-2 px-3 rounded text-xs hover:bg-blue-600 transition-colors flex items-center justify-center">
                         <span class="mr-2">⚙️</span>

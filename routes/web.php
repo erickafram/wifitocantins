@@ -6,6 +6,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\AuthController;
 
@@ -45,5 +46,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::get('/api/stats', [AdminController::class, 'apiStats'])->name('api.stats');
     Route::post('/export', [AdminController::class, 'exportReport'])->name('export');
+    Route::get('/api', [AdminController::class, 'apiSettings'])->name('api');
+    Route::post('/api/gateway', [AdminController::class, 'updateGateway'])->name('api.update-gateway');
+    
+    // Rotas de Relatórios
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
+    Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
 });
 

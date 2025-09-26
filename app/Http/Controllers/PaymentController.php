@@ -14,6 +14,7 @@ use App\Models\MikrotikMacReport;
 use App\Services\PixQRCodeService;
 use App\Services\SantanderPixService;
 use App\Services\WooviPixService;
+use App\Models\SystemSetting;
 
 class PaymentController extends Controller
 {
@@ -79,7 +80,7 @@ class PaymentController extends Controller
             }
 
             // Verificar qual gateway usar
-            $gateway = config('wifi.payment_gateways.pix.gateway');
+            $gateway = SystemSetting::getValue('pix_gateway', config('wifi.payment_gateways.pix.gateway'));
 
             // Criar registro de pagamento
             $payment = Payment::create([

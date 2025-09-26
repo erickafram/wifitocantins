@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Voucher;
 use App\Models\Device;
 use App\Models\Session;
+use App\Models\SystemSetting;
 
 class AdminController extends Controller
 {
@@ -385,5 +386,28 @@ class AdminController extends Controller
                 'message' => 'Erro ao excluir usuário: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function apiSettings()
+    {
+        $currentGateway = SystemSetting::getValue('pix_gateway', 'santander');
+
+        $gateways = [
+            'santander' => 'Santander (Recomendado)',
+            'woovi' => 'Woovi',
+        ];
+
+        return view('admin.api-settings', compact('currentGateway', 'gateways'));
+    }
+
+    public function updateGateway(Request $request)
+    {
+        $request->validate([
+            'pix_gateway' => 'required|in:santander,woovi',
+        ]);
+
+        SystemSetting::setValue('pix_gateway', $request->pix_gateway);
+
+        return redirect()->route('admin.api')->with('success', 'Gateway PIX atualizado com sucesso!');
     }
 }

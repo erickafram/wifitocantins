@@ -63,20 +63,20 @@ return [
     'payment_gateways' => [
         'pix' => [
             'enabled' => env('PIX_ENABLED', true),
-            'gateway' => env('PIX_GATEWAY', 'woovi'), // woovi, santander, manual
+            'gateway' => env('PIX_GATEWAY', 'santander'),
             
             // Configurações Woovi
             'woovi_app_id' => env('WOOVI_APP_ID', ''),
             'woovi_app_secret' => env('WOOVI_APP_SECRET', ''),
             
             // Configurações Santander
-            'client_id' => env('SANTANDER_CLIENT_ID', ''),
-            'client_secret' => env('SANTANDER_CLIENT_SECRET', ''),
+            'client_id' => env('SANTANDER_CLIENT_ID', 'RA4UP23L7tQLlAlcsk8O9QF9Q6Oih6NB'),
+            'client_secret' => env('SANTANDER_CLIENT_SECRET', 'nSkWIV8TFJUGRBur'),
             'workspace_id' => env('SANTANDER_WORKSPACE_ID', ''),
-            'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'storage/certificates/santander.pfx'),
+            'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'certificates/santander.pfx'),
             'certificate_password' => env('SANTANDER_CERTIFICATE_PASSWORD', ''),
             
-            'environment' => env('PIX_ENVIRONMENT', 'sandbox'), // sandbox ou production
+            'environment' => env('PIX_ENVIRONMENT', 'production'), // sandbox ou production
         ],
         'card' => [
             'enabled' => env('CARD_ENABLED', true),
@@ -93,10 +93,10 @@ return [
     */
     
     'payment' => [
-        'default_gateway' => env('PIX_GATEWAY', 'woovi'),
+        'default_gateway' => env('PIX_GATEWAY', 'santander'),
         'enabled_gateways' => [
             'woovi' => env('PIX_ENABLED', true),
-            'santander' => env('SANTANDER_PIX_ENABLED', false),
+            'santander' => env('SANTANDER_PIX_ENABLED', true),
         ],
     ],
 
