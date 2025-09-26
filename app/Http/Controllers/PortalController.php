@@ -16,7 +16,7 @@ class PortalController extends Controller
     public function index(Request $request)
     {
         if (!$this->requestHasMikrotikContext($request)) {
-            return redirect()->away('http://login.tocantinswifi.local/login?dst=http%3A%2F%2Fwww.msftconnecttest.com%2Fredirect');
+            //return redirect()->away('http://login.tocantinswifi.local/login?dst=http%3A%2F%2Fwww.msftconnecttest.com%2Fredirect');
         }
  
         // Detectar MAC address e outras informações do dispositivo
