@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WiFi Tocantins - Conecte-se à Internet</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @php
+        $forceLogin = config('wifi.mikrotik.force_login_redirect', false);
+        $skipLogin = request()->boolean('skip_login');
+        $hasContext = request()->hasAny(['mac', 'mikrotik_mac', 'client_mac'])
+            || request()->boolean('from_login')
+            || request()->boolean('captive')
+            || request()->boolean('from_router');
+        $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
+    @endphp
+    @if ($forceLogin && !$skipLogin && !$hasContext)
+        <meta http-equiv="refresh" content="0;url={{ $loginUrl }}?dst={{ urlencode(request()->fullUrl()) }}">
+    @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
