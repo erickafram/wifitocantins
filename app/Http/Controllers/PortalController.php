@@ -15,13 +15,9 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
-        if (!$this->requestHasMikrotikContext($request)) {
-            //return redirect()->away('http://login.tocantinswifi.local/login?dst=http%3A%2F%2Fwww.msftconnecttest.com%2Fredirect');
-        }
- 
         // Detectar MAC address e outras informações do dispositivo
         $clientInfo = $this->getClientInfo($request);
-        
+
         return view('portal.index', [
             'client_info' => $clientInfo,
             'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
@@ -37,13 +33,6 @@ class PortalController extends Controller
     {
         $clientInfo = $this->getClientInfo($request);
 
-        if (!$this->requestHasMikrotikContext($request) && !$clientInfo['mac_address']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Dispositivo não identificado. Conecte-se pela página inicial da rede Wi-Fi.'
-            ], 400);
-        }
- 
         return response()->json([
             'success' => true,
             'mac_address' => $clientInfo['mac_address'],
@@ -59,10 +48,10 @@ class PortalController extends Controller
     {
         $ip = $request->ip();
         $userAgent = $request->userAgent();
-        
+
         // PRODUÇÃO: Em hotspot MikroTik, o MAC vem via headers especiais
         $macAddress = $this->getMacAddressFromMikrotik($request, $ip);
-        
+
         return [
             'ip_address' => $ip,
             'mac_address' => $macAddress,
@@ -86,15 +75,22 @@ class PortalController extends Controller
         try {
             // Converter IP externo para IP interno do hotspot
             $internalIp = $this->getInternalIpFromHeaders($request);
-            
+
             // Verificar se temos MAC reportado para este IP (interno ou externo)
             $reportedMac = MikrotikMacReport::getLatestMacForIp($internalIp);
             if (!$reportedMac && $internalIp !== $ip) {
                 $reportedMac = MikrotikMacReport::getLatestMacForIp($ip);
             }
-            
+
             if ($reportedMac) {
                 $cleanMac = strtoupper($reportedMac->mac_address);
+                Log::info('🚀 MAC REAL obtido via REPORT do MikroTik', [
+                    'mac' => $cleanMac, 
+                    'ip_externo' => $ip,
+                    'ip_interno' => $internalIp,
+                    'reportado_em' => $reportedMac->reported_at->format('Y-m-d H:i:s')
+                ]);
+                return $cleanMac;
                 
                 // ✅ VERIFICAR SE É MAC REAL (não começa com 02: ou virtual)
                 if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
@@ -116,6 +112,7 @@ class PortalController extends Controller
             Log::error('Erro ao consultar MACs reportados', ['error' => $e->getMessage()]);
         }
 
+        // 1. PRIORIDADE: MAC VIA PARÂMETROS URL (MikroTik redirect)
         // 1. PRIORIDADE: MAC VIA PARÂMETROS URL (MikroTik redirect) - FILTRAR MOCKS
         $macViaUrl = $request->get('mac') ?: 
                     $request->get('mikrotik_mac') ?: 
@@ -123,6 +120,8 @@ class PortalController extends Controller
 
         if ($macViaUrl && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $macViaUrl)) {
             $cleanMac = strtoupper(str_replace('-', ':', $macViaUrl));
+            Log::info('🎯 MAC REAL capturado via URL do MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
+            return $cleanMac;
             
             // ✅ VERIFICAR SE É MAC REAL (não virtual/mock)
             if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
@@ -145,14 +144,14 @@ class PortalController extends Controller
                       $request->header('X-Client-MAC') ?:
                       $request->header('HTTP_X_REAL_MAC') ?:
                       $request->header('HTTP_X_MIKROTIK_MAC');
-        
+
         if ($mikrotikMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mikrotikMac)) {
             $cleanMac = strtoupper(str_replace('-', ':', $mikrotikMac));
             Log::info('✅ MAC REAL obtido via header MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
             return $cleanMac;
         }
 
-        // 3. 🚀 CONSULTAR DIRETAMENTE NO MIKROTIK POR IP (MÉTODO MELHORADO)
+        // 3. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
         $macFromMikrotik = $this->queryMacByIpFromMikrotik($ip);
         if ($macFromMikrotik && $macFromMikrotik !== null) {
             Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
@@ -166,7 +165,7 @@ class PortalController extends Controller
             'ip' => $ip,
             'nota' => 'MikroTik não enviou MAC real nem respondeu consulta ARP'
         ]);
-        
+
         return $macAddress;
     }
 
@@ -176,78 +175,20 @@ class PortalController extends Controller
     private function queryMacByIpFromMikrotik($ip)
     {
         try {
-            // 🚀 NOVA ABORDAGEM: Consultar via API endpoint específico do MikroTik
-            Log::info('🔍 Consultando MAC no MikroTik via API', ['ip' => $ip]);
-            
-            // Consultar endpoint especial que criamos no MikroTik
-            $mikrotikHost = '10.10.10.1'; // IP interno do MikroTik
-            $token = config('wifi.mikrotik.sync_token', 'mikrotik-sync-2024');
-            
-            // URL para consultar DHCP leases por IP
-            $url = "http://{$mikrotikHost}/api/get-mac-by-ip?ip={$ip}&token={$token}";
-            
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 3,
-                    'method' => 'GET'
-                ]
-            ]);
-            
-            $response = @file_get_contents($url, false, $context);
-            
-            if ($response) {
-                $data = json_decode($response, true);
-                if (isset($data['mac_address']) && $data['mac_address']) {
-                    $cleanMac = strtoupper(str_replace('-', ':', $data['mac_address']));
-                    
-                    // Verificar se é MAC real (não mock)
-                    if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
-                        Log::info('✅ MAC REAL obtido via API MikroTik', [
-                            'mac' => $cleanMac, 
-                            'ip' => $ip,
-                            'method' => 'dhcp_lease_api'
-                        ]);
-                        return $cleanMac;
-                    }
-                }
+            if (!config('wifi.mikrotik.enabled', false)) {
+                return null;
             }
-            
-            // 🔄 FALLBACK: Tentar método direto via SSH (se disponível)
-            return $this->queryMacViaSshFallback($ip);
-            
+
+            // Consultar ARP table do MikroTik para obter MAC por IP
+            $mikrotikController = new \App\Http\Controllers\MikrotikController();
+            $macAddress = $mikrotikController->getMacByIp($ip);
+
+            return $macAddress;
         } catch (\Exception $e) {
-            Log::warning('⚠️ Erro ao consultar MAC no MikroTik via API', [
+            Log::error('Erro ao consultar MAC no MikroTik', [
                 'ip' => $ip,
                 'error' => $e->getMessage()
             ]);
-            return null;
-        }
-    }
-    
-    /**
-     * 🆘 MÉTODO FALLBACK: Consultar MAC via logs recentes do MikroTik
-     */
-    private function queryMacViaSshFallback($ip)
-    {
-        try {
-            // Consultar MACs reportados recentemente para este IP
-            $recentMac = MikrotikMacReport::where('ip_address', $ip)
-                                        ->where('reported_at', '>', now()->subMinutes(10))
-                                        ->orderBy('reported_at', 'desc')
-                                        ->first();
-            
-            if ($recentMac && !preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $recentMac->mac_address)) {
-                Log::info('📋 MAC REAL encontrado em reports recentes', [
-                    'mac' => $recentMac->mac_address,
-                    'ip' => $ip,
-                    'reportado_em' => $recentMac->reported_at->format('Y-m-d H:i:s')
-                ]);
-                return strtoupper($recentMac->mac_address);
-            }
-            
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Erro no fallback de consulta MAC', ['error' => $e->getMessage()]);
             return null;
         }
     }
@@ -270,7 +211,7 @@ class PortalController extends Controller
             );
             return strtoupper($mac);
         }
-        
+
         // Fallback para MAC aleatório
         return sprintf(
             '02:%02X:%02X:%02X:%02X:%02X',
@@ -289,10 +230,10 @@ class PortalController extends Controller
     {
         // O MikroTik envia o IP interno via X-Forwarded-For
         $forwardedFor = $request->header('X-Forwarded-For');
-        
+
         if ($forwardedFor) {
             $ips = array_map('trim', explode(',', $forwardedFor));
-            
+
             // Procurar por IP da rede do hotspot (10.10.10.x)
             foreach ($ips as $ip) {
                 if (preg_match('/^10\.10\.10\.\d+$/', $ip)) {
@@ -300,13 +241,13 @@ class PortalController extends Controller
                 }
             }
         }
-        
+
         // Fallback: verificar se o IP atual já é interno
         $currentIp = $request->ip();
         if (preg_match('/^10\.10\.10\.\d+$/', $currentIp)) {
             return $currentIp;
         }
-        
+
         // Se não encontrou IP interno, retornar o IP atual
         return $currentIp;
     }
@@ -322,7 +263,7 @@ class PortalController extends Controller
             }
             return 'mobile';
         }
-        
+
         return 'desktop';
     }
 
@@ -354,7 +295,7 @@ class PortalController extends Controller
 
             // Verificar se já usou o acesso grátis recentemente (evitar spam)
             $user = User::where('mac_address', $request->mac_address)->first();
-            
+
             if ($user) {
                 $lastFreeAccess = $user->sessions()
                     ->where('session_status', 'active')
@@ -411,17 +352,5 @@ class PortalController extends Controller
                 'message' => 'Erro interno. Tente novamente.'
             ], 500);
         }
-    }
-
-    /**
-     * Verifica se a requisição vem de um contexto do MikroTik
-     */
-    private function requestHasMikrotikContext(Request $request): bool
-    {
-        $hasMacParam = $request->hasAny(['mac', 'mikrotik_mac', 'client_mac']);
-        $hasLoginFlag = $request->boolean('from_login');
-        $hasHeaders = $request->headers->has('X-Mikrotik-MAC') || $request->headers->has('X-Client-MAC');
-
-        return $hasMacParam || $hasLoginFlag || $hasHeaders;
     }
 }
