@@ -24,6 +24,10 @@ return [
         'timeout' => env('MIKROTIK_TIMEOUT', 10),
         'enabled' => env('MIKROTIK_ENABLED', true),
         'sync_token' => env('MIKROTIK_SYNC_TOKEN', 'mikrotik-sync-2024'),
+        'login_url' => env('MIKROTIK_LOGIN_URL', 'http://login.tocantinswifi.local/login'),
+        'force_login_redirect' => filter_var(env('MIKROTIK_FORCE_LOGIN_REDIRECT', true), FILTER_VALIDATE_BOOL),
+        'force_login_redirect_local' => filter_var(env('MIKROTIK_FORCE_LOGIN_REDIRECT_LOCAL', false), FILTER_VALIDATE_BOOL),
+        'hotspot_subnets' => array_filter(array_map('trim', explode(',', env('MIKROTIK_HOTSPOT_SUBNETS', '10.5.50.0/24,10.10.10.0/24')))),
     ],
     
     'mikrotik_sync_token' => env('MIKROTIK_SYNC_TOKEN', 'mikrotik-sync-2024'),

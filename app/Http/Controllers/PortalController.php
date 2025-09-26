@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\MikrotikMacReport;
+use Symfony\Component\HttpFoundation\IpUtils;
 
 class PortalController extends Controller
 {
@@ -15,7 +17,10 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
-        // Detectar MAC address e outras informações do dispositivo
+        if ($this->shouldForceMikrotikRedirect($request)) {
+            return $this->redirectToMikrotikLogin($request);
+        }
+
         $clientInfo = $this->getClientInfo($request);
 
         return view('portal.index', [
@@ -24,6 +29,77 @@ class PortalController extends Controller
             'price' => config('wifi.pricing.default_price', 0.05),
             'speed' => '100+ Mbps'
         ]);
+    }
+
+    private function shouldForceMikrotikRedirect(Request $request): bool
+    {
+        $mikrotikConfig = config('wifi.mikrotik', []);
+
+        if (!($mikrotikConfig['enabled'] ?? false)) {
+            return false;
+        }
+
+        if (!($mikrotikConfig['force_login_redirect'] ?? false)) {
+            return false;
+        }
+
+        if ($request->has('skip_login') || $request->boolean('skip_login')) {
+            return false;
+        }
+
+        if (app()->environment('local') && !($mikrotikConfig['force_login_redirect_local'] ?? false)) {
+            return false;
+        }
+
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return false;
+        }
+
+        if ($this->requestHasMikrotikContext($request)) {
+            return false;
+        }
+
+        if ($request->session()->get('mikrotik_context_verified')) {
+            return false;
+        }
+
+        if (!$this->ipMatchesHotspotSubnets($request->ip())) {
+            if (!($mikrotikConfig['force_login_redirect_outside_hotspot'] ?? false)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function redirectToMikrotikLogin(Request $request)
+    {
+        $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
+
+        $portalUrl = config('wifi.server_url', config('app.url'));
+        $desiredUrl = $request->fullUrl();
+        $destination = $portalUrl ?: $desiredUrl;
+
+        $query = [
+            'dst' => $destination,
+            'return_url' => $desiredUrl,
+            'from_portal' => 1,
+        ];
+
+        if ($request->has('device')) {
+            $query['device'] = $request->get('device');
+        }
+
+        Log::info('🔁 Redirecionando usuário para login do MikroTik para capturar MAC/IP', [
+            'login_url' => $loginUrl,
+            'query' => $query,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        $glue = Str::contains($loginUrl, '?') ? '&' : '?';
+
+        return redirect()->away($loginUrl . $glue . http_build_query($query));
     }
 
     /**
@@ -84,28 +160,24 @@ class PortalController extends Controller
 
             if ($reportedMac) {
                 $cleanMac = strtoupper($reportedMac->mac_address);
-                Log::info('🚀 MAC REAL obtido via REPORT do MikroTik', [
-                    'mac' => $cleanMac, 
-                    'ip_externo' => $ip,
-                    'ip_interno' => $internalIp,
-                    'reportado_em' => $reportedMac->reported_at->format('Y-m-d H:i:s')
-                ]);
-                return $cleanMac;
-                
-                // ✅ VERIFICAR SE É MAC REAL (não começa com 02: ou virtual)
-                if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
-                    Log::info('🚀 MAC REAL WiFi obtido via REPORT do MikroTik', [
-                        'mac' => $cleanMac, 
+
+                if ($this->isLikelyMockMac($cleanMac)) {
+                    Log::warning('🚨 MAC virtual/mock reportado - continuando busca', [
+                        'mac_virtual' => $cleanMac,
                         'ip_externo' => $ip,
                         'ip_interno' => $internalIp,
-                        'reportado_em' => $reportedMac->reported_at->format('Y-m-d H:i:s'),
-                        'tipo' => 'MAC_REAL_WIFI'
                     ]);
-                    return $cleanMac;
                 } else {
-                    Log::warning('🚨 MAC virtual/mock reportado - continuando busca', [
-                        'mac_virtual' => $cleanMac
+                    Log::info('🚀 MAC REAL obtido via REPORT do MikroTik', [
+                        'mac' => $cleanMac,
+                        'ip_externo' => $ip,
+                        'ip_interno' => $internalIp,
+                        'reportado_em' => $reportedMac->reported_at?->format('Y-m-d H:i:s')
                     ]);
+
+                    $this->markMikrotikContextVerified($request);
+
+                    return $cleanMac;
                 }
             }
         } catch (\Exception $e) {
@@ -120,21 +192,21 @@ class PortalController extends Controller
 
         if ($macViaUrl && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $macViaUrl)) {
             $cleanMac = strtoupper(str_replace('-', ':', $macViaUrl));
-            Log::info('🎯 MAC REAL capturado via URL do MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
-            return $cleanMac;
-            
-            // ✅ VERIFICAR SE É MAC REAL (não virtual/mock)
-            if (!preg_match('/^(02:|00:00:00|ff:ff:ff)/i', $cleanMac)) {
-                Log::info('🎯 MAC REAL WiFi capturado via URL do MikroTik', [
-                    'mac' => $cleanMac, 
-                    'ip' => $ip,
-                    'tipo' => 'MAC_REAL_URL'
-                ]);
-                return $cleanMac;
-            } else {
+
+            if ($this->isLikelyMockMac($cleanMac)) {
                 Log::warning('🚨 MAC virtual/mock via URL - ignorado', [
-                    'mac_virtual' => $cleanMac
+                    'mac_virtual' => $cleanMac,
+                    'ip' => $ip,
                 ]);
+            } else {
+                Log::info('🎯 MAC REAL capturado via URL do MikroTik', [
+                    'mac' => $cleanMac,
+                    'ip' => $ip
+                ]);
+
+                $this->markMikrotikContextVerified($request);
+
+                return $cleanMac;
             }
         }
 
@@ -147,15 +219,36 @@ class PortalController extends Controller
 
         if ($mikrotikMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mikrotikMac)) {
             $cleanMac = strtoupper(str_replace('-', ':', $mikrotikMac));
-            Log::info('✅ MAC REAL obtido via header MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
-            return $cleanMac;
+
+            if ($this->isLikelyMockMac($cleanMac)) {
+                Log::warning('🚨 MAC virtual/mock recebido via header MikroTik', [
+                    'mac_virtual' => $cleanMac,
+                    'ip' => $ip,
+                ]);
+            } else {
+                Log::info('✅ MAC REAL obtido via header MikroTik', ['mac' => $cleanMac, 'ip' => $ip]);
+
+                $this->markMikrotikContextVerified($request);
+
+                return $cleanMac;
+            }
         }
 
         // 3. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
         $macFromMikrotik = $this->queryMacByIpFromMikrotik($ip);
         if ($macFromMikrotik && $macFromMikrotik !== null) {
-            Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
-            return $macFromMikrotik;
+            if ($this->isLikelyMockMac($macFromMikrotik)) {
+                Log::warning('🚨 MAC virtual/mock retornado pela consulta ARP MikroTik', [
+                    'mac_virtual' => $macFromMikrotik,
+                    'ip' => $ip,
+                ]);
+            } else {
+                Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
+
+                $this->markMikrotikContextVerified($request);
+
+                return strtoupper($macFromMikrotik);
+            }
         }
 
         // 4. ÚLTIMO RECURSO: GERAR MAC CONSISTENTE BASEADO NO IP 
@@ -234,22 +327,96 @@ class PortalController extends Controller
         if ($forwardedFor) {
             $ips = array_map('trim', explode(',', $forwardedFor));
 
-            // Procurar por IP da rede do hotspot (10.10.10.x)
-            foreach ($ips as $ip) {
-                if (preg_match('/^10\.10\.10\.\d+$/', $ip)) {
-                    return $ip;
+            foreach ($ips as $candidateIp) {
+                if ($this->ipMatchesHotspotSubnets($candidateIp)) {
+                    return $candidateIp;
                 }
             }
         }
 
         // Fallback: verificar se o IP atual já é interno
         $currentIp = $request->ip();
-        if (preg_match('/^10\.10\.10\.\d+$/', $currentIp)) {
+        if ($this->ipMatchesHotspotSubnets($currentIp)) {
             return $currentIp;
         }
 
         // Se não encontrou IP interno, retornar o IP atual
         return $currentIp;
+    }
+
+    private function requestHasMikrotikContext(Request $request): bool
+    {
+        if ($request->session()->get('mikrotik_context_verified')) {
+            return true;
+        }
+
+        $macParams = array_filter([
+            $request->get('mac'),
+            $request->get('mikrotik_mac'),
+            $request->get('client_mac'),
+        ]);
+
+        foreach ($macParams as $macCandidate) {
+            $normalized = strtoupper(str_replace('-', ':', (string) $macCandidate));
+            if (preg_match('/^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/', $normalized) && !$this->isLikelyMockMac($normalized)) {
+                return true;
+            }
+        }
+
+        if ($request->boolean('captive') || $request->boolean('from_login') || $request->boolean('from_router')) {
+            return true;
+        }
+
+        $source = Str::lower((string) $request->query('source', ''));
+        if (in_array($source, ['mikrotik', 'captive-portal', 'hotspot'], true)) {
+            return true;
+        }
+
+        $headers = [
+            $request->header('X-Real-MAC'),
+            $request->header('X-Mikrotik-MAC'),
+            $request->header('X-Client-MAC'),
+            $request->header('HTTP_X_REAL_MAC'),
+            $request->header('HTTP_X_MIKROTIK_MAC'),
+        ];
+
+        foreach ($headers as $headerMac) {
+            if ($headerMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $headerMac)) {
+                $normalized = strtoupper(str_replace('-', ':', $headerMac));
+                if (!$this->isLikelyMockMac($normalized)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function ipMatchesHotspotSubnets(?string $ip): bool
+    {
+        if (!$ip) {
+            return false;
+        }
+
+        $subnets = config('wifi.mikrotik.hotspot_subnets', []);
+
+        foreach ($subnets as $subnet) {
+            if (IpUtils::checkIp($ip, $subnet)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function markMikrotikContextVerified(Request $request): void
+    {
+        $request->session()->put('mikrotik_context_verified', true);
+    }
+
+    private function isLikelyMockMac(string $mac): bool
+    {
+        return (bool) preg_match('/^(02:|00:00:00|FF:FF:FF)/i', $mac);
     }
 
     /**
