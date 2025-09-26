@@ -705,6 +705,30 @@
                     </div>
                 </div>
 
+                <!-- OR Divider -->
+                <div class="text-center">
+                    <div class="flex items-center">
+                        <div class="flex-grow border-t border-tocantins-gold/40"></div>
+                        <span class="flex-shrink mx-6 text-tocantins-gray-green font-medium text-sm bg-tocantins-light-cream px-4 py-1 rounded-full border border-tocantins-gold/30">OU</span>
+                        <div class="flex-grow border-t border-tocantins-gold/40"></div>
+                    </div>
+                </div>
+
+                <!-- Free Instagram Option (SEGUNDO) -->
+                <div class="elegant-card rounded-3xl shadow-2xl p-5 animate-slide-up relative overflow-hidden">
+                    <div class="text-center mb-4">
+                        <div class="bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow rounded-2xl p-4 mb-4 shadow-lg border border-tocantins-gold/50 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -slow"></div>
+                            <p class="text-tocantins-gray-green text-xs font-bold mb-1 relative z-10">🎁 GRÁTIS</p>
+                            <p class="text-tocantins-gray-green text-xs mb-1 relative z-10">📸 Curta no Instagram e ganhe</p>
+                            <p class="text-tocantins-gray-green text-sm font-bold relative z-10">5 MIN GRÁTIS</p>
+                        </div>
+                        
+                        <button id="instagram-btn-desktop" class="w-full bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow text-tocantins-gray-green font-bold py-3 px-5 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 hover:from-tocantins-light-yellow hover:to-tocantins-gold hover:shadow-xl text-sm">
+                            📸 Curtir Instagram
+                        </button>
+                    </div>
+                </div>
                 
                 </div>
             </div>
