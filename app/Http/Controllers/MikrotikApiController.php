@@ -89,15 +89,26 @@ class MikrotikApiController extends Controller
             }
 
             // 🚀 CONSULTA ULTRA-RÁPIDA - Buscar usuários pagos ativos
-            $paidUsers = User::where('status', 'connected')
-                           ->where('expires_at', '>', now())
+            $paidUsers = User::where(function($query) {
+                               // Usuários já conectados e não expirados
+                               $query->where('status', 'connected')
+                                     ->where('expires_at', '>', now());
+                           })
+                           ->orWhere(function($query) {
+                               // OU usuários com pagamentos aprovados mas status ainda pending
+                               $query->where('status', 'pending')
+                                     ->whereHas('payments', function($paymentQuery) {
+                                         $paymentQuery->where('status', 'completed')
+                                                     ->where('paid_at', '>', now()->subHours(24));
+                                     });
+                           })
                            ->whereNotNull('mac_address')
                            ->with(['payments' => function($query) {
                                $query->where('status', 'completed')
                                      ->latest()
                                      ->limit(1);
                            }])
-                           ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at']);
+                           ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at', 'status']);
 
             // Buscar usuários expirados que devem ser bloqueados
             $expiredUsers = User::where('status', 'connected')
@@ -108,6 +119,28 @@ class MikrotikApiController extends Controller
             // Registrar MACs que devem ser liberados na tabela mikrotik_mac_reports
             foreach ($paidUsers as $user) {
                 try {
+                    // Se o usuário tem pagamento aprovado mas status ainda pending, ativar automaticamente
+                    if ($user->status === 'pending' && $user->payments->isNotEmpty()) {
+                        $latestPayment = $user->payments->first();
+                        if ($latestPayment && $latestPayment->status === 'completed') {
+                            $sessionDurationHours = config('wifi.pricing.session_duration_hours', 12);
+                            $expiresAt = $latestPayment->paid_at->addHours($sessionDurationHours);
+                            
+                            $user->update([
+                                'status' => 'connected',
+                                'connected_at' => $latestPayment->paid_at,
+                                'expires_at' => $expiresAt
+                            ]);
+                            
+                            Log::info('🔧 Status do usuário corrigido automaticamente', [
+                                'user_id' => $user->id,
+                                'mac_address' => $user->mac_address,
+                                'payment_id' => $latestPayment->id,
+                                'expires_at' => $expiresAt->toISOString()
+                            ]);
+                        }
+                    }
+
                     MikrotikMacReport::updateOrCreate(
                         [
                             'ip_address' => $user->ip_address,
@@ -132,10 +165,18 @@ class MikrotikApiController extends Controller
                 'success' => true,
                 'timestamp' => now()->toISOString(),
                 'liberate_macs' => $paidUsers->map(function($user) {
+                    // Se o usuário não tem expires_at definido, calcular baseado no pagamento
+                    $expiresAt = $user->expires_at;
+                    if (!$expiresAt && $user->payments->isNotEmpty()) {
+                        $latestPayment = $user->payments->first();
+                        $sessionDurationHours = config('wifi.pricing.session_duration_hours', 12);
+                        $expiresAt = $latestPayment->paid_at->addHours($sessionDurationHours);
+                    }
+                    
                     return [
                         'mac_address' => $user->mac_address,
                         'ip_address' => $user->ip_address,
-                        'expires_at' => $user->expires_at->toISOString(),
+                        'expires_at' => $expiresAt ? $expiresAt->toISOString() : now()->addHours(12)->toISOString(),
                         'user_id' => $user->id,
                         'action' => 'LIBERATE'
                     ];
