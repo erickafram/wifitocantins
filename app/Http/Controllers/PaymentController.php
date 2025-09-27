@@ -831,7 +831,17 @@ class PaymentController extends Controller
             Log::info('✅ Sessão criada', ['session_id' => $session->id]);
 
             // Atualizar status do usuário com duração configurável
-            $sessionDurationHours = config('wifi.pricing.session_duration_hours', 12); // 🎯 PADRÃO 12 HORAS
+            $sessionDurationConfig = config('wifi.pricing.session_duration_hours', 12);
+            $sessionDurationHours = 12;
+
+            if (is_numeric($sessionDurationConfig)) {
+                $sessionDurationHours = max((float) $sessionDurationConfig, 0.1);
+            } elseif (is_string($sessionDurationConfig)) {
+                if (preg_match('/\d+(?:[\.,]\d+)?/', $sessionDurationConfig, $matches)) {
+                    $sessionDurationHours = max((float) str_replace(',', '.', $matches[0]), 0.1);
+                }
+            }
+
             $expiresAt = now()->addHours($sessionDurationHours);
             
             $payment->user->update([
