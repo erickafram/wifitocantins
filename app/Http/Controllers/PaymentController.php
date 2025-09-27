@@ -271,12 +271,10 @@ class PaymentController extends Controller
                 ]);
 
                 // Atualizar status do usuário
-                $sessionDurationHours = config('wifi.pricing.session_duration_hours', 12);
-
                 $user->update([
                     'status' => 'connected',
                     'connected_at' => now(),
-                    'expires_at' => now()->addHours($sessionDurationHours)
+                    'expires_at' => now()->addHours(24)
                 ]);
 
                 DB::commit();
