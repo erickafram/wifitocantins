@@ -49,19 +49,19 @@
             <nav class="flex-1 flex flex-col pt-6 relative z-10">
                 <div class="space-y-3 px-3">
                     <!-- Dashboard -->
-                    <button onclick="showSection('dashboard')" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 group relative" title="Dashboard">
+                    <a href="{{ route('admin.dashboard') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.dashboard') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Dashboard">
                         <span class="text-xl">📊</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-30 blur group-hover:opacity-50"></div>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.dashboard') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Dashboard
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
-                    </button>
+                    </a>
 
                     <!-- Usuários -->
-                    <a href="{{ route('admin.users') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Usuários">
+                    <a href="{{ route('admin.users') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.users*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Usuários">
                         <span class="text-xl">👥</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.users*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Usuários
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
@@ -69,9 +69,9 @@
                     </a>
 
                     <!-- Vouchers -->
-                    <a href="{{ route('admin.vouchers') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Vouchers">
+                    <a href="{{ route('admin.vouchers') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.vouchers*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Vouchers">
                         <span class="text-xl">🎫</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.vouchers*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Vouchers
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
@@ -79,9 +79,9 @@
                     </a>
 
                     <!-- Relatórios -->
-                    <a href="{{ route('admin.reports') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Relatórios">
+                    <a href="{{ route('admin.reports') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.reports*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Relatórios">
                         <span class="text-xl">📈</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.reports*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Relatórios
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
@@ -99,9 +99,9 @@
                     </a>
 
                     <!-- Configurações -->
-                    <a href="{{ route('admin.settings') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Configurações">
+                    <a href="{{ route('admin.settings') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.settings*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Configurações">
                         <span class="text-xl">⚙️</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.settings*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Configurações
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
@@ -109,9 +109,9 @@
                     </a>
 
                     <!-- Dispositivos -->
-                    <a href="{{ route('admin.devices') }}" class="menu-item w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center shadow-md hover:shadow-lg hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white transform hover:scale-110 transition-all duration-300 group relative" title="Dispositivos">
+                    <a href="{{ route('admin.devices') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.devices*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Dispositivos">
                         <span class="text-xl">📱</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.devices*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Dispositivos
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
@@ -432,41 +432,7 @@
                     </div>
                 </div>
 
-                <!-- Outras Seções (hidden por padrão) -->
-                <div id="users-section" class="section-content hidden">
-                    <div class="bg-white rounded-lg shadow-sm p-4">
-                        <h2 class="text-lg font-semibold text-tocantins-gray-green mb-4">Gerenciar Usuários</h2>
-                        <p class="text-sm text-gray-600">Seção de gerenciamento de usuários em desenvolvimento...</p>
-                    </div>
-                </div>
-
-                <div id="vouchers-section" class="section-content hidden">
-                    <div class="bg-white rounded-lg shadow-sm p-4">
-                        <h2 class="text-lg font-semibold text-tocantins-gray-green mb-4">Gerenciar Vouchers</h2>
-                        <p class="text-sm text-gray-600">Seção de gerenciamento de vouchers em desenvolvimento...</p>
-                    </div>
-                </div>
-
-                <div id="reports-section" class="section-content hidden">
-                    <div class="bg-white rounded-lg shadow-sm p-4">
-                        <h2 class="text-lg font-semibold text-tocantins-gray-green mb-4">Relatórios</h2>
-                        <p class="text-sm text-gray-600">Seção de relatórios em desenvolvimento...</p>
-                    </div>
-                </div>
-
-                <div id="settings-section" class="section-content hidden">
-                    <div class="bg-white rounded-lg shadow-sm p-4">
-                        <h2 class="text-lg font-semibold text-tocantins-gray-green mb-4">Configurações</h2>
-                        <p class="text-sm text-gray-600">Seção de configurações em desenvolvimento...</p>
-                    </div>
-                </div>
-
-                <div id="mikrotik-section" class="section-content hidden">
-                    <div class="bg-white rounded-lg shadow-sm p-4">
-                        <h2 class="text-lg font-semibold text-tocantins-gray-green mb-4">MikroTik</h2>
-                        <p class="text-sm text-gray-600">Seção de configurações MikroTik em desenvolvimento...</p>
-                    </div>
-                </div>
+                <!-- Seções removidas - agora cada funcionalidade tem sua própria página -->
 
             </main>
         </div>
@@ -557,31 +523,10 @@
             }
         }
 
-        // Função para mostrar seções
+        // Função para mostrar seções (mantida para compatibilidade, mas não mais usada)
         function showSection(sectionName) {
-            // Esconder todas as seções
-            const sections = document.querySelectorAll('.section-content');
-            sections.forEach(section => section.classList.add('hidden'));
-            
-            // Mostrar seção selecionada
-            const targetSection = document.getElementById(sectionName + '-section');
-            if (targetSection) {
-                targetSection.classList.remove('hidden');
-            }
-            
-            // Atualizar menu items
-            const menuItems = document.querySelectorAll('.menu-item');
-            menuItems.forEach(item => {
-                item.classList.remove('bg-gradient-to-br', 'from-tocantins-green', 'to-tocantins-dark-green', 'text-white');
-                item.classList.add('bg-gradient-to-br', 'from-gray-100', 'to-gray-200', 'text-gray-600', 'hover:from-tocantins-green', 'hover:to-tocantins-dark-green', 'hover:text-white');
-            });
-            
-            // Destacar item ativo
-            const activeButton = document.querySelector(`button[onclick="showSection('${sectionName}')"]`);
-            if (activeButton) {
-                activeButton.classList.remove('bg-gradient-to-br', 'from-gray-100', 'to-gray-200', 'text-gray-600', 'hover:from-tocantins-green', 'hover:to-tocantins-dark-green', 'hover:text-white');
-                activeButton.classList.add('bg-gradient-to-br', 'from-tocantins-green', 'to-tocantins-dark-green', 'text-white');
-            }
+            // Função removida - agora usamos navegação direta por links
+            console.log('Navegação direta implementada - função showSection() obsoleta');
         }
 
         // Auto-refresh apenas para dashboard
@@ -714,9 +659,8 @@
             simulateNetworkData(); // Substituir por updateNetworkStatus() quando integrar
         }, 10000);
 
-        // Inicializar dashboard como ativo
+        // Inicializar dashboard 
         document.addEventListener('DOMContentLoaded', function() {
-            showSection('dashboard');
             simulateNetworkData(); // Inicializar status
         });
     </script>

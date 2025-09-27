@@ -204,10 +204,23 @@ class AdminController extends Controller
      */
     public function deactivateVoucher($id)
     {
-        $voucher = Voucher::findOrFail($id);
-        $voucher->update(['is_active' => false]);
+        try {
+            $voucher = Voucher::findOrFail($id);
+            $voucher->update(['is_active' => false]);
 
-        return redirect()->back()->with('success', 'Voucher desativado com sucesso!');
+            // Se for uma requisição AJAX, retorna JSON
+            if (request()->expectsJson()) {
+                return response()->json(['success' => true, 'message' => 'Voucher desativado com sucesso!']);
+            }
+
+            return redirect()->back()->with('success', 'Voucher desativado com sucesso!');
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Erro ao desativar voucher: ' . $e->getMessage()]);
+            }
+            
+            return redirect()->back()->with('error', 'Erro ao desativar voucher: ' . $e->getMessage());
+        }
     }
 
     /**

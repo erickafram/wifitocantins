@@ -491,37 +491,6 @@
                 </div>
             </div>
 
-                 <!-- OR Divider -->
-                 <div class="text-center">
-                     <div class="flex items-center">
-                         <div class="flex-grow border-t border-tocantins-gold/40"></div>
-                         <span class="flex-shrink mx-4 sm:mx-6 text-tocantins-gray-green font-medium text-xs sm:text-sm bg-tocantins-light-cream px-3 sm:px-4 py-1 rounded-full border border-tocantins-gold/30">OU</span>
-                         <div class="flex-grow border-t border-tocantins-gold/40"></div>
-                     </div>
-                 </div>
-                 
-                 <!-- Free Instagram Option -->
-                 <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-5 animate-slide-up relative overflow-hidden">
-                     <div class="text-center mb-4">
-                         <div class="bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow rounded-2xl p-3 sm:p-4 mb-4 shadow-lg border border-tocantins-gold/50 relative overflow-hidden">
-                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -slow"></div>
-                             <p class="text-tocantins-gray-green text-xs font-bold mb-1 relative z-10">🎁 GRÁTIS</p>
-                             <p class="text-tocantins-gray-green text-xs mb-1 relative z-10">📸 Curta no Instagram e ganhe</p>
-                             <p class="text-tocantins-gray-green text-xs sm:text-sm font-bold relative z-10">5 MIN GRÁTIS</p>
-                         </div>
-                         
-                         <button 
-                             id="instagram-btn-mobile" 
-                             class="w-full bg-gradient-to-r from-tocantins-gold via-amber-400 to-tocantins-light-yellow text-tocantins-gray-green font-bold py-4 px-4 sm:px-5 rounded-2xl shadow-2xl transform transition-all duration-300 hover:scale-105 active:scale-95 hover:from-tocantins-light-yellow hover:to-tocantins-gold hover:shadow-2xl text-sm sm:text-base modern-glow relative overflow-hidden group"
-                         >
-                         <span class="relative z-10 flex items-center justify-center space-x-2">
-                             <span class="text-lg">📸</span>
-                             <span>Curtir Instagram</span>
-                         </span>
-                         <div class="absolute inset-0 bg-gradient-to-r from-pink-300/20 to-purple-300/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                 </button>
-                     </div>
-                 </div>
              </div>
 
              <!-- WhatsApp Cards - Mobile (Por último) -->
@@ -717,30 +686,6 @@
                     </div>
                 </div>
 
-                <!-- OR Divider -->
-                <div class="text-center">
-                    <div class="flex items-center">
-                        <div class="flex-grow border-t border-tocantins-gold/40"></div>
-                        <span class="flex-shrink mx-6 text-tocantins-gray-green font-medium text-sm bg-tocantins-light-cream px-4 py-1 rounded-full border border-tocantins-gold/30">OU</span>
-                        <div class="flex-grow border-t border-tocantins-gold/40"></div>
-                    </div>
-                </div>
-
-                <!-- Free Instagram Option (SEGUNDO) -->
-                <div class="elegant-card rounded-3xl shadow-2xl p-5 animate-slide-up relative overflow-hidden">
-                    <div class="text-center mb-4">
-                        <div class="bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow rounded-2xl p-4 mb-4 shadow-lg border border-tocantins-gold/50 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -slow"></div>
-                            <p class="text-tocantins-gray-green text-xs font-bold mb-1 relative z-10">🎁 GRÁTIS</p>
-                            <p class="text-tocantins-gray-green text-xs mb-1 relative z-10">📸 Curta no Instagram e ganhe</p>
-                            <p class="text-tocantins-gray-green text-sm font-bold relative z-10">5 MIN GRÁTIS</p>
-                        </div>
-                        
-                        <button id="instagram-btn-desktop" class="w-full bg-gradient-to-r from-tocantins-gold to-tocantins-light-yellow text-tocantins-gray-green font-bold py-3 px-5 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 hover:from-tocantins-light-yellow hover:to-tocantins-gold hover:shadow-xl text-sm">
-                            📸 Curtir Instagram
-                        </button>
-                    </div>
-                </div>
                 
                 </div>
             </div>
@@ -766,15 +711,6 @@
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="text-center mt-12 text-sm text-tocantins-gray-green glass-effect rounded-2xl p-6 shadow-xl border border-tocantins-gold/30">
-            <p class="mb-3 text-sm">
-                <a href="#" class="hover:text-tocantins-green transition-colors font-medium">Termos de Uso</a> • 
-                <a href="#" class="hover:text-tocantins-green transition-colors font-medium">Política de Privacidade</a>
-            </p>
-            <p class="text-tocantins-green font-semibold text-sm">📞 Suporte: (63) 9992410056</p>
-            <p class="text-xs text-tocantins-gray-green/70 mt-2">Desenvolvido por Érick Vinicius</p>
-        </footer>
     </div>
 
     <!-- Registration Modal -->
