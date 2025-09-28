@@ -195,6 +195,18 @@ class WooviPixService
             $charge = $webhookData['charge'] ?? [];
 
             if ($event === 'OPENPIX:CHARGE_COMPLETED' && !empty($charge)) {
+                // Somente trata como pago quando o status for de fato COMPLETED
+                $status = strtoupper($charge['status'] ?? '');
+
+                if ($status !== 'COMPLETED') {
+                    return [
+                        'success' => true,
+                        'payment_approved' => false,
+                        'event' => $event,
+                        'status' => $status,
+                    ];
+                }
+
                 return [
                     'success' => true,
                     'payment_approved' => true,

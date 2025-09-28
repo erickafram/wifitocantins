@@ -445,24 +445,6 @@ class PaymentController extends Controller
     }
 
     /**
-     * Simula processamento PIX (em produção, integrar com gateway real)
-     */
-    private function simulatePixPayment($payment)
-    {
-        // Simular 95% de taxa de aprovação
-        return rand(1, 100) <= 95;
-    }
-
-    /**
-     * Simula processamento cartão (em produção, integrar com gateway real)
-     */
-    private function simulateCardPayment($payment)
-    {
-        // Simular 90% de taxa de aprovação
-        return rand(1, 100) <= 90;
-    }
-
-    /**
      * Webhook para receber confirmações de pagamento
      */
     public function webhook(Request $request)

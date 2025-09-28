@@ -1,69 +1,80 @@
-:local url "https://www.tocantinstransportewifi.com.br/api/mikrotik/check-paid-users?token=mikrotik-sync-2024&format=routeros";
+:local url "https://www.tocantinstransportewifi.com.br/api/mikrotik/check-paid-users?token=mikrotik-sync-2024";
 :local hotspotServer "tocantins-hotspot";
 :local bypassComment "AUTO-PAGO";
-:local tempFile "mikrotik-sync.tmp";
 
-# --------------------------------------------------
-# Fetch data from server (RouterOS-friendly format)
-# --------------------------------------------------
-:do {
-    /tool fetch url=$url mode=https http-method=get output=file dst-path=$tempFile check-certificate=no;
-} on-error={
-    :log error ("Falha ao consultar API: " . $message);
+:local result [/tool fetch url=$url mode=https http-method=get output=user check-certificate=no as-value];
+:if ([:typeof $result] = "nothing") do={
+    :log error "Fetch sem retorno";
     :return;
 }
 
-:if ([:len [/file find where name=$tempFile]] = 0) do={
-    :log error "Arquivo temporario nao criado";
+:local status ($result->"status");
+:if ($status != "finished") do={
+    :log error ("Fetch falhou: " . $status);
     :return;
 }
 
-:local content [/file get $tempFile contents];
-/file remove $tempFile;
-
-:if ([:len $content] = 0) do={
+:local payload ($result->"data");
+:if ([:len $payload] = 0) do={
     :log info "Nenhum dado recebido";
     :return;
 }
 
-:local lines [:toarray [:split $content "\n"]];
+:local liberateToken "\"liberate_macs\":[";
+:local blockToken "\"block_macs\":[";
+:local macMarker "\"mac_address\":\"";
+:local macMarkerLen [:len $macMarker];
+
 :local liberados 0;
 :local bloqueados 0;
 
-:foreach line in=$lines do={
-    :local trimmed [:trim $line];
-    :if ([:len $trimmed] = 0) do={ :continue; }
+# --------------------------------------------------
+# Extrair seção de liberação
+# --------------------------------------------------
+:local liberateArray "";
+:local liberateStart [:find $payload $liberateToken];
+:if ($liberateStart != -1) do={
+    :local start ($liberateStart + [:len $liberateToken]);
+    :local end [:find $payload "]" $start];
+    :if ($end != -1) do={
+        :set liberateArray [:pick $payload $start $end];
+    }
+}
 
-    :local parts [:toarray [:split $trimmed "|"]];
-    :local action [:pick $parts 0];
+# --------------------------------------------------
+# Extrair seção de bloqueio
+# --------------------------------------------------
+:local blockArray "";
+:local blockStart [:find $payload $blockToken];
+:if ($blockStart != -1) do={
+    :local start ($blockStart + [:len $blockToken]);
+    :local end [:find $payload "]" $start];
+    :if ($end != -1) do={
+        :set blockArray [:pick $payload $start $end];
+    }
+}
 
-    :if ($action = "STATUS") do={
-        :if ([:len $parts] < 2) do={ :continue; }
-        :local status [:pick $parts 1];
-        :if ($status != "success") do={
-            :log error ("API retornou status: " . $status);
-            :return;
+# --------------------------------------------------
+# Processar liberação
+# --------------------------------------------------
+:if ([:len [:trim $liberateArray]] > 0) do={
+    :local pos 0;
+    :while (true) do={
+        :set pos [:find $liberateArray $macMarker $pos];
+        :if ($pos = -1) do={ :break; }
+
+        :local start ($pos + $macMarkerLen);
+        :local end [:find $liberateArray "\"" $start];
+        :if ($end = -1) do={ :break; }
+
+        :local mac [:toupper [:pick $liberateArray $start $end]];
+        :set pos ($end + 1);
+
+        :if ([:len $mac] != 17) do={
+            :log warning ("MAC invalido em liberate_macs: " . $mac);
+            :continue;
         }
-        :continue;
-    }
 
-    :if ($action = "TOTAL") do={
-        :log info ("Resumo sincronizacao - liberados: " . [:pick $parts 1] . " / bloqueados: " . [:pick $parts 2]);
-        :continue;
-    }
-
-    :if (([:len $parts] < 2) || ([:len [:pick $parts 1]] = 0)) do={
-        :log warning ("Linha invalida: " . $trimmed);
-        :continue;
-    }
-
-    :local mac [:toupper [:pick $parts 1]];
-    :if ([:len $mac] != 17) do={
-        :log warning ("MAC invalido recebido: " . $mac);
-        :continue;
-    }
-
-    :if ($action = "LIBERATE") do={
         :do {/ip hotspot ip-binding remove [find mac-address=$mac];} on-error={}
         :do {/ip hotspot user remove [find mac-address=$mac];} on-error={}
         :do {/ip hotspot active remove [find mac-address=$mac];} on-error={}
@@ -80,22 +91,40 @@
             :set liberados ($liberados + 1);
             :log info ("Liberado via API: " . $mac);
         }
-
-    } else={
-        :if ($action = "BLOCK") do={
-            :do {/ip hotspot ip-binding remove [find mac-address=$mac];} on-error={}
-            :do {/ip hotspot user remove [find mac-address=$mac];} on-error={}
-            :do {/ip hotspot active remove [find mac-address=$mac];} on-error={}
-
-            :set bloqueados ($bloqueados + 1);
-            :log info ("Bloqueado via API: " . $mac);
-        } else={
-            :log warning ("Acao desconhecida: " . $action);
-        }
     }
 }
 
 # --------------------------------------------------
-# Final summary
+# Processar bloqueio
 # --------------------------------------------------
-:log info ("Processo concluido - liberados: " . $liberados . " / bloqueados: " . $bloqueados);
+:if ([:len [:trim $blockArray]] > 0) do={
+    :local pos 0;
+    :while (true) do={
+        :set pos [:find $blockArray $macMarker $pos];
+        :if ($pos = -1) do={ :break; }
+
+        :local start ($pos + $macMarkerLen);
+        :local end [:find $blockArray "\"" $start];
+        :if ($end = -1) do={ :break; }
+
+        :local mac [:toupper [:pick $blockArray $start $end]];
+        :set pos ($end + 1);
+
+        :if ([:len $mac] != 17) do={
+            :log warning ("MAC invalido em block_macs: " . $mac);
+            :continue;
+        }
+
+        :do {/ip hotspot ip-binding remove [find mac-address=$mac];} on-error={}
+        :do {/ip hotspot user remove [find mac-address=$mac];} on-error={}
+        :do {/ip hotspot active remove [find mac-address=$mac];} on-error={}
+
+        :set bloqueados ($bloqueados + 1);
+        :log info ("Bloqueado via API: " . $mac);
+    }
+}
+
+# --------------------------------------------------
+# Resumo final
+# --------------------------------------------------
+:log info ("Resumo sincronizacao - liberados: " . $liberados . " / bloqueados: " . $bloqueados);
