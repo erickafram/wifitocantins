@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\HotspotIdentity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -188,8 +189,8 @@ class RegistrationController extends Controller
             }
 
             // 🎯 PROCESSAR MAC ADDRESS
-            $macAddress = $request->mac_address ? strtoupper(str_replace('-', ':', $request->mac_address)) : null;
-            $ipAddress = $this->resolveClientIp($request);
+            $ipAddress = HotspotIdentity::resolveClientIp($request);
+            $macAddress = HotspotIdentity::resolveRealMac($request->mac_address, $ipAddress);
 
             // Se tem user_id, é um usuário existente
             if ($request->user_id) {
@@ -210,7 +211,7 @@ class RegistrationController extends Controller
                 ];
 
                 // 🎯 ATUALIZAR MAC E IP SE FORNECIDOS
-                if ($macAddress && ($this->shouldReplaceMac($user->mac_address, $macAddress))) {
+                if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
                     $updateData['mac_address'] = $macAddress;
                 }
                 if ($ipAddress && $user->ip_address !== $ipAddress) {
@@ -235,7 +236,7 @@ class RegistrationController extends Controller
 
             if ($existingUser) {
                 $updates = [];
-                if ($macAddress && $this->shouldReplaceMac($existingUser->mac_address, $macAddress)) {
+                if (HotspotIdentity::shouldReplaceMac($existingUser->mac_address, $macAddress)) {
                     $updates['mac_address'] = $macAddress;
                 }
                 if ($ipAddress && $existingUser->ip_address !== $ipAddress) {
