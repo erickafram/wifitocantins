@@ -198,7 +198,7 @@ class WooviPixService
                 // Somente trata como pago quando o status for de fato COMPLETED
                 $status = strtoupper($charge['status'] ?? '');
 
-                if ($status !== 'COMPLETED') {
+                if (! in_array($status, ['COMPLETED', 'CONFIRMED'], true)) {
                     return [
                         'success' => true,
                         'payment_approved' => false,
@@ -240,10 +240,43 @@ class WooviPixService
      */
     private function validateWebhook(array $webhookData): bool
     {
-        // Woovi envia um hash HMAC-SHA256 no header X-Woovi-Signature
-        // Por enquanto, retorna true para desenvolvimento
-        // TODO: Implementar validação real conforme documentação
-        return true;
+        $signature = request()->header('X-Woovi-Signature');
+
+        if (! $signature || empty($this->appSecret)) {
+            Log::warning('Woovi webhook sem assinatura ou sem segredo configurado');
+
+            return false;
+        }
+
+        try {
+            $payload = json_encode($webhookData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            if ($payload === false) {
+                Log::warning('Woovi webhook: falha ao serializar payload para validação');
+
+                return false;
+            }
+
+            $expectedSignature = hash_hmac('sha256', $payload, $this->appSecret);
+
+            $isValid = hash_equals($expectedSignature, $signature);
+
+            if (! $isValid) {
+                Log::warning('Woovi webhook assinatura inválida', [
+                    'expected' => $expectedSignature,
+                    'received' => $signature,
+                ]);
+            }
+
+            return $isValid;
+
+        } catch (Exception $e) {
+            Log::error('Erro ao validar assinatura Woovi', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     /**

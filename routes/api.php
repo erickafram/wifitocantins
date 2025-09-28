@@ -44,13 +44,6 @@ Route::prefix('payment')->group(function () {
     Route::post('/webhook', [PaymentController::class, 'webhook']);
     Route::post('/webhook/santander', [PaymentController::class, 'santanderWebhook']);
     Route::post('/webhook/woovi', [PaymentController::class, 'wooviWebhook']);
-    Route::post('/webhook/woovi/created', [PaymentController::class, 'wooviWebhookCreated']);
-    Route::post('/webhook/woovi/expired', [PaymentController::class, 'wooviWebhookExpired']);
-    Route::post('/webhook/woovi/transaction', [PaymentController::class, 'wooviWebhookTransaction']);
-    Route::post('/webhook/woovi/different-payer', [PaymentController::class, 'wooviWebhookDifferentPayer']);
-    
-    // Webhook unificado com retry automático
-    Route::post('/webhook/woovi/unified', [PaymentController::class, 'wooviWebhookUnified']);
     Route::get('/test-santander', [PaymentController::class, 'testSantanderConnection']);
     Route::get('/test-woovi', [PaymentController::class, 'testWooviConnection']);
 });
