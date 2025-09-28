@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\HotspotIdentity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class RegistrationController extends Controller
 {
@@ -35,7 +33,7 @@ class RegistrationController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Dados inválidos',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -44,22 +42,22 @@ class RegistrationController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
-                'password' => Hash::make('default_password_' . time()), // Password temporário
+                'password' => Hash::make('default_password_'.time()), // Password temporário
                 'registered_at' => now(),
-                'status' => 'pending' // Status inicial
+                'status' => 'pending', // Status inicial
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário cadastrado com sucesso!',
                 'user_id' => $user->id,
-                'redirect_to_payment' => true
+                'redirect_to_payment' => true,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno do servidor: ' . $e->getMessage()
+                'message' => 'Erro interno do servidor: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -70,9 +68,9 @@ class RegistrationController extends Controller
     public function checkEmail(Request $request)
     {
         $exists = User::where('email', $request->email)->exists();
-        
+
         return response()->json([
-            'exists' => $exists
+            'exists' => $exists,
         ]);
     }
 
@@ -83,7 +81,7 @@ class RegistrationController extends Controller
     {
         $request->validate([
             'email' => 'nullable|email',
-            'phone' => 'nullable|string'
+            'phone' => 'nullable|string',
         ]);
 
         $user = null;
@@ -94,7 +92,7 @@ class RegistrationController extends Controller
         } elseif ($request->phone) {
             // Limpar formatação do telefone para busca
             $cleanPhone = preg_replace('/[^\d]/', '', $request->phone);
-            $user = User::where('phone', 'LIKE', '%' . $cleanPhone . '%')->first();
+            $user = User::where('phone', 'LIKE', '%'.$cleanPhone.'%')->first();
         }
 
         if ($user) {
@@ -104,13 +102,13 @@ class RegistrationController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'phone' => $user->phone
-                ]
+                    'phone' => $user->phone,
+                ],
             ]);
         }
 
         return response()->json([
-            'exists' => false
+            'exists' => false,
         ]);
     }
 
@@ -121,11 +119,11 @@ class RegistrationController extends Controller
             $request->input('client_ip'),
             $request->header('X-Client-IP'),
             $request->header('X-Forwarded-For'),
-            $request->header('X-Real-IP')
+            $request->header('X-Real-IP'),
         ];
 
         foreach ($candidates as $value) {
-            if (!$value) {
+            if (! $value) {
                 continue;
             }
 
@@ -140,18 +138,18 @@ class RegistrationController extends Controller
 
     private function shouldReplaceMac(?string $currentMac, string $newMac): bool
     {
-        if (!$currentMac) {
+        if (! $currentMac) {
             return true;
         }
 
         $isCurrentMock = stripos($currentMac, '02:') === 0;
         $isNewMock = stripos($newMac, '02:') === 0;
 
-        if ($isCurrentMock && !$isNewMock) {
+        if ($isCurrentMock && ! $isNewMock) {
             return true;
         }
 
-        if (!$isCurrentMock && !$isNewMock) {
+        if (! $isCurrentMock && ! $isNewMock) {
             return $currentMac !== $newMac;
         }
 
@@ -184,22 +182,29 @@ class RegistrationController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Dados inválidos',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
             // 🎯 PROCESSAR MAC ADDRESS
-            $ipAddress = HotspotIdentity::resolveClientIp($request);
-            $macAddress = HotspotIdentity::resolveRealMac($request->mac_address, $ipAddress);
+            $ipAddress = $ipAddress ?? HotspotIdentity::resolveClientIp($request);
+            $macAddress = $macAddress ?? HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
+
+            if (! $macAddress) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Não foi possível identificar o dispositivo. Reconecte ao Wi-Fi e tente novamente.',
+                ], 422);
+            }
 
             // Se tem user_id, é um usuário existente
             if ($request->user_id) {
                 $user = User::find($request->user_id);
 
-                if (!$user) {
+                if (! $user) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Usuário não encontrado'
+                        'message' => 'Usuário não encontrado',
                     ], 404);
                 }
 
@@ -225,14 +230,14 @@ class RegistrationController extends Controller
                     'message' => 'Dados atualizados com sucesso!',
                     'user_id' => $user->id,
                     'existing_user' => true,
-                    'redirect_to_payment' => true
+                    'redirect_to_payment' => true,
                 ]);
             }
 
             // Verificar se já existe usuário com este email ou telefone
             $existingUser = User::where('email', $request->email)
-                                ->orWhere('phone', $request->phone)
-                                ->first();
+                ->orWhere('phone', $request->phone)
+                ->first();
 
             if ($existingUser) {
                 $updates = [];
@@ -243,7 +248,7 @@ class RegistrationController extends Controller
                     $updates['ip_address'] = $ipAddress;
                 }
 
-                if (!empty($updates)) {
+                if (! empty($updates)) {
                     $existingUser->update($updates);
                 }
 
@@ -252,18 +257,18 @@ class RegistrationController extends Controller
                     'message' => 'Usuário já existente atualizado.',
                     'user_id' => $existingUser->id,
                     'existing_user' => true,
-                    'redirect_to_payment' => true
+                    'redirect_to_payment' => true,
                 ]);
             }
 
             // Criar novo usuário
             $userData = [
                 'name' => $request->name ?? 'Visitante WiFi',
-                'email' => $request->email ?? ('guest+' . uniqid() . '@wifitocantins.com.br'),
+                'email' => $request->email ?? ('guest+'.uniqid().'@wifitocantins.com.br'),
                 'phone' => $request->phone ?? '0000000000',
-                'password' => Hash::make('default_password_' . time()),
+                'password' => Hash::make('default_password_'.time()),
                 'registered_at' => now(),
-                'status' => 'pending'
+                'status' => 'pending',
             ];
 
             // 🎯 ADICIONAR MAC E IP SE FORNECIDOS
@@ -281,13 +286,13 @@ class RegistrationController extends Controller
                 'message' => 'Usuário cadastrado com sucesso!',
                 'user_id' => $user->id,
                 'existing_user' => false,
-                'redirect_to_payment' => true
+                'redirect_to_payment' => true,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno do servidor: ' . $e->getMessage()
+                'message' => 'Erro interno do servidor: '.$e->getMessage(),
             ], 500);
         }
     }

@@ -47,7 +47,19 @@ class PaymentController extends Controller
 
             // 🎯 BUSCAR OU CRIAR USUÁRIO COM MAC
             $clientIp = HotspotIdentity::resolveClientIp($request);
-            $macAddress = HotspotIdentity::resolveRealMac($request->mac_address, $clientIp);
+            $macAddress = HotspotIdentity::resolveRealMac($request->input('mac_address'), $clientIp);
+
+            if (! $macAddress) {
+                Log::warning('⚠️ MAC inválido ou ausente no request', [
+                    'mac_address' => $request->input('mac_address'),
+                    'ip' => $clientIp,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Não foi possível identificar o dispositivo. Tente reconectar ao Wi-Fi.',
+                ], 422);
+            }
 
             // Se tem user_id, usar usuário existente
             if ($request->user_id) {
@@ -417,12 +429,12 @@ class PaymentController extends Controller
             $mikrotikUrl = 'http://mikrotik.local/rest/system/script/run';
             $macAddress = $request->mac_address;
 
-            $ipAddress = HotspotIdentity::resolveClientIp($request);
-            $realMac = HotspotIdentity::resolveRealMac($macAddress, $ipAddress);
+            $clientIp = HotspotIdentity::resolveClientIp($request);
+            $realMac = HotspotIdentity::resolveRealMac($macAddress, $clientIp);
 
             Log::info('🔥 FORÇANDO REPORT DE MAC', [
                 'mac_address' => $realMac,
-                'ip_address' => $ipAddress,
+                'ip_address' => $clientIp,
                 'note' => 'Report forçado antes do pagamento',
             ]);
 

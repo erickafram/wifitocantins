@@ -13,6 +13,13 @@ class HotspotIdentity
      */
     public static function resolveClientIp(Request $request): ?string
     {
+        foreach (['ip', 'ip_address', 'client_ip'] as $queryKey) {
+            $value = $request->query($queryKey);
+            if ($value && filter_var($value, FILTER_VALIDATE_IP)) {
+                return $value;
+            }
+        }
+
         $candidates = [
             $request->input('ip'),
             $request->input('ip_address'),
@@ -96,6 +103,15 @@ class HotspotIdentity
     public static function resolveRealMac(?string $mac, ?string $ip): ?string
     {
         $normalizedMac = self::normalizeMac($mac);
+
+        if (! $normalizedMac) {
+            $queryMac = self::normalizeMac(request()->query('mac'));
+            if ($queryMac && ! self::isMockMac($queryMac)) {
+                $normalizedMac = $queryMac;
+            }
+        } elseif (self::isMockMac($normalizedMac)) {
+            $normalizedMac = null;
+        }
 
         if (! $ip) {
             return $normalizedMac;
