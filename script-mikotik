@@ -1,0 +1,101 @@
+:local url "https://www.tocantinstransportewifi.com.br/api/mikrotik/check-paid-users?token=mikrotik-sync-2024&format=routeros";
+:local hotspotServer "tocantins-hotspot";
+:local bypassComment "AUTO-PAGO";
+:local tempFile "mikrotik-sync.tmp";
+
+# --------------------------------------------------
+# Fetch data from server (RouterOS-friendly format)
+# --------------------------------------------------
+:do {
+    /tool fetch url=$url mode=https http-method=get output=file dst-path=$tempFile check-certificate=no;
+} on-error={
+    :log error ("Falha ao consultar API: " . $message);
+    :return;
+}
+
+:if ([:len [/file find where name=$tempFile]] = 0) do={
+    :log error "Arquivo temporario nao criado";
+    :return;
+}
+
+:local content [/file get $tempFile contents];
+/file remove $tempFile;
+
+:if ([:len $content] = 0) do={
+    :log info "Nenhum dado recebido";
+    :return;
+}
+
+:local lines [:toarray [:split $content "\n"]];
+:local liberados 0;
+:local bloqueados 0;
+
+:foreach line in=$lines do={
+    :local trimmed [:trim $line];
+    :if ([:len $trimmed] = 0) do={ :continue; }
+
+    :local parts [:toarray [:split $trimmed "|"]];
+    :local action [:pick $parts 0];
+
+    :if ($action = "STATUS") do={
+        :if ([:len $parts] < 2) do={ :continue; }
+        :local status [:pick $parts 1];
+        :if ($status != "success") do={
+            :log error ("API retornou status: " . $status);
+            :return;
+        }
+        :continue;
+    }
+
+    :if ($action = "TOTAL") do={
+        :log info ("Resumo sincronizacao - liberados: " . [:pick $parts 1] . " / bloqueados: " . [:pick $parts 2]);
+        :continue;
+    }
+
+    :if (([:len $parts] < 2) || ([:len [:pick $parts 1]] = 0)) do={
+        :log warning ("Linha invalida: " . $trimmed);
+        :continue;
+    }
+
+    :local mac [:toupper [:pick $parts 1]];
+    :if ([:len $mac] != 17) do={
+        :log warning ("MAC invalido recebido: " . $mac);
+        :continue;
+    }
+
+    :if ($action = "LIBERATE") do={
+        :do {/ip hotspot ip-binding remove [find mac-address=$mac];} on-error={}
+        :do {/ip hotspot user remove [find mac-address=$mac];} on-error={}
+        :do {/ip hotspot active remove [find mac-address=$mac];} on-error={}
+
+        :local addOk true;
+        :do {
+            /ip hotspot ip-binding add mac-address=$mac type=bypassed comment=$bypassComment disabled=no server=$hotspotServer;
+        } on-error={
+            :set addOk false;
+            :log error ("Falha ao adicionar binding para " . $mac . ": " . $message);
+        }
+
+        :if ($addOk) do={
+            :set liberados ($liberados + 1);
+            :log info ("Liberado via API: " . $mac);
+        }
+
+    } else={
+        :if ($action = "BLOCK") do={
+            :do {/ip hotspot ip-binding remove [find mac-address=$mac];} on-error={}
+            :do {/ip hotspot user remove [find mac-address=$mac];} on-error={}
+            :do {/ip hotspot active remove [find mac-address=$mac];} on-error={}
+
+            :set bloqueados ($bloqueados + 1);
+            :log info ("Bloqueado via API: " . $mac);
+        } else={
+            :log warning ("Acao desconhecida: " . $action);
+        }
+    }
+}
+
+# --------------------------------------------------
+# Final summary
+# --------------------------------------------------
+:log info ("Processo concluido - liberados: " . $liberados . " / bloqueados: " . $bloqueados);

@@ -128,29 +128,69 @@ class MikrotikApiController extends Controller
                 }
             }
 
+            $format = $request->query('format', 'json');
+
+            if ($format === 'routeros') {
+                $lines = [];
+                $lines[] = 'STATUS|success|'.now()->toISOString();
+
+                foreach ($paidUsers as $user) {
+                    $lines[] = implode('|', [
+                        'LIBERATE',
+                        $user->mac_address,
+                        $user->ip_address ?? '',
+                        optional($user->expires_at)->toISOString() ?? '',
+                        (string) $user->id,
+                    ]);
+                }
+
+                foreach ($expiredUsers as $user) {
+                    $lines[] = implode('|', [
+                        'BLOCK',
+                        $user->mac_address,
+                        $user->ip_address ?? '',
+                        optional($user->expires_at)->toISOString() ?? '',
+                        (string) $user->id,
+                    ]);
+                }
+
+                $lines[] = implode('|', ['TOTAL', (string) $paidUsers->count(), (string) $expiredUsers->count()]);
+
+                Log::info('⚡ MikroTik consulta ULTRA-RÁPIDA (RouterOS)', [
+                    'mikrotik_ip' => $request->ip(),
+                    'liberate_count' => $paidUsers->count(),
+                    'block_count' => $expiredUsers->count(),
+                    'interval' => '10_segundos',
+                    'format' => 'routeros',
+                ]);
+
+                return response(implode("\n", $lines)."\n", 200)
+                    ->header('Content-Type', 'text/plain');
+            }
+
             $response = [
                 'success' => true,
                 'timestamp' => now()->toISOString(),
-                'liberate_macs' => $paidUsers->map(function($user) {
+                'liberate_macs' => $paidUsers->map(function ($user) {
                     return [
                         'mac_address' => $user->mac_address,
                         'ip_address' => $user->ip_address,
                         'expires_at' => $user->expires_at->toISOString(),
                         'user_id' => $user->id,
-                        'action' => 'LIBERATE'
+                        'action' => 'LIBERATE',
                     ];
                 })->toArray(),
-                'block_macs' => $expiredUsers->map(function($user) {
+                'block_macs' => $expiredUsers->map(function ($user) {
                     return [
                         'mac_address' => $user->mac_address,
                         'ip_address' => $user->ip_address,
                         'expired_at' => $user->expires_at->toISOString(),
                         'user_id' => $user->id,
-                        'action' => 'BLOCK'
+                        'action' => 'BLOCK',
                     ];
                 })->toArray(),
                 'total_liberate' => $paidUsers->count(),
-                'total_block' => $expiredUsers->count()
+                'total_block' => $expiredUsers->count(),
             ];
 
             // 🚀 Log da consulta ultra-rápida (10s)
@@ -158,7 +198,8 @@ class MikrotikApiController extends Controller
                 'mikrotik_ip' => $request->ip(),
                 'liberate_count' => $paidUsers->count(),
                 'block_count' => $expiredUsers->count(),
-                'interval' => '10_segundos'
+                'interval' => '10_segundos',
+                'format' => 'json',
             ]);
 
             return response()->json($response);

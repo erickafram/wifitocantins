@@ -79,7 +79,7 @@ Route::prefix('mikrotik')->group(function () {
     Route::get('/usage/{mac}', [MikrotikController::class, 'getUsage']);
     
     // 🚀 NOVOS ENDPOINTS PARA AUTOMAÇÃO MIKROTIK
-    Route::get('/check-paid-users', [MikrotikApiController::class, 'checkPaidUsers']);
+    Route::match(['GET', 'POST'], '/check-paid-users', [MikrotikApiController::class, 'checkPaidUsers']);
     Route::post('/report-mac', [MikrotikApiController::class, 'reportMacAddress']);
     Route::post('/confirm-liberation', [MikrotikApiController::class, 'confirmMacLiberation']);
     Route::get('/register-mac', [MikrotikApiController::class, 'registerMac']);

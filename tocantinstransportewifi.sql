@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Tempo de geração: 23/09/2025 às 16:58
+-- Tempo de geração: 28/09/2025 às 22:51
 -- Versão do servidor: 8.4.5-5
 -- Versão do PHP: 8.1.33
 
@@ -32,6 +32,13 @@ CREATE TABLE `cache` (
   `value` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` int NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('tocantinstransportwifi-cache-mikrotik_commands_D6:DE:C4:66:F2:84', 'a:10:{i:0;a:4:{s:4:\"type\";s:11:\"remove_user\";s:4:\"path\";s:16:\"/ip/hotspot/user\";s:6:\"action\";s:6:\"remove\";s:5:\"where\";a:1:{s:4:\"name\";s:17:\"d6:de:c4:66:f2:84\";}}i:1;a:4:{s:4:\"type\";s:8:\"add_user\";s:4:\"path\";s:16:\"/ip/hotspot/user\";s:6:\"action\";s:3:\"add\";s:6:\"params\";a:4:{s:4:\"name\";s:17:\"d6:de:c4:66:f2:84\";s:11:\"mac-address\";s:17:\"d6:de:c4:66:f2:84\";s:7:\"profile\";s:7:\"default\";s:7:\"comment\";s:43:\"Liberado automaticamente - 28/09/2025 17:09\";}}i:2;a:4:{s:4:\"type\";s:14:\"remove_binding\";s:4:\"path\";s:22:\"/ip/hotspot/ip-binding\";s:6:\"action\";s:6:\"remove\";s:5:\"where\";a:1:{s:11:\"mac-address\";s:17:\"d6:de:c4:66:f2:84\";}}i:3;a:4:{s:4:\"type\";s:11:\"add_binding\";s:4:\"path\";s:22:\"/ip/hotspot/ip-binding\";s:6:\"action\";s:3:\"add\";s:6:\"params\";a:4:{s:11:\"mac-address\";s:17:\"d6:de:c4:66:f2:84\";s:7:\"address\";s:11:\"10.5.50.248\";s:4:\"type\";s:8:\"bypassed\";s:7:\"comment\";s:47:\"Pago - Amanda campos - Expira: 29/09/2025 05:09\";}}i:4;a:4:{s:4:\"type\";s:11:\"remove_user\";s:4:\"path\";s:16:\"/ip/hotspot/user\";s:6:\"action\";s:6:\"remove\";s:5:\"where\";a:1:{s:4:\"name\";s:17:\"D6:DE:C4:66:F2:84\";}}i:5;a:4:{s:4:\"type\";s:8:\"add_user\";s:4:\"path\";s:16:\"/ip/hotspot/user\";s:6:\"action\";s:3:\"add\";s:6:\"params\";a:4:{s:4:\"name\";s:17:\"D6:DE:C4:66:F2:84\";s:11:\"mac-address\";s:17:\"D6:DE:C4:66:F2:84\";s:7:\"profile\";s:7:\"default\";s:7:\"comment\";s:43:\"Liberado automaticamente - 28/09/2025 17:09\";}}i:6;a:4:{s:4:\"type\";s:14:\"remove_binding\";s:4:\"path\";s:22:\"/ip/hotspot/ip-binding\";s:6:\"action\";s:6:\"remove\";s:5:\"where\";a:1:{s:11:\"mac-address\";s:17:\"D6:DE:C4:66:F2:84\";}}i:7;a:4:{s:4:\"type\";s:11:\"add_binding\";s:4:\"path\";s:22:\"/ip/hotspot/ip-binding\";s:6:\"action\";s:3:\"add\";s:6:\"params\";a:4:{s:11:\"mac-address\";s:17:\"D6:DE:C4:66:F2:84\";s:7:\"address\";s:11:\"10.5.50.248\";s:4:\"type\";s:8:\"bypassed\";s:7:\"comment\";s:47:\"Pago - Amanda campos - Expira: 29/09/2025 05:09\";}}i:8;a:4:{s:4:\"type\";s:13:\"remove_active\";s:4:\"path\";s:18:\"/ip/hotspot/active\";s:6:\"action\";s:6:\"remove\";s:5:\"where\";a:1:{s:11:\"mac-address\";s:17:\"d6:de:c4:66:f2:84\";}}i:9;a:4:{s:4:\"type\";s:13:\"remove_active\";s:4:\"path\";s:18:\"/ip/hotspot/active\";s:6:\"action\";s:6:\"remove\";s:5:\"where\";a:1:{s:11:\"mac-address\";s:17:\"D6:DE:C4:66:F2:84\";}}}', 1759090771);
 
 -- --------------------------------------------------------
 
@@ -168,7 +175,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (13, '2025_09_04_162140_add_role_to_users_table', 1),
 (14, '2025_09_16_191813_add_pix_fields_to_payments_table', 2),
 (15, '2025_09_16_194112_add_gateway_payment_id_to_payments_table', 3),
-(16, '2025_09_22_025710_create_mikrotik_mac_reports_table', 4);
+(16, '2025_09_22_025710_create_mikrotik_mac_reports_table', 4),
+(17, '2025_01_25_000000_create_payment_settings_table', 5),
+(18, '2025_09_26_000001_create_system_settings_table', 6);
 
 -- --------------------------------------------------------
 
@@ -178,10 +187,10 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 
 CREATE TABLE `mikrotik_mac_reports` (
   `id` bigint UNSIGNED NOT NULL,
-  `ip_address` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `mac_address` varchar(17) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `transaction_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mikrotik_ip` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip_address` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mac_address` varchar(17) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `transaction_id` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mikrotik_ip` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `reported_at` timestamp NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -192,8 +201,7 @@ CREATE TABLE `mikrotik_mac_reports` (
 --
 
 INSERT INTO `mikrotik_mac_reports` (`id`, `ip_address`, `mac_address`, `transaction_id`, `mikrotik_ip`, `reported_at`, `created_at`, `updated_at`) VALUES
-(25, '10.10.10.107', '4a:24:2c:27:7e:86', NULL, '189.72.217.241', '2025-09-22 18:23:31', '2025-09-22 18:08:18', '2025-09-22 18:23:31'),
-(27, '10.10.10.100', 'd6:de:c4:66:f2:84', NULL, '189.72.217.241', '2025-09-22 23:29:36', '2025-09-22 23:28:37', '2025-09-22 23:29:36');
+(104, '10.5.50.248', 'D6:DE:C4:66:F2:84', 'AUTO_LIBERATED_139', '200.163.8.89', '2025-09-28 20:50:59', '2025-09-28 20:06:39', '2025-09-28 20:50:59');
 
 -- --------------------------------------------------------
 
@@ -230,6 +238,35 @@ CREATE TABLE `payments` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Despejando dados para a tabela `payments`
+--
+
+INSERT INTO `payments` (`id`, `user_id`, `amount`, `payment_type`, `status`, `payment_id`, `transaction_id`, `pix_emv_string`, `pix_location`, `gateway_payment_id`, `payment_data`, `paid_at`, `created_at`, `updated_at`) VALUES
+(128, 139, 0.05, 'pix', 'completed', NULL, 'TXN_1759090047_5F6E3D04', '00020101021226810014br.gov.bcb.pix2559qr.woovi.com/qr/v2/cob/62851899-beb1-49b0-97ce-51d3911854cf52040000530398654040.055802BR592357732545_ERICK_VINICIUS6009Sao_Paulo6229052561a63589fa2a4c728c65878156304AD39', 'TXN_1759090047_5F6E3D04', 'Q2hhcmdlOjY4ZDk5NTgwNDRmZGIzZDEwOWQwOTBmYg==', '{\"pix\": {\"time\": \"2025-09-28T20:08:05.000Z\", \"type\": \"PAYMENT\", \"payer\": {\"name\": \"KAUANY NERES DE NAZARE\", \"taxID\": {\"type\": \"BR:CPF\", \"taxID\": \"07886155130\"}, \"correlationID\": \"6a0bdb7f-f510-4757-8d4f-0e81cd89891f\"}, \"value\": 5, \"charge\": {\"fee\": 85, \"type\": \"DYNAMIC\", \"value\": 5, \"brCode\": \"00020101021226810014br.gov.bcb.pix2559qr.woovi.com/qr/v2/cob/62851899-beb1-49b0-97ce-51d3911854cf52040000530398654040.055802BR592357732545_ERICK_VINICIUS6009Sao_Paulo6229052561a63589fa2a4c728c65878156304AD39\", \"pixKey\": \"acd05342-22f3-49c2-8598-45daaf15744b\", \"status\": \"ACTIVE\", \"comment\": \"WiFi Tocantins Express - Internet Premium\", \"customer\": {\"name\": \"ERICK VINICIUS RODRIGUES\", \"email\": \"cliente@wifitocantins.com.br\", \"phone\": \"+556399999999\", \"taxID\": {\"type\": \"BR:CNPJ\", \"taxID\": \"57732545000100\"}, \"correlationID\": \"3c91229a-c993-46ee-8765-a0fa227a1491\"}, \"discount\": 0, \"globalID\": \"Q2hhcmdlOjY4ZDk5NTgwNDRmZGIzZDEwOWQwOTBmYg==\", \"createdAt\": \"2025-09-28T20:07:28.059Z\", \"expiresIn\": 3600, \"updatedAt\": \"2025-09-28T20:07:28.059Z\", \"identifier\": \"61a63589fa2a4c728c65878156f10114\", \"expiresDate\": \"2025-09-28T21:07:28.017Z\", \"qrCodeImage\": \"https://api.openpix.com.br/openpix/charge/brcode/image/0a217663-9f26-4aa1-a99f-21fd3da5559c.png\", \"correlationID\": \"TXN_1759090047_5F6E3D04\", \"paymentLinkID\": \"0a217663-9f26-4aa1-a99f-21fd3da5559c\", \"transactionID\": \"61a63589fa2a4c728c65878156f10114\", \"additionalInfo\": [], \"paymentLinkUrl\": \"https://openpix.com.br/pay/0a217663-9f26-4aa1-a99f-21fd3da5559c\", \"ensureSameTaxID\": false, \"valueWithDiscount\": 5}, \"status\": \"CONFIRMED\", \"customer\": {\"name\": \"ERICK VINICIUS RODRIGUES\", \"email\": \"cliente@wifitocantins.com.br\", \"phone\": \"+556399999999\", \"taxID\": {\"type\": \"BR:CNPJ\", \"taxID\": \"57732545000100\"}, \"correlationID\": \"3c91229a-c993-46ee-8765-a0fa227a1491\"}, \"globalID\": \"UGl4VHJhbnNhY3Rpb246NjhkOTk1ZTIzZmQ1Y2QzNjJlY2U2MGJm\", \"createdAt\": \"2025-09-28T20:09:06.014Z\", \"debitParty\": {\"psp\": {\"id\": \"22896431\", \"name\": \"PICPAY\"}, \"holder\": {\"name\": \"KAUANY NERES DE NAZARE\", \"taxID\": {\"type\": \"BR:CPF\", \"taxID\": \"07886155130\"}}, \"account\": {\"branch\": \"0001\", \"account\": \"1039136990\", \"accountType\": \"CACC\"}}, \"endToEndId\": \"E2289643120250928200872xNxuFS3SS\", \"creditParty\": {\"psp\": {\"id\": \"54811417\", \"name\": \"WOOVI IP LTDA.\"}, \"holder\": {\"taxID\": {\"type\": \"BR:CNPJ\", \"taxID\": \"57732545000100\"}}, \"pixKey\": {\"type\": \"RANDOM\", \"pixKey\": \"acd05342-22f3-49c2-8598-45daaf15744b\"}, \"account\": {\"branch\": \"0001\", \"account\": \"1235400\", \"accountType\": \"TRAN\"}}, \"transactionID\": \"61a63589fa2a4c728c65878156f10114\"}, \"event\": \"OPENPIX:CHARGE_COMPLETED\", \"charge\": {\"fee\": 85, \"type\": \"DYNAMIC\", \"value\": 5, \"brCode\": \"00020101021226810014br.gov.bcb.pix2559qr.woovi.com/qr/v2/cob/62851899-beb1-49b0-97ce-51d3911854cf52040000530398654040.055802BR592357732545_ERICK_VINICIUS6009Sao_Paulo6229052561a63589fa2a4c728c65878156304AD39\", \"pixKey\": \"acd05342-22f3-49c2-8598-45daaf15744b\", \"status\": \"ACTIVE\", \"comment\": \"WiFi Tocantins Express - Internet Premium\", \"customer\": {\"name\": \"ERICK VINICIUS RODRIGUES\", \"email\": \"cliente@wifitocantins.com.br\", \"phone\": \"+556399999999\", \"taxID\": {\"type\": \"BR:CNPJ\", \"taxID\": \"57732545000100\"}, \"correlationID\": \"3c91229a-c993-46ee-8765-a0fa227a1491\"}, \"discount\": 0, \"globalID\": \"Q2hhcmdlOjY4ZDk5NTgwNDRmZGIzZDEwOWQwOTBmYg==\", \"createdAt\": \"2025-09-28T20:07:28.059Z\", \"expiresIn\": 3600, \"updatedAt\": \"2025-09-28T20:07:28.059Z\", \"identifier\": \"61a63589fa2a4c728c65878156f10114\", \"expiresDate\": \"2025-09-28T21:07:28.017Z\", \"qrCodeImage\": \"https://api.openpix.com.br/openpix/charge/brcode/image/0a217663-9f26-4aa1-a99f-21fd3da5559c.png\", \"correlationID\": \"TXN_1759090047_5F6E3D04\", \"paymentLinkID\": \"0a217663-9f26-4aa1-a99f-21fd3da5559c\", \"transactionID\": \"61a63589fa2a4c728c65878156f10114\", \"additionalInfo\": [], \"paymentLinkUrl\": \"https://openpix.com.br/pay/0a217663-9f26-4aa1-a99f-21fd3da5559c\", \"paymentMethods\": {\"pix\": {\"fee\": 85, \"txId\": \"61a63589fa2a4c728c65878156f10114\", \"value\": 5, \"brCode\": \"00020101021226810014br.gov.bcb.pix2559qr.woovi.com/qr/v2/cob/62851899-beb1-49b0-97ce-51d3911854cf52040000530398654040.055802BR592357732545_ERICK_VINICIUS6009Sao_Paulo6229052561a63589fa2a4c728c65878156304AD39\", \"method\": \"PIX_COB\", \"status\": \"ACTIVE\", \"identifier\": \"61a63589fa2a4c728c65878156f10114\", \"qrCodeImage\": \"https://api.openpix.com.br/openpix/charge/brcode/image/0a217663-9f26-4aa1-a99f-21fd3da5559c.png\", \"transactionID\": \"61a63589fa2a4c728c65878156f10114\"}}, \"ensureSameTaxID\": false, \"valueWithDiscount\": 5}, \"account\": [], \"company\": {\"id\": \"68caca98941631e25550170c\", \"name\": \"57.732.545 ERICK VINICIUS RODRIGUES\", \"taxID\": \"57732545000100\"}, \"authorization\": null}', '2025-09-28 20:09:21', '2025-09-28 20:07:27', '2025-09-28 20:09:21');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `payment_settings`
+--
+
+CREATE TABLE `payment_settings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `provider_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `provider_type` enum('woovi','santander','pagseguro','mercadopago') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `api_token` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `webhook_url` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `client_id` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `client_secret` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `environment` enum('sandbox','production') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '0',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `settings` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -250,36 +287,30 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('aXLGyfNLbBewbFZOW4fGY1kBuFH7oZ6663hwhuBn', NULL, '189.72.217.241', 'Mozilla/5.0 (Linux; Android 14; 2203129G Build/UKQ1.231003.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/140.0.7339.51 Mobile Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoia2ttdU9LZnBvN0RaU0tkNWxpVEJxUlBjdGdHM0htcGs3bHg0UzFOZiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6OTA6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5ici9sb2dpbj9kc3Q9aHR0cCUzQSUyRiUyRnd3dy5nb29nbGUuY29tJTJGZ2VuXzIwNCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758587957),
-('7ZBzF4JF4DLyG0XYXglqfQBZ9GYcptT78PiYUX40', NULL, '54.208.119.170', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiRFhpdkpCOUMxcnJnWms0bmJOcU9iOGYwSWNpbElodVFoR1ZneDlzNSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758581318),
-('b6P6IbmI5r6nY0f8HOIpCDJOf637o6fQ3VJ9udGX', NULL, '54.208.119.170', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoienNqUjFqa0RxbFhUYU1PNjBJQTNRMUloUGVGbXQyWFJkVmdFbUJvRCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758581359),
-('Q1jDTvUd57RQCVFBb9v5vthHbp4JHZmGNc6mb5fL', NULL, '13.220.238.56', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoib2pWU3JucTc3SFlSS3JPTXBSdEQxcTRJUVoxSmkwZENacGNneXM0UiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MTAwOiJodHRwczovL3d3dy50b2NhbnRpbnN0cmFuc3BvcnRld2lmaS5jb20uYnIvbG9naW4/ZHN0PWh0dHAlM0ElMkYlMkZ3d3cubXNmdGNvbm5lY3R0ZXN0LmNvbSUyRnJlZGlyZWN0Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1758581359),
-('VRRV3l9FEzYqctgiaazNYJGggDflWXxWkUORN0U1', NULL, '34.96.50.85', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOFZXSmw5VEVMZWlwaXpWNU5UVklzYTJaQjVKYjl6NHQ1VWJ5YmN6ZCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758582562),
-('L4jLfEw1l4eOmxgQwdCtIt8nLMb9I0dBUg3pY4aS', NULL, '34.34.234.141', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoibjRFZkxsczZ2V1hWUFU4WHp1WkMzMzhobG9zbk9TNzRpR2E3czVaWSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758583410),
-('p8iDxIstAOZYwdq8VIOL5W69Z9PH8oVmV9DGBOCO', NULL, '34.34.234.141', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiUGlhd09JdVBpUjcxaUhISVF3STdEYWdrQ0M1YlNNTnZIbFF4STBxMiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758583410),
-('9SukPrHnJr6kwQ0kFKwHwOACMqfYL7d7CftEgo8w', NULL, '34.96.51.34', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiQVhjYmtscjMzNTVnU1dsZHVkcjdIbGNvRlY0R2VlaHd2eXYxcFdwWCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758583916),
-('B4y5ffgCzBjzuy3A7FJr4j7TNkqMno80n9g83bft', NULL, '34.96.51.34', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoid0FROWZjY0MxZ0YwTERBUnBoZTVIc05ZU0ZNeWpleXBvdkYzUkxSQSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758583916),
-('LgyXQk6R7WWQaIYxGJlhfP92ncHQs3dhwYsakZ0x', NULL, '13.220.238.56', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiUWVwY3h4TEJaVWh6SHk4dTFJNUtBSUlNN0pEVGpNd2JBQjMzREhWMiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758584465),
-('xJMSkfFfmsmaW3bX8o9VkseHryZekPyhzZ9aPyVI', NULL, '189.72.217.241', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiYlU0dktMT1pCRHJadDR5ZVd5QzhWdmt0RXk4Q1ZOd0JPMFpZT3VMdSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758587814),
-('O0bsMpWReQGoJC7wn2fvE5HYpstcBFSesLiO0dkE', NULL, '189.72.217.241', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOGhOTWFLWkVSTzQzMkQxekgxNm9YQ0ZJNXBxNmdYdGtZNnE3VWVSRSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758587830),
-('hnnnIJcONQwRsIT9iv0qeWYiQgg35X0rfBgxlK8t', NULL, '128.201.17.234', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiYWVqam5MUVJaUXlWUTFpVm1ORUlHNkxrWW40ZHBNUTh6bHlDd3hlSiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758627662),
-('OarABfsyKYewenU6FJ99jCBDXEjlXaoWI9zguf0z', NULL, '34.139.66.163', 'Mozilla/5.0 (compatible; CMS-Checker/1.0; +https://example.com)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiU2taTkZGeVNXTXZacGRXYnJacVRoc010MjZSY3dHcUhsdDFBdUk3ViI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758631493),
-('DLMGAq7wDHlDnS7q2UUTk2tl86R3SRlJrM9H1T2I', NULL, '34.147.13.14', 'Mozilla/5.0 (compatible; CMS-Checker/1.0; +https://example.com)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiMEZJQWlTaUQxUUxuWnVwTkswUk9sRllDUk04ZzRxTEd4NFA4RlJsWSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758633537),
-('3krRtZgvgMJjRVb16u5hzWUILHqZCaTrqBT8p21i', NULL, '189.72.217.241', 'RouterOS 7.20rc3', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiUXNMZFBRTTBMbkNHdXgxaGxPWXBnS3RSWFA4VGJCS3Y2MlRyZ01tdiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580551),
-('Bj7YUY3Mf8M3Qp3w5DPoKMvG4QyA4wYj2Rgx6ytu', NULL, '34.96.50.85', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoieUFpOFVXbU9YcE1IYzZVSFd6bnBOdTRtc0drNkpCdk1SbTVra1ZxViI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580578),
-('fskJTCjkmKEtPumq7MExTMUF9y0HVcJMj2xbYNy1', NULL, '34.96.50.85', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoid2pxRDFGT0x3RW92Zm42c1J2MDk3bm9MOHNEZjFxdXR1RlpnZXpKRCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580578),
-('l1jNpgZhu2tjJwYPJlD5YcOCF5suzUCrXE0hMdSx', NULL, '189.72.217.241', 'Mozilla/5.0 (Linux; Android 14; 2203129G Build/UKQ1.231003.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/140.0.7339.51 Mobile Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoidE8yaGFncmRveklIN2lGM2tMNFcyUVFOYjY2WWV3dFAxbkdIOFZ3TyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6OTA6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5ici9sb2dpbj9kc3Q9aHR0cCUzQSUyRiUyRnd3dy5nb29nbGUuY29tJTJGZ2VuXzIwNCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580898),
-('XN3dA2lwQifbj4DtyVzFCmqvii1XxLwKrLELIuJl', NULL, '189.72.217.241', 'RouterOS 7.20rc3', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiZmQ3alZqdXdkQ3dTbFlXQzhyd291Wm1GUnVKOUZIc3RmWDNrNVM2dSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580256),
-('EkIL0dNo8he5hWjeYazSmYodhJzXgiT8DrmgqNYy', NULL, '54.208.119.170', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoidGRia204aVJuQUZtRWhkRnY4YU1hQnA5WXpOUmFXb0pYMnhGbTVzbSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580148),
-('YjK0ewm8RAjbhyTY6gx7Gm4Ypa1lCqGClP9aZxNT', NULL, '189.72.217.241', 'RouterOS 7.20rc3', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiR3hxNWRmd1BYMTZjd01xMXlRbjR5bWVJRXplY0RzcmU0Y2hlTWN4cSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580112),
-('Iouw2DaL22IWXsCmXHpiXVoFAg4GzEpY0sOomfEU', NULL, '13.220.238.56', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiRU43dlRYV1dKSVlaa1pvWUpQSnNGSHVXU0ZIYmVRb2xiRjYweDhyOSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580054),
-('RyzK6Nv9Jmt4LxUXhYaNlDiIc17WAWNLBeLTGgV6', NULL, '189.72.217.241', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiSXRnYWVwUWFuVFVhU0lETDZwMllySmpHa3MyMXV6U3BYN0l5TmJLNCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580021),
-('SsLerNhgPSARU4iqEZ5XUGCyZzKm09gIyLQS2WUP', NULL, '189.72.217.241', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiSjNJY2VTMWJ6dllnVG56eWJxSzZXNDVROFlNd280RHhLZFo1Q1lUUiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758589181),
-('SzVt7qM2O4sW5JHhwO1N0JUmUci2kJAl5r11Rjh2', NULL, '34.96.50.85', 'Mozilla/5.0 (compatible; WarpBot/1.0)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiaUVGNk9ROXRzeW9HUzN3dFM3TTgydDloYlpwQXJxTG1Eb2NWU0RJeiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580486),
-('OVTW8aQmwk6t1vb0NQBGMTBfVWN3lwnkCC6FPRGN', NULL, '13.220.238.56', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOXJ2eFBEWjVQMXFnV3ZIUnJkeEd2eFViWTZXQWNMTklIMVV5M1Y3SCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758573890),
-('mwzBt3g7e4QO9oXpzEPB1FRY9KzFRY77kdBiKxTI', NULL, '189.72.217.241', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiUlg5VnJFeFdtN1RrOW9rTDZKcUliN0o3TTlNaDlNMmxOcUhuc0MzRCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MTAwOiJodHRwczovL3d3dy50b2NhbnRpbnN0cmFuc3BvcnRld2lmaS5jb20uYnIvbG9naW4/ZHN0PWh0dHAlM0ElMkYlMkZ3d3cubXNmdGNvbm5lY3R0ZXN0LmNvbSUyRnJlZGlyZWN0Ijt9fQ==', 1758587791),
-('FN2RD1VH1bO0LeTCoCLBBmthvWHWWf9KTYiTv7Ro', NULL, '13.220.238.56', 'got (https://github.com/sindresorhus/got)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiRFdqZk5sNVFEclY4eEhXR1JBRFlUN1hsakFKOUtySERodDI1QVJlUiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758574323),
-('71nZmxt3PTBkyTDppmlFy40g09iPWgHvdqV5Vt9M', NULL, '189.72.217.241', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiMmV3cWdySHlIVHpDRWpiSkV0aDVJNUtyN09Rb1VldTMxTmhrU3VMbSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDI6Imh0dHBzOi8vd3d3LnRvY2FudGluc3RyYW5zcG9ydGV3aWZpLmNvbS5iciI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1758580016);
+('NEKLPz8WHp0l0iUNt9lz1rsPLLbTVfav0o3ptIdR', NULL, '200.163.8.89', 'Mozilla/5.0 (Linux; Android 14; 2203129G Build/UKQ1.231003.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/140.0.7339.156 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoidHFERlJIN1hpUWRzSm1BdzdiU2c4eHIzODBkNDZFU01mb2Z3bzVqeSI7czoyNToibWlrcm90aWtfY29udGV4dF92ZXJpZmllZCI7YjoxO3M6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjExOToiaHR0cHM6Ly93d3cudG9jYW50aW5zdHJhbnNwb3J0ZXdpZmkuY29tLmJyLz9jYXB0aXZlPXRydWUmaXA9MTAuNS41MC4yNDgmbWFjPUQ2JTNBREUlM0FDNCUzQTY2JTNBRjIlM0E4NCZzb3VyY2U9bWlrcm90aWsiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1759090019),
+('GXQaEpgXi1lGjAwtYcUJjtM7wN2rBrcNPPSqA2P9', 1, '170.239.227.20', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiaG1TWktleDZWQlFvamQ2QTQwQWluNGhpUm9BSmpoWWhhRkdlUEhYTSI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjU4OiJodHRwczovL3d3dy50b2NhbnRpbnN0cmFuc3BvcnRld2lmaS5jb20uYnIvYWRtaW4vdXNlcnMvMTM5Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1759091862),
+('czxLcypeGnc7IIJnGXWe1BJbz08rUnhyhbMVEd44', NULL, '200.163.8.89', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiMHJWTWxROW9hUnp0VVdCUW5OWkhoZHR1ZnV5ZUxSaFJyU3Q1NFFWcCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czoyNToibWlrcm90aWtfY29udGV4dF92ZXJpZmllZCI7YjoxO3M6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjExOToiaHR0cHM6Ly93d3cudG9jYW50aW5zdHJhbnNwb3J0ZXdpZmkuY29tLmJyLz9jYXB0aXZlPXRydWUmaXA9MTAuNS41MC4yNDgmbWFjPUQ2JTNBREUlM0FDNCUzQTY2JTNBRjIlM0E4NCZzb3VyY2U9bWlrcm90aWsiO319', 1759090030);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `system_settings`
+--
+
+CREATE TABLE `system_settings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `key` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `system_settings`
+--
+
+INSERT INTO `system_settings` (`id`, `key`, `value`, `created_at`, `updated_at`) VALUES
+(1, 'pix_gateway', 'woovi', '2025-09-26 16:45:10', '2025-09-27 21:57:52');
 
 -- --------------------------------------------------------
 
@@ -313,8 +344,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `registered_at`, `mac_address`, `ip_address`, `device_name`, `connected_at`, `expires_at`, `data_used`, `status`, `role`) VALUES
-(1, 'Administrador WiFi Tocantins', 'admin@wifitocantins.com.br', NULL, NULL, '$2y$12$lYCO2S0fN33Xggr8/ITUEOx58rlsM7S7gLT2dJVwNcaxMg63USvxS', NULL, '2025-09-04 19:33:14', '2025-09-04 19:33:14', '2025-09-04 19:33:14', NULL, NULL, NULL, NULL, NULL, 0, 'active', 'admin'),
-(2, 'Gestor WiFi Tocantins', 'gestor@wifitocantins.com.br', NULL, NULL, '$2y$12$.kPHfPHzQAy0ap5UU6atcOaQq6WjXtCjTfCGsZQSB4SKAc..CS9bq', NULL, '2025-09-04 19:33:14', '2025-09-04 19:33:14', '2025-09-04 19:33:14', NULL, NULL, NULL, NULL, NULL, 0, 'active', 'manager');
+(1, 'Administrador WiFi Tocantins', 'admin@wifitocantins.com.br', NULL, NULL, '$2y$12$lYCO2S0fN33Xggr8/ITUEOx58rlsM7S7gLT2dJVwNcaxMg63USvxS', NULL, '2025-09-04 19:33:14', '2025-09-26 05:45:16', '2025-09-04 19:33:14', 'D4:01:C3:C6:29:4A', '10.5.50.42', NULL, NULL, NULL, 0, 'offline', 'admin'),
+(2, 'Gestor WiFi Tocantins', 'gestor@wifitocantins.com.br', NULL, NULL, '$2y$12$.kPHfPHzQAy0ap5UU6atcOaQq6WjXtCjTfCGsZQSB4SKAc..CS9bq', NULL, '2025-09-04 19:33:14', '2025-09-04 19:33:14', '2025-09-04 19:33:14', NULL, NULL, NULL, NULL, NULL, 0, 'active', 'manager'),
+(139, 'Amanda campos', 'amandasilvarsr@gmail.com', '63981015422', NULL, '$2y$12$GImfH7M1GeOhocMkc7gvqO2gXT0o77malzaHtyXJByqX5p5pF8/1a', NULL, '2025-09-28 20:07:25', '2025-09-28 20:37:00', '2025-09-28 20:07:25', 'D6:DE:C4:66:F2:84', '10.5.50.248', NULL, NULL, NULL, 0, 'offline', 'user');
 
 -- --------------------------------------------------------
 
@@ -353,6 +385,13 @@ CREATE TABLE `wifi_sessions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `wifi_sessions`
+--
+
+INSERT INTO `wifi_sessions` (`id`, `user_id`, `payment_id`, `started_at`, `ended_at`, `data_used`, `session_status`, `created_at`, `updated_at`) VALUES
+(86, 139, 128, '2025-09-28 20:09:21', '2025-09-28 20:37:00', 0, 'ended', '2025-09-28 20:09:21', '2025-09-28 20:37:00');
 
 --
 -- Índices para tabelas despejadas
@@ -434,12 +473,27 @@ ALTER TABLE `payments`
   ADD KEY `payments_user_id_foreign` (`user_id`);
 
 --
+-- Índices de tabela `payment_settings`
+--
+ALTER TABLE `payment_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `payment_settings_provider_type_is_active_index` (`provider_type`,`is_active`),
+  ADD KEY `payment_settings_is_active_index` (`is_active`);
+
+--
 -- Índices de tabela `sessions`
 --
 ALTER TABLE `sessions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sessions_user_id_index` (`user_id`),
   ADD KEY `sessions_last_activity_index` (`last_activity`);
+
+--
+-- Índices de tabela `system_settings`
+--
+ALTER TABLE `system_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `system_settings_key_unique` (`key`);
 
 --
 -- Índices de tabela `users`
@@ -496,25 +550,37 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT de tabela `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de tabela `mikrotik_mac_reports`
 --
 ALTER TABLE `mikrotik_mac_reports`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
 
 --
 -- AUTO_INCREMENT de tabela `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
+
+--
+-- AUTO_INCREMENT de tabela `payment_settings`
+--
+ALTER TABLE `payment_settings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `system_settings`
+--
+ALTER TABLE `system_settings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
 
 --
 -- AUTO_INCREMENT de tabela `vouchers`
@@ -526,7 +592,7 @@ ALTER TABLE `vouchers`
 -- AUTO_INCREMENT de tabela `wifi_sessions`
 --
 ALTER TABLE `wifi_sessions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
