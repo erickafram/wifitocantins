@@ -20,6 +20,16 @@ class HotspotIdentity
             }
         }
 
+        if ($referer = $request->headers->get('referer')) {
+            $parsed = parse_url($referer);
+            if (! empty($parsed['query'])) {
+                parse_str($parsed['query'], $queryParams);
+                if (! empty($queryParams['ip']) && filter_var($queryParams['ip'], FILTER_VALIDATE_IP)) {
+                    return $queryParams['ip'];
+                }
+            }
+        }
+
         $candidates = [
             $request->input('ip'),
             $request->input('ip_address'),
@@ -108,6 +118,17 @@ class HotspotIdentity
             $queryMac = self::normalizeMac(request()->query('mac'));
             if ($queryMac && ! self::isMockMac($queryMac)) {
                 $normalizedMac = $queryMac;
+            } elseif ($referer = request()->headers->get('referer')) {
+                $parsed = parse_url($referer);
+                if (! empty($parsed['query'])) {
+                    parse_str($parsed['query'], $queryParams);
+                    if (! empty($queryParams['mac'])) {
+                        $refererMac = self::normalizeMac($queryParams['mac']);
+                        if ($refererMac && ! self::isMockMac($refererMac)) {
+                            $normalizedMac = $refererMac;
+                        }
+                    }
+                }
             }
         } elseif (self::isMockMac($normalizedMac)) {
             $normalizedMac = null;
