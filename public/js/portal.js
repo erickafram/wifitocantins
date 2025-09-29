@@ -936,7 +936,7 @@ class WiFiPortal {
                 this.stopPixCountdown();
 
                 this.updatePixTimerDisplay('✅ Pagamento confirmado!');
-                this.updatePixStatusHint('Aguarde até 2 minutos para liberação automática do acesso.');
+                this.updatePixStatusHint('🛰️ Aguarde até 2 minutos enquanto configuramos seu dispositivo na Starlink. Em instantes você terá acesso à melhor internet do Brasil!');
 
                 const checkButton = document.getElementById('check-payment-status');
                 if (checkButton) {
@@ -959,12 +959,12 @@ class WiFiPortal {
                 const allowed = await this.allowDevice(this.deviceMac);
                 if (allowed) {
                     // Mostrar mensagem de redirecionamento
-                    this.updatePixStatusHint('✅ Acesso liberado! Redirecionando para navegação...');
+                    this.updatePixStatusHint('✅ Acesso liberado! Seu dispositivo está conectado à Starlink. Aproveite a melhor internet do Brasil!');
                     
                     // Fechar modal e redirecionar para o Google
                     setTimeout(() => {
                         this.closePixModal();
-                        this.showSuccessMessage('🌐 Conectado! Você está sendo redirecionado...');
+                        this.showSuccessMessage('🛰️ Conectado à Starlink! Navegue à vontade com a melhor internet do Brasil...');
                         
                         // Redirecionar para o Google após 2 segundos
                         setTimeout(() => {
@@ -1037,12 +1037,12 @@ class WiFiPortal {
             const result = await response.json();
 
             if (result.success) {
-                this.showSuccessMessage('Pagamento aprovado! Conectando...');
+                this.showSuccessMessage('✅ Pagamento aprovado! Conectando à Starlink...');
                 const allowed = await this.allowDevice(this.deviceMac);
                 
                 if (allowed) {
                     setTimeout(() => {
-                        this.showSuccessMessage('🌐 Conectado! Você está sendo redirecionado...');
+                        this.showSuccessMessage('🛰️ Conectado à Starlink! Navegue à vontade com a melhor internet do Brasil...');
                         
                         // Redirecionar para o Google após 2 segundos
                         setTimeout(() => {
@@ -1099,13 +1099,13 @@ class WiFiPortal {
             const result = await response.json();
 
             if (result.success) {
-                this.showSuccessMessage('Voucher aplicado! Conectando...');
+                this.showSuccessMessage('✅ Voucher aplicado! Conectando à Starlink...');
                 if (voucherInput) voucherInput.value = '';
                 
                 const allowed = await this.allowDevice(this.deviceMac);
                 if (allowed) {
                     setTimeout(() => {
-                        this.showSuccessMessage('🌐 Conectado! Você está sendo redirecionado...');
+                        this.showSuccessMessage('🛰️ Conectado à Starlink! Navegue à vontade com a melhor internet do Brasil...');
                         
                         // Redirecionar para o Google após 2 segundos
                         setTimeout(() => {
