@@ -162,16 +162,23 @@ class RegistrationController extends Controller
     public function registerForPayment(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            // Validação diferente para usuário existente (login) vs novo usuário (cadastro)
+            $rules = [
                 'user_id' => 'nullable|exists:users,id',
-                'name' => 'required_without:user_id|string|max:255',
                 'email' => 'required|email|max:255',
                 'phone' => 'required|string|max:20',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
                 'password' => 'required|string|min:6',
-                'password_confirmation' => 'required_without:user_id|string|min:6|same:password',
-            ]);
+            ];
+
+            // Se NÃO tem user_id, é novo usuário - exigir name e password_confirmation
+            if (!$request->has('user_id') || !$request->user_id) {
+                $rules['name'] = 'required|string|max:255';
+                $rules['password_confirmation'] = 'required|string|min:6|same:password';
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 return response()->json([

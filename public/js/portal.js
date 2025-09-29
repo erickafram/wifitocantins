@@ -455,15 +455,22 @@ class WiFiPortal {
         const form = e.target;
         const formData = new FormData(form);
         const data = {
-            name: formData.get('name'),
             email: formData.get('email'),
             phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
             password: formData.get('password'),
-            password_confirmation: formData.get('password_confirmation'),
-            user_id: this.currentUserId, // Incluir ID se for usuário existente
             mac_address: this.deviceMac, // 🎯 ADICIONAR MAC ADDRESS
             ip_address: this.deviceIp
         };
+
+        // Se tem user_id, é usuário existente fazendo login (não precisa de name e password_confirmation)
+        if (this.currentUserId) {
+            data.user_id = this.currentUserId;
+            data.name = formData.get('name'); // Nome já está preenchido (readonly)
+        } else {
+            // Novo usuário - precisa de name e password_confirmation
+            data.name = formData.get('name');
+            data.password_confirmation = formData.get('password_confirmation');
+        }
 
         // Validação básica
         if (!data.email || !data.phone) {
