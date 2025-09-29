@@ -172,12 +172,12 @@ class RegistrationController extends Controller
                 'password' => 'nullable|string|min:6|confirmed',
             ]);
 
-            // Validação customizada: senha obrigatória apenas para novos usuários
-            if (!$request->user_id && !$request->filled('password')) {
+            // Validação customizada: senha obrigatória sempre
+            if (!$request->filled('password')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Senha é obrigatória para novos usuários.',
-                    'errors' => ['password' => ['Senha é obrigatória para novos usuários.']],
+                    'message' => 'Senha é obrigatória.',
+                    'errors' => ['password' => ['Senha é obrigatória.']],
                 ], 422);
             }
 

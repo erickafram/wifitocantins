@@ -730,48 +730,54 @@
                 <form id="registration-form" class="space-y-4">
                     <div id="registration-errors" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
                     
-                    <div>
-                        <label for="full_name" class="block text-sm font-medium text-tocantins-gray-green mb-2">Nome Completo *</label>
-                        <input 
-                            type="text" 
-                            id="full_name" 
-                            name="name" 
-                            required
-                            placeholder="Digite seu nome completo"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                        >
+                    <!-- Campos iniciais: Email e Telefone -->
+                    <div id="initial-fields">
+                        <div>
+                            <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
+                            <input 
+                                type="email" 
+                                id="user_email" 
+                                name="email" 
+                                required
+                                placeholder="seu@email.com"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
+                            <input 
+                                type="tel" 
+                                id="user_phone" 
+                                name="phone" 
+                                required
+                                placeholder="(XX) X XXXX-XXXX"
+                                maxlength="16"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
-                        <input 
-                            type="email" 
-                            id="user_email" 
-                            name="email" 
-                            required
-                            placeholder="seu@email.com"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                        >
+
+                    <!-- Campos adicionais: aparecem quando necessário -->
+                    <div id="additional-fields" class="hidden space-y-4">
+                        <div>
+                            <label for="full_name" class="block text-sm font-medium text-tocantins-gray-green mb-2">Nome Completo *</label>
+                            <input 
+                                type="text" 
+                                id="full_name" 
+                                name="name" 
+                                placeholder="Digite seu nome completo"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
-                        <input 
-                            type="tel" 
-                            id="user_phone" 
-                            name="phone" 
-                            required
-                            placeholder="(XX) X XXXX-XXXX"
-                            maxlength="16"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                        >
-                    </div>
-                    
-                    <div id="password-fields">
+
+                    <!-- Campos de senha: aparecem quando necessário -->
+                    <div id="password-fields" class="hidden space-y-4">
                         <div>
                             <label for="user_password" class="block text-sm font-medium text-tocantins-gray-green mb-2">
                                 Senha * 
-                                <span id="password-helper" class="text-xs text-gray-500 hidden">(deixe em branco para manter a atual)</span>
+                                <span id="password-helper" class="text-xs text-gray-500 hidden">(para acessar sua conta)</span>
                             </label>
                             <input 
                                 type="password" 
@@ -783,7 +789,7 @@
                             >
                         </div>
                         
-                        <div>
+                        <div id="password-confirm-field">
                             <label for="user_password_confirmation" class="block text-sm font-medium text-tocantins-gray-green mb-2">Confirmar Senha *</label>
                             <input 
                                 type="password" 
@@ -800,8 +806,9 @@
                         type="submit" 
                         id="registration-submit-btn"
                         class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm relative z-10"
+                        style="display: none;"
                     >
-                        ✅ CONTINUAR PARA PAGAMENTO
+                        ✅ CONTINUAR
                     </button>
                 </form>
                 

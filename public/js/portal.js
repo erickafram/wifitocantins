@@ -388,43 +388,21 @@ class WiFiPortal {
      * Reseta o formulário de registro
      */
     resetRegistrationForm() {
-        this.currentUserId = null;
-        
+        // Limpar todos os campos
         const nameInput = document.getElementById('full_name');
         const emailInput = document.getElementById('user_email');
         const phoneInput = document.getElementById('user_phone');
         const passwordInput = document.getElementById('user_password');
         const passwordConfirmInput = document.getElementById('user_password_confirmation');
-        const submitBtn = document.getElementById('registration-submit-btn');
-        const errorDiv = document.getElementById('registration-errors');
-        const passwordHelper = document.getElementById('password-helper');
 
         if (nameInput) nameInput.value = '';
         if (emailInput) emailInput.value = '';
         if (phoneInput) phoneInput.value = '';
-        if (passwordInput) {
-            passwordInput.value = '';
-            passwordInput.setAttribute('required', 'required');
-        }
-        if (passwordConfirmInput) {
-            passwordConfirmInput.value = '';
-            passwordConfirmInput.setAttribute('required', 'required');
-        }
-        
-        if (submitBtn) {
-            submitBtn.innerHTML = '✅ CONTINUAR PARA PAGAMENTO';
-            submitBtn.disabled = false;
-        }
+        if (passwordInput) passwordInput.value = '';
+        if (passwordConfirmInput) passwordConfirmInput.value = '';
 
-        if (errorDiv) {
-            errorDiv.classList.add('hidden');
-            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
-        }
-
-        // Esconder mensagem de ajuda da senha
-        if (passwordHelper) {
-            passwordHelper.classList.add('hidden');
-        }
+        // Voltar ao estado inicial (apenas email e telefone visíveis)
+        this.resetFormToInitialState();
     }
 
     /**
@@ -477,21 +455,39 @@ class WiFiPortal {
         };
 
         // Validação básica
-        if (!data.name || !data.email || !data.phone || !data.password) {
-            this.showRegistrationError('Todos os campos são obrigatórios.');
+        if (!data.email || !data.phone) {
+            this.showRegistrationError('E-mail e telefone são obrigatórios.');
             return;
         }
 
-        // Validar senha
-        if (data.password.length < 6) {
-            this.showRegistrationError('A senha deve ter pelo menos 6 caracteres.');
-            return;
-        }
-
-        // Validar confirmação de senha
-        if (data.password !== data.password_confirmation) {
-            this.showRegistrationError('As senhas não coincidem.');
-            return;
+        // Para usuários existentes, só validar se preencheram senha
+        if (this.currentUserId) {
+            if (!data.password) {
+                this.showRegistrationError('Digite sua senha para continuar.');
+                return;
+            }
+            if (data.password.length < 6) {
+                this.showRegistrationError('A senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+        } else {
+            // Para novos usuários, todos os campos são obrigatórios
+            if (!data.name) {
+                this.showRegistrationError('Nome é obrigatório para novos usuários.');
+                return;
+            }
+            if (!data.password) {
+                this.showRegistrationError('Senha é obrigatória para novos usuários.');
+                return;
+            }
+            if (data.password.length < 6) {
+                this.showRegistrationError('A senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+            if (data.password !== data.password_confirmation) {
+                this.showRegistrationError('As senhas não coincidem.');
+                return;
+            }
         }
 
         // 🚀 VALIDAR SE MAC FOI DETECTADO
@@ -544,14 +540,10 @@ class WiFiPortal {
                     'Cadastro realizado com sucesso!';
                 this.showSuccessMessage(message);
                 
-                // Redirecionar para dashboard ou pagamento
-                if (result.redirect_to_dashboard) {
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1500);
-                } else {
-                    this.showPaymentModal();
-                }
+                // Redirecionar para dashboard (tanto para usuários novos quanto existentes)
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
             } else {
                 if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
@@ -578,18 +570,27 @@ class WiFiPortal {
      * Verifica se usuário já existe por email ou telefone
      */
     async checkExistingUser(field, value) {
-        if (!value || value.length < 3) return;
+        if (!value || value.length < 3) {
+            this.resetFormToInitialState();
+            return;
+        }
 
         // Limpar valor dependendo do campo
         let cleanValue = value;
         if (field === 'phone') {
             cleanValue = value.replace(/\D/g, '');
-            if (cleanValue.length < 10) return;
+            if (cleanValue.length < 10) {
+                this.resetFormToInitialState();
+                return;
+            }
         }
 
         if (field === 'email') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(cleanValue)) return;
+            if (!emailRegex.test(cleanValue)) {
+                this.resetFormToInitialState();
+                return;
+            }
         }
 
         try {
@@ -608,64 +609,148 @@ class WiFiPortal {
             const result = await response.json();
 
             if (result.exists && result.user) {
-                this.fillUserData(result.user);
-                this.showUserFoundMessage(result.user.name);
+                this.showExistingUserForm(result.user);
+            } else {
+                this.showNewUserForm();
             }
         } catch (error) {
             console.error('Erro ao verificar usuário:', error);
+            this.showNewUserForm();
         }
     }
 
     /**
-     * Preenche os dados do usuário no formulário
+     * Reseta formulário para estado inicial (apenas email e telefone)
      */
-    fillUserData(userData) {
+    resetFormToInitialState() {
+        this.currentUserId = null;
+        
+        // Esconder campos adicionais
+        const additionalFields = document.getElementById('additional-fields');
+        const passwordFields = document.getElementById('password-fields');
+        
+        if (additionalFields) {
+            additionalFields.classList.add('hidden');
+        }
+        if (passwordFields) {
+            passwordFields.classList.add('hidden');
+        }
+
+        // Limpar campos
+        const nameInput = document.getElementById('full_name');
+        const passwordInput = document.getElementById('user_password');
+        const passwordConfirmInput = document.getElementById('user_password_confirmation');
+        
+        if (nameInput) nameInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+        if (passwordConfirmInput) passwordConfirmInput.value = '';
+
+        // Resetar botão
+        const submitBtn = document.getElementById('registration-submit-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = '✅ CONTINUAR';
+            submitBtn.style.display = 'none'; // Esconder até mostrar campos necessários
+        }
+
+        // Esconder mensagens
+        this.hideRegistrationError();
+        this.hideUserFoundMessage();
+    }
+
+    /**
+     * Mostra formulário para usuário existente
+     */
+    showExistingUserForm(userData) {
         this.currentUserId = userData.id;
 
+        // Preencher dados básicos
         const nameInput = document.getElementById('full_name');
-        const emailInput = document.getElementById('user_email');
-        const phoneInput = document.getElementById('user_phone');
-
         if (nameInput && userData.name) {
             nameInput.value = userData.name;
         }
 
-        if (emailInput && userData.email) {
-            emailInput.value = userData.email;
+        // Mostrar campos adicionais preenchidos
+        const additionalFields = document.getElementById('additional-fields');
+        if (additionalFields) {
+            additionalFields.classList.remove('hidden');
         }
 
-        if (phoneInput && userData.phone) {
-            // Aplicar formatação ao telefone
-            const formattedPhone = this.formatPhoneNumber(userData.phone);
-            phoneInput.value = formattedPhone;
-        }
-
-        // Atualizar botão para indicar atualização
-        const submitBtn = document.getElementById('registration-submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '✅ ATUALIZAR E PAGAR';
-        }
-
-        // Mostrar mensagem de ajuda da senha para usuário existente
+        // Mostrar apenas campo de senha (sem confirmação)
+        const passwordFields = document.getElementById('password-fields');
+        const passwordConfirmField = document.getElementById('password-confirm-field');
         const passwordHelper = document.getElementById('password-helper');
-        const passwordInput = document.getElementById('user_password');
-        const passwordConfirmInput = document.getElementById('user_password_confirmation');
         
+        if (passwordFields) {
+            passwordFields.classList.remove('hidden');
+        }
+        if (passwordConfirmField) {
+            passwordConfirmField.classList.add('hidden');
+        }
         if (passwordHelper) {
             passwordHelper.classList.remove('hidden');
+            passwordHelper.textContent = '(para acessar sua conta)';
         }
-        
-        // Remover required dos campos de senha para usuário existente
-        if (passwordInput) {
-            passwordInput.removeAttribute('required');
+
+        // Atualizar botão
+        const submitBtn = document.getElementById('registration-submit-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = '🚀 ENTRAR E PAGAR';
+            submitBtn.style.display = 'block';
         }
-        if (passwordConfirmInput) {
-            passwordConfirmInput.removeAttribute('required');
-        }
+
+        // Mostrar mensagem de usuário encontrado
+        this.showUserFoundMessage(userData.name);
 
         if (!this.hasRealIdentifiers()) {
             this.ensureRealIdentifiers();
         }
+    }
+
+    /**
+     * Mostra formulário para novo usuário
+     */
+    showNewUserForm() {
+        this.currentUserId = null;
+
+        // Mostrar todos os campos
+        const additionalFields = document.getElementById('additional-fields');
+        const passwordFields = document.getElementById('password-fields');
+        const passwordConfirmField = document.getElementById('password-confirm-field');
+        const passwordHelper = document.getElementById('password-helper');
+        
+        if (additionalFields) {
+            additionalFields.classList.remove('hidden');
+        }
+        if (passwordFields) {
+            passwordFields.classList.remove('hidden');
+        }
+        if (passwordConfirmField) {
+            passwordConfirmField.classList.remove('hidden');
+        }
+        if (passwordHelper) {
+            passwordHelper.classList.add('hidden');
+        }
+
+        // Atualizar botão
+        const submitBtn = document.getElementById('registration-submit-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = '✅ CADASTRAR E PAGAR';
+            submitBtn.style.display = 'block';
+        }
+
+        // Esconder mensagem de usuário encontrado
+        this.hideUserFoundMessage();
+
+        if (!this.hasRealIdentifiers()) {
+            this.ensureRealIdentifiers();
+        }
+    }
+
+    /**
+     * Preenche os dados do usuário no formulário (função legada - mantida para compatibilidade)
+     */
+    fillUserData(userData) {
+        this.showExistingUserForm(userData);
     }
 
     /**
@@ -674,15 +759,20 @@ class WiFiPortal {
     showUserFoundMessage(name) {
         const errorDiv = document.getElementById('registration-errors');
         if (errorDiv) {
-            errorDiv.innerHTML = `👋 Olá ${name}! Seus dados foram preenchidos automaticamente. Você pode editar se necessário.`;
+            errorDiv.innerHTML = `👋 Olá ${name}! Digite sua senha para continuar.`;
             errorDiv.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-sm';
             errorDiv.classList.remove('hidden');
-            
-            // Esconder após 5 segundos
-            setTimeout(() => {
-                errorDiv.classList.add('hidden');
-                errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
-            }, 5000);
+        }
+    }
+
+    /**
+     * Esconde mensagem de usuário encontrado
+     */
+    hideUserFoundMessage() {
+        const errorDiv = document.getElementById('registration-errors');
+        if (errorDiv) {
+            errorDiv.classList.add('hidden');
+            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
         }
     }
 
@@ -1359,6 +1449,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+/**
+ * Função debounce para evitar muitas chamadas seguidas
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 // Exportar para uso global
 window.WiFiPortal = WiFiPortal;
