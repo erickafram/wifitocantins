@@ -30,6 +30,7 @@ Route::post('/detect-device', [PortalController::class, 'detectDevice']);
 
 // Registro de usuários (landing) - legado
 Route::post('/register', [RegistrationController::class, 'register']);
+Route::post('/register-for-payment', [RegistrationController::class, 'registerForPayment']);
 Route::post('/check-email', [RegistrationController::class, 'checkEmail']);
 Route::post('/check-user', [RegistrationController::class, 'checkUser']);
 

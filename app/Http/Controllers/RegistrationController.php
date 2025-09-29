@@ -169,8 +169,17 @@ class RegistrationController extends Controller
                 'phone' => 'required|string|max:20',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
-                'password' => 'required_without:user_id|string|min:6',
+                'password' => 'nullable|string|min:6|confirmed',
             ]);
+
+            // Validação customizada: senha obrigatória apenas para novos usuários
+            if (!$request->user_id && !$request->filled('password')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Senha é obrigatória para novos usuários.',
+                    'errors' => ['password' => ['Senha é obrigatória para novos usuários.']],
+                ], 422);
+            }
 
             if ($validator->fails()) {
                 return response()->json([
@@ -219,12 +228,15 @@ class RegistrationController extends Controller
 
                 $user->update($updateData);
 
+                // Fazer login automático do usuário
+                auth()->login($user);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Dados atualizados com sucesso!',
                     'user_id' => $user->id,
                     'existing_user' => true,
-                    'redirect_to_payment' => true,
+                    'redirect_to_dashboard' => true,
                 ]);
             }
 
@@ -248,12 +260,15 @@ class RegistrationController extends Controller
                     $existingUser->update($updates);
                 }
 
+                // Fazer login automático do usuário
+                auth()->login($existingUser);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Usuário já existente atualizado.',
                     'user_id' => $existingUser->id,
                     'existing_user' => true,
-                    'redirect_to_payment' => true,
+                    'redirect_to_dashboard' => true,
                 ]);
             }
 
@@ -275,12 +290,15 @@ class RegistrationController extends Controller
 
             $user = User::create($userData);
 
+            // Fazer login automático do usuário
+            auth()->login($user);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário cadastrado com sucesso!',
                 'user_id' => $user->id,
                 'existing_user' => false,
-                'redirect_to_payment' => true,
+                'redirect_to_dashboard' => true,
             ]);
 
         } catch (\Exception $e) {

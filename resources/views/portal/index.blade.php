@@ -767,6 +767,35 @@
                         >
                     </div>
                     
+                    <div id="password-fields">
+                        <div>
+                            <label for="user_password" class="block text-sm font-medium text-tocantins-gray-green mb-2">
+                                Senha * 
+                                <span id="password-helper" class="text-xs text-gray-500 hidden">(deixe em branco para manter a atual)</span>
+                            </label>
+                            <input 
+                                type="password" 
+                                id="user_password" 
+                                name="password" 
+                                placeholder="Mínimo 6 caracteres"
+                                minlength="6"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
+                        </div>
+                        
+                        <div>
+                            <label for="user_password_confirmation" class="block text-sm font-medium text-tocantins-gray-green mb-2">Confirmar Senha *</label>
+                            <input 
+                                type="password" 
+                                id="user_password_confirmation" 
+                                name="password_confirmation" 
+                                placeholder="Repita a senha"
+                                minlength="6"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
+                        </div>
+                    </div>
+                    
                     <button 
                         type="submit" 
                         id="registration-submit-btn"

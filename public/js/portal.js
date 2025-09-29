@@ -393,12 +393,23 @@ class WiFiPortal {
         const nameInput = document.getElementById('full_name');
         const emailInput = document.getElementById('user_email');
         const phoneInput = document.getElementById('user_phone');
+        const passwordInput = document.getElementById('user_password');
+        const passwordConfirmInput = document.getElementById('user_password_confirmation');
         const submitBtn = document.getElementById('registration-submit-btn');
         const errorDiv = document.getElementById('registration-errors');
+        const passwordHelper = document.getElementById('password-helper');
 
         if (nameInput) nameInput.value = '';
         if (emailInput) emailInput.value = '';
         if (phoneInput) phoneInput.value = '';
+        if (passwordInput) {
+            passwordInput.value = '';
+            passwordInput.setAttribute('required', 'required');
+        }
+        if (passwordConfirmInput) {
+            passwordConfirmInput.value = '';
+            passwordConfirmInput.setAttribute('required', 'required');
+        }
         
         if (submitBtn) {
             submitBtn.innerHTML = '✅ CONTINUAR PARA PAGAMENTO';
@@ -408,6 +419,11 @@ class WiFiPortal {
         if (errorDiv) {
             errorDiv.classList.add('hidden');
             errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
+        }
+
+        // Esconder mensagem de ajuda da senha
+        if (passwordHelper) {
+            passwordHelper.classList.add('hidden');
         }
     }
 
@@ -453,14 +469,28 @@ class WiFiPortal {
             name: formData.get('name'),
             email: formData.get('email'),
             phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
+            password: formData.get('password'),
+            password_confirmation: formData.get('password_confirmation'),
             user_id: this.currentUserId, // Incluir ID se for usuário existente
             mac_address: this.deviceMac, // 🎯 ADICIONAR MAC ADDRESS
             ip_address: this.deviceIp
         };
 
         // Validação básica
-        if (!data.name || !data.email || !data.phone) {
+        if (!data.name || !data.email || !data.phone || !data.password) {
             this.showRegistrationError('Todos os campos são obrigatórios.');
+            return;
+        }
+
+        // Validar senha
+        if (data.password.length < 6) {
+            this.showRegistrationError('A senha deve ter pelo menos 6 caracteres.');
+            return;
+        }
+
+        // Validar confirmação de senha
+        if (data.password !== data.password_confirmation) {
+            this.showRegistrationError('As senhas não coincidem.');
             return;
         }
 
@@ -508,11 +538,20 @@ class WiFiPortal {
             if (result.success) {
                 this.currentUserId = result.user_id;
                 this.hideRegistrationModal();
-                this.showPaymentModal();
+                
                 const message = result.existing_user ? 
                     'Dados atualizados com sucesso!' : 
                     'Cadastro realizado com sucesso!';
                 this.showSuccessMessage(message);
+                
+                // Redirecionar para dashboard ou pagamento
+                if (result.redirect_to_dashboard) {
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    this.showPaymentModal();
+                }
             } else {
                 if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
@@ -605,6 +644,23 @@ class WiFiPortal {
         const submitBtn = document.getElementById('registration-submit-btn');
         if (submitBtn) {
             submitBtn.innerHTML = '✅ ATUALIZAR E PAGAR';
+        }
+
+        // Mostrar mensagem de ajuda da senha para usuário existente
+        const passwordHelper = document.getElementById('password-helper');
+        const passwordInput = document.getElementById('user_password');
+        const passwordConfirmInput = document.getElementById('user_password_confirmation');
+        
+        if (passwordHelper) {
+            passwordHelper.classList.remove('hidden');
+        }
+        
+        // Remover required dos campos de senha para usuário existente
+        if (passwordInput) {
+            passwordInput.removeAttribute('required');
+        }
+        if (passwordConfirmInput) {
+            passwordConfirmInput.removeAttribute('required');
         }
 
         if (!this.hasRealIdentifiers()) {
