@@ -263,7 +263,9 @@ class WooviPixService
                 return false;
             }
 
-            $expectedSignature = hash_hmac('sha256', $payload, $secret);
+            // Gerar assinatura em formato base64 (como a Woovi envia)
+            $rawHash = hash_hmac('sha256', $payload, $secret, true);
+            $expectedSignature = base64_encode($rawHash);
 
             $isValid = hash_equals($expectedSignature, $signature);
 
@@ -272,6 +274,9 @@ class WooviPixService
                     'expected' => $expectedSignature,
                     'received' => $signature,
                     'header_name' => 'x-webhook-signature',
+                    'payload_size' => strlen($payload),
+                    'secret_size' => strlen($secret),
+                    'payload_preview' => substr($payload, 0, 200) . '...',
                 ]);
             }
 
