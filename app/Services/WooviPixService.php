@@ -249,17 +249,7 @@ class WooviPixService
             Log::warning('Woovi webhook sem assinatura ou sem segredo configurado', [
                 'has_signature' => !empty($signature),
                 'has_secret' => !empty($secret),
-                'request_ip' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'all_headers' => request()->headers->all(),
             ]);
-
-            // TEMPORÁRIO: Permitir webhooks sem assinatura em produção para não bloquear pagamentos
-            // Isso deve ser removido após configurar corretamente a Woovi
-            if (app()->environment('production')) {
-                Log::warning('🚨 PRODUÇÃO: Permitindo webhook sem assinatura temporariamente');
-                return true;
-            }
 
             return false;
         }

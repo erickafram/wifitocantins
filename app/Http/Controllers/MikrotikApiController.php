@@ -99,11 +99,25 @@ class MikrotikApiController extends Controller
                            }])
                            ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at']);
 
-            // Buscar usuários expirados que devem ser bloqueados
+            // Buscar usuários expirados que devem ser removidos
             $expiredUsers = User::where('status', 'connected')
                               ->where('expires_at', '<=', now())
                               ->whereNotNull('mac_address')
                               ->get(['id', 'mac_address', 'ip_address', 'expires_at']);
+
+            // Atualizar status dos usuários expirados para 'expired'
+            if ($expiredUsers->count() > 0) {
+                $expiredUserIds = $expiredUsers->pluck('id')->toArray();
+                User::whereIn('id', $expiredUserIds)->update([
+                    'status' => 'expired',
+                    'connected_at' => null
+                ]);
+                
+                Log::info('👥 Usuários expirados atualizados', [
+                    'count' => count($expiredUserIds),
+                    'user_ids' => $expiredUserIds
+                ]);
+            }
 
             // Registrar MACs que devem ser liberados na tabela mikrotik_mac_reports
             foreach ($paidUsers as $user) {
@@ -146,7 +160,7 @@ class MikrotikApiController extends Controller
 
                 foreach ($expiredUsers as $user) {
                     $lines[] = implode('|', [
-                        'BLOCK',
+                        'REMOVE',
                         $user->mac_address,
                         $user->ip_address ?? '',
                         optional($user->expires_at)->toISOString() ?? '',
@@ -156,13 +170,13 @@ class MikrotikApiController extends Controller
 
                 $lines[] = implode('|', ['TOTAL', (string) $paidUsers->count(), (string) $expiredUsers->count()]);
 
-                Log::info('⚡ MikroTik consulta ULTRA-RÁPIDA (RouterOS)', [
-                    'mikrotik_ip' => $request->ip(),
-                    'liberate_count' => $paidUsers->count(),
-                    'block_count' => $expiredUsers->count(),
-                    'interval' => '10_segundos',
-                    'format' => 'routeros',
-                ]);
+            Log::info('⚡ MikroTik consulta ULTRA-RÁPIDA (RouterOS)', [
+                'mikrotik_ip' => $request->ip(),
+                'liberate_count' => $paidUsers->count(),
+                'remove_count' => $expiredUsers->count(),
+                'interval' => '10_segundos',
+                'format' => 'routeros',
+            ]);
 
                 return response(implode("\n", $lines)."\n", 200)
                     ->header('Content-Type', 'text/plain');
@@ -180,24 +194,24 @@ class MikrotikApiController extends Controller
                         'action' => 'LIBERATE',
                     ];
                 })->toArray(),
-                'block_macs' => $expiredUsers->map(function ($user) {
+                'remove_macs' => $expiredUsers->map(function ($user) {
                     return [
                         'mac_address' => $user->mac_address,
                         'ip_address' => $user->ip_address,
                         'expired_at' => $user->expires_at->toISOString(),
                         'user_id' => $user->id,
-                        'action' => 'BLOCK',
+                        'action' => 'REMOVE',
                     ];
                 })->toArray(),
                 'total_liberate' => $paidUsers->count(),
-                'total_block' => $expiredUsers->count(),
+                'total_remove' => $expiredUsers->count(),
             ];
 
             // 🚀 Log da consulta ultra-rápida (10s)
             Log::info('⚡ MikroTik consulta ULTRA-RÁPIDA', [
                 'mikrotik_ip' => $request->ip(),
                 'liberate_count' => $paidUsers->count(),
-                'block_count' => $expiredUsers->count(),
+                'remove_count' => $expiredUsers->count(),
                 'interval' => '10_segundos',
                 'format' => 'json',
             ]);
