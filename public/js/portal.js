@@ -102,17 +102,15 @@ class WiFiPortal {
         // Máscara de telefone e verificação de usuário
         const phoneInput = document.getElementById('user_phone');
         if (phoneInput) {
-            phoneInput.addEventListener('input', (e) => {
-                this.applyPhoneMask(e);
-                this.checkBothFieldsFilled();
-            });
+            phoneInput.addEventListener('input', (e) => this.applyPhoneMask(e));
             phoneInput.addEventListener('keydown', (e) => this.handlePhoneKeydown(e));
+            phoneInput.addEventListener('blur', (e) => this.checkExistingUser('phone', e.target.value));
         }
 
         // Verificação de usuário por email
         const emailInput = document.getElementById('user_email');
         if (emailInput) {
-            emailInput.addEventListener('input', () => this.checkBothFieldsFilled());
+            emailInput.addEventListener('blur', (e) => this.checkExistingUser('email', e.target.value));
         }
 
         // Fechar modais clicando fora
@@ -390,30 +388,27 @@ class WiFiPortal {
      * Reseta o formulário de registro
      */
     resetRegistrationForm() {
-        // Limpar todos os campos
+        this.currentUserId = null;
+        
         const nameInput = document.getElementById('full_name');
         const emailInput = document.getElementById('user_email');
         const phoneInput = document.getElementById('user_phone');
-        const passwordInput = document.getElementById('user_password');
-        const passwordConfirmInput = document.getElementById('user_password_confirmation');
+        const submitBtn = document.getElementById('registration-submit-btn');
+        const errorDiv = document.getElementById('registration-errors');
 
-        if (nameInput) {
-            nameInput.value = '';
-            nameInput.removeAttribute('readonly');
+        if (nameInput) nameInput.value = '';
+        if (emailInput) emailInput.value = '';
+        if (phoneInput) phoneInput.value = '';
+        
+        if (submitBtn) {
+            submitBtn.innerHTML = '✅ CONTINUAR PARA PAGAMENTO';
+            submitBtn.disabled = false;
         }
-        if (emailInput) {
-            emailInput.value = '';
-            emailInput.removeAttribute('readonly');
-        }
-        if (phoneInput) {
-            phoneInput.value = '';
-            phoneInput.removeAttribute('readonly');
-        }
-        if (passwordInput) passwordInput.value = '';
-        if (passwordConfirmInput) passwordConfirmInput.value = '';
 
-        // Voltar ao estado inicial (apenas email e telefone visíveis)
-        this.resetFormToInitialState();
+        if (errorDiv) {
+            errorDiv.classList.add('hidden');
+            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
+        }
     }
 
     /**
@@ -455,57 +450,18 @@ class WiFiPortal {
         const form = e.target;
         const formData = new FormData(form);
         const data = {
+            name: formData.get('name'),
             email: formData.get('email'),
             phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
-            password: formData.get('password'),
+            user_id: this.currentUserId, // Incluir ID se for usuário existente
             mac_address: this.deviceMac, // 🎯 ADICIONAR MAC ADDRESS
             ip_address: this.deviceIp
         };
 
-        // Se tem user_id, é usuário existente fazendo login (não precisa de name e password_confirmation)
-        if (this.currentUserId) {
-            data.user_id = this.currentUserId;
-            data.name = formData.get('name'); // Nome já está preenchido (readonly)
-        } else {
-            // Novo usuário - precisa de name e password_confirmation
-            data.name = formData.get('name');
-            data.password_confirmation = formData.get('password_confirmation');
-        }
-
         // Validação básica
-        if (!data.email || !data.phone) {
-            this.showRegistrationError('E-mail e telefone são obrigatórios.');
+        if (!data.name || !data.email || !data.phone) {
+            this.showRegistrationError('Todos os campos são obrigatórios.');
             return;
-        }
-
-        // Para usuários existentes, só validar se preencheram senha
-        if (this.currentUserId) {
-            if (!data.password) {
-                this.showRegistrationError('Digite sua senha para continuar.');
-                return;
-            }
-            if (data.password.length < 6) {
-                this.showRegistrationError('A senha deve ter pelo menos 6 caracteres.');
-                return;
-            }
-        } else {
-            // Para novos usuários, todos os campos são obrigatórios
-            if (!data.name) {
-                this.showRegistrationError('Nome é obrigatório para novos usuários.');
-                return;
-            }
-            if (!data.password) {
-                this.showRegistrationError('Senha é obrigatória para novos usuários.');
-                return;
-            }
-            if (data.password.length < 6) {
-                this.showRegistrationError('A senha deve ter pelo menos 6 caracteres.');
-                return;
-            }
-            if (data.password !== data.password_confirmation) {
-                this.showRegistrationError('As senhas não coincidem.');
-                return;
-            }
         }
 
         // 🚀 VALIDAR SE MAC FOI DETECTADO
@@ -548,46 +504,17 @@ class WiFiPortal {
             });
 
             const result = await response.json();
-            console.log('📊 Resposta do registro/login:', result);
 
             if (result.success) {
                 this.currentUserId = result.user_id;
                 this.hideRegistrationModal();
-                
+                this.showPaymentModal();
                 const message = result.existing_user ? 
-                    '✅ Login realizado com sucesso!' : 
-                    '✅ Cadastro realizado com sucesso!';
+                    'Dados atualizados com sucesso!' : 
+                    'Cadastro realizado com sucesso!';
                 this.showSuccessMessage(message);
-                
-                console.log('🔐 Usuário autenticado! Redirecionando para dashboard...');
-                
-                // Redirecionar para dashboard (tanto para usuários novos quanto existentes)
-                // O backend já fez auth()->login() automaticamente
-                if (result.redirect_to_dashboard) {
-                    setTimeout(() => {
-                        console.log('🚀 Redirecionando para /dashboard');
-                        window.location.href = '/dashboard';
-                    }, 1000);
-                } else {
-                    // Fallback: mostrar modal de pagamento
-                    setTimeout(() => {
-                        this.showPaymentModal();
-                    }, 1000);
-                }
             } else {
-                if (result.user_exists && result.user_id) {
-                    // Usuário tentou se cadastrar mas já existe
-                    // Mudar para modo de login
-                    this.currentUserId = result.user_id;
-                    
-                    // Buscar dados do usuário
-                    this.checkExistingUser(
-                        document.getElementById('user_email').value.trim(),
-                        document.getElementById('user_phone').value.replace(/\D/g, '')
-                    );
-                    
-                    this.showRegistrationError('⚠️ Você já tem cadastro! Digite sua senha para fazer login.');
-                } else if (result.errors) {
+                if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
                     this.showRegistrationError(errorMessages.join('<br>'));
                 } else if (result.existing_user_data) {
@@ -609,218 +536,80 @@ class WiFiPortal {
     }
 
     /**
-     * Verifica se ambos os campos (email e telefone) estão preenchidos
+     * Verifica se usuário já existe por email ou telefone
      */
-    checkBothFieldsFilled() {
-        const emailInput = document.getElementById('user_email');
-        const phoneInput = document.getElementById('user_phone');
-        
-        if (!emailInput || !phoneInput) return;
+    async checkExistingUser(field, value) {
+        if (!value || value.length < 3) return;
 
-        const email = emailInput.value.trim();
-        const phone = phoneInput.value.replace(/\D/g, '');
-
-        // Validar email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const isEmailValid = emailRegex.test(email);
-
-        // Validar telefone (10 ou 11 dígitos)
-        const isPhoneValid = phone.length >= 10 && phone.length <= 11;
-
-        // Se ambos estiverem válidos, verificar se usuário existe
-        if (isEmailValid && isPhoneValid) {
-            this.checkExistingUser(email, phone);
+        // Limpar valor dependendo do campo
+        let cleanValue = value;
+        if (field === 'phone') {
+            cleanValue = value.replace(/\D/g, '');
+            if (cleanValue.length < 10) return;
         }
-    }
 
-    /**
-     * Verifica se usuário já existe por email e telefone
-     */
-    async checkExistingUser(email, phone) {
+        if (field === 'email') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(cleanValue)) return;
+        }
+
         try {
+            const payload = {};
+            payload[field] = cleanValue;
+
             const response = await fetch('/api/check-user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
-                body: JSON.stringify({
-                    email: email,
-                    phone: phone
-                })
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
 
             if (result.exists && result.user) {
-                this.showExistingUserForm(result.user);
-            } else {
-                this.showNewUserForm();
+                this.fillUserData(result.user);
+                this.showUserFoundMessage(result.user.name);
             }
         } catch (error) {
             console.error('Erro ao verificar usuário:', error);
-            this.showNewUserForm();
         }
     }
 
     /**
-     * Reseta formulário para estado inicial (apenas email e telefone)
-     */
-    resetFormToInitialState() {
-        this.currentUserId = null;
-        
-        // Esconder campos adicionais
-        const additionalFields = document.getElementById('additional-fields');
-        const passwordFields = document.getElementById('password-fields');
-        const passwordConfirmField = document.getElementById('password-confirm-field');
-        
-        if (additionalFields) {
-            additionalFields.classList.add('hidden');
-        }
-        if (passwordFields) {
-            passwordFields.classList.add('hidden');
-        }
-        if (passwordConfirmField) {
-            passwordConfirmField.classList.add('hidden');
-        }
-
-        // Limpar campos
-        const nameInput = document.getElementById('full_name');
-        const passwordInput = document.getElementById('user_password');
-        const passwordConfirmInput = document.getElementById('user_password_confirmation');
-        
-        if (nameInput) {
-            nameInput.value = '';
-            nameInput.removeAttribute('readonly');
-        }
-        if (passwordInput) {
-            passwordInput.value = '';
-        }
-        if (passwordConfirmInput) {
-            passwordConfirmInput.value = '';
-        }
-
-        // Resetar botão
-        const submitBtn = document.getElementById('registration-submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '✅ CONTINUAR';
-            submitBtn.classList.add('hidden'); // Esconder até preencher email e telefone
-        }
-
-        // Esconder mensagens
-        this.hideRegistrationError();
-        this.hideUserFoundMessage();
-    }
-
-    /**
-     * Mostra formulário para usuário existente
-     */
-    showExistingUserForm(userData) {
-        this.currentUserId = userData.id;
-
-        // Bloquear campos de email e telefone para edição
-        const emailInput = document.getElementById('user_email');
-        const phoneInput = document.getElementById('user_phone');
-        if (emailInput) emailInput.setAttribute('readonly', 'readonly');
-        if (phoneInput) phoneInput.setAttribute('readonly', 'readonly');
-
-        // Preencher dados básicos
-        const nameInput = document.getElementById('full_name');
-        if (nameInput && userData.name) {
-            nameInput.value = userData.name;
-            nameInput.setAttribute('readonly', 'readonly');
-        }
-
-        // Mostrar campos adicionais preenchidos
-        const additionalFields = document.getElementById('additional-fields');
-        if (additionalFields) {
-            additionalFields.classList.remove('hidden');
-        }
-
-        // Mostrar apenas campo de senha (sem confirmação)
-        const passwordFields = document.getElementById('password-fields');
-        const passwordConfirmField = document.getElementById('password-confirm-field');
-        const passwordHelper = document.getElementById('password-helper');
-        
-        if (passwordFields) {
-            passwordFields.classList.remove('hidden');
-        }
-        if (passwordConfirmField) {
-            passwordConfirmField.classList.add('hidden');
-        }
-        if (passwordHelper) {
-            passwordHelper.classList.remove('hidden');
-            passwordHelper.textContent = '(para acessar sua conta)';
-        }
-
-        // Atualizar botão
-        const submitBtn = document.getElementById('registration-submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '🚀 ENTRAR E PAGAR';
-            submitBtn.classList.remove('hidden');
-        }
-
-        // Mostrar mensagem de usuário encontrado
-        this.showUserFoundMessage(userData.name);
-
-        if (!this.hasRealIdentifiers()) {
-            this.ensureRealIdentifiers();
-        }
-    }
-
-    /**
-     * Mostra formulário para novo usuário
-     */
-    showNewUserForm() {
-        this.currentUserId = null;
-
-        // Desbloquear campos de email e telefone para edição
-        const emailInput = document.getElementById('user_email');
-        const phoneInput = document.getElementById('user_phone');
-        const nameInput = document.getElementById('full_name');
-        if (emailInput) emailInput.removeAttribute('readonly');
-        if (phoneInput) phoneInput.removeAttribute('readonly');
-        if (nameInput) nameInput.removeAttribute('readonly');
-
-        // Mostrar todos os campos
-        const additionalFields = document.getElementById('additional-fields');
-        const passwordFields = document.getElementById('password-fields');
-        const passwordConfirmField = document.getElementById('password-confirm-field');
-        const passwordHelper = document.getElementById('password-helper');
-        
-        if (additionalFields) {
-            additionalFields.classList.remove('hidden');
-        }
-        if (passwordFields) {
-            passwordFields.classList.remove('hidden');
-        }
-        if (passwordConfirmField) {
-            passwordConfirmField.classList.remove('hidden');
-        }
-        if (passwordHelper) {
-            passwordHelper.classList.add('hidden');
-        }
-
-        // Atualizar botão
-        const submitBtn = document.getElementById('registration-submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '✅ CADASTRAR E PAGAR';
-            submitBtn.classList.remove('hidden');
-        }
-
-        // Esconder mensagem de usuário encontrado
-        this.hideUserFoundMessage();
-
-        if (!this.hasRealIdentifiers()) {
-            this.ensureRealIdentifiers();
-        }
-    }
-
-    /**
-     * Preenche os dados do usuário no formulário (função legada - mantida para compatibilidade)
+     * Preenche os dados do usuário no formulário
      */
     fillUserData(userData) {
-        this.showExistingUserForm(userData);
+        this.currentUserId = userData.id;
+
+        const nameInput = document.getElementById('full_name');
+        const emailInput = document.getElementById('user_email');
+        const phoneInput = document.getElementById('user_phone');
+
+        if (nameInput && userData.name) {
+            nameInput.value = userData.name;
+        }
+
+        if (emailInput && userData.email) {
+            emailInput.value = userData.email;
+        }
+
+        if (phoneInput && userData.phone) {
+            // Aplicar formatação ao telefone
+            const formattedPhone = this.formatPhoneNumber(userData.phone);
+            phoneInput.value = formattedPhone;
+        }
+
+        // Atualizar botão para indicar atualização
+        const submitBtn = document.getElementById('registration-submit-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = '✅ ATUALIZAR E PAGAR';
+        }
+
+        if (!this.hasRealIdentifiers()) {
+            this.ensureRealIdentifiers();
+        }
     }
 
     /**
@@ -829,20 +618,15 @@ class WiFiPortal {
     showUserFoundMessage(name) {
         const errorDiv = document.getElementById('registration-errors');
         if (errorDiv) {
-            errorDiv.innerHTML = `👋 Olá ${name}! Digite sua senha para continuar.`;
+            errorDiv.innerHTML = `👋 Olá ${name}! Seus dados foram preenchidos automaticamente. Você pode editar se necessário.`;
             errorDiv.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-sm';
             errorDiv.classList.remove('hidden');
-        }
-    }
-
-    /**
-     * Esconde mensagem de usuário encontrado
-     */
-    hideUserFoundMessage() {
-        const errorDiv = document.getElementById('registration-errors');
-        if (errorDiv) {
-            errorDiv.classList.add('hidden');
-            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
+            
+            // Esconder após 5 segundos
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+                errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
+            }, 5000);
         }
     }
 
@@ -868,24 +652,12 @@ class WiFiPortal {
         const errorDiv = document.getElementById('registration-errors');
         if (errorDiv) {
             errorDiv.innerHTML = message;
-            errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
             errorDiv.classList.remove('hidden');
             
             // Esconder após 5 segundos
             setTimeout(() => {
                 errorDiv.classList.add('hidden');
             }, 5000);
-        }
-    }
-
-    /**
-     * Esconde erro no formulário de registro
-     */
-    hideRegistrationError() {
-        const errorDiv = document.getElementById('registration-errors');
-        if (errorDiv) {
-            errorDiv.classList.add('hidden');
-            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
         }
     }
 
@@ -970,10 +742,10 @@ class WiFiPortal {
 
     startPixCountdown() {
         this.stopPixCountdown();
-        this.pixCountdownSeconds = 120;
+        this.pixCountdownSeconds = 300; // 5 minutos
         this.pixPaymentConfirmed = false;
         this.updatePixTimerDisplay();
-        this.updatePixStatusHint('Finalize o pagamento em até 2 minutos.');
+        this.updatePixStatusHint('Finalize o pagamento em até 5 minutos.');
 
         this.pixTimerInterval = setInterval(() => {
             if (this.pixPaymentConfirmed) {
@@ -1036,6 +808,21 @@ class WiFiPortal {
                         <button id="close-pix-modal" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
                     </div>
                     
+                    <!-- Aviso importante -->
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-semibold text-red-800">⚠️ NÃO FECHE ESTA TELA!</p>
+                                <p class="text-xs text-red-700 mt-1">Mantenha esta janela aberta até realizar o pagamento</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="text-center mb-4">
                         <div class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-4">
                             <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-48 h-48 mx-auto">
@@ -1057,8 +844,8 @@ class WiFiPortal {
                         </div>
                         
                         <div class="bg-yellow-50 rounded-xl p-3 mb-4">
-                            <p id="pix-timer-text" class="text-sm font-semibold text-yellow-700">⏱️ Tempo restante: 02:00</p>
-                            <p id="pix-status-hint" class="text-xs text-yellow-600 mt-1">Finalize o pagamento em até 2 minutos.</p>
+                            <p id="pix-timer-text" class="text-sm font-semibold text-yellow-700">⏱️ Tempo restante: 05:00</p>
+                            <p id="pix-status-hint" class="text-xs text-yellow-600 mt-1">Finalize o pagamento em até 5 minutos.</p>
                         </div>
                         
                         <div class="flex space-x-2">
@@ -1171,8 +958,18 @@ class WiFiPortal {
 
                 const allowed = await this.allowDevice(this.deviceMac);
                 if (allowed) {
+                    // Mostrar mensagem de redirecionamento
+                    this.updatePixStatusHint('✅ Acesso liberado! Redirecionando para navegação...');
+                    
+                    // Fechar modal e redirecionar para o Google
                     setTimeout(() => {
-                        this.checkConnectionStatus();
+                        this.closePixModal();
+                        this.showSuccessMessage('🌐 Conectado! Você está sendo redirecionado...');
+                        
+                        // Redirecionar para o Google após 2 segundos
+                        setTimeout(() => {
+                            window.location.href = 'https://www.google.com';
+                        }, 2000);
                     }, 2000);
                 }
             } else {
@@ -1245,7 +1042,12 @@ class WiFiPortal {
                 
                 if (allowed) {
                     setTimeout(() => {
-                        this.checkConnectionStatus();
+                        this.showSuccessMessage('🌐 Conectado! Você está sendo redirecionado...');
+                        
+                        // Redirecionar para o Google após 2 segundos
+                        setTimeout(() => {
+                            window.location.href = 'https://www.google.com';
+                        }, 2000);
                     }, 2000);
                 }
             } else {
@@ -1303,7 +1105,12 @@ class WiFiPortal {
                 const allowed = await this.allowDevice(this.deviceMac);
                 if (allowed) {
                     setTimeout(() => {
-                        this.checkConnectionStatus();
+                        this.showSuccessMessage('🌐 Conectado! Você está sendo redirecionado...');
+                        
+                        // Redirecionar para o Google após 2 segundos
+                        setTimeout(() => {
+                            window.location.href = 'https://www.google.com';
+                        }, 2000);
                     }, 2000);
                 }
             } else {
@@ -1531,21 +1338,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-/**
- * Função debounce para evitar muitas chamadas seguidas
- */
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
 
 // Exportar para uso global
 window.WiFiPortal = WiFiPortal;

@@ -15,13 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.access' => \App\Http\Middleware\AdminAccess::class,
         ]);
-        
-        // 🔥 Habilitar sessão e cookies nas rotas da API para auth()->login() funcionar
-        $middleware->api(prepend: [
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

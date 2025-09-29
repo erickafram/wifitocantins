@@ -319,25 +319,6 @@
 
     <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
         
-        <!-- Connection Status (Top) -->
-        <div id="connection-status" class="bg-white rounded-xl p-4 mb-4 hidden">
-            <div class="flex items-center justify-center">
-                <div class="flex items-center text-tocantins-green">
-                    <div class="w-3 h-3 bg-tocantins-green rounded-full mr-3"></div>
-                    <span class="font-medium">Status: <span id="status-text">Verificando...</span></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-center">
-            <button 
-                id="manage-connection"
-                class="text-tocantins-green font-medium text-sm hover:text-tocantins-dark-green transition-colors hidden"
-            >
-                ℹ️ Já conectado? Gerencie sua conexão
-            </button>
-        </div>
-
         <!-- Header -->
         <div class="text-center mb-10 animate-fade-in">
             <!-- Logo -->
@@ -730,84 +711,49 @@
                 <form id="registration-form" class="space-y-4">
                     <div id="registration-errors" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
                     
-                    <!-- Campos iniciais: Email e Telefone -->
-                    <div id="initial-fields">
-                        <div>
-                            <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
-                            <input 
-                                type="email" 
-                                id="user_email" 
-                                name="email" 
-                                required
-                                placeholder="seu@email.com"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                            >
-                        </div>
-                        
-                        <div class="mt-4">
-                            <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
-                            <input 
-                                type="tel" 
-                                id="user_phone" 
-                                name="phone" 
-                                required
-                                placeholder="(XX) X XXXX-XXXX"
-                                maxlength="16"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                            >
-                        </div>
+                    <div>
+                        <label for="full_name" class="block text-sm font-medium text-tocantins-gray-green mb-2">Nome Completo *</label>
+                        <input 
+                            type="text" 
+                            id="full_name" 
+                            name="name" 
+                            required
+                            placeholder="Digite seu nome completo"
+                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                        >
                     </div>
-
-                    <!-- Campos adicionais: aparecem quando necessário -->
-                    <div id="additional-fields" class="hidden space-y-4">
-                        <div>
-                            <label for="full_name" class="block text-sm font-medium text-tocantins-gray-green mb-2">Nome Completo *</label>
-                            <input 
-                                type="text" 
-                                id="full_name" 
-                                name="name" 
-                                placeholder="Digite seu nome completo"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                            >
-                        </div>
+                    
+                    <div>
+                        <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
+                        <input 
+                            type="email" 
+                            id="user_email" 
+                            name="email" 
+                            required
+                            placeholder="seu@email.com"
+                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                        >
                     </div>
-
-                    <!-- Campos de senha: aparecem quando necessário -->
-                    <div id="password-fields" class="hidden space-y-4">
-                        <div>
-                            <label for="user_password" class="block text-sm font-medium text-tocantins-gray-green mb-2">
-                                Senha * 
-                                <span id="password-helper" class="text-xs text-gray-500 hidden">(para acessar sua conta)</span>
-                            </label>
-                            <input 
-                                type="password" 
-                                id="user_password" 
-                                name="password" 
-                                placeholder="Mínimo 6 caracteres"
-                                minlength="6"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                            >
-                        </div>
-                        
-                        <div id="password-confirm-field">
-                            <label for="user_password_confirmation" class="block text-sm font-medium text-tocantins-gray-green mb-2">Confirmar Senha *</label>
-                            <input 
-                                type="password" 
-                                id="user_password_confirmation" 
-                                name="password_confirmation" 
-                                placeholder="Repita a senha"
-                                minlength="6"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                            >
-                        </div>
+                    
+                    <div>
+                        <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
+                        <input 
+                            type="tel" 
+                            id="user_phone" 
+                            name="phone" 
+                            required
+                            placeholder="(XX) X XXXX-XXXX"
+                            maxlength="16"
+                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                        >
                     </div>
                     
                     <button 
                         type="submit" 
                         id="registration-submit-btn"
-                        class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm relative z-10 hidden"
+                        class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm relative z-10"
                     >
-                        ✅ CONTINUAR
+                        ✅ CONTINUAR PARA PAGAMENTO
                     </button>
                 </form>
                 

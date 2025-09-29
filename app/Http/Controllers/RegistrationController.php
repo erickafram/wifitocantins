@@ -188,8 +188,9 @@ class RegistrationController extends Controller
                 ], 422);
             }
 
-            $ipAddress = HotspotIdentity::resolveClientIp($request);
-            $macAddress = HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
+            // 🎯 PROCESSAR MAC ADDRESS
+            $ipAddress = $ipAddress ?? HotspotIdentity::resolveClientIp($request);
+            $macAddress = $macAddress ?? HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
 
             if (! $macAddress) {
                 return response()->json([
@@ -244,32 +245,54 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // Verificar se usuário já existe (mas não passou user_id)
+            // Verificar se já existe usuário com este email, telefone OU MAC address
             $existingUser = User::where('email', $request->email)
                 ->orWhere('phone', $request->phone)
+                ->orWhere('mac_address', $macAddress)
                 ->first();
 
             if ($existingUser) {
-                // Usuário tentando se cadastrar mas já existe
-                // Retornar erro pedindo para usar a senha existente
+                // Usuário já existe - atualizar dados
+                $updates = [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'password' => Hash::make($request->password ?? 'default_password_'.time()),
+                ];
+                
+                // Atualizar MAC e IP
+                if (HotspotIdentity::shouldReplaceMac($existingUser->mac_address, $macAddress)) {
+                    $updates['mac_address'] = $macAddress;
+                }
+                if ($ipAddress && $existingUser->ip_address !== $ipAddress) {
+                    $updates['ip_address'] = $ipAddress;
+                }
+
+                $existingUser->update($updates);
+                
+                // Fazer login automático
+                auth()->login($existingUser);
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Este email ou telefone já está cadastrado. Por favor, use sua senha existente para fazer login.',
-                    'user_exists' => true,
+                    'success' => true,
+                    'message' => 'Cadastro atualizado com sucesso!',
                     'user_id' => $existingUser->id,
-                    'errors' => ['email' => ['Este email ou telefone já está cadastrado.']],
-                ], 422);
+                    'existing_user' => false,
+                    'redirect_to_dashboard' => true,
+                ]);
             }
 
+            // Criar novo usuário (só chega aqui se realmente não existir)
             $userData = [
-                'name' => $request->name ?? 'Visitante WiFi',
-                'email' => $request->email ?? ('guest+'.uniqid().'@wifitocantins.com.br'),
-                'phone' => $request->phone ?? '0000000000',
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
                 'password' => Hash::make($request->password ?? 'default_password_'.time()),
                 'registered_at' => now(),
                 'status' => 'pending',
             ];
 
+            // Adicionar MAC e IP
             if ($macAddress) {
                 $userData['mac_address'] = $macAddress;
             }
@@ -278,8 +301,8 @@ class RegistrationController extends Controller
             }
 
             $user = User::create($userData);
-
-            // Fazer login automático do usuário
+            
+            // Fazer login automático
             auth()->login($user);
 
             return response()->json([
