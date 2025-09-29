@@ -742,10 +742,10 @@ class WiFiPortal {
 
     startPixCountdown() {
         this.stopPixCountdown();
-        this.pixCountdownSeconds = 300; // 5 minutos
+        this.pixCountdownSeconds = 900; // 15 minutos
         this.pixPaymentConfirmed = false;
         this.updatePixTimerDisplay();
-        this.updatePixStatusHint('Finalize o pagamento em até 5 minutos.');
+        this.updatePixStatusHint('Finalize o pagamento em até 15 minutos.');
 
         this.pixTimerInterval = setInterval(() => {
             if (this.pixPaymentConfirmed) {

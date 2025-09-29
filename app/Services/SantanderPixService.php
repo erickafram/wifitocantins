@@ -79,7 +79,7 @@ class SantanderPixService
             // Payload conforme documentação Santander PIX
             $payload = [
                 'calendario' => [
-                    'expiracao' => 1800 // 30 minutos em segundos
+                    'expiracao' => 900 // 15 minutos em segundos
                 ],
                 'valor' => [
                     'original' => number_format($amount, 2, '.', '')
