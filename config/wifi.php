@@ -73,12 +73,13 @@ return [
             'woovi_app_id' => env('WOOVI_APP_ID', ''),
             'woovi_app_secret' => env('WOOVI_APP_SECRET', ''),
             
-            // Configurações Santander
-            'client_id' => env('SANTANDER_CLIENT_ID', 'RA4UP23L7tQLlAlcsk8O9QF9Q6Oih6NB'),
-            'client_secret' => env('SANTANDER_CLIENT_SECRET', 'nSkWIV8TFJUGRBur'),
+            // Configurações Santander PIX
+            'client_id' => env('SANTANDER_CLIENT_ID', ''),
+            'client_secret' => env('SANTANDER_CLIENT_SECRET', ''),
             'workspace_id' => env('SANTANDER_WORKSPACE_ID', ''),
-            'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'certificates/santander.pfx'),
+            'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'certificates/santander.pem'),
             'certificate_password' => env('SANTANDER_CERTIFICATE_PASSWORD', ''),
+            'station_code' => env('SANTANDER_STATION_CODE', ''), // Código de Estação
             
             'environment' => env('PIX_ENVIRONMENT', 'production'), // sandbox ou production
         ],

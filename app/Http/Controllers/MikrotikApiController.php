@@ -89,7 +89,7 @@ class MikrotikApiController extends Controller
             }
 
             // 🚀 CONSULTA ULTRA-RÁPIDA - Buscar usuários pagos ativos
-            $paidUsers = User::where('status', 'connected')
+            $paidUsers = User::whereIn('status', ['connected', 'active'])
                            ->where('expires_at', '>', now())
                            ->whereNotNull('mac_address')
                            ->with(['payments' => function($query) {
@@ -100,7 +100,7 @@ class MikrotikApiController extends Controller
                            ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at']);
 
             // Buscar usuários expirados que devem ser removidos
-            $expiredUsers = User::where('status', 'connected')
+            $expiredUsers = User::whereIn('status', ['connected', 'active'])
                               ->where('expires_at', '<=', now())
                               ->whereNotNull('mac_address')
                               ->get(['id', 'mac_address', 'ip_address', 'expires_at']);

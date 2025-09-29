@@ -28,10 +28,10 @@ class SantanderPixService
         $this->certificatePassword = config('wifi.payment_gateways.pix.certificate_password');
         $this->environment = config('wifi.payment_gateways.pix.environment', 'sandbox');
         
-        // URLs do Santander
+        // URLs do Santander conforme documentação oficial
         $this->baseUrl = $this->environment === 'production' 
-            ? 'https://api.santander.com.br' 
-            : 'https://api-sandbox.santander.com.br';
+            ? 'https://trust-pix.santander.com.br' 
+            : 'https://trust-pix-h.santander.com.br';
     }
 
     /**
@@ -45,11 +45,11 @@ class SantanderPixService
                     'cert' => [storage_path('app/' . $this->certificatePath), $this->certificatePassword],
                     'verify' => true,
                 ])
-                ->post($this->baseUrl . '/auth/oauth/v2/token', [
+                ->post($this->baseUrl . '/oauth/token', [
                     'grant_type' => 'client_credentials',
                     'client_id' => $this->clientId,
                     'client_secret' => $this->clientSecret,
-                    'scope' => 'pix_payments'
+                    // Sem scope específico conforme documentação Santander
                 ]);
 
             if ($response->successful()) {
@@ -76,15 +76,21 @@ class SantanderPixService
             // Converter valor para centavos
             $amountCents = intval($amount * 100);
             
+            // Payload conforme documentação Santander PIX
             $payload = [
-                'key' => $this->pixKey,
-                'amount' => [
-                    'value' => $amountCents
+                'calendario' => [
+                    'expiracao' => 1800 // 30 minutos em segundos
                 ],
-                'expiration_datetime' => now()->addMinutes(30)->toISOString(),
-                'external_id' => $externalId ?: 'WIFI_' . time(),
-                'additional_information' => [
-                    'description' => $description
+                'valor' => [
+                    'original' => number_format($amount, 2, '.', '')
+                ],
+                'chave' => $this->pixKey,
+                'solicitacaoPagador' => $description,
+                'infoAdicionais' => [
+                    [
+                        'nome' => 'Referencia',
+                        'valor' => $externalId ?: 'WIFI_' . time()
+                    ]
                 ]
             ];
 
@@ -97,20 +103,25 @@ class SantanderPixService
                 'cert' => [storage_path('app/' . $this->certificatePath), $this->certificatePassword],
                 'verify' => true,
             ])
-            ->post($this->baseUrl . '/pix_payments/v1/qr_codes', $payload);
+            ->put($this->baseUrl . '/pix/v2/cob/' . ($externalId ?: 'WIFI_' . time()), $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
                 
+                // Gerar string EMV conforme documentação
+                $emvString = $this->generateEMVString($data['location'], $amount, $data['txid']);
+                
                 return [
                     'success' => true,
-                    'payment_id' => $data['payment_id'],
-                    'qr_code_text' => $data['qr_code_text'], // String EMV
-                    'qr_code_image' => $data['qr_code_image'] ?? null, // Base64 da imagem
+                    'payment_id' => $data['txid'],
+                    'qr_code_text' => $emvString, // String EMV gerada
+                    'qr_code_image' => $this->generateQRCodeImageUrl($emvString),
                     'amount' => $amount,
                     'status' => 'pending',
-                    'external_id' => $data['external_id'],
-                    'expiration_datetime' => $data['expiration_datetime'],
+                    'external_id' => $externalId ?: 'WIFI_' . time(),
+                    'expiration_datetime' => $data['calendario']['criacao'] ?? now()->toISOString(),
+                    'location' => $data['location'],
+                    'txid' => $data['txid'],
                 ];
             }
 
@@ -248,6 +259,90 @@ class SantanderPixService
                 'environment' => $this->environment,
             ];
         }
+    }
+
+    /**
+     * Gerar string EMV conforme documentação Santander
+     */
+    private function generateEMVString(string $location, float $amount, string $txid): string
+    {
+        $merchantName = config('wifi.pix.merchant_name', 'TocantinsTransportWiFi');
+        $merchantCity = config('wifi.pix.merchant_city', 'Palmas');
+        
+        // Formatar valor no padrão EMV
+        $formattedAmount = number_format($amount, 2, '.', '');
+        
+        // Campo 00: Payload Format Indicator
+        $payload = $this->formatEMVField('00', '01');
+        
+        // Campo 01: Point of Initiation Method (12 = dinâmico)
+        $payload .= $this->formatEMVField('01', '12');
+        
+        // Campo 26: Merchant Account Information
+        $merchantInfo = $this->formatEMVField('00', 'br.gov.bcb.pix');
+        $merchantInfo .= $this->formatEMVField('25', $location);
+        $payload .= $this->formatEMVField('26', $merchantInfo);
+        
+        // Campo 52: Merchant Category Code
+        $payload .= $this->formatEMVField('52', '0000');
+        
+        // Campo 53: Transaction Currency (986 = BRL)
+        $payload .= $this->formatEMVField('53', '986');
+        
+        // Campo 54: Transaction Amount
+        $payload .= $this->formatEMVField('54', $formattedAmount);
+        
+        // Campo 58: Country Code
+        $payload .= $this->formatEMVField('58', 'BR');
+        
+        // Campo 59: Merchant Name
+        $payload .= $this->formatEMVField('59', $merchantName);
+        
+        // Campo 60: Merchant City
+        $payload .= $this->formatEMVField('60', $merchantCity);
+        
+        // Campo 62: Additional Data Field Template
+        $additionalData = $this->formatEMVField('05', '***'); // Referência
+        $payload .= $this->formatEMVField('62', $additionalData);
+        
+        // Campo 63: CRC16 (calculado sobre todo o payload + "6304")
+        $crcPayload = $payload . '6304';
+        $crc = $this->calculateCRC16($crcPayload);
+        $payload .= '6304' . strtoupper(str_pad(dechex($crc), 4, '0', STR_PAD_LEFT));
+        
+        return $payload;
+    }
+
+    /**
+     * Formatar campo EMV (ID + Tamanho + Conteúdo)
+     */
+    private function formatEMVField(string $id, string $content): string
+    {
+        $length = str_pad(strlen($content), 2, '0', STR_PAD_LEFT);
+        return $id . $length . $content;
+    }
+
+    /**
+     * Calcular CRC16-CCITT para validação EMV
+     */
+    private function calculateCRC16(string $data): int
+    {
+        $crc = 0xFFFF;
+        $polynomial = 0x1021;
+        
+        for ($i = 0; $i < strlen($data); $i++) {
+            $crc ^= (ord($data[$i]) << 8);
+            
+            for ($j = 0; $j < 8; $j++) {
+                if (($crc & 0x8000) !== 0) {
+                    $crc = (($crc << 1) ^ $polynomial) & 0xFFFF;
+                } else {
+                    $crc = ($crc << 1) & 0xFFFF;
+                }
+            }
+        }
+        
+        return $crc;
     }
 
     /**
