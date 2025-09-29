@@ -102,15 +102,17 @@ class WiFiPortal {
         // Máscara de telefone e verificação de usuário
         const phoneInput = document.getElementById('user_phone');
         if (phoneInput) {
-            phoneInput.addEventListener('input', (e) => this.applyPhoneMask(e));
+            phoneInput.addEventListener('input', (e) => {
+                this.applyPhoneMask(e);
+                this.checkBothFieldsFilled();
+            });
             phoneInput.addEventListener('keydown', (e) => this.handlePhoneKeydown(e));
-            phoneInput.addEventListener('blur', (e) => this.checkExistingUser('phone', e.target.value));
         }
 
         // Verificação de usuário por email
         const emailInput = document.getElementById('user_email');
         if (emailInput) {
-            emailInput.addEventListener('blur', (e) => this.checkExistingUser('email', e.target.value));
+            emailInput.addEventListener('input', () => this.checkBothFieldsFilled());
         }
 
         // Fechar modais clicando fora
@@ -395,9 +397,18 @@ class WiFiPortal {
         const passwordInput = document.getElementById('user_password');
         const passwordConfirmInput = document.getElementById('user_password_confirmation');
 
-        if (nameInput) nameInput.value = '';
-        if (emailInput) emailInput.value = '';
-        if (phoneInput) phoneInput.value = '';
+        if (nameInput) {
+            nameInput.value = '';
+            nameInput.removeAttribute('readonly');
+        }
+        if (emailInput) {
+            emailInput.value = '';
+            emailInput.removeAttribute('readonly');
+        }
+        if (phoneInput) {
+            phoneInput.value = '';
+            phoneInput.removeAttribute('readonly');
+        }
         if (passwordInput) passwordInput.value = '';
         if (passwordConfirmInput) passwordConfirmInput.value = '';
 
@@ -567,43 +578,45 @@ class WiFiPortal {
     }
 
     /**
-     * Verifica se usuário já existe por email ou telefone
+     * Verifica se ambos os campos (email e telefone) estão preenchidos
      */
-    async checkExistingUser(field, value) {
-        if (!value || value.length < 3) {
-            this.resetFormToInitialState();
-            return;
-        }
+    checkBothFieldsFilled() {
+        const emailInput = document.getElementById('user_email');
+        const phoneInput = document.getElementById('user_phone');
+        
+        if (!emailInput || !phoneInput) return;
 
-        // Limpar valor dependendo do campo
-        let cleanValue = value;
-        if (field === 'phone') {
-            cleanValue = value.replace(/\D/g, '');
-            if (cleanValue.length < 10) {
-                this.resetFormToInitialState();
-                return;
-            }
-        }
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.replace(/\D/g, '');
 
-        if (field === 'email') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(cleanValue)) {
-                this.resetFormToInitialState();
-                return;
-            }
-        }
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isEmailValid = emailRegex.test(email);
 
+        // Validar telefone (10 ou 11 dígitos)
+        const isPhoneValid = phone.length >= 10 && phone.length <= 11;
+
+        // Se ambos estiverem válidos, verificar se usuário existe
+        if (isEmailValid && isPhoneValid) {
+            this.checkExistingUser(email, phone);
+        }
+    }
+
+    /**
+     * Verifica se usuário já existe por email e telefone
+     */
+    async checkExistingUser(email, phone) {
         try {
-            const payload = {};
-            payload[field] = cleanValue;
-
             const response = await fetch('/api/check-user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    email: email,
+                    phone: phone
+                })
             });
 
             const result = await response.json();
@@ -628,6 +641,7 @@ class WiFiPortal {
         // Esconder campos adicionais
         const additionalFields = document.getElementById('additional-fields');
         const passwordFields = document.getElementById('password-fields');
+        const passwordConfirmField = document.getElementById('password-confirm-field');
         
         if (additionalFields) {
             additionalFields.classList.add('hidden');
@@ -635,21 +649,31 @@ class WiFiPortal {
         if (passwordFields) {
             passwordFields.classList.add('hidden');
         }
+        if (passwordConfirmField) {
+            passwordConfirmField.classList.add('hidden');
+        }
 
         // Limpar campos
         const nameInput = document.getElementById('full_name');
         const passwordInput = document.getElementById('user_password');
         const passwordConfirmInput = document.getElementById('user_password_confirmation');
         
-        if (nameInput) nameInput.value = '';
-        if (passwordInput) passwordInput.value = '';
-        if (passwordConfirmInput) passwordConfirmInput.value = '';
+        if (nameInput) {
+            nameInput.value = '';
+            nameInput.removeAttribute('readonly');
+        }
+        if (passwordInput) {
+            passwordInput.value = '';
+        }
+        if (passwordConfirmInput) {
+            passwordConfirmInput.value = '';
+        }
 
         // Resetar botão
         const submitBtn = document.getElementById('registration-submit-btn');
         if (submitBtn) {
             submitBtn.innerHTML = '✅ CONTINUAR';
-            submitBtn.style.display = 'none'; // Esconder até mostrar campos necessários
+            submitBtn.classList.add('hidden'); // Esconder até preencher email e telefone
         }
 
         // Esconder mensagens
@@ -663,10 +687,17 @@ class WiFiPortal {
     showExistingUserForm(userData) {
         this.currentUserId = userData.id;
 
+        // Bloquear campos de email e telefone para edição
+        const emailInput = document.getElementById('user_email');
+        const phoneInput = document.getElementById('user_phone');
+        if (emailInput) emailInput.setAttribute('readonly', 'readonly');
+        if (phoneInput) phoneInput.setAttribute('readonly', 'readonly');
+
         // Preencher dados básicos
         const nameInput = document.getElementById('full_name');
         if (nameInput && userData.name) {
             nameInput.value = userData.name;
+            nameInput.setAttribute('readonly', 'readonly');
         }
 
         // Mostrar campos adicionais preenchidos
@@ -695,7 +726,7 @@ class WiFiPortal {
         const submitBtn = document.getElementById('registration-submit-btn');
         if (submitBtn) {
             submitBtn.innerHTML = '🚀 ENTRAR E PAGAR';
-            submitBtn.style.display = 'block';
+            submitBtn.classList.remove('hidden');
         }
 
         // Mostrar mensagem de usuário encontrado
@@ -711,6 +742,14 @@ class WiFiPortal {
      */
     showNewUserForm() {
         this.currentUserId = null;
+
+        // Desbloquear campos de email e telefone para edição
+        const emailInput = document.getElementById('user_email');
+        const phoneInput = document.getElementById('user_phone');
+        const nameInput = document.getElementById('full_name');
+        if (emailInput) emailInput.removeAttribute('readonly');
+        if (phoneInput) phoneInput.removeAttribute('readonly');
+        if (nameInput) nameInput.removeAttribute('readonly');
 
         // Mostrar todos os campos
         const additionalFields = document.getElementById('additional-fields');
@@ -735,7 +774,7 @@ class WiFiPortal {
         const submitBtn = document.getElementById('registration-submit-btn');
         if (submitBtn) {
             submitBtn.innerHTML = '✅ CADASTRAR E PAGAR';
-            submitBtn.style.display = 'block';
+            submitBtn.classList.remove('hidden');
         }
 
         // Esconder mensagem de usuário encontrado

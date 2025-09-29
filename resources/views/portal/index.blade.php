@@ -805,8 +805,7 @@
                     <button 
                         type="submit" 
                         id="registration-submit-btn"
-                        class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm relative z-10"
-                        style="display: none;"
+                        class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm relative z-10 hidden"
                     >
                         ✅ CONTINUAR
                     </button>
