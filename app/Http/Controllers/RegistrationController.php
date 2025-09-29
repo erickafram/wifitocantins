@@ -162,23 +162,21 @@ class RegistrationController extends Controller
     public function registerForPayment(Request $request)
     {
         try {
-            // Validação diferente para usuário existente (login) vs novo usuário (cadastro)
-            $rules = [
-                'user_id' => 'nullable|exists:users,id',
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'nullable|exists:users,id', // ID do usuário existente (opcional)
+                'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
                 'phone' => 'required|string|max:20',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
-                'password' => 'required|string|min:6',
-            ];
-
-            // Se NÃO tem user_id, é novo usuário - exigir name e password_confirmation
-            if (!$request->has('user_id') || !$request->user_id) {
-                $rules['name'] = 'required|string|max:255';
-                $rules['password_confirmation'] = 'required|string|min:6|same:password';
-            }
-
-            $validator = Validator::make($request->all(), $rules);
+            ], [
+                'name.required' => 'Nome completo é obrigatório',
+                'email.required' => 'E-mail é obrigatório',
+                'email.email' => 'E-mail deve ter um formato válido',
+                'phone.required' => 'Telefone é obrigatório',
+                'mac_address.string' => 'MAC address deve ser uma string válida',
+                'ip_address.ip' => 'IP inválido',
+            ]);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -199,7 +197,7 @@ class RegistrationController extends Controller
                 ], 422);
             }
 
-            // Se tem user_id, é um usuário existente tentando fazer login
+            // Se tem user_id, é um usuário existente
             if ($request->user_id) {
                 $user = User::find($request->user_id);
 
@@ -210,18 +208,14 @@ class RegistrationController extends Controller
                     ], 404);
                 }
 
-                // Validar senha do usuário existente
-                if (!$request->filled('password') || !Hash::check($request->password, $user->password)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Senha incorreta.',
-                        'errors' => ['password' => ['Senha incorreta.']],
-                    ], 422);
-                }
+                // Atualizar dados se necessário
+                $updateData = [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                ];
 
-                // Atualizar apenas MAC e IP se necessário (não atualiza nome/email/senha)
-                $updateData = [];
-
+                // 🎯 ATUALIZAR MAC E IP SE FORNECIDOS
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
                     $updateData['mac_address'] = $macAddress;
                 }
@@ -229,70 +223,72 @@ class RegistrationController extends Controller
                     $updateData['ip_address'] = $ipAddress;
                 }
 
-                if (!empty($updateData)) {
-                    $user->update($updateData);
-                }
-
-                // Fazer login automático do usuário
-                auth()->login($user);
+                $user->update($updateData);
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Login realizado com sucesso!',
+                    'message' => 'Dados atualizados com sucesso!',
                     'user_id' => $user->id,
                     'existing_user' => true,
-                    'redirect_to_dashboard' => true,
+                    'redirect_to_payment' => true,
                 ]);
             }
 
-            // Verificar se já existe usuário com este email, telefone OU MAC address
-            $existingUser = User::where('email', $request->email)
+            // 1. Verificar se já existe usuário com este email ou telefone
+            $existingUserByContact = User::where('email', $request->email)
                 ->orWhere('phone', $request->phone)
-                ->orWhere('mac_address', $macAddress)
                 ->first();
 
-            if ($existingUser) {
-                // Usuário já existe - atualizar dados
-                $updates = [
+            if ($existingUserByContact) {
+                // Usuário tentando cadastrar mas já tem conta com esse email/telefone
+                // Precisa fazer login com a senha existente
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este email ou telefone já está cadastrado. Por favor, use sua senha existente para fazer login.',
+                    'user_exists' => true,
+                    'user_id' => $existingUserByContact->id,
+                    'errors' => ['email' => ['Este email ou telefone já está cadastrado.']],
+                ], 422);
+            }
+
+            // 2. Verificar se já existe usuário com este MAC address (dispositivo já usado)
+            $existingUserByMac = $macAddress ? User::where('mac_address', $macAddress)->first() : null;
+
+            if ($existingUserByMac) {
+                // Dispositivo já foi usado antes, mas com email/telefone diferentes
+                // Atualizar os dados do usuário existente (permite reutilização do dispositivo)
+                $existingUserByMac->update([
                     'name' => $request->name,
                     'email' => $request->email,
                     'phone' => $request->phone,
-                    'password' => Hash::make($request->password ?? 'default_password_'.time()),
-                ];
-                
-                // Atualizar MAC e IP
-                if (HotspotIdentity::shouldReplaceMac($existingUser->mac_address, $macAddress)) {
-                    $updates['mac_address'] = $macAddress;
-                }
-                if ($ipAddress && $existingUser->ip_address !== $ipAddress) {
-                    $updates['ip_address'] = $ipAddress;
-                }
+                    'password' => Hash::make($request->password),
+                    'ip_address' => $ipAddress,
+                    'registered_at' => now(),
+                    'status' => 'pending',
+                ]);
 
-                $existingUser->update($updates);
-                
                 // Fazer login automático
-                auth()->login($existingUser);
+                auth()->login($existingUserByMac);
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Cadastro atualizado com sucesso!',
-                    'user_id' => $existingUser->id,
+                    'message' => 'Cadastro realizado com sucesso!',
+                    'user_id' => $existingUserByMac->id,
                     'existing_user' => false,
                     'redirect_to_dashboard' => true,
                 ]);
             }
 
-            // Criar novo usuário (só chega aqui se realmente não existir)
+            // 3. Criar novo usuário (não existe por email, telefone ou MAC)
             $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
-                'password' => Hash::make($request->password ?? 'default_password_'.time()),
+                'password' => Hash::make($request->password),
                 'registered_at' => now(),
                 'status' => 'pending',
             ];
 
-            // Adicionar MAC e IP
             if ($macAddress) {
                 $userData['mac_address'] = $macAddress;
             }
@@ -301,13 +297,13 @@ class RegistrationController extends Controller
             }
 
             $user = User::create($userData);
-            
+
             // Fazer login automático
             auth()->login($user);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Usuário cadastrado com sucesso!',
+                'message' => 'Cadastro realizado com sucesso!',
                 'user_id' => $user->id,
                 'existing_user' => false,
                 'redirect_to_dashboard' => true,
