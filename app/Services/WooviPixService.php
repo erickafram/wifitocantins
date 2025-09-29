@@ -250,7 +250,10 @@ class WooviPixService
      */
     private function validateWebhook(array $webhookData): bool
     {
-        $signature = request()->header('x-webhook-signature');
+        // Woovi envia a assinatura em múltiplos headers possíveis
+        $signature = request()->header('x-webhook-signature') 
+                  ?? request()->header('x-openpix-signature');
+        
         $secret = $this->resolveSigningSecret();
 
         if (! $signature || empty($secret)) {
