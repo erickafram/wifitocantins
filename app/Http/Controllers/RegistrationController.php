@@ -164,22 +164,14 @@ class RegistrationController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'user_id' => 'nullable|exists:users,id',
-                'name' => 'required|string|max:255',
+                'name' => 'required_without:user_id|string|max:255',
                 'email' => 'required|email|max:255',
                 'phone' => 'required|string|max:20',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
-                'password' => 'nullable|string|min:6|confirmed',
+                'password' => 'required|string|min:6',
+                'password_confirmation' => 'required_without:user_id|string|min:6|same:password',
             ]);
-
-            // Validação customizada: senha obrigatória sempre
-            if (!$request->filled('password')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Senha é obrigatória.',
-                    'errors' => ['password' => ['Senha é obrigatória.']],
-                ], 422);
-            }
 
             if ($validator->fails()) {
                 return response()->json([
@@ -199,7 +191,7 @@ class RegistrationController extends Controller
                 ], 422);
             }
 
-            // Se tem user_id, é um usuário existente
+            // Se tem user_id, é um usuário existente tentando fazer login
             if ($request->user_id) {
                 $user = User::find($request->user_id);
 
@@ -210,11 +202,17 @@ class RegistrationController extends Controller
                     ], 404);
                 }
 
-                $updateData = [
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'phone' => $request->phone,
-                ];
+                // Validar senha do usuário existente
+                if (!$request->filled('password') || !Hash::check($request->password, $user->password)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Senha incorreta.',
+                        'errors' => ['password' => ['Senha incorreta.']],
+                    ], 422);
+                }
+
+                // Atualizar apenas MAC e IP se necessário (não atualiza nome/email/senha)
+                $updateData = [];
 
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
                     $updateData['mac_address'] = $macAddress;
@@ -222,54 +220,38 @@ class RegistrationController extends Controller
                 if ($ipAddress && $user->ip_address !== $ipAddress) {
                     $updateData['ip_address'] = $ipAddress;
                 }
-                if ($request->filled('password')) {
-                    $updateData['password'] = Hash::make($request->password);
-                }
 
-                $user->update($updateData);
+                if (!empty($updateData)) {
+                    $user->update($updateData);
+                }
 
                 // Fazer login automático do usuário
                 auth()->login($user);
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Dados atualizados com sucesso!',
+                    'message' => 'Login realizado com sucesso!',
                     'user_id' => $user->id,
                     'existing_user' => true,
                     'redirect_to_dashboard' => true,
                 ]);
             }
 
+            // Verificar se usuário já existe (mas não passou user_id)
             $existingUser = User::where('email', $request->email)
                 ->orWhere('phone', $request->phone)
                 ->first();
 
             if ($existingUser) {
-                $updates = [];
-                if (HotspotIdentity::shouldReplaceMac($existingUser->mac_address, $macAddress)) {
-                    $updates['mac_address'] = $macAddress;
-                }
-                if ($ipAddress && $existingUser->ip_address !== $ipAddress) {
-                    $updates['ip_address'] = $ipAddress;
-                }
-                if ($request->filled('password')) {
-                    $updates['password'] = Hash::make($request->password);
-                }
-
-                if (! empty($updates)) {
-                    $existingUser->update($updates);
-                }
-
-                // Fazer login automático do usuário
-                auth()->login($existingUser);
-
+                // Usuário tentando se cadastrar mas já existe
+                // Retornar erro pedindo para usar a senha existente
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Usuário já existente atualizado.',
+                    'success' => false,
+                    'message' => 'Este email ou telefone já está cadastrado. Por favor, use sua senha existente para fazer login.',
+                    'user_exists' => true,
                     'user_id' => $existingUser->id,
-                    'existing_user' => true,
-                    'redirect_to_dashboard' => true,
-                ]);
+                    'errors' => ['email' => ['Este email ou telefone já está cadastrado.']],
+                ], 422);
             }
 
             $userData = [

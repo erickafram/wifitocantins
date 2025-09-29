@@ -541,22 +541,46 @@ class WiFiPortal {
             });
 
             const result = await response.json();
+            console.log('📊 Resposta do registro/login:', result);
 
             if (result.success) {
                 this.currentUserId = result.user_id;
                 this.hideRegistrationModal();
                 
                 const message = result.existing_user ? 
-                    'Dados atualizados com sucesso!' : 
-                    'Cadastro realizado com sucesso!';
+                    '✅ Login realizado com sucesso!' : 
+                    '✅ Cadastro realizado com sucesso!';
                 this.showSuccessMessage(message);
                 
+                console.log('🔐 Usuário autenticado! Redirecionando para dashboard...');
+                
                 // Redirecionar para dashboard (tanto para usuários novos quanto existentes)
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 1500);
+                // O backend já fez auth()->login() automaticamente
+                if (result.redirect_to_dashboard) {
+                    setTimeout(() => {
+                        console.log('🚀 Redirecionando para /dashboard');
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    // Fallback: mostrar modal de pagamento
+                    setTimeout(() => {
+                        this.showPaymentModal();
+                    }, 1000);
+                }
             } else {
-                if (result.errors) {
+                if (result.user_exists && result.user_id) {
+                    // Usuário tentou se cadastrar mas já existe
+                    // Mudar para modo de login
+                    this.currentUserId = result.user_id;
+                    
+                    // Buscar dados do usuário
+                    this.checkExistingUser(
+                        document.getElementById('user_email').value.trim(),
+                        document.getElementById('user_phone').value.replace(/\D/g, '')
+                    );
+                    
+                    this.showRegistrationError('⚠️ Você já tem cadastro! Digite sua senha para fazer login.');
+                } else if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
                     this.showRegistrationError(errorMessages.join('<br>'));
                 } else if (result.existing_user_data) {
