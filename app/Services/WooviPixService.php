@@ -245,22 +245,11 @@ class WooviPixService
         $signature = request()->header('x-webhook-signature');
         $secret = $this->resolveSigningSecret();
 
-        // DEBUG: Log das informações de validação
-        Log::info('🔍 Debug validação webhook', [
-            'has_signature' => !empty($signature),
-            'has_secret' => !empty($secret),
-            'signature_preview' => $signature ? substr($signature, 0, 20) . '...' : 'null',
-            'secret_preview' => $secret ? substr($secret, 0, 20) . '...' : 'null',
-        ]);
-
         if (! $signature || empty($secret)) {
-            Log::warning('Woovi webhook sem assinatura ou sem segredo configurado');
-
-            // DEBUG: Temporariamente permitir sem validação para teste
-            if (app()->environment('production')) {
-                Log::warning('🚨 PRODUÇÃO: Webhook sem assinatura - permitindo temporariamente para debug');
-                return true; // TEMPORÁRIO - REMOVER APÓS DEBUG
-            }
+            Log::warning('Woovi webhook sem assinatura ou sem segredo configurado', [
+                'has_signature' => !empty($signature),
+                'has_secret' => !empty($secret),
+            ]);
 
             return false;
         }

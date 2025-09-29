@@ -264,47 +264,18 @@ class PaymentController extends Controller
                 'transaction_id' => $this->generateTransactionId(),
             ]);
 
-            // Simular processamento do cartão
-            $cardApproved = $this->simulateCardPayment($payment);
-
-            if ($cardApproved) {
-                $payment->update([
-                    'status' => 'completed',
-                    'paid_at' => now(),
-                ]);
-
-                // Criar sessão ativa
-                $session = Session::create([
-                    'user_id' => $user->id,
-                    'payment_id' => $payment->id,
-                    'started_at' => now(),
-                    'session_status' => 'active',
-                ]);
-
-                // Atualizar status do usuário
-                $user->update([
-                    'status' => 'connected',
-                    'connected_at' => now(),
-                    'expires_at' => now()->addHours(24),
-                ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Pagamento aprovado!',
-                    'payment_id' => $payment->id,
-                    'session_id' => $session->id,
-                ]);
-            } else {
-                $payment->update(['status' => 'failed']);
-                DB::rollback();
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cartão recusado. Verifique os dados.',
-                ], 400);
-            }
+            // REMOVIDO: Simulação de cartão que aprovava automaticamente
+            // Cartão deve aguardar confirmação real do gateway de pagamento
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Pagamento de cartão criado. Aguardando confirmação do gateway.',
+                'payment_id' => $payment->id,
+                'transaction_id' => $payment->transaction_id,
+                'status' => 'pending',
+            ]);
 
         } catch (\Exception $e) {
             DB::rollback();
