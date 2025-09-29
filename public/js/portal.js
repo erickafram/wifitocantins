@@ -798,12 +798,24 @@ class WiFiPortal {
         const errorDiv = document.getElementById('registration-errors');
         if (errorDiv) {
             errorDiv.innerHTML = message;
+            errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
             errorDiv.classList.remove('hidden');
             
             // Esconder após 5 segundos
             setTimeout(() => {
                 errorDiv.classList.add('hidden');
             }, 5000);
+        }
+    }
+
+    /**
+     * Esconde erro no formulário de registro
+     */
+    hideRegistrationError() {
+        const errorDiv = document.getElementById('registration-errors');
+        if (errorDiv) {
+            errorDiv.classList.add('hidden');
+            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
         }
     }
 
