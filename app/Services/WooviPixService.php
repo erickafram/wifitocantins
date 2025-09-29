@@ -19,36 +19,7 @@ class WooviPixService
         $this->appId = config('wifi.payment_gateways.pix.woovi_app_id');
         $this->appSecret = config('wifi.payment_gateways.pix.woovi_app_secret');
         $this->environment = config('wifi.payment_gateways.pix.environment', 'sandbox');
-        $this->webhookSecret = $this->resolveWebhookSecret();
-    /**
-     * Resolve webhook secret (fallback para app secret decodificado)
-     */
-    private function resolveWebhookSecret(): ?string
-    {
-        $explicit = config('wifi.payment_gateways.pix.woovi_webhook_secret');
-
-        if (! empty($explicit)) {
-            return $explicit;
-        }
-
-        if (empty($this->appSecret)) {
-            return null;
-        }
-
-        $decoded = base64_decode($this->appSecret, true);
-
-        if ($decoded !== false) {
-            if (strpos($decoded, ':') !== false) {
-                [$clientId, $secret] = explode(':', $decoded, 2);
-
-                return $secret ?: $decoded;
-            }
-
-            return $decoded;
-        }
-
-        return $this->appSecret;
-    }
+        $this->webhookSecret = env('WOOVI_WEBHOOK_SECRET');
         
         // URLs da Woovi
         $this->baseUrl = $this->environment === 'production' 
@@ -271,31 +242,25 @@ class WooviPixService
      */
     private function validateWebhook(array $webhookData): bool
     {
-        $signature = request()->header('X-Woovi-Signature')
-            ?? request()->header('X-Openpix-Signature');
+        $signature = request()->header('X-Woovi-Signature');
+        $secret = $this->resolveSigningSecret();
 
-        if (! $signature || empty($this->webhookSecret)) {
+        if (! $signature || empty($secret)) {
             Log::warning('Woovi webhook sem assinatura ou sem segredo configurado');
 
             return false;
         }
 
         try {
-            $rawBody = request()->getContent();
+            $payload = json_encode($webhookData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-            if ($rawBody === false || $rawBody === null) {
-                $rawBody = json_encode($webhookData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            }
-
-            if ($rawBody === false) {
-                Log::warning('Woovi webhook: falha ao obter payload bruto para validação');
+            if ($payload === false) {
+                Log::warning('Woovi webhook: falha ao serializar payload para validação');
 
                 return false;
             }
 
-            $expectedSignature = base64_encode(
-                hash_hmac('sha256', $rawBody, $this->webhookSecret, true)
-            );
+            $expectedSignature = hash_hmac('sha256', $payload, $secret);
 
             $isValid = hash_equals($expectedSignature, $signature);
 
@@ -315,6 +280,25 @@ class WooviPixService
 
             return false;
         }
+    }
+
+    private function resolveSigningSecret(): ?string
+    {
+        if (! empty($this->webhookSecret)) {
+            return $this->webhookSecret;
+        }
+
+        if (! empty($this->appSecret)) {
+            $decoded = base64_decode($this->appSecret, true);
+
+            if ($decoded !== false) {
+                return $decoded;
+            }
+
+            return $this->appSecret;
+        }
+
+        return null;
     }
 
     /**
