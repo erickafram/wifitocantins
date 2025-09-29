@@ -163,19 +163,13 @@ class RegistrationController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'user_id' => 'nullable|exists:users,id', // ID do usuário existente (opcional)
+                'user_id' => 'nullable|exists:users,id',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
                 'phone' => 'required|string|max:20',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
-            ], [
-                'name.required' => 'Nome completo é obrigatório',
-                'email.required' => 'E-mail é obrigatório',
-                'email.email' => 'E-mail deve ter um formato válido',
-                'phone.required' => 'Telefone é obrigatório',
-                'mac_address.string' => 'MAC address deve ser uma string válida',
-                'ip_address.ip' => 'IP inválido',
+                'password' => 'required_without:user_id|string|min:6',
             ]);
 
             if ($validator->fails()) {
@@ -186,9 +180,8 @@ class RegistrationController extends Controller
                 ], 422);
             }
 
-            // 🎯 PROCESSAR MAC ADDRESS
-            $ipAddress = $ipAddress ?? HotspotIdentity::resolveClientIp($request);
-            $macAddress = $macAddress ?? HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
+            $ipAddress = HotspotIdentity::resolveClientIp($request);
+            $macAddress = HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
 
             if (! $macAddress) {
                 return response()->json([
@@ -208,19 +201,20 @@ class RegistrationController extends Controller
                     ], 404);
                 }
 
-                // Atualizar dados se necessário
                 $updateData = [
                     'name' => $request->name,
                     'email' => $request->email,
                     'phone' => $request->phone,
                 ];
 
-                // 🎯 ATUALIZAR MAC E IP SE FORNECIDOS
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
                     $updateData['mac_address'] = $macAddress;
                 }
                 if ($ipAddress && $user->ip_address !== $ipAddress) {
                     $updateData['ip_address'] = $ipAddress;
+                }
+                if ($request->filled('password')) {
+                    $updateData['password'] = Hash::make($request->password);
                 }
 
                 $user->update($updateData);
@@ -234,7 +228,6 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // Verificar se já existe usuário com este email ou telefone
             $existingUser = User::where('email', $request->email)
                 ->orWhere('phone', $request->phone)
                 ->first();
@@ -246,6 +239,9 @@ class RegistrationController extends Controller
                 }
                 if ($ipAddress && $existingUser->ip_address !== $ipAddress) {
                     $updates['ip_address'] = $ipAddress;
+                }
+                if ($request->filled('password')) {
+                    $updates['password'] = Hash::make($request->password);
                 }
 
                 if (! empty($updates)) {
@@ -261,17 +257,15 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // Criar novo usuário
             $userData = [
                 'name' => $request->name ?? 'Visitante WiFi',
                 'email' => $request->email ?? ('guest+'.uniqid().'@wifitocantins.com.br'),
                 'phone' => $request->phone ?? '0000000000',
-                'password' => Hash::make('default_password_'.time()),
+                'password' => Hash::make($request->password ?? 'default_password_'.time()),
                 'registered_at' => now(),
                 'status' => 'pending',
             ];
 
-            // 🎯 ADICIONAR MAC E IP SE FORNECIDOS
             if ($macAddress) {
                 $userData['mac_address'] = $macAddress;
             }

@@ -28,9 +28,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Detectar dispositivo
 Route::post('/detect-device', [PortalController::class, 'detectDevice']);
 
-// Registro de usuários
+// Registro de usuários (landing) - legado
 Route::post('/register', [RegistrationController::class, 'register']);
-Route::post('/register-for-payment', [RegistrationController::class, 'registerForPayment']);
 Route::post('/check-email', [RegistrationController::class, 'checkEmail']);
 Route::post('/check-user', [RegistrationController::class, 'checkUser']);
 

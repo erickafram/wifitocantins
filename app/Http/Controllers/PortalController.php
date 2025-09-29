@@ -17,6 +17,10 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
+        if (auth()->check() && ! in_array(auth()->user()->role, ['admin', 'manager'], true)) {
+            return redirect()->route('portal.dashboard');
+        }
+
         if ($this->shouldForceMikrotikRedirect($request)) {
             return $this->redirectToMikrotikLogin($request);
         }
@@ -27,7 +31,7 @@ class PortalController extends Controller
             'client_info' => $clientInfo,
             'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
             'price' => config('wifi.pricing.default_price', 0.05),
-            'speed' => '100+ Mbps'
+            'speed' => '100+ Mbps',
         ]);
     }
 

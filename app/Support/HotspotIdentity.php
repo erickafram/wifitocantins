@@ -13,24 +13,10 @@ class HotspotIdentity
      */
     public static function resolveClientIp(Request $request): ?string
     {
-        foreach (['ip', 'ip_address', 'client_ip'] as $queryKey) {
-            $value = $request->query($queryKey);
-            if ($value && filter_var($value, FILTER_VALIDATE_IP)) {
-                return $value;
-            }
-        }
-
-        if ($referer = $request->headers->get('referer')) {
-            $parsed = parse_url($referer);
-            if (! empty($parsed['query'])) {
-                parse_str($parsed['query'], $queryParams);
-                if (! empty($queryParams['ip']) && filter_var($queryParams['ip'], FILTER_VALIDATE_IP)) {
-                    return $queryParams['ip'];
-                }
-            }
-        }
-
         $candidates = [
+            $request->query('ip'),
+            $request->query('ip_address'),
+            $request->query('client_ip'),
             $request->input('ip'),
             $request->input('ip_address'),
             $request->input('client_ip'),

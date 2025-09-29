@@ -9,9 +9,19 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PortalDashboardController;
+use App\Http\Controllers\PortalAuthController;
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('portal.dashboard');
+    Route::post('/dashboard/payments/regenerate', [PortalDashboardController::class, 'regeneratePix'])->name('portal.dashboard.payments.regenerate');
+});
+
+Route::get('/entrar', [PortalAuthController::class, 'showLogin'])->name('portal.login');
+Route::post('/entrar', [PortalAuthController::class, 'login'])->name('portal.login.submit');
+Route::post('/sair', [PortalAuthController::class, 'logout'])->middleware('auth')->name('portal.logout');
 
 // Rota alternativa para /portal (redireciona para raiz)
 Route::get('/portal', function () {
