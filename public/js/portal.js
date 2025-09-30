@@ -474,6 +474,14 @@ class WiFiPortal {
         data.mac_address = this.deviceMac;
         data.ip_address = this.deviceIp;
 
+        // 🐛 DEBUG: Log dos dados que serão enviados
+        console.log('📤 ENVIANDO PARA BACKEND:', {
+            mac: this.deviceMac,
+            ip: this.deviceIp,
+            name: data.name,
+            email: data.email,
+        });
+
         // Validar email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(data.email)) {

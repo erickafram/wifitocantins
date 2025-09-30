@@ -189,9 +189,26 @@ class RegistrationController extends Controller
             }
 
             // 🎯 PROCESSAR MAC E IP ADDRESS
-            // PRIORIZAR IP/MAC da URL (MikroTik) em vez do IP da requisição HTTP
-            $ipAddress = $request->input('ip_address') ?? HotspotIdentity::resolveClientIp($request);
-            $macAddress = $request->input('mac_address') ?? HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
+            // PRIORIZAR IP/MAC do request body (enviado pelo JavaScript) em vez do IP público
+            $ipAddress = $request->input('ip_address');
+            $macAddress = $request->input('mac_address');
+            
+            \Log::info('📋 DADOS RECEBIDOS DO FRONTEND', [
+                'ip_enviado' => $ipAddress,
+                'mac_enviado' => $macAddress,
+                'ip_http_header' => $request->header('X-Real-IP'),
+            ]);
+            
+            // Se não veio do frontend, tentar detectar
+            if (!$ipAddress) {
+                $ipAddress = HotspotIdentity::resolveClientIp($request);
+                \Log::warning('⚠️ IP não enviado pelo frontend, usando fallback', ['ip_fallback' => $ipAddress]);
+            }
+            
+            if (!$macAddress) {
+                $macAddress = HotspotIdentity::resolveRealMac(null, $ipAddress);
+                \Log::warning('⚠️ MAC não enviado pelo frontend, usando fallback', ['mac_fallback' => $macAddress]);
+            }
 
             if (! $macAddress) {
                 return response()->json([
