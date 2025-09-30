@@ -188,9 +188,10 @@ class RegistrationController extends Controller
                 ], 422);
             }
 
-            // 🎯 PROCESSAR MAC ADDRESS
-            $ipAddress = $ipAddress ?? HotspotIdentity::resolveClientIp($request);
-            $macAddress = $macAddress ?? HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
+            // 🎯 PROCESSAR MAC E IP ADDRESS
+            // PRIORIZAR IP/MAC da URL (MikroTik) em vez do IP da requisição HTTP
+            $ipAddress = $request->input('ip_address') ?? HotspotIdentity::resolveClientIp($request);
+            $macAddress = $request->input('mac_address') ?? HotspotIdentity::resolveRealMac($request->input('mac_address'), $ipAddress);
 
             if (! $macAddress) {
                 return response()->json([
