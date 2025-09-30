@@ -82,17 +82,21 @@ class RegistrationController extends Controller
         $request->validate([
             'email' => 'nullable|email',
             'phone' => 'nullable|string',
+            'mac_address' => 'nullable|string|max:17',
         ]);
 
         $user = null;
 
-        // Buscar por email ou telefone
+        // Buscar por email, telefone ou MAC
         if ($request->email) {
             $user = User::where('email', $request->email)->first();
         } elseif ($request->phone) {
             // Limpar formatação do telefone para busca
             $cleanPhone = preg_replace('/[^\d]/', '', $request->phone);
             $user = User::where('phone', 'LIKE', '%'.$cleanPhone.'%')->first();
+        } elseif ($request->mac_address) {
+            // Buscar por MAC address
+            $user = User::where('mac_address', $request->mac_address)->first();
         }
 
         if ($user) {
