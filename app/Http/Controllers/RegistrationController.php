@@ -103,6 +103,8 @@ class RegistrationController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $user->phone,
+                    'mac_address' => $user->mac_address,  // ✅ Adicionar MAC
+                    'ip_address' => $user->ip_address,    // ✅ Adicionar IP
                 ],
             ]);
         }

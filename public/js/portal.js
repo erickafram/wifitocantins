@@ -601,6 +601,17 @@ class WiFiPortal {
             phoneInput.value = formattedPhone;
         }
 
+        // ✅ RECUPERAR MAC E IP DO BANCO (para usuários expirados que tentam reconectar)
+        if (userData.mac_address && !this.deviceMac) {
+            this.deviceMac = userData.mac_address;
+            console.log('✅ MAC recuperado do banco:', this.deviceMac);
+        }
+
+        if (userData.ip_address && !this.deviceIp) {
+            this.deviceIp = userData.ip_address;
+            console.log('✅ IP recuperado do banco:', this.deviceIp);
+        }
+
         // Atualizar botão para indicar atualização
         const submitBtn = document.getElementById('registration-submit-btn');
         if (submitBtn) {
