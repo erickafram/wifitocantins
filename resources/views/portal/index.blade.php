@@ -139,6 +139,8 @@
             background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
             animation: float 20s ease-in-out infinite;
             filter: blur(40px);
+            pointer-events: none;
+            z-index: -1;
         }
         .floating-shapes::after {
             content: '';
@@ -151,6 +153,8 @@
             background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
             animation: float 15s ease-in-out infinite reverse;
             filter: blur(40px);
+            pointer-events: none;
+            z-index: -1;
         }
         .connect-button {
             background: linear-gradient(135deg, #10B981 0%, #059669 50%, #047857 100%);
@@ -475,12 +479,14 @@
              </div>
 
              <!-- WhatsApp Cards - Mobile (Por último) -->
-             <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-5 animate-slide-up relative overflow-hidden">
+             <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-5 animate-slide-up relative overflow-hidden z-10">
                  <div class="grid grid-cols-2 gap-2 mb-4">
                      <!-- Card Passagens Compacto -->
                      <button 
+                         type="button"
                          onclick="openPassagensModal()" 
-                         class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full"
+                         class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
+                         style="touch-action: manipulation;"
                      >
                          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
                              <div class="text-lg mb-1">🎫</div>
@@ -491,8 +497,10 @@
 
                      <!-- Card Turismo Compacto -->
                      <button 
+                         type="button"
                          onclick="openTurismoModal()" 
-                         class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full"
+                         class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
+                         style="touch-action: manipulation;"
                      >
                          <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
                              <div class="text-lg mb-1">🏖️</div>
@@ -536,34 +544,38 @@
                      </div>
                  </div>
 
-                 <!-- Serviços WhatsApp - Compactos -->
-                 <div class="border-t border-tocantins-gold/30 pt-4 mb-6">
-                     <div class="grid grid-cols-2 gap-2 mb-4">
-                         
-                         <!-- Card Passagens Compacto -->
-                         <button 
-                             onclick="openPassagensModal()" 
-                             class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full"
-                         >
-                             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
-                                 <div class="text-lg mb-1">🎫</div>
-                                 <p class="text-white text-xs font-bold">PASSAGENS</p>
-                             </div>
-                             <p class="text-xs text-tocantins-gray-green">Compre sua passagem</p>
-                         </button>
+                                 <!-- Serviços WhatsApp - Compactos -->
+                <div class="border-t border-tocantins-gold/30 pt-4 mb-6">
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        
+                        <!-- Card Passagens Compacto -->
+                        <button 
+                            type="button"
+                            onclick="openPassagensModal()" 
+                            class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
+                            style="touch-action: manipulation;"
+                        >
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
+                                <div class="text-lg mb-1">🎫</div>
+                                <p class="text-white text-xs font-bold">PASSAGENS</p>
+                            </div>
+                            <p class="text-xs text-tocantins-gray-green">Compre sua passagem</p>
+                        </button>
 
-                         <!-- Card Turismo Compacto -->
-                         <button 
-                             onclick="openTurismoModal()" 
-                             class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full"
-                         >
-                             <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
-                                 <div class="text-lg mb-1">🏖️</div>
-                                 <p class="text-white text-xs font-bold">TURISMO</p>
-                             </div>
-                             <p class="text-xs text-tocantins-gray-green">Alugue conosco</p>
-                         </button>
-                </div>
+                        <!-- Card Turismo Compacto -->
+                        <button 
+                            type="button"
+                            onclick="openTurismoModal()" 
+                            class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
+                            style="touch-action: manipulation;"
+                        >
+                            <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
+                                <div class="text-lg mb-1">🏖️</div>
+                                <p class="text-white text-xs font-bold">TURISMO</p>
+                            </div>
+                            <p class="text-xs text-tocantins-gray-green">Alugue conosco</p>
+                        </button>
+               </div>
             </div>
 
                  <!-- Voucher Section - Visível apenas no DESKTOP -->
@@ -939,44 +951,98 @@
     <script>
         // Funções para controlar os modais de Passagens e Turismo
         function openPassagensModal() {
-            document.getElementById('passagensModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            const modal = document.getElementById('passagensModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
         }
 
         function closePassagensModal() {
-            document.getElementById('passagensModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            const modal = document.getElementById('passagensModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
         }
 
         function openTurismoModal() {
-            document.getElementById('turismoModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            const modal = document.getElementById('turismoModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
         }
 
         function closeTurismoModal() {
-            document.getElementById('turismoModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            const modal = document.getElementById('turismoModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
         }
 
-        // Fechar modais clicando fora deles
-        document.getElementById('passagensModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closePassagensModal();
-            }
-        });
+        // Aguardar DOM carregar para adicionar event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Adicionar event listeners aos botões (fallback para onclick)
+            const passagensButtons = document.querySelectorAll('[onclick*="openPassagensModal"]');
+            passagensButtons.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openPassagensModal();
+                }, { passive: false });
+                
+                // Para dispositivos móveis - adicionar touchstart também
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openPassagensModal();
+                }, { passive: false });
+            });
 
-        document.getElementById('turismoModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeTurismoModal();
-            }
-        });
+            const turismoButtons = document.querySelectorAll('[onclick*="openTurismoModal"]');
+            turismoButtons.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openTurismoModal();
+                }, { passive: false });
+                
+                // Para dispositivos móveis - adicionar touchstart também
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openTurismoModal();
+                }, { passive: false });
+            });
 
-        // Fechar modais com a tecla ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePassagensModal();
-                closeTurismoModal();
+            // Fechar modais clicando fora deles
+            const passagensModal = document.getElementById('passagensModal');
+            if (passagensModal) {
+                passagensModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closePassagensModal();
+                    }
+                });
             }
+
+            const turismoModal = document.getElementById('turismoModal');
+            if (turismoModal) {
+                turismoModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeTurismoModal();
+                    }
+                });
+            }
+
+            // Fechar modais com a tecla ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePassagensModal();
+                    closeTurismoModal();
+                }
+            });
         });
     </script>
     <script src="{{ asset('js/mac-detector.js') }}"></script>

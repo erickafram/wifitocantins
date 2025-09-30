@@ -624,8 +624,8 @@ class WiFiPortal {
             
             // Esconder após 5 segundos
             setTimeout(() => {
-                errorDiv.classList.add('hidden');
-                errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
+            errorDiv.classList.add('hidden');
+            errorDiv.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
             }, 5000);
         }
     }

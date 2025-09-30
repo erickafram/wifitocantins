@@ -1,140 +1,257 @@
-# Script MikroTik - Liberar usuários pagos e remover usuários expirados
-# Versão: 2.0 - Com suporte a remoção de expirados
-# Compatível com RouterOS 7.x
+# =============================================================================
+# Script MikroTik - Sincronização de MACs Pagos e Expirados
+# Versão: 4.0 - CORRIGIDO
+# Data: 2025-09-30
+# =============================================================================
+# 
+# FUNCIONALIDADES:
+# - Libera MACs pagos no ip-binding (bypass do hotspot)
+# - Remove MACs expirados do ip-binding
+# - Mantém apenas usuários com pagamento ativo
+# - Log detalhado de todas as operações
+#
+# =============================================================================
 
 :local url "https://www.tocantinstransportewifi.com.br/api/mikrotik/check-paid-users?token=mikrotik-sync-2024"
-:local hotspotServer "tocantins-hotspot"
-:local bypassComment "AUTO-PAGO"
+:local bypassComment "PAGO-AUTO"
+
+:log info "========================================="
+:log info "=== INICIANDO SINCRONIZACAO DE MACS ==="
+:log info "========================================="
+
+# -----------------------------------------------------------------------------
+# ETAPA 1: Buscar dados da API
+# -----------------------------------------------------------------------------
+:log info "[1/4] Buscando dados da API..."
 
 :local result [/tool fetch url=$url mode=https http-method=get output=user check-certificate=no as-value]
+
+# Verificar se fetch retornou algo
 :if ([:typeof $result] = "nothing") do={
-    :log error "Fetch sem retorno"
+    :log error "  [ERRO] Fetch nao retornou dados"
     :return
 }
 
+# Verificar status do fetch
 :local status ($result->"status")
 :if ($status != "finished") do={
-    :log error ("Fetch falhou: " . $status)
+    :log error ("  [ERRO] Fetch falhou com status: " . $status)
     :return
 }
 
+# Obter payload
 :local payload ($result->"data")
 :if ([:len $payload] = 0) do={
-    :log info "Nenhum dado recebido"
+    :log warning "  [AVISO] API retornou payload vazio"
     :return
 }
 
-:local liberateToken "\"liberate_macs\":["
-:local removeToken "\"remove_macs\":["
-:local macMarker "\"mac_address\":\""
-:local macMarkerLen [:len $macMarker]
+:log info ("  [OK] Dados recebidos: " . [:len $payload] . " caracteres")
 
+# -----------------------------------------------------------------------------
+# ETAPA 2: Extrair seção liberate_macs
+# -----------------------------------------------------------------------------
+:log info "[2/4] Processando MACs para LIBERAR..."
+
+:local liberateStart [:find $payload "\"liberate_macs\":["]
+:local liberateEnd [:find $payload "],\"remove_macs\"" $liberateStart]
+
+:local macsPagos [:toarray ""]
 :local liberados 0
-:local removidos 0
+:local jaExistentes 0
 
-# =====================================
-# PROCESSAMENTO DE LIBERAÇÕES (PAGOS)
-# =====================================
-:local liberateArray ""
-:local liberateStart [:find $payload $liberateToken]
-:if ($liberateStart != -1) do={
-    :local start ($liberateStart + [:len $liberateToken])
-    :local end [:find $payload "]" $start]
-    :if ($end != -1) do={
-        :set liberateArray [:pick $payload $start $end]
+:if ($liberateStart >= 0 and $liberateEnd >= 0) do={
+    :set liberateStart ($liberateStart + 18)
+    :local liberateContent [:pick $payload $liberateStart $liberateEnd]
+    
+    # Se não estiver vazio, processar
+    :if ([:len $liberateContent] > 5) do={
+        :log info "  Encontrados MACs para processar..."
+        
+        :local pos 0
+        :local maxIterations 50
+        :local iteration 0
+        
+        :while ($iteration < $maxIterations) do={
+            :set iteration ($iteration + 1)
+            
+            # Procurar próximo MAC
+            :local macStart [:find $liberateContent "\"mac_address\":\"" $pos]
+            
+            :if ($macStart = -1) do={
+                :set iteration $maxIterations
+            } else={
+                :set macStart ($macStart + 16)
+                :local macEnd [:find $liberateContent "\"" $macStart]
+                
+                :if ($macEnd != -1) do={
+                    :local mac [:pick $liberateContent $macStart $macEnd]
+                    :set pos ($macEnd + 1)
+                    
+                    # Validar formato do MAC
+                    :if ([:len $mac] = 17) do={
+                        # Converter para uppercase para consistência
+                        :local macUpper [:tostr $mac]
+                        :set macsPagos ($macsPagos, $macUpper)
+                        
+                        # Verificar se já existe
+                        :local existing [/ip hotspot ip-binding find mac-address=$macUpper]
+                        
+                        :if ([:len $existing] = 0) do={
+                            :log info ("  [+] Liberando: " . $macUpper)
+                            
+                            # Limpar possíveis conflitos
+                            :do {/ip hotspot user remove [find mac-address=$macUpper]} on-error={}
+                            :do {/ip hotspot active remove [find mac-address=$macUpper]} on-error={}
+                            
+                            # Adicionar ao ip-binding
+                            :do {
+                                /ip hotspot ip-binding add \
+                                    mac-address=$macUpper \
+                                    type=bypassed \
+                                    comment=$bypassComment \
+                                    disabled=no
+                                
+                                :set liberados ($liberados + 1)
+                                :log info ("      [OK] MAC liberado com sucesso!")
+                            } on-error={
+                                :log error ("      [ERRO] Falha ao adicionar binding")
+                            }
+                        } else={
+                            :set jaExistentes ($jaExistentes + 1)
+                            :log info ("  [=] Ja existe: " . $macUpper)
+                        }
+                    } else={
+                        :log warning ("  [!] MAC invalido (len=" . [:len $mac] . "): " . $mac)
+                    }
+                } else={
+                    :set iteration $maxIterations
+                }
+            }
+        }
+    } else={
+        :log info "  Lista liberate_macs vazia"
     }
+} else={
+    :log warning "  [AVISO] Secao liberate_macs nao encontrada no JSON"
 }
 
-:if ([:find $liberateArray "\"mac_address\""] != -1) do={
+:log info ("  TOTAL processados: " . [:len $macsPagos])
+:log info ("  Liberados agora: " . $liberados)
+:log info ("  Ja existentes: " . $jaExistentes)
+
+# -----------------------------------------------------------------------------
+# ETAPA 3: Extrair seção remove_macs (CORRIGIDO!)
+# -----------------------------------------------------------------------------
+:log info "[3/4] Processando MACs para REMOVER..."
+
+# ⚠️ CORRIGIDO: Procurar por "remove_macs" em vez de "block_macs"
+:local removeStart [:find $payload "\"remove_macs\":[" $liberateEnd]
+:local removeEnd [:find $payload "]" $removeStart]
+
+:local macsRemovidos 0
+
+:if ($removeStart >= 0 and $removeEnd >= 0) do={
+    :set removeStart ($removeStart + 16)
+    :local removeContent [:pick $payload $removeStart $removeEnd]
+    
+    :if ([:len $removeContent] > 5) do={
+        :log info "  Encontrados MACs expirados para remover..."
+        
     :local pos 0
-    :while (true) do={
-        :set pos [:find $liberateArray $macMarker $pos]
-        :if ($pos = -1) do={ :break }
+        :local maxIterations 50
+        :local iteration 0
+        
+        :while ($iteration < $maxIterations) do={
+            :set iteration ($iteration + 1)
+            
+            :local macStart [:find $removeContent "\"mac_address\":\"" $pos]
+            
+            :if ($macStart = -1) do={
+                :set iteration $maxIterations
+            } else={
+                :set macStart ($macStart + 16)
+                :local macEnd [:find $removeContent "\"" $macStart]
+                
+                :if ($macEnd != -1) do={
+                    :local mac [:pick $removeContent $macStart $macEnd]
+                    :set pos ($macEnd + 1)
 
-        :local start ($pos + $macMarkerLen)
-        :local end [:find $liberateArray "\"" $start]
-        :if ($end = -1) do={ :break }
-
-        :local mac [:toupper [:pick $liberateArray $start $end]]
-        :set pos ($end + 1)
-
-        :if ([:len $mac] != 17) do={
-            :log warning ("MAC invalido em liberate_macs: " . $mac)
-            :continue
-        }
-
-        # Verificar se já está liberado
-        :local existing [/ip hotspot ip-binding find mac-address=$mac]
-        :if ($existing = "") do={
-            # Limpar registros anteriores
-            :do {/ip hotspot ip-binding remove [find mac-address=$mac]} on-error={}
+                    :if ([:len $mac] = 17) do={
+                        :log warning ("  [-] Removendo expirado: " . $mac)
+                        
+                        # Remover de todos os lugares
+                        :do {
+                            /ip hotspot ip-binding remove [find mac-address=$mac]
+                            :set macsRemovidos ($macsRemovidos + 1)
+                            :log info ("      [OK] Binding removido")
+                        } on-error={}
+                        
             :do {/ip hotspot user remove [find mac-address=$mac]} on-error={}
             :do {/ip hotspot active remove [find mac-address=$mac]} on-error={}
-
-            # Adicionar como bypassed
-            :local addOk true
-            :do {
-                /ip hotspot ip-binding add mac-address=$mac type=bypassed comment=$bypassComment disabled=no server=$hotspotServer
-            } on-error={
-                :set addOk false
-                :log error ("Falha ao adicionar binding para " . $mac)
+                    }
+                } else={
+                    :set iteration $maxIterations
+                }
             }
+        }
+    } else={
+        :log info "  Lista remove_macs vazia"
+    }
+} else={
+    :log info "  Secao remove_macs nao encontrada (ou vazia)"
+}
 
-            :if ($addOk) do={
-                :set liberados ($liberados + 1)
-                :log info ("✅ Liberado via API: " . $mac)
-            }
-        } else={
-            :log info ("MAC " . $mac . " já liberado, pulando")
+:log info ("  TOTAL removidos: " . $macsRemovidos)
+
+# -----------------------------------------------------------------------------
+# ETAPA 4: Limpar bindings órfãos (que não estão na lista de pagos)
+# -----------------------------------------------------------------------------
+:log info "[4/4] Limpando bindings orfaos..."
+
+:local bindings [/ip hotspot ip-binding find where comment=$bypassComment]
+:local orfaosRemovidos 0
+
+:log info ("  Total de bindings AUTO-PAGO: " . [:len $bindings])
+
+:foreach bindingId in=$bindings do={
+    :local macAtual [/ip hotspot ip-binding get $bindingId mac-address]
+    :local encontrado false
+    
+    # Verificar se está na lista de MACs pagos
+    :foreach macPago in=$macsPagos do={
+        :if ($macPago = $macAtual) do={
+            :set encontrado true
         }
     }
-}
-
-# =====================================
-# PROCESSAMENTO DE REMOÇÕES (EXPIRADOS)
-# =====================================
-:local removeArray ""
-:local removeStart [:find $payload $removeToken]
-:if ($removeStart != -1) do={
-    :local start ($removeStart + [:len $removeToken])
-    :local end [:find $payload "]" $start]
-    :if ($end != -1) do={
-        :set removeArray [:pick $payload $start $end]
-    }
-}
-
-:if ([:find $removeArray "\"mac_address\""] != -1) do={
-    :local pos 0
-    :while (true) do={
-        :set pos [:find $removeArray $macMarker $pos]
-        :if ($pos = -1) do={ :break }
-
-        :local start ($pos + $macMarkerLen)
-        :local end [:find $removeArray "\"" $start]
-        :if ($end = -1) do={ :break }
-
-        :local mac [:toupper [:pick $removeArray $start $end]]
-        :set pos ($end + 1)
-
-        :if ([:len $mac] != 17) do={
-            :log warning ("MAC invalido em remove_macs: " . $mac)
-            :continue
+    
+    :if (!$encontrado) do={
+        :log warning ("  [ORFAO] Removendo: " . $macAtual)
+        
+        :do {
+            /ip hotspot ip-binding remove $bindingId
+            :set orfaosRemovidos ($orfaosRemovidos + 1)
+        } on-error={
+            :log error ("  [ERRO] Falha ao remover orfao")
         }
-
-        # ⚠️ REMOÇÃO COMPLETA (NÃO BLOQUEAR) - usuário volta ao estado inicial
-        :do {/ip hotspot ip-binding remove [find mac-address=$mac]} on-error={}
-        :do {/ip hotspot user remove [find mac-address=$mac]} on-error={}
-        :do {/ip hotspot active remove [find mac-address=$mac]} on-error={}
-
-        :set removidos ($removidos + 1)
-        :log info ("🗑️ Removido (expirado): " . $mac . " - volta ao estado inicial")
+        
+        # Limpar usuário e sessões ativas
+        :do {/ip hotspot user remove [find mac-address=$macAtual]} on-error={}
+        :do {/ip hotspot active remove [find mac-address=$macAtual]} on-error={}
     }
 }
 
-# =====================================
-# RESUMO DA SINCRONIZAÇÃO
-# =====================================
-:log info ("📊 Resumo da sincronização:")
-:log info ("   ✅ Liberados: " . $liberados)
-:log info ("   🗑️ Removidos: " . $removidos)
-:log info ("   ⏰ Próxima sync: 2 minutos")
+:log info ("  Orfaos removidos: " . $orfaosRemovidos)
+
+# -----------------------------------------------------------------------------
+# RESUMO FINAL
+# -----------------------------------------------------------------------------
+:log info "========================================="
+:log info "===      SINCRONIZACAO CONCLUIDA     ==="
+:log info "========================================="
+:log info ("  MACs pagos ativos: " . [:len $macsPagos])
+:log info ("  Novos liberados: " . $liberados)
+:log info ("  Ja existentes: " . $jaExistentes)
+:log info ("  Expirados removidos: " . $macsRemovidos)
+:log info ("  Orfaos limpos: " . $orfaosRemovidos)
+:log info "========================================="

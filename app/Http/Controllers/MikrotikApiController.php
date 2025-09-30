@@ -100,7 +100,8 @@ class MikrotikApiController extends Controller
                            ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at']);
 
             // Buscar usuários expirados que devem ser removidos
-            $expiredUsers = User::whereIn('status', ['connected', 'active'])
+            // Incluir status 'expired' também para garantir remoção
+            $expiredUsers = User::whereIn('status', ['connected', 'active', 'expired'])
                               ->where('expires_at', '<=', now())
                               ->whereNotNull('mac_address')
                               ->get(['id', 'mac_address', 'ip_address', 'expires_at']);
