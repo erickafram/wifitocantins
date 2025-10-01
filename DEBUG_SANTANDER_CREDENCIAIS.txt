@@ -1,0 +1,136 @@
+=============================================================================
+DEBUG - CREDENCIAIS SANTANDER PIX
+=============================================================================
+
+📌 MUDANÇA APLICADA:
+- Adicionado parâmetro 'scope' nas requisições OAuth
+- Scope: cob.write cob.read pix.write pix.read webhook.read webhook.write
+
+=============================================================================
+TESTE AGORA
+=============================================================================
+
+cd /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br
+
+# Fazer upload do arquivo atualizado
+
+# Limpar cache
+php artisan config:clear
+
+# Testar
+php artisan santander:pix test
+
+=============================================================================
+SE CONTINUAR DANDO ERRO 400 - PRÓXIMOS PASSOS
+=============================================================================
+
+O erro "A requisição não possui os parâmetros necessários" pode significar:
+
+1. ❌ CLIENT_ID ou CLIENT_SECRET INCORRETOS
+   
+   Suas credenciais:
+   - CLIENT_ID: RA4UP23L7tQLlAlcsk8O9QF9Q6Oih6NB (32 chars)
+   - CLIENT_SECRET: nSkWIV8TFJUGRBur (16 chars)
+   
+   ⚠️ ATENÇÃO: Essas credenciais parecem ser do formato Apigee/API Gateway
+   
+   VERIFIQUE COM O RAFAEL:
+   - Essas credenciais são do ambiente PRODUCTION ou SANDBOX?
+   - O certificado .pfx está vinculado a essas credenciais?
+   - Existe algum parâmetro adicional necessário?
+
+2. ❌ AMBIENTE INCORRETO (production vs sandbox)
+   
+   Se as credenciais são de SANDBOX, mude no .env:
+   
+   nano .env
+   
+   # Procure por:
+   SANTANDER_ENVIRONMENT=production
+   
+   # Mude para:
+   SANTANDER_ENVIRONMENT=sandbox
+   
+   # Salve e teste novamente:
+   php artisan config:clear
+   php artisan santander:pix test
+
+3. ❌ CERTIFICADO NÃO VINCULADO À CONTA
+   
+   O certificado digital deve estar registrado no Portal do Desenvolvedor Santander
+   e vinculado ao mesmo CLIENT_ID que você está usando.
+   
+   VERIFIQUE:
+   - Entre no Portal do Desenvolvedor Santander
+   - Vá em "Meus Aplicativos" ou "Certificados"
+   - Confirme se o certificado está ativo
+
+4. ❌ CONTA NÃO ATIVADA/APROVADA
+   
+   O Santander pode exigir aprovação manual da conta antes de liberar o acesso à API PIX.
+   
+   ENTRE EM CONTATO:
+   - Suporte Santander Empresas: 0800 762 7777
+   - Portal do Desenvolvedor: https://developer.santander.com.br
+   - Email: suporte.api@santander.com.br
+
+=============================================================================
+TESTE ALTERNATIVO - CONSULTAR DOCUMENTAÇÃO
+=============================================================================
+
+Se você tem acesso ao Portal do Desenvolvedor Santander:
+
+1. Acesse: https://developer.santander.com.br
+2. Faça login
+3. Vá em "Documentação" > "PIX" > "Autenticação"
+4. Verifique:
+   - Endpoint correto de OAuth (trust-pix.santander.com.br)
+   - Parâmetros exigidos para grant_type=client_credentials
+   - Formato esperado do certificado mTLS
+
+=============================================================================
+PERGUNTAS PARA O RAFAEL
+=============================================================================
+
+Envie estas perguntas para o Rafael:
+
+1. As credenciais CLIENT_ID e CLIENT_SECRET são de PRODUCTION ou SANDBOX?
+
+2. O certificado santander.pfx está vinculado a essas credenciais no Portal do Santander?
+
+3. A conta já foi aprovada/ativada para integração PIX?
+
+4. Existe algum parâmetro adicional necessário na requisição OAuth além de:
+   - grant_type
+   - client_id
+   - client_secret
+   - scope
+
+5. Qual é o endpoint correto de autenticação que ele está usando?
+   - Production: https://trust-pix.santander.com.br/oauth/token
+   - Sandbox: https://trust-pix-h.santander.com.br/oauth/token
+
+6. Você tem alguma documentação específica ou exemplo de integração?
+
+=============================================================================
+ALTERNATIVA - USAR WOOVI ENQUANTO ISSO
+=============================================================================
+
+Enquanto resolve o Santander, o sistema já está configurado para usar a Woovi:
+
+# Editar .env
+nano .env
+
+# Mudar temporariamente:
+PIX_GATEWAY=woovi
+
+# Salvar e limpar cache
+php artisan config:clear
+
+# Testar um pagamento no portal
+# O sistema vai usar a Woovi (que já está funcionando)
+
+# Quando o Santander funcionar, volte para:
+PIX_GATEWAY=santander
+
+============================================================================= 

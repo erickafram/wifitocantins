@@ -113,6 +113,13 @@ class SantanderPixService
                 ])
                 ->post($this->baseUrl . '/oauth/token', $bodyParams);
 
+            // Log detalhado da resposta
+            Log::info('📥 Resposta do Santander (Basic Auth)', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->body(),
+            ]);
+
             if ($response->successful()) {
                 $data = $response->json();
                 $token = $data['access_token'] ?? null;
@@ -128,6 +135,7 @@ class SantanderPixService
             // Se Basic Auth falhou, tentar com credenciais no body
             Log::warning('⚠️ Basic Auth falhou, tentando com credenciais no body', [
                 'status' => $response->status(),
+                'error_body' => $response->body(),
             ]);
 
             $bodyParamsAlt = [
@@ -151,6 +159,13 @@ class SantanderPixService
                     'timeout' => 30,
                 ])
                 ->post($this->baseUrl . '/oauth/token', $bodyParamsAlt);
+
+            // Log detalhado da resposta
+            Log::info('📥 Resposta do Santander (Body params)', [
+                'status' => $response2->status(),
+                'headers' => $response2->headers(),
+                'body' => $response2->body(),
+            ]);
 
             if ($response2->successful()) {
                 $data = $response2->json();
