@@ -1,0 +1,56 @@
+﻿# ===================================================
+# CORREÇÕES PARA O .ENV DE PRODUÇÃO
+# ===================================================
+
+LOCALIZE ESTAS LINHAS NO SEU .ENV:
+-----------------------------------------------------
+SANTANDER_WORKSPACE_ID=<workspace_id_fornecido_pelo_santander>
+SANTANDER_CERTIFICATE_PATH=certificates/santander.pfx
+SANTANDER_CERTIFICATE_PASSWORD=<senha_do_certificado_pfx>
+
+
+SUBSTITUA POR:
+-----------------------------------------------------
+SANTANDER_WORKSPACE_ID=AINDA_PRECISA_OBTER_DO_SANTANDER
+SANTANDER_CERTIFICATE_PATH=certificates/santander.pem
+SANTANDER_CERTIFICATE_PASSWORD=
+
+
+EXPLICAÇÃO:
+-----------------------------------------------------
+1. WORKSPACE_ID: Você AINDA precisa solicitar ao Santander
+   - Ligue para o gerente Cash
+   - Ou abra chamado no Portal do Desenvolvedor
+   
+2. CERTIFICATE_PATH: Alterado de .pfx para .pem
+   - Você JÁ TEM o certificado correto!
+   - Está em: storage/app/certificates/santander.pem
+   
+3. CERTIFICATE_PASSWORD: VAZIO (sem senha)
+   - O certificado não está encriptado
+   - Deixe em branco mesmo
+
+
+RESUMO DO QUE VOCÊ TEM:
+-----------------------------------------------------
+ Client ID:     RA4UP23L7tQLlAlcsk8O9QF9Q6Oih6NB
+ Client Secret: nSkWIV8TFJUGRBur
+ Chave PIX:     pix@tocantinstransportewifi.com.br
+ Certificado:   storage/app/certificates/santander.pem (SEM SENHA)
+ Workspace ID:  FALTA OBTER DO SANTANDER
+
+
+COMO OBTER O WORKSPACE_ID:
+-----------------------------------------------------
+Opção 1 - Ligar para o Santander:
+  'Olá, já tenho Client ID e Client Secret no Portal do 
+   Desenvolvedor. Preciso do Workspace ID para integração PIX.'
+
+Opção 2 - Portal do Desenvolvedor:
+  https://developers.santander.com.br
+  - Login > Aplicações > Sua aplicação > Workspace ID
+
+Opção 3 - Testar sem Workspace ID:
+  - Algumas implementações não usam Workspace ID
+  - Podemos tentar deixar vazio e testar
+

@@ -376,47 +376,11 @@ class WiFiPortal {
     /**
      * Mostra modal de registro
      */
-    async showRegistrationModal() {
+    showRegistrationModal() {
         if (this.registrationModal) {
             this.resetRegistrationForm();
-            
-            // 🔍 Se temos MAC mas não temos dados do usuário, buscar no banco
-            if (this.deviceMac && !this.currentUserId) {
-                await this.tryLoadUserFromMac();
-            }
-            
             this.registrationModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-        }
-    }
-    
-    /**
-     * Tenta carregar dados do usuário pelo MAC address
-     */
-    async tryLoadUserFromMac() {
-        if (!this.deviceMac || this.deviceMac.startsWith('02:')) {
-            return; // Não buscar se for MAC mock
-        }
-        
-        try {
-            const response = await fetch('/api/check-user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': this.getCSRFToken()
-                },
-                body: JSON.stringify({ mac_address: this.deviceMac })
-            });
-
-            const result = await response.json();
-
-            if (result.exists && result.user) {
-                console.log('✅ Usuário encontrado pelo MAC:', result.user);
-                this.fillUserData(result.user);
-                this.showUserFoundMessage(result.user.name);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar usuário pelo MAC:', error);
         }
     }
 
@@ -646,29 +610,14 @@ class WiFiPortal {
         }
 
         // ✅ RECUPERAR MAC E IP DO BANCO (para usuários expirados que tentam reconectar)
-        // PRIORIZAR MAC REAL do banco em vez de MAC MOCK gerado
-        if (userData.mac_address) {
-            const macDoBanco = userData.mac_address;
-            const ehMacMock = this.deviceMac && this.deviceMac.startsWith('02:');
-            const ehMacReal = !macDoBanco.startsWith('02:');
-            
-            // Se não tem MAC ou tem MAC mock, usar o do banco (se for real)
-            if (!this.deviceMac || (ehMacMock && ehMacReal)) {
-                this.deviceMac = macDoBanco;
-                console.log('✅ MAC recuperado do banco:', this.deviceMac);
-            }
+        if (userData.mac_address && !this.deviceMac) {
+            this.deviceMac = userData.mac_address;
+            console.log('✅ MAC recuperado do banco:', this.deviceMac);
         }
 
-        // PRIORIZAR IP LOCAL do banco em vez de IP público
-        if (userData.ip_address) {
-            const ipDoBanco = userData.ip_address;
-            const ehIpLocal = ipDoBanco.startsWith('10.') || ipDoBanco.startsWith('192.168.');
-            
-            // Se não tem IP ou tem IP público (não 10.x ou 192.168.x), usar o do banco
-            if (!this.deviceIp || (ehIpLocal && !this.deviceIp.startsWith('10.') && !this.deviceIp.startsWith('192.168.'))) {
-                this.deviceIp = ipDoBanco;
-                console.log('✅ IP recuperado do banco:', this.deviceIp);
-            }
+        if (userData.ip_address && !this.deviceIp) {
+            this.deviceIp = userData.ip_address;
+            console.log('✅ IP recuperado do banco:', this.deviceIp);
         }
 
         // Atualizar botão para indicar atualização

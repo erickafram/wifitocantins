@@ -152,31 +152,40 @@ class PaymentController extends Controller
                 ];
 
             } elseif ($gateway === 'santander' && config('wifi.payment_gateways.pix.client_id')) {
-                // Usar API do Santander
+                // Usar API do Santander PIX
                 $santanderService = new SantanderPixService;
                 $qrData = $santanderService->createPixPayment(
                     $request->amount,
-                    'WiFi Tocantins Express - Internet',
-                    $payment->transaction_id
+                    'WiFi Tocantins Express - Internet Premium',
+                    $payment->transaction_id // Usar como TXId (26-35 caracteres)
                 );
 
-                if (! $qrData['success']) {
-                    throw new \Exception($qrData['message']);
+                if (!$qrData['success']) {
+                    throw new \Exception($qrData['message'] ?? 'Erro ao criar pagamento Santander');
                 }
+
+                Log::info('✅ QR Code Santander gerado', [
+                    'txid' => $qrData['txid'] ?? null,
+                    'location' => $qrData['location'] ?? null,
+                    'status' => $qrData['status'] ?? null,
+                ]);
 
                 // Atualizar payment com dados do Santander
                 $payment->update([
                     'pix_emv_string' => $qrData['qr_code_text'],
-                    'pix_location' => $qrData['external_id'],
-                    'gateway_payment_id' => $qrData['payment_id'],
+                    'pix_location' => $qrData['location'],
+                    'gateway_payment_id' => $qrData['txid'], // TXId é o identificador único
                 ]);
 
                 $response = [
                     'emv_string' => $qrData['qr_code_text'],
-                    'image_url' => $santanderService->generateQRCodeImageUrl($qrData['qr_code_text']),
+                    'image_url' => $qrData['qr_code_image'] ?? $santanderService->generateQRCodeImageUrl($qrData['qr_code_text']),
                     'amount' => number_format($qrData['amount'], 2, '.', ''),
-                    'transaction_id' => $qrData['external_id'],
-                    'payment_id' => $qrData['payment_id'],
+                    'transaction_id' => $payment->transaction_id,
+                    'payment_id' => $payment->id,
+                    'txid' => $qrData['txid'], // TXId Santander
+                    'location' => $qrData['location'], // Location Santander
+                    'expires_in' => $qrData['expiration'] ?? 900, // Segundos até expirar
                 ];
 
             } else {
@@ -463,37 +472,74 @@ class PaymentController extends Controller
     }
 
     /**
-     * Webhook específico do Santander
+     * Webhook específico do Santander PIX
+     * Documentação: Portal do Desenvolvedor > Gerenciamento de notificações via Webhook
      */
     public function santanderWebhook(Request $request)
     {
         try {
+            Log::info('🔔 Webhook Santander recebido', [
+                'timestamp' => now()->toISOString(),
+                'ip' => $request->ip(),
+                'method' => $request->method(),
+                'headers' => $request->headers->all(),
+                'body' => $request->all(),
+            ]);
+
+            // Santander pode enviar GET para validação da URL
+            if ($request->isMethod('get')) {
+                Log::info('✅ Validação GET do webhook Santander');
+                return response()->json(['success' => true]);
+            }
+
             $webhookData = $request->all();
 
             $santanderService = new SantanderPixService;
             $result = $santanderService->processWebhook($webhookData);
 
-            if ($result['success'] && $result['payment_approved']) {
-                // Buscar pagamento pelo gateway_payment_id
-                $payment = Payment::where('gateway_payment_id', $result['payment_id'])->first();
+            if ($result['success'] && ($result['payment_confirmed'] ?? false)) {
+                // Buscar pagamento pelo TXId (gateway_payment_id)
+                $txid = $result['txid'] ?? null;
+                
+                if (!$txid) {
+                    Log::warning('⚠️ Webhook sem TXId', ['result' => $result]);
+                    return response()->json(['success' => true, 'message' => 'TXId não encontrado']);
+                }
+
+                $payment = Payment::where('gateway_payment_id', $txid)
+                    ->orWhere('transaction_id', $txid)
+                    ->first();
 
                 if ($payment) {
+                    Log::info('💰 Pagamento Santander confirmado', [
+                        'payment_id' => $payment->id,
+                        'txid' => $txid,
+                        'e2eid' => $result['e2eid'] ?? null,
+                        'amount' => $result['amount'] ?? null,
+                    ]);
+
                     $payment->update([
                         'status' => 'completed',
-                        'paid_at' => $result['paid_at'],
+                        'paid_at' => $result['paid_at'] ?? now(),
                     ]);
 
                     // Liberar acesso do usuário automaticamente
                     $this->activateUserAccess($payment);
+                } else {
+                    Log::warning('⚠️ Pagamento não encontrado para o TXId', ['txid' => $txid]);
                 }
             }
 
             return response()->json(['success' => true]);
 
         } catch (\Exception $e) {
-            Log::error('Erro no webhook Santander: '.$e->getMessage());
+            Log::error('❌ Erro no webhook Santander: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
-            return response()->json(['success' => false], 500);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
