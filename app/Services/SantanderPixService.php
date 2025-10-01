@@ -97,10 +97,10 @@ class SantanderPixService
                 'body' => $bodyParams,
             ]);
 
+            // asForm() já adiciona Content-Type automaticamente, não duplicar!
             $response = Http::asForm()
                 ->withHeaders([
                     'Authorization' => 'Basic ' . $basicAuth,
-                    'Content-Type' => 'application/x-www-form-urlencoded',
                 ])
                 ->withOptions([
                     'cert' => empty($this->certificatePassword) 
@@ -138,10 +138,8 @@ class SantanderPixService
                 'body_keys' => array_keys($bodyParamsAlt),
             ]);
 
+            // asForm() já adiciona Content-Type automaticamente, não duplicar!
             $response2 = Http::asForm()
-                ->withHeaders([
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ])
                 ->withOptions([
                     'cert' => empty($this->certificatePassword) 
                         ? $certificateFullPath 
