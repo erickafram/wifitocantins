@@ -76,18 +76,31 @@ class SantanderPixService
                 throw new Exception("Client ID ou Client Secret não configurados no .env");
             }
 
+            Log::info('📤 Enviando requisição OAuth', [
+                'url' => $this->baseUrl . '/oauth/token',
+                'grant_type' => 'client_credentials',
+                'client_id_length' => strlen($this->clientId),
+                'client_secret_length' => strlen($this->clientSecret),
+            ]);
+
+            // Santander PIX requer Basic Authentication
+            // Authorization: Basic base64(client_id:client_secret)
+            $basicAuth = base64_encode($this->clientId . ':' . $this->clientSecret);
+
             $response = Http::asForm()
+                ->withHeaders([
+                    'Authorization' => 'Basic ' . $basicAuth,
+                ])
                 ->withOptions([
                     'cert' => empty($this->certificatePassword) 
                         ? $certificateFullPath 
                         : [$certificateFullPath, $this->certificatePassword],
                     'verify' => true,
                     'timeout' => 30,
+                    'debug' => false, // Mudar para true para ver requisição completa
                 ])
                 ->post($this->baseUrl . '/oauth/token', [
                     'grant_type' => 'client_credentials',
-                    'client_id' => $this->clientId,
-                    'client_secret' => $this->clientSecret,
                 ]);
 
             if ($response->successful()) {
