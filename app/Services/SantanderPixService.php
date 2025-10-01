@@ -87,9 +87,20 @@ class SantanderPixService
             // Authorization: Basic base64(client_id:client_secret)
             $basicAuth = base64_encode($this->clientId . ':' . $this->clientSecret);
 
+            // Testar com diferentes formatos de autenticação
+            $bodyParams = [
+                'grant_type' => 'client_credentials',
+            ];
+
+            Log::info('🔍 Tentando autenticação (formato 1: Basic Auth)', [
+                'authorization_header' => 'Basic [REDACTED]',
+                'body' => $bodyParams,
+            ]);
+
             $response = Http::asForm()
                 ->withHeaders([
                     'Authorization' => 'Basic ' . $basicAuth,
+                    'Content-Type' => 'application/x-www-form-urlencoded',
                 ])
                 ->withOptions([
                     'cert' => empty($this->certificatePassword) 
@@ -97,11 +108,8 @@ class SantanderPixService
                         : [$certificateFullPath, $this->certificatePassword],
                     'verify' => true,
                     'timeout' => 30,
-                    'debug' => false, // Mudar para true para ver requisição completa
                 ])
-                ->post($this->baseUrl . '/oauth/token', [
-                    'grant_type' => 'client_credentials',
-                ]);
+                ->post($this->baseUrl . '/oauth/token', $bodyParams);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -111,14 +119,56 @@ class SantanderPixService
                     throw new Exception('Token não retornado na resposta');
                 }
 
-                Log::info('✅ Token OAuth 2.0 obtido com sucesso');
+                Log::info('✅ Token OAuth 2.0 obtido com sucesso (Basic Auth)');
                 return $token;
             }
 
-            $errorBody = $response->body();
-            Log::error('❌ Erro na autenticação Santander', [
+            // Se Basic Auth falhou, tentar com credenciais no body
+            Log::warning('⚠️ Basic Auth falhou, tentando com credenciais no body', [
                 'status' => $response->status(),
-                'body' => $errorBody,
+            ]);
+
+            $bodyParamsAlt = [
+                'grant_type' => 'client_credentials',
+                'client_id' => $this->clientId,
+                'client_secret' => $this->clientSecret,
+            ];
+
+            Log::info('🔍 Tentando autenticação (formato 2: Body params)', [
+                'body_keys' => array_keys($bodyParamsAlt),
+            ]);
+
+            $response2 = Http::asForm()
+                ->withHeaders([
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ])
+                ->withOptions([
+                    'cert' => empty($this->certificatePassword) 
+                        ? $certificateFullPath 
+                        : [$certificateFullPath, $this->certificatePassword],
+                    'verify' => true,
+                    'timeout' => 30,
+                ])
+                ->post($this->baseUrl . '/oauth/token', $bodyParamsAlt);
+
+            if ($response2->successful()) {
+                $data = $response2->json();
+                $token = $data['access_token'] ?? null;
+                
+                if (!$token) {
+                    throw new Exception('Token não retornado na resposta');
+                }
+
+                Log::info('✅ Token OAuth 2.0 obtido com sucesso (Body params)');
+                return $token;
+            }
+
+            // Ambas as tentativas falharam
+            $errorBody = $response2->body();
+            Log::error('❌ Ambas tentativas de autenticação falharam', [
+                'basic_auth_status' => $response->status(),
+                'body_params_status' => $response2->status(),
+                'last_error' => $errorBody,
             ]);
 
             throw new Exception('Erro na autenticação Santander: ' . $errorBody);
