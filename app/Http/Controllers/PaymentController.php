@@ -393,10 +393,16 @@ class PaymentController extends Controller
 
     /**
      * Gera ID único para transação
+     * Formato: TXN_timestamp_hash (26-35 caracteres para Santander)
      */
     private function generateTransactionId()
     {
-        return 'TXN_'.time().'_'.strtoupper(substr(md5(uniqid()), 0, 8));
+        // Gerar ID com 30 caracteres (dentro do range 26-35 exigido pelo Santander)
+        // Formato: TXN_1234567890_ABCDEF123456 (30 chars)
+        $timestamp = time();
+        $hash = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 12));
+        
+        return 'TXN_' . $timestamp . '_' . $hash;
     }
 
     /**
