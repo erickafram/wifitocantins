@@ -59,6 +59,9 @@ class SantanderPixService
             Log::info('🔐 Iniciando autenticação OAuth 2.0 Santander', [
                 'environment' => $this->environment,
                 'base_url' => $this->baseUrl,
+                'client_id' => $this->clientId ? 'PRESENTE' : 'AUSENTE',
+                'client_secret' => $this->clientSecret ? 'PRESENTE' : 'AUSENTE',
+                'workspace_id' => $this->workspaceId ? 'PRESENTE' : 'AUSENTE',
             ]);
 
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
@@ -66,6 +69,11 @@ class SantanderPixService
             // Verificar se certificado existe
             if (!file_exists($certificateFullPath)) {
                 throw new Exception("Certificado não encontrado: {$certificateFullPath}");
+            }
+
+            // Verificar credenciais
+            if (empty($this->clientId) || empty($this->clientSecret)) {
+                throw new Exception("Client ID ou Client Secret não configurados no .env");
             }
 
             $response = Http::asForm()
@@ -124,7 +132,7 @@ class SantanderPixService
      * @param string|null $txid Identificador único (26-35 caracteres)
      * @return array
      */
-    public function createPixPayment(float $amount, string $description, string $txid = null): array
+    public function createPixPayment(float $amount, string $description, ?string $txid = null): array
     {
         try {
             // Gerar TXId único se não fornecido (26-35 caracteres alfanuméricos)
@@ -144,7 +152,7 @@ class SantanderPixService
             ]);
 
             $accessToken = $this->getAccessToken();
-
+            
             // Payload conforme documentação Santander PIX
             $payload = [
                 'calendario' => [
@@ -183,7 +191,7 @@ class SantanderPixService
 
             if ($response->successful()) {
                 $data = $response->json();
-
+                
                 Log::info('✅ Cobrança PIX criada com sucesso', [
                     'txid' => $data['txid'] ?? $txid,
                     'location' => $data['location'] ?? null,
@@ -196,7 +204,7 @@ class SantanderPixService
                 }
 
                 $emvString = $this->generateEMVString($location, $amount, $txid);
-
+                
                 return [
                     'success' => true,
                     'txid' => $data['txid'] ?? $txid,
@@ -339,7 +347,7 @@ class SantanderPixService
 
         } catch (Exception $e) {
             Log::error('❌ Erro ao consultar lista PIX: ' . $e->getMessage());
-
+            
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -358,7 +366,7 @@ class SantanderPixService
      * @param string|null $chave Chave PIX (se null, usa a configurada)
      * @return array
      */
-    public function configureWebhook(string $webhookUrl, string $chave = null): array
+    public function configureWebhook(string $webhookUrl, ?string $chave = null): array
     {
         try {
             $chave = $chave ?? $this->pixKey;
@@ -415,7 +423,7 @@ class SantanderPixService
      * ===================================================================
      * Endpoint: GET /api/v1/webhook/{chave}
      */
-    public function getWebhookConfig(string $chave = null): array
+    public function getWebhookConfig(?string $chave = null): array
     {
         try {
             $chave = $chave ?? $this->pixKey;
@@ -462,7 +470,7 @@ class SantanderPixService
      * ===================================================================
      * Endpoint: DELETE /api/v1/webhook/{chave}
      */
-    public function deleteWebhook(string $chave = null): array
+    public function deleteWebhook(?string $chave = null): array
     {
         try {
             $chave = $chave ?? $this->pixKey;
@@ -497,7 +505,7 @@ class SantanderPixService
 
         } catch (Exception $e) {
             Log::error('❌ Erro ao cancelar webhook: ' . $e->getMessage());
-
+            
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -567,7 +575,7 @@ class SantanderPixService
 
         } catch (Exception $e) {
             Log::error('❌ Erro ao processar webhook Santander: ' . $e->getMessage());
-
+            
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -587,7 +595,7 @@ class SantanderPixService
             Log::info('🧪 Testando conexão com Santander PIX');
 
             $accessToken = $this->getAccessToken();
-
+            
             $checks = [
                 'environment' => $this->environment,
                 'base_url' => $this->baseUrl,
@@ -635,38 +643,38 @@ class SantanderPixService
     {
         // Campo 00: Payload Format Indicator (sempre "01")
         $emv = $this->formatEMVField('00', '01');
-
+        
         // Campo 01: Point of Initiation Method ("12" = dinâmico)
         $emv .= $this->formatEMVField('01', '12');
-
+        
         // Campo 26: Merchant Account Information (GUI + Location)
         $merchantAccount = $this->formatEMVField('00', 'br.gov.bcb.pix');
         $merchantAccount .= $this->formatEMVField('25', $location);
         $emv .= $this->formatEMVField('26', $merchantAccount);
-
+        
         // Campo 52: Merchant Category Code (sempre "0000")
         $emv .= $this->formatEMVField('52', '0000');
-
+        
         // Campo 53: Transaction Currency (986 = Real Brasileiro)
         $emv .= $this->formatEMVField('53', '986');
-
+        
         // Campo 54: Transaction Amount
         $formattedAmount = number_format($amount, 2, '.', '');
         $emv .= $this->formatEMVField('54', $formattedAmount);
-
+        
         // Campo 58: Country Code (BR = Brasil)
         $emv .= $this->formatEMVField('58', 'BR');
-
+        
         // Campo 59: Merchant Name (sem acentos ou caracteres especiais)
         $emv .= $this->formatEMVField('59', $this->merchantName);
-
+        
         // Campo 60: Merchant City (sem acentos ou caracteres especiais)
         $emv .= $this->formatEMVField('60', $this->merchantCity);
-
+        
         // Campo 62: Additional Data Field Template (opcional: TXId)
         $additionalData = $this->formatEMVField('05', '***');
         $emv .= $this->formatEMVField('62', $additionalData);
-
+        
         // Campo 63: CRC16-CCITT (calculado sobre todo o EMV + "6304")
         $crcInput = $emv . '6304';
         $crc = $this->calculateCRC16($crcInput);
@@ -698,10 +706,10 @@ class SantanderPixService
     {
         $crc = 0xFFFF;
         $polynomial = 0x1021;
-
+        
         for ($i = 0; $i < strlen($data); $i++) {
             $crc ^= (ord($data[$i]) << 8);
-
+            
             for ($j = 0; $j < 8; $j++) {
                 if (($crc & 0x8000) !== 0) {
                     $crc = (($crc << 1) ^ $polynomial) & 0xFFFF;
@@ -710,7 +718,7 @@ class SantanderPixService
                 }
             }
         }
-
+        
         return $crc;
     }
 
@@ -736,7 +744,7 @@ class SantanderPixService
     {
         $size = '300x300';
         $encodedData = urlencode($emvText);
-
+        
         return "https://api.qrserver.com/v1/create-qr-code/?size={$size}&data={$encodedData}";
     }
 }

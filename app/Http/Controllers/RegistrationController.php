@@ -201,7 +201,7 @@ class RegistrationController extends Controller
             
             // Se não veio do frontend, tentar detectar
             if (!$ipAddress) {
-                $ipAddress = HotspotIdentity::resolveClientIp($request);
+            $ipAddress = HotspotIdentity::resolveClientIp($request);
                 \Log::warning('⚠️ IP não enviado pelo frontend, usando fallback', ['ip_fallback' => $ipAddress]);
             }
             

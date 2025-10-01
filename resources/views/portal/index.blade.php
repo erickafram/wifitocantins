@@ -322,7 +322,7 @@
     </div>
 
     <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
-        
+
         <!-- Header -->
         <div class="text-center mb-10 animate-fade-in">
             <!-- Logo -->
@@ -544,38 +544,38 @@
                      </div>
                  </div>
 
-                                 <!-- Serviços WhatsApp - Compactos -->
-                <div class="border-t border-tocantins-gold/30 pt-4 mb-6">
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        
-                        <!-- Card Passagens Compacto -->
-                        <button 
+                 <!-- Serviços WhatsApp - Compactos -->
+                 <div class="border-t border-tocantins-gold/30 pt-4 mb-6">
+                     <div class="grid grid-cols-2 gap-2 mb-4">
+                         
+                         <!-- Card Passagens Compacto -->
+                         <button 
                             type="button"
-                            onclick="openPassagensModal()" 
+                             onclick="openPassagensModal()" 
                             class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
                             style="touch-action: manipulation;"
-                        >
-                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
-                                <div class="text-lg mb-1">🎫</div>
-                                <p class="text-white text-xs font-bold">PASSAGENS</p>
-                            </div>
-                            <p class="text-xs text-tocantins-gray-green">Compre sua passagem</p>
-                        </button>
+                         >
+                             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
+                                 <div class="text-lg mb-1">🎫</div>
+                                 <p class="text-white text-xs font-bold">PASSAGENS</p>
+                             </div>
+                             <p class="text-xs text-tocantins-gray-green">Compre sua passagem</p>
+                         </button>
 
-                        <!-- Card Turismo Compacto -->
-                        <button 
+                         <!-- Card Turismo Compacto -->
+                         <button 
                             type="button"
-                            onclick="openTurismoModal()" 
+                             onclick="openTurismoModal()" 
                             class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
                             style="touch-action: manipulation;"
-                        >
-                            <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
-                                <div class="text-lg mb-1">🏖️</div>
-                                <p class="text-white text-xs font-bold">TURISMO</p>
-                            </div>
-                            <p class="text-xs text-tocantins-gray-green">Alugue conosco</p>
-                        </button>
-               </div>
+                         >
+                             <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
+                                 <div class="text-lg mb-1">🏖️</div>
+                                 <p class="text-white text-xs font-bold">TURISMO</p>
+                             </div>
+                             <p class="text-xs text-tocantins-gray-green">Alugue conosco</p>
+                         </button>
+                </div>
             </div>
 
                  <!-- Voucher Section - Visível apenas no DESKTOP -->
@@ -735,29 +735,29 @@
                         >
                     </div>
                     
+                        <div>
+                            <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
+                            <input 
+                                type="email" 
+                                id="user_email" 
+                                name="email" 
+                                required
+                                placeholder="seu@email.com"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
+                        </div>
+                        
                     <div>
-                        <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
-                        <input 
-                            type="email" 
-                            id="user_email" 
-                            name="email" 
-                            required
-                            placeholder="seu@email.com"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                        >
-                    </div>
-                    
-                    <div>
-                        <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
-                        <input 
-                            type="tel" 
-                            id="user_phone" 
-                            name="phone" 
-                            required
-                            placeholder="(XX) X XXXX-XXXX"
-                            maxlength="16"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                        >
+                            <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
+                            <input 
+                                type="tel" 
+                                id="user_phone" 
+                                name="phone" 
+                                required
+                                placeholder="(XX) X XXXX-XXXX"
+                                maxlength="16"
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                            >
                     </div>
                     
                     <button 
@@ -954,7 +954,7 @@
             const modal = document.getElementById('passagensModal');
             if (modal) {
                 modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
             }
         }
 
@@ -962,7 +962,7 @@
             const modal = document.getElementById('passagensModal');
             if (modal) {
                 modal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
+            document.body.style.overflow = 'auto';
             }
         }
 
@@ -970,7 +970,7 @@
             const modal = document.getElementById('turismoModal');
             if (modal) {
                 modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
             }
         }
 
@@ -978,8 +978,8 @@
             const modal = document.getElementById('turismoModal');
             if (modal) {
                 modal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }
+            document.body.style.overflow = 'auto';
+        }
         }
 
         // Aguardar DOM carregar para adicionar event listeners
@@ -1017,31 +1017,31 @@
                 }, { passive: false });
             });
 
-            // Fechar modais clicando fora deles
+        // Fechar modais clicando fora deles
             const passagensModal = document.getElementById('passagensModal');
             if (passagensModal) {
                 passagensModal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        closePassagensModal();
-                    }
-                });
+            if (e.target === this) {
+                closePassagensModal();
+            }
+        });
             }
 
             const turismoModal = document.getElementById('turismoModal');
             if (turismoModal) {
                 turismoModal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        closeTurismoModal();
-                    }
-                });
+            if (e.target === this) {
+                closeTurismoModal();
+            }
+        });
             }
 
-            // Fechar modais com a tecla ESC
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closePassagensModal();
-                    closeTurismoModal();
-                }
+        // Fechar modais com a tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePassagensModal();
+                closeTurismoModal();
+            }
             });
         });
     </script>

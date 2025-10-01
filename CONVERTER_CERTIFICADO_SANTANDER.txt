@@ -1,0 +1,76 @@
+=============================================================================
+CONVERTER CERTIFICADO SANTANDER.PFX PARA .PEM (COM CHAVE PRIVADA)
+=============================================================================
+
+📁 LOCAL: /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br/storage/app/certificates/
+
+🔑 SENHA: e12345678
+
+=============================================================================
+COMANDOS PARA EXECUTAR NO SERVIDOR (copie e cole)
+=============================================================================
+
+# 1. Ir para a pasta de certificados
+cd /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br/storage/app/certificates
+
+# 2. Fazer backup do .pem atual (sem chave privada)
+mv santander.pem santander.pem.OLD
+
+# 3. CONVERTER - Opção 1 (mais simples)
+openssl pkcs12 -in santander.pfx -out santander.pem -nodes -legacy -password pass:e12345678
+
+# OU se der erro, usar Opção 2:
+openssl pkcs12 -in santander.pfx -out santander.pem -nodes -provider default -provider legacy -password pass:e12345678
+
+# 4. VERIFICAR se tem a chave privada (deve retornar 1)
+grep -c "BEGIN PRIVATE KEY" santander.pem
+
+# 5. VERIFICAR se tem o certificado (deve retornar 1 ou mais)
+grep -c "BEGIN CERTIFICATE" santander.pem
+
+# 6. Ver as primeiras 30 linhas
+head -n 30 santander.pem
+
+# 7. Ajustar permissões (segurança!)
+chmod 600 santander.pem
+chown tocantinstransportewifi:tocantinstransportewifi santander.pem
+
+# 8. Remover o .pfx (não precisa mais)
+rm santander.pfx
+
+# 9. Limpar cache do Laravel
+cd /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br
+php artisan config:clear
+php artisan cache:clear
+
+# 10. TESTAR a conexão
+php artisan santander:pix test
+
+=============================================================================
+O QUE ESPERAR
+=============================================================================
+
+✅ Após o comando 4: deve retornar "1" (tem chave privada!)
+✅ Após o comando 5: deve retornar "2" ou "3" (tem certificados!)
+✅ Após o comando 6: deve aparecer algo como:
+
+Bag Attributes
+    localKeyID: ...
+    friendlyName: TOCANTINS TRANSPORTE E TURISMO LTDA...
+Key Attributes: <No Attributes>
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+-----END PRIVATE KEY-----
+Bag Attributes
+    localKeyID: ...
+subject=C = BR, O = ICP-Brasil...
+issuer=C = BR, O = ICP-Brasil...
+-----BEGIN CERTIFICATE-----
+MIIFXzCCBEegAwIBAgIQfGqYwQq...
+-----END CERTIFICATE-----
+
+✅ Após o comando 10: deve aparecer:
+✅ Conexão estabelecida com sucesso!
+✅ Token OAuth obtido!
+
+============================================================================= 
