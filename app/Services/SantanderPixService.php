@@ -88,11 +88,13 @@ class SantanderPixService
             $basicAuth = base64_encode($this->clientId . ':' . $this->clientSecret);
 
             // Testar com diferentes formatos de autenticação
+            // Algumas APIs Santander exigem o parâmetro 'scope'
             $bodyParams = [
                 'grant_type' => 'client_credentials',
+                'scope' => 'cob.write cob.read pix.write pix.read webhook.read webhook.write',
             ];
 
-            Log::info('🔍 Tentando autenticação (formato 1: Basic Auth)', [
+            Log::info('🔍 Tentando autenticação (formato 1: Basic Auth com scope)', [
                 'authorization_header' => 'Basic [REDACTED]',
                 'body' => $bodyParams,
             ]);
@@ -132,9 +134,10 @@ class SantanderPixService
                 'grant_type' => 'client_credentials',
                 'client_id' => $this->clientId,
                 'client_secret' => $this->clientSecret,
+                'scope' => 'cob.write cob.read pix.write pix.read webhook.read webhook.write',
             ];
 
-            Log::info('🔍 Tentando autenticação (formato 2: Body params)', [
+            Log::info('🔍 Tentando autenticação (formato 2: Body params com scope)', [
                 'body_keys' => array_keys($bodyParamsAlt),
             ]);
 
