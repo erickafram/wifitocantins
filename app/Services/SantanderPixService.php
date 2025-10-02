@@ -222,8 +222,8 @@ class SantanderPixService
      * ===================================================================
      * CRIAR COBRANÇA PIX (QR Code Dinâmico)
      * ===================================================================
-     * Endpoint: PUT /pix/v2/cob/{txid}
-     * Documentação: https://developer.santander.com.br/guias/api-pix
+     * Endpoint: PUT /api/v1/cob/{txid}
+     * Documentação: https://developer.santander.com.br (Biblioteca de APIs > Pix)
      * 
      * @param float $amount Valor da cobrança em reais
      * @param string $description Descrição do pagamento
@@ -282,7 +282,7 @@ class SantanderPixService
                 'verify' => true,
                 'timeout' => 30,
             ])
-                            ->put($this->baseUrl . '/pix/v2/cob/' . $txid, $payload);
+                            ->put($this->baseUrl . '/api/v1/cob/' . $txid, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -337,8 +337,8 @@ class SantanderPixService
      * ===================================================================
      * CONSULTAR COBRANÇA PIX
      * ===================================================================
-     * Endpoint: GET /pix/v2/cob/{txid}
-     * Documentação: https://developer.santander.com.br/guias/api-pix
+     * Endpoint: GET /api/v1/cob/{txid}
+     * Documentação: https://developer.santander.com.br (Biblioteca de APIs > Pix)
      */
     public function getPaymentStatus(string $txid): array
     {
@@ -356,7 +356,7 @@ class SantanderPixService
                 'verify' => true,
                 'timeout' => 30,
             ])
-                            ->get($this->baseUrl . '/pix/v2/cob/' . $txid);
+                            ->get($this->baseUrl . '/api/v1/cob/' . $txid);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -713,7 +713,7 @@ class SantanderPixService
                         'verify' => true,
                         'timeout' => 30,
                     ])
-                    ->put($this->baseUrl . '/pix/v2/cob/' . $testTxid, $testPayload);
+                    ->put($this->baseUrl . '/api/v1/cob/' . $testTxid, $testPayload);
 
                 $pixTestPassed = $response->successful();
                 
