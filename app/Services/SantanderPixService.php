@@ -49,7 +49,7 @@ class SantanderPixService
      * ===================================================================
      * AUTENTICAÇÃO OAuth 2.0 com mTLS
      * ===================================================================
-     * Endpoint: POST /oauth/token
+     * Endpoint: POST /auth/oauth/v2/token
      * Documentação: Portal do Desenvolvedor > OAuth 2.0
      * Token válido por: 15 minutos
      */
@@ -77,7 +77,7 @@ class SantanderPixService
             }
 
             Log::info('📤 Enviando requisição OAuth', [
-                'url' => $this->baseUrl . '/oauth/token',
+                'url' => $this->baseUrl . '/auth/oauth/v2/token',
                 'grant_type' => 'client_credentials',
                 'client_id_length' => strlen($this->clientId),
                 'client_secret_length' => strlen($this->clientSecret),
@@ -99,7 +99,7 @@ class SantanderPixService
             Log::info('🔍 Tentando autenticação (formato 1: Basic Auth com scope)', [
                 'authorization_header' => 'Basic ' . substr($basicAuth, 0, 20) . '...',
                 'body' => $bodyParams,
-                'full_url' => $this->baseUrl . '/oauth/token',
+                'full_url' => $this->baseUrl . '/auth/oauth/v2/token',
                 'certificate_path' => storage_path('app/' . $this->certificatePath),
             ]);
 
@@ -115,7 +115,7 @@ class SantanderPixService
                     'verify' => true,
                     'timeout' => 30,
                 ])
-                ->post($this->baseUrl . '/oauth/token', $bodyParams);
+                ->post($this->baseUrl . '/auth/oauth/v2/token', $bodyParams);
 
             // Log detalhado da resposta
             Log::info('📥 Resposta do Santander (Basic Auth)', [
@@ -162,7 +162,7 @@ class SantanderPixService
                     'verify' => true,
                     'timeout' => 30,
                 ])
-                ->post($this->baseUrl . '/oauth/token', $bodyParamsAlt);
+                ->post($this->baseUrl . '/auth/oauth/v2/token', $bodyParamsAlt);
 
             // Log detalhado da resposta
             Log::info('📥 Resposta do Santander (Body params)', [
