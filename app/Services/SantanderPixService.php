@@ -40,9 +40,10 @@ class SantanderPixService
         $this->merchantCity = $this->sanitizeMerchantName(config('wifi.pix.merchant_city', 'Palmas'));
         
         // URLs oficiais do Santander conforme documentação
+        // Documentação: https://developer.santander.com.br
         $this->baseUrl = $this->environment === 'production' 
-            ? 'https://trust-pix.santander.com.br' 
-            : 'https://trust-pix-h.santander.com.br';
+            ? 'https://api.santander.com.br' 
+            : 'https://api-h.santander.com.br';
     }
 
     /**
@@ -50,11 +51,11 @@ class SantanderPixService
      */
     private function getAuthHeaders(string $accessToken): array
     {
+        // Headers conforme documentação oficial do Santander
+        // Referência: https://developer.santander.com.br/guias/api-pix
         return [
             'Authorization' => 'Bearer ' . $accessToken,
             'Content-Type' => 'application/json',
-            'X-Application-Key' => $this->clientId,
-            'client_id' => $this->clientId,
         ];
     }
 
@@ -220,8 +221,8 @@ class SantanderPixService
      * ===================================================================
      * CRIAR COBRANÇA PIX (QR Code Dinâmico)
      * ===================================================================
-     * Endpoint: PUT /api/v1/cob/{txid}
-     * Documentação: Portal do Desenvolvedor > API Pix
+     * Endpoint: PUT /pix/v2/cob/{txid}
+     * Documentação: https://developer.santander.com.br/guias/api-pix
      * 
      * @param float $amount Valor da cobrança em reais
      * @param string $description Descrição do pagamento
@@ -280,7 +281,7 @@ class SantanderPixService
                 'verify' => true,
                 'timeout' => 30,
             ])
-            ->put($this->baseUrl . '/api/v1/cob/' . $txid, $payload);
+                            ->put($this->baseUrl . '/pix/v2/cob/' . $txid, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -335,8 +336,8 @@ class SantanderPixService
      * ===================================================================
      * CONSULTAR COBRANÇA PIX
      * ===================================================================
-     * Endpoint: GET /api/v1/cob/{txid}
-     * Documentação: Portal do Desenvolvedor > API Pix
+     * Endpoint: GET /pix/v2/cob/{txid}
+     * Documentação: https://developer.santander.com.br/guias/api-pix
      */
     public function getPaymentStatus(string $txid): array
     {
@@ -354,7 +355,7 @@ class SantanderPixService
                 'verify' => true,
                 'timeout' => 30,
             ])
-            ->get($this->baseUrl . '/api/v1/cob/' . $txid);
+                            ->get($this->baseUrl . '/pix/v2/cob/' . $txid);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -711,7 +712,7 @@ class SantanderPixService
                         'verify' => true,
                         'timeout' => 30,
                     ])
-                    ->put($this->baseUrl . '/api/v1/cob/' . $testTxid, $testPayload);
+                    ->put($this->baseUrl . '/pix/v2/cob/' . $testTxid, $testPayload);
 
                 $pixTestPassed = $response->successful();
                 
