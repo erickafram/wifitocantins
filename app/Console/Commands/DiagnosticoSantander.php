@@ -53,10 +53,31 @@ class DiagnosticoSantander extends Command
         $this->info('');
 
         // Verificar certificado
-        $certPath = storage_path('app/' . str_replace('storage/app/', '', $config['certificate_path']));
+        $certPathConfig = $config['certificate_path'];
+        
+        // Construir caminho correto
+        if (empty($certPathConfig)) {
+            $this->error("❌ ERRO: SANTANDER_CERTIFICATE_PATH não configurado no .env");
+            return 1;
+        }
+        
+        // Se o caminho começa com /, é absoluto
+        if (substr($certPathConfig, 0, 1) === '/') {
+            $certPath = $certPathConfig;
+        } else {
+            // Caso contrário, é relativo ao storage/app
+            $certPath = storage_path('app/' . str_replace('storage/app/', '', $certPathConfig));
+        }
         
         if (!file_exists($certPath)) {
             $this->error("❌ ERRO: Certificado não encontrado em: $certPath");
+            return 1;
+        }
+
+        if (is_dir($certPath)) {
+            $this->error("❌ ERRO: O caminho aponta para um DIRETÓRIO, não um arquivo!");
+            $this->warn("Caminho: $certPath");
+            $this->warn("Verifique SANTANDER_CERTIFICATE_PATH no .env - deve apontar para o arquivo .pem");
             return 1;
         }
 
