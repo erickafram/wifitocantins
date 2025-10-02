@@ -81,6 +81,8 @@ class SantanderPixService
                 'grant_type' => 'client_credentials',
                 'client_id_length' => strlen($this->clientId),
                 'client_secret_length' => strlen($this->clientSecret),
+                'client_id_first_4' => substr($this->clientId, 0, 4),
+                'client_id_last_4' => substr($this->clientId, -4),
             ]);
 
             // Santander PIX requer Basic Authentication
@@ -95,8 +97,10 @@ class SantanderPixService
             ];
 
             Log::info('🔍 Tentando autenticação (formato 1: Basic Auth com scope)', [
-                'authorization_header' => 'Basic [REDACTED]',
+                'authorization_header' => 'Basic ' . substr($basicAuth, 0, 20) . '...',
                 'body' => $bodyParams,
+                'full_url' => $this->baseUrl . '/oauth/token',
+                'certificate_path' => storage_path('app/' . $this->certificatePath),
             ]);
 
             // asForm() já adiciona Content-Type automaticamente, não duplicar!
