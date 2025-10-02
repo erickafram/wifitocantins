@@ -135,7 +135,7 @@ class SantanderPixService
                 'status' => $response->status(),
                 'headers' => $response->headers(),
                 'body' => $response->body(),
-            ]);
+                ]);
 
             if ($response->successful()) {
                 $data = $response->json();
