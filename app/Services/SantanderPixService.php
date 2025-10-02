@@ -46,6 +46,19 @@ class SantanderPixService
     }
 
     /**
+     * Obter headers padrão para requisições autenticadas
+     */
+    private function getAuthHeaders(string $accessToken): array
+    {
+        return [
+            'Authorization' => 'Bearer ' . $accessToken,
+            'Content-Type' => 'application/json',
+            'X-Application-Key' => $this->clientId,
+            'client_id' => $this->clientId,
+        ];
+    }
+
+    /**
      * ===================================================================
      * AUTENTICAÇÃO OAuth 2.0 com mTLS
      * ===================================================================
@@ -259,10 +272,7 @@ class SantanderPixService
 
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json',
-            ])
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
@@ -336,9 +346,7 @@ class SantanderPixService
             $accessToken = $this->getAccessToken();
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-            ])
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
@@ -407,9 +415,7 @@ class SantanderPixService
                 'paginacao.itensPorPagina' => $itensPorPagina,
             ];
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-            ])
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
@@ -466,10 +472,7 @@ class SantanderPixService
                 'webhookUrl' => $webhookUrl
             ];
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json',
-            ])
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
@@ -516,9 +519,7 @@ class SantanderPixService
             $accessToken = $this->getAccessToken();
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-            ])
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
@@ -563,9 +564,7 @@ class SantanderPixService
             $accessToken = $this->getAccessToken();
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-            ])
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
