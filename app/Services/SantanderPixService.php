@@ -39,11 +39,10 @@ class SantanderPixService
         $this->merchantName = $this->sanitizeMerchantName(config('wifi.pix.merchant_name', 'TocantinsTransportWiFi'));
         $this->merchantCity = $this->sanitizeMerchantName(config('wifi.pix.merchant_city', 'Palmas'));
         
-        // URLs oficiais do Santander conforme documentação
-        // Documentação: https://developer.santander.com.br
+        // URLs do Santander (trust-pix é a URL que funciona para OAuth)
         $this->baseUrl = $this->environment === 'production' 
-            ? 'https://api.santander.com.br' 
-            : 'https://api-h.santander.com.br';
+            ? 'https://trust-pix.santander.com.br' 
+            : 'https://trust-pix-h.santander.com.br';
     }
 
     /**
@@ -51,11 +50,13 @@ class SantanderPixService
      */
     private function getAuthHeaders(string $accessToken): array
     {
-        // Headers conforme documentação oficial do Santander
-        // Referência: https://developer.santander.com.br/guias/api-pix
+        // Headers conforme documentação oficial do Santander PIX
+        // Referência: https://developer.santander.com.br (Passo 4: Inclusão do X-Application-Key)
+        // Documentação atualizada em 8 de setembro de 2025
         return [
             'Authorization' => 'Bearer ' . $accessToken,
             'Content-Type' => 'application/json',
+            'X-Application-Key' => $this->clientId, // OBRIGATÓRIO conforme docs
         ];
     }
 
