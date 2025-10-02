@@ -75,18 +75,24 @@ class SantanderPixSetup extends Command
             $this->info('✅ Conexão estabelecida com sucesso!');
             $this->newLine();
 
-            $this->table(
-                ['Verificação', 'Status'],
-                [
-                    ['Ambiente', $result['checks']['environment']],
-                    ['Base URL', $result['checks']['base_url']],
-                    ['Client ID', $result['checks']['client_id'] ? '✅ Configurado' : '❌ Ausente'],
-                    ['Client Secret', $result['checks']['client_secret'] ? '✅ Configurado' : '❌ Ausente'],
-                    ['Chave PIX', $result['checks']['pix_key'] ? '✅ Configurado' : '❌ Ausente'],
-                    ['Certificado', $result['checks']['certificate_exists'] ? '✅ Encontrado' : '❌ Não encontrado'],
-                    ['Token OAuth', $result['checks']['token_obtained'] ? '✅ Obtido' : '❌ Falhou'],
-                ]
-            );
+            $tableData = [
+                ['Ambiente', $result['checks']['environment']],
+                ['Base URL', $result['checks']['base_url']],
+                ['Client ID', $result['checks']['client_id'] ? '✅ Configurado' : '❌ Ausente'],
+                ['Client Secret', $result['checks']['client_secret'] ? '✅ Configurado' : '❌ Ausente'],
+                ['Chave PIX', $result['checks']['pix_key'] ? '✅ Configurado' : '❌ Ausente'],
+                ['Certificado', $result['checks']['certificate_exists'] ? '✅ Encontrado' : '❌ Não encontrado'],
+                ['Token OAuth', $result['checks']['token_obtained'] ? '✅ Obtido' : '❌ Falhou'],
+                ['Teste API PIX', ($result['checks']['pix_api_test'] ?? false) ? '✅ Sucesso' : '❌ Falhou'],
+            ];
+            
+            $this->table(['Verificação', 'Status'], $tableData);
+            
+            if (isset($result['pix_test_error']) && $result['pix_test_error']) {
+                $this->newLine();
+                $this->error('⚠️  Erro no teste PIX: ' . $result['pix_test_error']);
+                $this->warn('💡 Possível causa: Credenciais são do Portal do Desenvolvedor, não da API PIX');
+            }
         } else {
             $this->error('❌ Erro na conexão:');
             $this->error($result['message']);

@@ -688,6 +688,43 @@ class SantanderPixService
                 'token_obtained' => !empty($accessToken),
             ];
 
+            // Teste REAL: tentar criar uma cobrança PIX de teste
+            $pixTestPassed = false;
+            $pixTestError = null;
+            
+            try {
+                $testTxid = 'TESTE' . time() . 'WIFI' . strtoupper(Str::random(15));
+                $testPayload = [
+                    'calendario' => ['expiracao' => 900],
+                    'valor' => ['original' => '0.01'],
+                    'chave' => $this->pixKey,
+                    'solicitacaoPagador' => 'Teste de conexao'
+                ];
+
+                $certificateFullPath = storage_path('app/' . $this->certificatePath);
+                
+                $response = Http::withHeaders($this->getAuthHeaders($accessToken))
+                    ->withOptions([
+                        'cert' => empty($this->certificatePassword) 
+                            ? $certificateFullPath 
+                            : [$certificateFullPath, $this->certificatePassword],
+                        'verify' => true,
+                        'timeout' => 30,
+                    ])
+                    ->put($this->baseUrl . '/api/v1/cob/' . $testTxid, $testPayload);
+
+                $pixTestPassed = $response->successful();
+                
+                if (!$pixTestPassed) {
+                    $error = $response->json();
+                    $pixTestError = $error['fault']['faultstring'] ?? $error['detail'] ?? 'Erro desconhecido';
+                }
+            } catch (Exception $e) {
+                $pixTestError = $e->getMessage();
+            }
+            
+            $checks['pix_api_test'] = $pixTestPassed;
+
             $allChecksPass = array_reduce($checks, function($carry, $item) {
                 return $carry && $item;
             }, true);
@@ -696,8 +733,9 @@ class SantanderPixService
                 'success' => $allChecksPass,
                 'message' => $allChecksPass 
                     ? 'Conexão com Santander estabelecida com sucesso' 
-                    : 'Algumas verificações falharam',
+                    : ($pixTestError ? "Falha no teste PIX: {$pixTestError}" : 'Algumas verificações falharam'),
                 'checks' => $checks,
+                'pix_test_error' => $pixTestError,
             ];
 
         } catch (Exception $e) {
