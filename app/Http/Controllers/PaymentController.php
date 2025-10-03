@@ -157,12 +157,16 @@ class PaymentController extends Controller
                 $qrData = $santanderService->createPixPayment(
                     $request->amount,
                     'WiFi Tocantins Express - Internet Premium',
-                    $payment->transaction_id // Usar como TXId (26-35 caracteres)
+                    900 // Expira em 15 minutos
                 );
 
                 if (!$qrData['success']) {
                     throw new \Exception($qrData['message'] ?? 'Erro ao criar pagamento Santander');
                 }
+
+                // Atualizar transaction_id com o TXId do Santander
+                $payment->transaction_id = $qrData['txid'];
+                $payment->save();
 
                 Log::info('✅ QR Code Santander gerado', [
                     'txid' => $qrData['txid'] ?? null,
