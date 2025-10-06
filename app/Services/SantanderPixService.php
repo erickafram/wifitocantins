@@ -48,16 +48,87 @@ class SantanderPixService
     /**
      * Obter headers padrão para requisições autenticadas
      */
-    private function getAuthHeaders(string $accessToken): array
+    private function getAuthHeaders(string $accessToken, ?array $payload = null): array
     {
         // Headers conforme documentação oficial do Santander PIX
         // Referência: https://developer.santander.com.br (Passo 4: Inclusão do X-Application-Key)
         // Documentação atualizada em 8 de setembro de 2025
-        return [
+        $headers = [
             'Authorization' => 'Bearer ' . $accessToken,
             'Content-Type' => 'application/json',
             'X-Application-Key' => $this->clientId, // OBRIGATÓRIO conforme docs
         ];
+
+        // Se payload fornecido, gerar JWS (JSON Web Signature) com RS256
+        if ($payload !== null && config('wifi.payment_gateways.pix.use_jws', false)) {
+            try {
+                $jws = $this->generateJWS($payload);
+                $headers['x-jws-signature'] = $jws;
+                Log::info('✅ JWS gerado e adicionado ao header', [
+                    'jws_length' => strlen($jws),
+                    'algorithm' => 'RS256',
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('⚠️ Erro ao gerar JWS: ' . $e->getMessage());
+            }
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Gerar JWS (JSON Web Signature) com algoritmo RS256
+     * Conforme especificação RFC 7515
+     */
+    private function generateJWS(array $payload): string
+    {
+        $certificateFullPath = storage_path('app/' . $this->certificatePath);
+
+        if (!file_exists($certificateFullPath)) {
+            throw new \Exception("Certificado não encontrado para JWS: {$certificateFullPath}");
+        }
+
+        // Ler chave privada do certificado
+        $privateKeyContent = file_get_contents($certificateFullPath);
+        $privateKey = openssl_pkey_get_private($privateKeyContent, $this->certificatePassword);
+
+        if (!$privateKey) {
+            throw new \Exception('Erro ao carregar chave privada para JWS: ' . openssl_error_string());
+        }
+
+        // Header JWS com algoritmo RS256 (OBRIGATÓRIO para Santander)
+        $header = [
+            'alg' => 'RS256',  // ⚠️ DEVE SER RS256, NÃO PS256!
+            'typ' => 'JWT'
+        ];
+
+        // Codificar header e payload em Base64URL
+        $headerEncoded = $this->base64UrlEncode(json_encode($header));
+        $payloadEncoded = $this->base64UrlEncode(json_encode($payload));
+
+        // Criar mensagem para assinar: header.payload
+        $message = $headerEncoded . '.' . $payloadEncoded;
+
+        // Assinar com SHA256 (RS256 = RSA with SHA-256)
+        $signature = '';
+        openssl_sign($message, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+
+        // Codificar assinatura em Base64URL
+        $signatureEncoded = $this->base64UrlEncode($signature);
+
+        // Liberar recurso da chave
+        openssl_free_key($privateKey);
+
+        // Retornar JWS completo: header.payload.signature
+        return $message . '.' . $signatureEncoded;
+    }
+
+    /**
+     * Codificar em Base64 URL-safe (sem padding)
+     */
+    private function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
     /**
@@ -274,7 +345,7 @@ class SantanderPixService
 
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            $response = Http::withHeaders($this->getAuthHeaders($accessToken))
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken, $payload))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
