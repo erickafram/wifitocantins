@@ -80,7 +80,7 @@ return [
             'certificate_path' => env('SANTANDER_CERTIFICATE_PATH', 'certificates/santander.pem'),
             'certificate_password' => env('SANTANDER_CERTIFICATE_PASSWORD', ''),
             'station_code' => env('SANTANDER_STATION_CODE', ''), // Código de Estação
-            'use_jws' => env('SANTANDER_USE_JWS', false), // Habilitar JWS (JSON Web Signature) com RS256
+            'use_jws' => filter_var(env('SANTANDER_USE_JWS', true), FILTER_VALIDATE_BOOL), // JWS OBRIGATÓRIO para Santander PIX
             
             'environment' => env('PIX_ENVIRONMENT', 'production'), // sandbox ou production
         ],

@@ -43,6 +43,48 @@ class SantanderPixService
         $this->baseUrl = $this->environment === 'production' 
             ? 'https://trust-pix.santander.com.br' 
             : 'https://trust-pix-h.santander.com.br';
+        
+        // Validar certificado na inicialização
+        $this->validateCertificate();
+    }
+    
+    /**
+     * Validar se o certificado existe e contém chave privada
+     */
+    private function validateCertificate(): void
+    {
+        $certificateFullPath = storage_path('app/' . $this->certificatePath);
+        
+        if (!file_exists($certificateFullPath)) {
+            Log::warning('⚠️ Certificado Santander não encontrado', [
+                'path' => $certificateFullPath,
+                'relative_path' => $this->certificatePath,
+            ]);
+            return;
+        }
+        
+        // Verificar se é um arquivo PEM válido
+        $content = file_get_contents($certificateFullPath);
+        
+        // Verificar se contém chave privada
+        $hasPrivateKey = strpos($content, '-----BEGIN PRIVATE KEY-----') !== false 
+                      || strpos($content, '-----BEGIN RSA PRIVATE KEY-----') !== false
+                      || strpos($content, '-----BEGIN ENCRYPTED PRIVATE KEY-----') !== false;
+        
+        // Verificar se contém certificado
+        $hasCertificate = strpos($content, '-----BEGIN CERTIFICATE-----') !== false;
+        
+        Log::info('🔐 Validação do certificado Santander', [
+            'path' => $certificateFullPath,
+            'has_private_key' => $hasPrivateKey,
+            'has_certificate' => $hasCertificate,
+            'file_size' => strlen($content) . ' bytes',
+            'is_encrypted' => strpos($content, 'ENCRYPTED') !== false,
+        ]);
+        
+        if (!$hasPrivateKey) {
+            Log::warning('⚠️ Certificado sem chave privada - JWS não funcionará');
+        }
     }
 
     /**
@@ -78,7 +120,8 @@ class SantanderPixService
 
     /**
      * Gerar JWS (JSON Web Signature) com algoritmo RS256
-     * Usa biblioteca firebase/php-jwt para garantir compatibilidade com Santander
+     * Conforme especificação do Santander PIX
+     * Documentação: Portal do Desenvolvedor > Segurança > JWS
      */
     private function generateJWS(array $payload): string
     {
@@ -99,13 +142,27 @@ class SantanderPixService
         }
 
         try {
-            // Usar firebase/php-jwt para gerar JWS com RS256
-            $jws = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+            // Adicionar campos obrigatórios JWT conforme Santander
+            $jwtPayload = array_merge([
+                'iat' => time(), // Issued at
+                'exp' => time() + 300, // Expira em 5 minutos
+                'iss' => $this->clientId, // Issuer (Client ID)
+            ], $payload);
+
+            // Gerar JWS com RS256 usando firebase/php-jwt
+            $jws = \Firebase\JWT\JWT::encode(
+                $jwtPayload, 
+                $privateKey, 
+                'RS256',
+                null,
+                ['alg' => 'RS256', 'typ' => 'JWT']
+            );
             
-            Log::info('✅ JWS gerado com firebase/php-jwt', [
-                'jws_length' => strlen($jws),
+            Log::info('✅ JWS gerado com sucesso', [
                 'algorithm' => 'RS256',
+                'jws_length' => strlen($jws),
                 'jws_preview' => substr($jws, 0, 50) . '...',
+                'payload_keys' => array_keys($jwtPayload),
             ]);
             
             // Liberar recurso da chave
