@@ -214,15 +214,12 @@ class WooviPixService
                 }
 
                 // A Woovi envia o valor em centavos, converter para reais
-                $valueInCents = $charge['value'] ?? 0;
-                $amount = is_numeric($valueInCents) ? ($valueInCents / 100) : 0;
-
                 return [
                     'success' => true,
                     'payment_approved' => true,
                     'correlation_id' => $charge['correlationID'] ?? null,
                     'woovi_id' => $charge['globalID'] ?? null,
-                    'amount' => $amount,
+                'amount' => $charge['value'] ?? 0,
                     'paid_at' => $charge['paidAt'] ?? now(),
                     'payer_name' => $charge['payer']['name'] ?? null,
                     'payer_email' => $charge['payer']['email'] ?? null,

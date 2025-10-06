@@ -575,6 +575,20 @@ class PaymentController extends Controller
             $wooviService = new WooviPixService;
             $result = $wooviService->processWebhook($webhookData);
 
+            if (isset($result['message']) && $result['message'] === 'Pagamento ainda não confirmado') {
+                Log::info('⏳ Webhook Woovi recebido antes da confirmação', [
+                    'correlation_id' => $result['correlation_id'] ?? null,
+                    'status' => $result['status'] ?? null,
+                    'woovi_id' => $result['woovi_id'] ?? null,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pagamento ainda não confirmado na Woovi',
+                    'pending' => true,
+                ], 202);
+            }
+
             Log::info('📊 Resultado do processamento Woovi', [
                 'success' => $result['success'],
                 'payment_approved' => $result['payment_approved'] ?? false,
