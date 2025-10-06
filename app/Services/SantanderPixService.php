@@ -26,6 +26,7 @@ class SantanderPixService
     private $environment;
     private $merchantName;
     private $merchantCity;
+    private $certificateKid;
 
     public function __construct()
     {
@@ -46,6 +47,85 @@ class SantanderPixService
         
         // Validar certificado na inicialização
         $this->validateCertificate();
+        $this->certificateKid = null;
+    }
+
+    private function getCertificateFullPath(): string
+    {
+        return storage_path('app/' . $this->certificatePath);
+    }
+
+    public function getCertificateKid(): ?string
+    {
+        if ($this->certificateKid !== null) {
+            return $this->certificateKid;
+        }
+
+        $certificateFullPath = $this->getCertificateFullPath();
+
+        if (!file_exists($certificateFullPath)) {
+            Log::warning('⚠️ Não foi possível calcular kid do certificado: arquivo inexistente', [
+                'path' => $certificateFullPath,
+            ]);
+            return null;
+        }
+
+        $content = file_get_contents($certificateFullPath);
+
+        if (!preg_match('/-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----/s', $content, $matches)) {
+            Log::warning('⚠️ Conteúdo do certificado não possui bloco BEGIN CERTIFICATE');
+            return null;
+        }
+
+        $certificatePem = "-----BEGIN CERTIFICATE-----\n" . trim($matches[1]) . "\n-----END CERTIFICATE-----\n";
+        $certificateResource = @openssl_x509_read($certificatePem);
+
+        if (!$certificateResource) {
+            Log::warning('⚠️ Não foi possível ler certificado Santander para gerar kid');
+            return null;
+        }
+
+        $certificateExported = null;
+        openssl_x509_export($certificateResource, $certificateExported);
+        openssl_x509_free($certificateResource);
+
+        $certificateDer = $this->convertPemToDer($certificateExported);
+
+        if ($certificateDer === null) {
+            Log::warning('⚠️ Falha ao converter certificado Santander para DER');
+            return null;
+        }
+
+        $thumbprint = hash('sha256', $certificateDer, true);
+        $kid = $this->base64UrlEncode($thumbprint);
+
+        $this->certificateKid = $kid;
+
+        Log::info('🔑 kid do certificado Santander calculado', [
+            'kid' => $kid,
+        ]);
+
+        return $this->certificateKid;
+    }
+
+    private function convertPemToDer(?string $pem): ?string
+    {
+        if (!$pem) {
+            return null;
+        }
+
+        $clean = preg_replace('/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\s+/', '', $pem);
+
+        if ($clean === null) {
+            return null;
+        }
+
+        return base64_decode($clean, true) ?: null;
+    }
+
+    private function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
     
     /**
@@ -53,7 +133,7 @@ class SantanderPixService
      */
     private function validateCertificate(): void
     {
-        $certificateFullPath = storage_path('app/' . $this->certificatePath);
+        $certificateFullPath = $this->getCertificateFullPath();
         
         if (!file_exists($certificateFullPath)) {
             Log::warning('⚠️ Certificado Santander não encontrado', [
@@ -98,6 +178,7 @@ class SantanderPixService
         $headers = [
             'Authorization' => 'Bearer ' . $accessToken,
             'Content-Type' => 'application/json',
+            'Accept' => 'application/json, application/problem+json',
             'X-Application-Key' => $this->clientId, // OBRIGATÓRIO conforme docs
         ];
 
@@ -106,9 +187,17 @@ class SantanderPixService
             try {
                 $jws = $this->generateJWS($payload);
                 $headers['x-jws-signature'] = $jws;
+
+                $kid = $this->getCertificateKid();
+
+                if ($kid) {
+                    $headers['kid'] = $kid;
+                }
+
                 Log::info('✅ JWS gerado e adicionado ao header', [
                     'jws_length' => strlen($jws),
                     'algorithm' => 'RS256',
+                    'kid' => $kid,
                 ]);
             } catch (\Exception $e) {
                 Log::warning('⚠️ Erro ao gerar JWS: ' . $e->getMessage());
@@ -123,7 +212,7 @@ class SantanderPixService
      * Conforme especificação do Santander PIX
      * Documentação: Portal do Desenvolvedor > Segurança > JWS
      */
-    private function generateJWS(array $payload): string
+    public function generateJWS(array $payload): string
     {
         $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
@@ -142,27 +231,33 @@ class SantanderPixService
         }
 
         try {
-            // Adicionar campos obrigatórios JWT conforme Santander
-            $jwtPayload = array_merge([
-                'iat' => time(), // Issued at
-                'exp' => time() + 300, // Expira em 5 minutos
-                'iss' => $this->clientId, // Issuer (Client ID)
-            ], $payload);
-
             // Gerar JWS com RS256 usando firebase/php-jwt
+            $headers = [
+                'alg' => 'RS256',
+                'typ' => 'JWT',
+                'cty' => 'application/json',
+            ];
+
+            $kid = $this->getCertificateKid();
+
+            if ($kid) {
+                $headers['kid'] = $kid;
+            }
+
             $jws = \Firebase\JWT\JWT::encode(
-                $jwtPayload, 
-                $privateKey, 
+                $payload,
+                $privateKey,
                 'RS256',
                 null,
-                ['alg' => 'RS256', 'typ' => 'JWT']
+                $headers
             );
             
             Log::info('✅ JWS gerado com sucesso', [
                 'algorithm' => 'RS256',
                 'jws_length' => strlen($jws),
                 'jws_preview' => substr($jws, 0, 50) . '...',
-                'payload_keys' => array_keys($jwtPayload),
+                'payload_keys' => array_keys($payload),
+                'kid' => $kid,
             ]);
             
             // Liberar recurso da chave

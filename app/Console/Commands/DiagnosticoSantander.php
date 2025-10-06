@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\SantanderPixService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +40,8 @@ class DiagnosticoSantander extends Command
             ? 'https://trust-pix.santander.com.br' 
             : 'https://trust-pix-h.santander.com.br';
 
+        $service = app(SantanderPixService::class);
+
         $this->table(
             ['Configuração', 'Valor'],
             [
@@ -49,6 +52,7 @@ class DiagnosticoSantander extends Command
                 ['PIX Key', $config['pix_key']],
                 ['Cert Path', $config['certificate_path']],
                 ['JWS Habilitado', $config['use_jws'] ? '✅ SIM' : '❌ NÃO'],
+                ['kid do Certificado', $service->getCertificateKid() ?? '⚠️ não definido'],
             ]
         );
 
@@ -226,43 +230,29 @@ class DiagnosticoSantander extends Command
         $headers = [
             'Authorization' => 'Bearer ' . $token,
             'Content-Type' => 'application/json',
+            'Accept' => 'application/json, application/problem+json',
             'X-Application-Key' => $config['client_id'],
         ];
 
         // Gerar JWS se habilitado
         if ($config['use_jws']) {
             $this->info('🔐 Gerando JWS (JSON Web Signature)...');
-            
+
             try {
-                $privateKeyContent = file_get_contents($certPath);
-                $privateKey = openssl_pkey_get_private($privateKeyContent);
-                
-                if (!$privateKey) {
-                    $this->error('❌ Erro ao carregar chave privada para JWS');
-                } else {
-                    $jwtPayload = array_merge([
-                        'iat' => time(),
-                        'exp' => time() + 300,
-                        'iss' => $config['client_id'],
-                    ], $testPayload);
-                    
-                    $jws = \Firebase\JWT\JWT::encode(
-                        $jwtPayload,
-                        $privateKey,
-                        'RS256',
-                        null,
-                        ['alg' => 'RS256', 'typ' => 'JWT']
-                    );
-                    
-                    $headers['x-jws-signature'] = $jws;
-                    
-                    $this->info('   ✅ JWS gerado (' . strlen($jws) . ' bytes)');
-                    openssl_free_key($privateKey);
+                $service = app(SantanderPixService::class);
+                $headers['x-jws-signature'] = $service->generateJWS($testPayload);
+
+                $kid = $service->getCertificateKid();
+
+                if ($kid) {
+                    $headers['kid'] = $kid;
                 }
+
+                $this->info('   ✅ JWS gerado (' . strlen($headers['x-jws-signature']) . ' bytes)');
             } catch (\Exception $e) {
                 $this->error('   ❌ Erro ao gerar JWS: ' . $e->getMessage());
             }
-            
+
             $this->info('');
         }
 
