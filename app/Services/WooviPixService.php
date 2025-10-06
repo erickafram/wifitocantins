@@ -213,16 +213,19 @@ class WooviPixService
                     ];
                 }
 
-                // A Woovi envia o valor em centavos, converter para reais
+                // Pagamento confirmado
                 return [
                     'success' => true,
                     'payment_approved' => true,
+                    'event' => $event,
+                    'status' => $status,
                     'correlation_id' => $charge['correlationID'] ?? null,
                     'woovi_id' => $charge['globalID'] ?? null,
-                'amount' => $charge['value'] ?? 0,
+                    'amount' => $charge['value'] ?? 0,
                     'paid_at' => $charge['paidAt'] ?? now(),
                     'payer_name' => $charge['payer']['name'] ?? null,
                     'payer_email' => $charge['payer']['email'] ?? null,
+                    'transaction_id' => $charge['transactionID'] ?? null,
                 ];
             }
 
@@ -230,6 +233,9 @@ class WooviPixService
                 'success' => true,
                 'payment_approved' => false,
                 'event' => $event,
+                'status' => strtoupper($charge['status'] ?? ''),
+                'correlation_id' => $charge['correlationID'] ?? null,
+                'woovi_id' => $charge['globalID'] ?? null,
             ];
 
         } catch (Exception $e) {

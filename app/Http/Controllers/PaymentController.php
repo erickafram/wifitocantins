@@ -575,11 +575,24 @@ class PaymentController extends Controller
             $wooviService = new WooviPixService;
             $result = $wooviService->processWebhook($webhookData);
 
-            if (isset($result['message']) && $result['message'] === 'Pagamento ainda não confirmado') {
-                Log::info('⏳ Webhook Woovi recebido antes da confirmação', [
-                    'correlation_id' => $result['correlation_id'] ?? null,
+            if (! ($result['success'] ?? false)) {
+                Log::warning('⚠️ Webhook Woovi rejeitado', [
+                    'reason' => $result['message'] ?? 'Erro desconhecido',
+                    'correlation_id' => $webhookData['charge']['correlationID'] ?? null,
+                    'event' => $webhookData['event'] ?? null,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? 'Webhook rejeitado',
+                ], 400);
+            }
+
+            if (! ($result['payment_approved'] ?? false)) {
+                Log::info('⏳ Webhook Woovi recebido, mas sem confirmação', [
+                    'event' => $webhookData['event'] ?? null,
                     'status' => $result['status'] ?? null,
-                    'woovi_id' => $result['woovi_id'] ?? null,
+                    'correlation_id' => $result['correlation_id'] ?? null,
                 ]);
 
                 return response()->json([
@@ -591,12 +604,14 @@ class PaymentController extends Controller
 
             Log::info('📊 Resultado do processamento Woovi', [
                 'success' => $result['success'],
-                'payment_approved' => $result['payment_approved'] ?? false,
+                'payment_approved' => $result['payment_approved'],
+                'event' => $webhookData['event'] ?? null,
+                'status' => $result['status'] ?? null,
                 'correlation_id' => $result['correlation_id'] ?? 'N/A',
                 'woovi_id' => $result['woovi_id'] ?? 'N/A',
             ]);
 
-            if ($result['success'] && $result['payment_approved']) {
+            if ($result['payment_approved']) {
 
                 DB::beginTransaction();
 
