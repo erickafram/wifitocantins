@@ -78,7 +78,7 @@ class SantanderPixService
 
     /**
      * Gerar JWS (JSON Web Signature) com algoritmo RS256
-     * Conforme especificação RFC 7515
+     * Usa biblioteca firebase/php-jwt para garantir compatibilidade com Santander
      */
     private function generateJWS(array $payload): string
     {
@@ -90,45 +90,34 @@ class SantanderPixService
 
         // Ler chave privada do certificado
         $privateKeyContent = file_get_contents($certificateFullPath);
-        $privateKey = openssl_pkey_get_private($privateKeyContent, $this->certificatePassword);
+        
+        // Criar recurso OpenSSL da chave privada
+        $privateKey = openssl_pkey_get_private($privateKeyContent, $this->certificatePassword ?: null);
 
         if (!$privateKey) {
             throw new \Exception('Erro ao carregar chave privada para JWS: ' . openssl_error_string());
         }
 
-        // Header JWS com algoritmo RS256 (OBRIGATÓRIO para Santander)
-        $header = [
-            'alg' => 'RS256',  // ⚠️ DEVE SER RS256, NÃO PS256!
-            'typ' => 'JWT'
-        ];
-
-        // Codificar header e payload em Base64URL
-        $headerEncoded = $this->base64UrlEncode(json_encode($header));
-        $payloadEncoded = $this->base64UrlEncode(json_encode($payload));
-
-        // Criar mensagem para assinar: header.payload
-        $message = $headerEncoded . '.' . $payloadEncoded;
-
-        // Assinar com SHA256 (RS256 = RSA with SHA-256)
-        $signature = '';
-        openssl_sign($message, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-
-        // Codificar assinatura em Base64URL
-        $signatureEncoded = $this->base64UrlEncode($signature);
-
-        // Liberar recurso da chave
-        openssl_free_key($privateKey);
-
-        // Retornar JWS completo: header.payload.signature
-        return $message . '.' . $signatureEncoded;
-    }
-
-    /**
-     * Codificar em Base64 URL-safe (sem padding)
-     */
-    private function base64UrlEncode(string $data): string
-    {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        try {
+            // Usar firebase/php-jwt para gerar JWS com RS256
+            $jws = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+            
+            Log::info('✅ JWS gerado com firebase/php-jwt', [
+                'jws_length' => strlen($jws),
+                'algorithm' => 'RS256',
+                'jws_preview' => substr($jws, 0, 50) . '...',
+            ]);
+            
+            // Liberar recurso da chave
+            openssl_free_key($privateKey);
+            
+            return $jws;
+            
+        } catch (\Exception $e) {
+            // Liberar recurso da chave em caso de erro
+            openssl_free_key($privateKey);
+            throw new \Exception('Erro ao gerar JWS: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -345,19 +334,7 @@ class SantanderPixService
 
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            // DEBUG: Log completo da requisição
-            $headers = $this->getAuthHeaders($accessToken, $payload);
-            Log::info('🔍 DEBUG: Requisição PIX completa', [
-                'method' => 'PUT',
-                'url' => $this->baseUrl . '/api/v1/cob/' . $txid,
-                'headers' => array_merge($headers, [
-                    'Authorization' => 'Bearer ' . substr($accessToken, 0, 20) . '...',
-                ]),
-                'payload' => $payload,
-                'certificate_path' => $certificateFullPath,
-            ]);
-
-            $response = Http::withHeaders($headers)
+            $response = Http::withHeaders($this->getAuthHeaders($accessToken, $payload))
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
