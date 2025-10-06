@@ -27,11 +27,12 @@ class DiagnosticoSantander extends Command
         $this->info('');
 
         $config = [
-            'environment' => config('wifi.payment_gateways.pix.santander.environment'),
-            'client_id' => config('wifi.payment_gateways.pix.santander.client_id'),
-            'client_secret' => config('wifi.payment_gateways.pix.santander.client_secret'),
-            'certificate_path' => config('wifi.payment_gateways.pix.santander.certificate_path'),
-            'pix_key' => config('wifi.payment_gateways.pix.santander.pix_key'),
+            'environment' => config('wifi.payment_gateways.pix.environment'),
+            'client_id' => config('wifi.payment_gateways.pix.client_id'),
+            'client_secret' => config('wifi.payment_gateways.pix.client_secret'),
+            'certificate_path' => config('wifi.payment_gateways.pix.certificate_path'),
+            'pix_key' => config('wifi.pix.key'),
+            'use_jws' => config('wifi.payment_gateways.pix.use_jws'),
         ];
 
         $baseUrl = $config['environment'] === 'production' 
@@ -47,6 +48,7 @@ class DiagnosticoSantander extends Command
                 ['Client Secret', str_repeat('*', 10) . ' (OK)'],
                 ['PIX Key', $config['pix_key']],
                 ['Cert Path', $config['certificate_path']],
+                ['JWS Habilitado', $config['use_jws'] ? '✅ SIM' : '❌ NÃO'],
             ]
         );
 
@@ -220,13 +222,63 @@ class DiagnosticoSantander extends Command
             'solicitacaoPagador' => 'Teste diagnostico detalhado',
         ];
 
+        // Preparar headers
+        $headers = [
+            'Authorization' => 'Bearer ' . $token,
+            'Content-Type' => 'application/json',
+            'X-Application-Key' => $config['client_id'],
+        ];
+
+        // Gerar JWS se habilitado
+        if ($config['use_jws']) {
+            $this->info('🔐 Gerando JWS (JSON Web Signature)...');
+            
+            try {
+                $privateKeyContent = file_get_contents($certPath);
+                $privateKey = openssl_pkey_get_private($privateKeyContent);
+                
+                if (!$privateKey) {
+                    $this->error('❌ Erro ao carregar chave privada para JWS');
+                } else {
+                    $jwtPayload = array_merge([
+                        'iat' => time(),
+                        'exp' => time() + 300,
+                        'iss' => $config['client_id'],
+                    ], $testPayload);
+                    
+                    $jws = \Firebase\JWT\JWT::encode(
+                        $jwtPayload,
+                        $privateKey,
+                        'RS256',
+                        null,
+                        ['alg' => 'RS256', 'typ' => 'JWT']
+                    );
+                    
+                    $headers['x-jws-signature'] = $jws;
+                    
+                    $this->info('   ✅ JWS gerado (' . strlen($jws) . ' bytes)');
+                    openssl_free_key($privateKey);
+                }
+            } catch (\Exception $e) {
+                $this->error('   ❌ Erro ao gerar JWS: ' . $e->getMessage());
+            }
+            
+            $this->info('');
+        }
+
         $this->info('📤 REQUISIÇÃO PIX:');
         $this->line('   URL: ' . $baseUrl . $endpoint);
         $this->line('   Method: PUT');
         $this->line('   Headers:');
-        $this->line('     Authorization: Bearer [TOKEN]');
-        $this->line('     Content-Type: application/json');
-        $this->line('     X-Application-Key: ' . $config['client_id']);
+        foreach ($headers as $key => $value) {
+            if ($key === 'x-jws-signature') {
+                $this->line('     ' . $key . ': ' . substr($value, 0, 50) . '... (' . strlen($value) . ' bytes)');
+            } elseif ($key === 'Authorization') {
+                $this->line('     ' . $key . ': Bearer [TOKEN]');
+            } else {
+                $this->line('     ' . $key . ': ' . $value);
+            }
+        }
         $this->line('   Body:');
         $this->line('   ' . json_encode($testPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->info('');
@@ -237,11 +289,7 @@ class DiagnosticoSantander extends Command
                 'verify' => true,
                 'timeout' => 30,
             ])
-            ->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type' => 'application/json',
-                'X-Application-Key' => $config['client_id'],
-            ])
+            ->withHeaders($headers)
             ->put($baseUrl . $endpoint, $testPayload);
 
             $this->info('📥 RESPOSTA PIX:');
