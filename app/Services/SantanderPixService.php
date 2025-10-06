@@ -345,7 +345,19 @@ class SantanderPixService
 
             $certificateFullPath = storage_path('app/' . $this->certificatePath);
 
-            $response = Http::withHeaders($this->getAuthHeaders($accessToken, $payload))
+            // DEBUG: Log completo da requisição
+            $headers = $this->getAuthHeaders($accessToken, $payload);
+            Log::info('🔍 DEBUG: Requisição PIX completa', [
+                'method' => 'PUT',
+                'url' => $this->baseUrl . '/api/v1/cob/' . $txid,
+                'headers' => array_merge($headers, [
+                    'Authorization' => 'Bearer ' . substr($accessToken, 0, 20) . '...',
+                ]),
+                'payload' => $payload,
+                'certificate_path' => $certificateFullPath,
+            ]);
+
+            $response = Http::withHeaders($headers)
             ->withOptions([
                 'cert' => empty($this->certificatePassword) 
                     ? $certificateFullPath 
