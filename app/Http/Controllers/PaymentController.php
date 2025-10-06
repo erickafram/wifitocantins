@@ -157,7 +157,7 @@ class PaymentController extends Controller
                 $qrData = $santanderService->createPixPayment(
                     $request->amount,
                     'WiFi Tocantins Express - Internet Premium',
-                    900 // Expira em 15 minutos
+                    $payment->transaction_id // Usar o TXId gerado pelo sistema (já tem 30 caracteres)
                 );
 
                 if (!$qrData['success']) {
