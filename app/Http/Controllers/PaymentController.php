@@ -998,7 +998,7 @@ class PaymentController extends Controller
 
             // Processar webhook de criação
             $wooviService = new WooviPixService;
-            $result = $wooviService->processWebhook($webhookData, 'created');
+            $result = $wooviService->processWebhook($webhookData, 'OPENPIX:CHARGE_CREATED');
 
             Log::info('📊 Resultado webhook CRIADA', [
                 'success' => $result['success'],
@@ -1053,7 +1053,7 @@ class PaymentController extends Controller
 
             // Processar webhook de expiração
             $wooviService = new WooviPixService;
-            $result = $wooviService->processWebhook($webhookData, 'expired');
+            $result = $wooviService->processWebhook($webhookData, 'OPENPIX:CHARGE_EXPIRED');
 
             if ($result['success'] && isset($result['correlation_id'])) {
 
@@ -1139,7 +1139,7 @@ class PaymentController extends Controller
 
             // Processar webhook de transação recebida
             $wooviService = new WooviPixService;
-            $result = $wooviService->processWebhook($webhookData, 'transaction');
+            $result = $wooviService->processWebhook($webhookData, 'OPENPIX:TRANSACTION_RECEIVED');
 
             if ($result['success'] && isset($result['correlation_id'])) {
 
@@ -1229,7 +1229,7 @@ class PaymentController extends Controller
 
             // Processar webhook de pagamento com pessoa diferente
             $wooviService = new WooviPixService;
-            $result = $wooviService->processWebhook($webhookData, 'different_payer');
+            $result = $wooviService->processWebhook($webhookData, 'OPENPIX:CHARGE_COMPLETED_NOT_SAME_CUSTOMER_PAYER');
 
             if ($result['success'] && isset($result['correlation_id'])) {
 

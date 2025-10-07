@@ -10,7 +10,7 @@ class WooviPixService
 {
     private $appId;
     private $appSecret;
-    private $webhookSecret;
+    private array $webhookSecrets = [];
     private $baseUrl;
     private $environment;
 
@@ -19,12 +19,64 @@ class WooviPixService
         $this->appId = config('wifi.payment_gateways.pix.woovi_app_id');
         $this->appSecret = config('wifi.payment_gateways.pix.woovi_app_secret');
         $this->environment = config('wifi.payment_gateways.pix.environment', 'sandbox');
-        $this->webhookSecret = env('WOOVI_WEBHOOK_SECRET');
-        
+        $this->webhookSecrets = $this->resolveInitialWebhookSecrets();
+
         // URLs da Woovi
-        $this->baseUrl = $this->environment === 'production' 
-            ? 'https://api.woovi.com' 
+        $this->baseUrl = $this->environment === 'production'
+            ? 'https://api.woovi.com'
             : 'https://api.woovi.com'; // Woovi usa mesma URL para sandbox/prod
+    }
+
+    private function resolveInitialWebhookSecrets(): array
+    {
+        $secrets = [];
+
+        $globalSecret = env('WOOVI_WEBHOOK_SECRET');
+        if (! empty($globalSecret)) {
+            $secrets['GLOBAL'] = $globalSecret;
+        }
+
+        $mapping = env('WOOVI_WEBHOOK_SECRETS');
+        if (! empty($mapping)) {
+            foreach (explode(',', $mapping) as $pair) {
+                $pair = trim($pair);
+
+                if (empty($pair) || ! str_contains($pair, ':')) {
+                    continue;
+                }
+
+                [$eventKey, $secretValue] = array_map('trim', explode(':', $pair, 2));
+
+                if ($eventKey !== '' && $secretValue !== '') {
+                    $secrets[strtoupper($eventKey)] = $secretValue;
+                }
+            }
+        }
+
+        return $secrets;
+    }
+
+    private function resolveSigningSecrets(?string $event = null): array
+    {
+        $secrets = $this->webhookSecrets;
+
+        if ($event) {
+            $key = strtoupper($event);
+            if (isset($secrets[$key])) {
+                return [$key => $secrets[$key]];
+            }
+        }
+
+        if (! empty($secrets)) {
+            return $secrets;
+        }
+
+        if (! empty($this->appSecret)) {
+            $decoded = base64_decode($this->appSecret, true);
+            return ['FALLBACK' => $decoded !== false ? $decoded : $this->appSecret];
+        }
+
+        return [];
     }
 
     /**
@@ -36,7 +88,7 @@ class WooviPixService
             // Converter valor para centavos
             $amountCents = intval($amount * 100);
             
-            $payload = [
+        $payload = [
                 'correlationID' => $correlationId ?: 'WIFI_' . time() . '_' . rand(1000, 9999),
                 'value' => $amountCents,
                 'comment' => $description,
@@ -185,19 +237,19 @@ class WooviPixService
     /**
      * Processar webhook da Woovi
      */
-    public function processWebhook(array $webhookData): array
+    public function processWebhook(array $webhookData, ?string $eventOverride = null): array
     {
         try {
-            // Tentar validar webhook, mas permitir prosseguir mesmo se falhar
-            // (a validação pode falhar por diferenças no formato do payload)
-            $isValid = $this->validateWebhook($webhookData);
-            if (!$isValid) {
-                Log::warning('⚠️ Webhook Woovi com assinatura inválida, mas processando mesmo assim', [
-                    'correlation_id' => $webhookData['charge']['correlationID'] ?? 'N/A',
-                ]);
+            $signature = request()->header('x-webhook-signature') ?? request()->header('x-openpix-signature');
+
+            if (! $this->validateWebhook($webhookData, $signature, $eventOverride ?? ($webhookData['event'] ?? null))) {
+                return [
+                    'success' => false,
+                    'message' => 'Assinatura inválida ou segredo não configurado',
+                ];
             }
 
-            $event = $webhookData['event'] ?? '';
+            $event = $eventOverride ?? ($webhookData['event'] ?? '');
             $charge = $webhookData['charge'] ?? [];
 
             if ($event === 'OPENPIX:CHARGE_COMPLETED' && !empty($charge)) {
@@ -251,18 +303,11 @@ class WooviPixService
     /**
      * Validar webhook da Woovi
      */
-    private function validateWebhook(array $webhookData): bool
+    private function validateWebhook(array $webhookData, ?string $signature, ?string $event = null): bool
     {
-        // Woovi envia a assinatura em múltiplos headers possíveis
-        $signature = request()->header('x-webhook-signature') 
-                  ?? request()->header('x-openpix-signature');
-        
-        $secret = $this->resolveSigningSecret();
-
-        if (! $signature || empty($secret)) {
-            Log::warning('Woovi webhook sem assinatura ou sem segredo configurado', [
-                'has_signature' => !empty($signature),
-                'has_secret' => !empty($secret),
+        if (empty($signature)) {
+            Log::warning('Woovi webhook sem assinatura', [
+                'headers' => request()->headers->all(),
             ]);
 
             return false;
@@ -277,24 +322,33 @@ class WooviPixService
                 return false;
             }
 
-            // Gerar assinatura em formato base64 (como a Woovi envia)
-            $rawHash = hash_hmac('sha256', $payload, $secret, true);
-            $expectedSignature = base64_encode($rawHash);
+            $secrets = $this->resolveSigningSecrets($event);
 
-            $isValid = hash_equals($expectedSignature, $signature);
+            foreach ($secrets as $secretLabel => $secretValue) {
+                if (empty($secretValue)) {
+                    continue;
+                }
 
-            if (! $isValid) {
-                Log::warning('Woovi webhook assinatura inválida', [
-                    'expected' => $expectedSignature,
-                    'received' => $signature,
-                    'header_name' => 'x-webhook-signature',
-                    'payload_size' => strlen($payload),
-                    'secret_size' => strlen($secret),
-                    'payload_preview' => substr($payload, 0, 200) . '...',
-                ]);
+                $rawHash = hash_hmac('sha256', $payload, $secretValue, true);
+                $expectedSignature = base64_encode($rawHash);
+
+                if (hash_equals($expectedSignature, $signature)) {
+                    Log::info('✅ Assinatura Woovi validada', [
+                        'secret_label' => $secretLabel,
+                        'payload_size' => strlen($payload),
+                    ]);
+
+                    return true;
+                }
             }
 
-            return $isValid;
+            Log::warning('Woovi webhook assinatura inválida para segredos conhecidos', [
+                'received' => $signature,
+                'payload_size' => strlen($payload),
+                'available_secrets' => array_keys($secrets),
+            ]);
+
+            return false;
 
         } catch (Exception $e) {
             Log::error('Erro ao validar assinatura Woovi', [
