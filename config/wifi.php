@@ -73,6 +73,10 @@ return [
             'woovi_app_id' => env('WOOVI_APP_ID', ''),
             'woovi_app_secret' => env('WOOVI_APP_SECRET', ''),
             
+            // Configurações PagBank (PagSeguro)
+            'pagbank_token' => env('PAGBANK_TOKEN', ''),
+            'pagbank_email' => env('PAGBANK_EMAIL', ''),
+            
             // Configurações Santander PIX
             'client_id' => env('SANTANDER_CLIENT_ID', ''),
             'client_secret' => env('SANTANDER_CLIENT_SECRET', ''),

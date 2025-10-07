@@ -15,6 +15,7 @@ class PixPaymentManager
     {
         $this->wooviService = app(WooviPixService::class);
         $this->santanderService = app(SantanderPixService::class);
+        $this->pagbankService = app(PagBankPixService::class);
         $this->pixQRCodeService = app(PixQRCodeService::class);
     }
 
@@ -106,6 +107,7 @@ class PixPaymentManager
         return match ($gateway) {
             'woovi' => $this->handleWooviGateway($payment, $amount),
             'santander' => $this->handleSantanderGateway($payment, $amount),
+            'pagbank' => $this->handlePagBankGateway($payment, $amount),
             default => $this->handleDefaultGateway($payment, $amount),
         };
     }
@@ -178,6 +180,41 @@ class PixPaymentManager
             'amount' => number_format($qrData['amount'], 2, '.', ''),
             'transaction_id' => $qrData['external_id'],
             'payment_id' => $qrData['payment_id'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function handlePagBankGateway(Payment $payment, float $amount): array
+    {
+        if (! config('wifi.payment_gateways.pix.pagbank_token')) {
+            return $this->handleDefaultGateway($payment, $amount);
+        }
+
+        $qrData = $this->pagbankService->createPixPayment(
+            $amount,
+            'WiFi Tocantins Express - Internet Premium',
+            $payment->transaction_id
+        );
+
+        if (! ($qrData['success'] ?? false)) {
+            throw new RuntimeException($qrData['message'] ?? 'Erro ao gerar cobrança PagBank.');
+        }
+
+        $payment->update([
+            'pix_emv_string' => $qrData['qr_code_text'],
+            'pix_location' => $qrData['reference_id'],
+            'gateway_payment_id' => $qrData['order_id'],
+        ]);
+
+        return [
+            'emv_string' => $qrData['qr_code_text'],
+            'image_url' => $qrData['qr_code_image'],
+            'amount' => number_format($qrData['amount'], 2, '.', ''),
+            'transaction_id' => $qrData['reference_id'],
+            'payment_id' => $qrData['order_id'],
+            'expires_at' => $qrData['expires_at'] ?? null,
         ];
     }
 

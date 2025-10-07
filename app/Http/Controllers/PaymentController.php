@@ -1304,4 +1304,185 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Webhook PagBank
+     */
+    public function pagbankWebhook(Request $request)
+    {
+        $startTime = microtime(true);
+
+        Log::info('🏦 Webhook PagBank recebido', [
+            'timestamp' => now()->toISOString(),
+            'ip' => $request->ip(),
+            'headers' => $request->headers->all(),
+            'body' => $request->all(),
+        ]);
+
+        try {
+            $webhookData = $request->all();
+
+            // Processar webhook PagBank
+            $pagbankService = new \App\Services\PagBankPixService;
+            $result = $pagbankService->processWebhook($webhookData);
+
+            if (! ($result['success'] ?? false)) {
+                Log::warning('⚠️ Webhook PagBank rejeitado', [
+                    'reason' => $result['message'] ?? 'Erro desconhecido',
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? 'Webhook rejeitado',
+                ], 400);
+            }
+
+            if (! ($result['payment_approved'] ?? false)) {
+                Log::info('⏳ Webhook PagBank sem aprovação', [
+                    'status' => $result['status'] ?? null,
+                    'reference_id' => $result['reference_id'] ?? null,
+                    'message' => $result['message'] ?? null,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message'] ?? 'Pagamento ainda não confirmado',
+                    'status' => $result['status'] ?? null,
+                ], 202);
+            }
+
+            Log::info('📊 Resultado do processamento PagBank', [
+                'success' => $result['success'],
+                'payment_approved' => $result['payment_approved'],
+                'reference_id' => $result['reference_id'] ?? 'N/A',
+                'order_id' => $result['order_id'] ?? 'N/A',
+            ]);
+
+            if ($result['payment_approved']) {
+
+                DB::beginTransaction();
+
+                try {
+                    // Buscar pagamento
+                    $payment = Payment::where('transaction_id', $result['reference_id'])
+                        ->orWhere('gateway_payment_id', $result['order_id'])
+                        ->orWhere('pix_location', $result['reference_id'])
+                        ->first();
+
+                    if (! $payment) {
+                        Log::warning('❌ Pagamento PagBank não encontrado', [
+                            'reference_id' => $result['reference_id'],
+                            'order_id' => $result['order_id'],
+                        ]);
+
+                        DB::rollback();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pagamento não encontrado',
+                        ], 404);
+                    }
+
+                    Log::info('💳 Pagamento PagBank encontrado', [
+                        'payment_id' => $payment->id,
+                        'current_status' => $payment->status,
+                        'user_mac' => $payment->user->mac_address ?? 'N/A',
+                    ]);
+
+                    // Só processar se ainda está pendente
+                    if ($payment->status === 'pending') {
+
+                        // Atualizar pagamento
+                        $payment->update([
+                            'status' => 'completed',
+                            'paid_at' => $result['paid_at'] ?? now(),
+                            'payment_data' => $webhookData,
+                        ]);
+
+                        // Ativar acesso do usuário
+                        $this->activateUserAccess($payment);
+
+                        DB::commit();
+
+                        $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+
+                        Log::info('✅ Pagamento PagBank processado com SUCESSO', [
+                            'payment_id' => $payment->id,
+                            'user_mac' => $payment->user->mac_address,
+                            'expires_at' => $payment->user->expires_at,
+                            'total_processing_time' => $processingTime.'ms',
+                        ]);
+
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Pagamento processado com sucesso',
+                            'processing_time' => $processingTime.'ms',
+                        ]);
+
+                    } else {
+                        DB::rollback();
+                        Log::info('ℹ️ Pagamento PagBank já processado anteriormente', [
+                            'payment_id' => $payment->id,
+                            'status' => $payment->status,
+                            'paid_at' => $payment->paid_at,
+                        ]);
+
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Pagamento já processado anteriormente',
+                            'already_processed' => true,
+                        ]);
+                    }
+
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    throw $e;
+                }
+            }
+
+            // Webhook recebido mas não processado
+            return response()->json(['success' => true, 'message' => 'Webhook recebido']);
+
+        } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollback();
+            }
+
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            Log::error('❌ ERRO CRÍTICO no webhook PagBank', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'processing_time' => $processingTime.'ms',
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno do servidor',
+                'processing_time' => $processingTime.'ms',
+            ], 500);
+        }
+    }
+
+    /**
+     * Testar conexão com PagBank
+     */
+    public function testPagBankConnection()
+    {
+        try {
+            $pagbankService = new \App\Services\PagBankPixService;
+            $result = $pagbankService->testConnection();
+
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

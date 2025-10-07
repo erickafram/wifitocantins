@@ -48,8 +48,10 @@ Route::prefix('payment')->group(function () {
     Route::post('/webhook/woovi/expired', [PaymentController::class, 'wooviWebhookExpired']);
     Route::post('/webhook/woovi/transaction', [PaymentController::class, 'wooviWebhookTransaction']);
     Route::post('/webhook/woovi/different-payer', [PaymentController::class, 'wooviWebhookDifferentPayer']);
+    Route::post('/webhook/pagbank', [PaymentController::class, 'pagbankWebhook']);
     Route::get('/test-santander', [PaymentController::class, 'testSantanderConnection']);
     Route::get('/test-woovi', [PaymentController::class, 'testWooviConnection']);
+    Route::get('/test-pagbank', [PaymentController::class, 'testPagBankConnection']);
 });
 
 // Vouchers

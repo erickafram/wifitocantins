@@ -408,6 +408,7 @@ class AdminController extends Controller
         $gateways = [
             'santander' => 'Santander (Recomendado)',
             'woovi' => 'Woovi',
+            'pagbank' => 'PagBank',
         ];
 
         return view('admin.api-settings', compact('currentGateway', 'gateways'));
@@ -416,7 +417,7 @@ class AdminController extends Controller
     public function updateGateway(Request $request)
     {
         $request->validate([
-            'pix_gateway' => 'required|in:santander,woovi',
+            'pix_gateway' => 'required|in:santander,woovi,pagbank',
         ]);
 
         SystemSetting::setValue('pix_gateway', $request->pix_gateway);
