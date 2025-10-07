@@ -59,7 +59,7 @@ class PagBankPixService
                 'reference_id' => $referenceId,
                 'customer' => [
                     'name' => $customerData['name'] ?? 'Cliente WiFi Tocantins',
-                    'email' => $customerData['email'] ?? 'cliente@wifitocantins.com.br',
+                    'email' => $customerData['email'] ?? 'cliente.wifi@tocantinstransportewifi.com.br', // Email diferente do vendedor
                     'tax_id' => $customerData['tax_id'] ?? '12345678909',
                     'phones' => [
                         [
@@ -91,11 +91,18 @@ class PagBankPixService
                 ]
             ];
 
-            $response = Http::withHeaders([
+            $http = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/orders', $payload);
+            ]);
+
+            // Desabilitar verificação SSL se configurado (útil em alguns ambientes)
+            if (config('wifi.payment_gateways.pix.disable_ssl_verification', false)) {
+                $http = $http->withOptions(['verify' => false]);
+            }
+
+            $response = $http->post($this->baseUrl . '/orders', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -158,10 +165,16 @@ class PagBankPixService
         try {
             Log::info('🔍 Consultando pedido PagBank', ['order_id' => $orderId]);
 
-            $response = Http::withHeaders([
+            $http = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
                 'Accept' => 'application/json',
-            ])->get($this->baseUrl . '/orders/' . $orderId);
+            ]);
+
+            if (config('wifi.payment_gateways.pix.disable_ssl_verification', false)) {
+                $http = $http->withOptions(['verify' => false]);
+            }
+
+            $response = $http->get($this->baseUrl . '/orders/' . $orderId);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -293,10 +306,16 @@ class PagBankPixService
         try {
             Log::info('🗑️ Cancelando pedido PagBank', ['order_id' => $orderId]);
 
-            $response = Http::withHeaders([
+            $http = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . '/orders/' . $orderId . '/cancel');
+            ]);
+
+            if (config('wifi.payment_gateways.pix.disable_ssl_verification', false)) {
+                $http = $http->withOptions(['verify' => false]);
+            }
+
+            $response = $http->post($this->baseUrl . '/orders/' . $orderId . '/cancel');
 
             if ($response->successful()) {
                 Log::info('✅ Pedido cancelado com sucesso');
@@ -332,7 +351,7 @@ class PagBankPixService
                 'reference_id' => 'TEST_' . time(),
                 'customer' => [
                     'name' => 'Teste PagBank',
-                    'email' => 'test@example.com',
+                    'email' => 'cliente.teste@wifitocantins.com.br', // Email diferente do vendedor
                     'tax_id' => '12345678909',
                 ],
                 'items' => [
@@ -351,10 +370,16 @@ class PagBankPixService
                 ]
             ];
 
-            $response = Http::withHeaders([
+            $http = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . '/orders', $testPayload);
+            ]);
+
+            if (config('wifi.payment_gateways.pix.disable_ssl_verification', false)) {
+                $http = $http->withOptions(['verify' => false]);
+            }
+
+            $response = $http->post($this->baseUrl . '/orders', $testPayload);
 
             if ($response->successful()) {
                 $data = $response->json();
