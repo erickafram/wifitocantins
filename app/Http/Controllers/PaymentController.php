@@ -151,6 +151,40 @@ class PaymentController extends Controller
                     'expires_at' => $qrData['expires_at'],
                 ];
 
+            } elseif ($gateway === 'pagbank' && config('wifi.payment_gateways.pix.pagbank_token')) {
+                // Usar API do PagBank
+                $pagbankService = new \App\Services\PagBankPixService;
+                $qrData = $pagbankService->createPixPayment(
+                    $request->amount,
+                    'WiFi Tocantins Express - Internet Premium',
+                    $payment->transaction_id
+                );
+
+                if (! $qrData['success']) {
+                    throw new \Exception($qrData['message'] ?? 'Erro ao criar pagamento PagBank');
+                }
+
+                Log::info('✅ QR Code PagBank gerado', [
+                    'order_id' => $qrData['order_id'] ?? null,
+                    'reference_id' => $qrData['reference_id'] ?? null,
+                ]);
+
+                // Atualizar payment com dados do PagBank
+                $payment->update([
+                    'pix_emv_string' => $qrData['qr_code_text'],
+                    'pix_location' => $qrData['reference_id'],
+                    'gateway_payment_id' => $qrData['order_id'],
+                ]);
+
+                $response = [
+                    'emv_string' => $qrData['qr_code_text'],
+                    'image_url' => $qrData['qr_code_image'],
+                    'amount' => number_format($qrData['amount'], 2, '.', ''),
+                    'transaction_id' => $qrData['reference_id'],
+                    'payment_id' => $qrData['order_id'],
+                    'expires_at' => $qrData['expires_at'] ?? null,
+                ];
+
             } elseif ($gateway === 'santander' && config('wifi.payment_gateways.pix.client_id')) {
                 // Usar API do Santander PIX
                 $santanderService = new SantanderPixService;
