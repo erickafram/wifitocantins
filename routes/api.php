@@ -52,6 +52,7 @@ Route::prefix('payment')->group(function () {
     Route::get('/test-santander', [PaymentController::class, 'testSantanderConnection']);
     Route::get('/test-woovi', [PaymentController::class, 'testWooviConnection']);
     Route::get('/test-pagbank', [PaymentController::class, 'testPagBankConnection']);
+    Route::get('/export-pagbank-logs', [PaymentController::class, 'exportPagBankLogs']);
 });
 
 // Vouchers

@@ -55,6 +55,14 @@ class PagBankPixService
                 'description' => $description,
             ]);
 
+            // Log detalhado para validação PagBank
+            Log::channel('pagbank')->info('=== REQUEST: Criar Pedido PIX ===', [
+                'timestamp' => now()->toISOString(),
+                'endpoint' => $this->baseUrl . '/orders',
+                'method' => 'POST',
+                'environment' => $this->environment,
+            ]);
+
             $payload = [
                 'reference_id' => $referenceId,
                 'customer' => [
@@ -102,7 +110,17 @@ class PagBankPixService
                 $http = $http->withOptions(['verify' => false]);
             }
 
+            // Log do payload completo
+            Log::channel('pagbank')->info('REQUEST PAYLOAD:', ['payload' => $payload]);
+
             $response = $http->post($this->baseUrl . '/orders', $payload);
+
+            // Log da resposta completa
+            Log::channel('pagbank')->info('RESPONSE:', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->json(),
+            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -111,6 +129,12 @@ class PagBankPixService
                     'order_id' => $data['id'] ?? null,
                     'reference_id' => $referenceId,
                     'qr_codes_count' => count($data['qr_codes'] ?? []),
+                ]);
+
+                Log::channel('pagbank')->info('=== SUCESSO: Pedido Criado ===', [
+                    'order_id' => $data['id'] ?? null,
+                    'reference_id' => $referenceId,
+                    'full_response' => $data,
                 ]);
 
                 $qrCode = $data['qr_codes'][0] ?? null;
@@ -138,6 +162,12 @@ class PagBankPixService
             Log::error('❌ Erro ao criar pedido PagBank', [
                 'status' => $response->status(),
                 'body' => $errorBody,
+                'reference_id' => $referenceId,
+            ]);
+
+            Log::channel('pagbank')->error('=== ERRO: Falha ao Criar Pedido ===', [
+                'status' => $response->status(),
+                'error_body' => $errorBody,
                 'reference_id' => $referenceId,
             ]);
 
@@ -226,6 +256,12 @@ class PagBankPixService
                 'data' => $webhookData,
             ]);
 
+            // Log detalhado do webhook para validação
+            Log::channel('pagbank')->info('=== WEBHOOK RECEBIDO ===', [
+                'timestamp' => now()->toISOString(),
+                'webhook_data' => $webhookData,
+            ]);
+
             // Extrair informações do webhook
             $charges = $webhookData['charges'] ?? [];
             
@@ -242,6 +278,12 @@ class PagBankPixService
 
             $status = $charge['status'] ?? 'WAITING';
             $referenceId = $webhookData['reference_id'] ?? null;
+
+            Log::channel('pagbank')->info('Status da cobrança:', [
+                'status' => $status,
+                'reference_id' => $referenceId,
+                'charge_details' => $charge,
+            ]);
 
             // Só aprovar pagamento se status for PAID
             if ($status === 'PAID') {

@@ -1519,4 +1519,109 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Exportar logs do PagBank para validação
+     * Endpoint: GET /api/payment/export-pagbank-logs
+     */
+    public function exportPagBankLogs()
+    {
+        try {
+            $logPath = storage_path('logs/pagbank.log');
+
+            if (!file_exists($logPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nenhum log encontrado. Execute transações primeiro.',
+                    'log_path' => $logPath,
+                ], 404);
+            }
+
+            // Ler arquivo de log
+            $logContent = file_get_contents($logPath);
+            $lines = explode("\n", $logContent);
+
+            $transactions = [];
+            $webhooks = [];
+            $currentContext = null;
+
+            foreach ($lines as $line) {
+                if (empty(trim($line))) {
+                    continue;
+                }
+
+                // Parsear JSON do log
+                if (preg_match('/\{.*\}/', $line, $matches)) {
+                    $jsonStr = $matches[0];
+                    $data = json_decode($jsonStr, true);
+                    
+                    if ($data && isset($data['message'])) {
+                        $message = $data['message'];
+                        
+                        if (strpos($message, '=== REQUEST: Criar Pedido PIX ===') !== false) {
+                            $currentContext = [
+                                'type' => 'create_order',
+                                'timestamp' => $data['context']['timestamp'] ?? date('c'),
+                                'endpoint' => $data['context']['endpoint'] ?? '',
+                                'method' => $data['context']['method'] ?? 'POST',
+                            ];
+                        } elseif (strpos($message, 'REQUEST PAYLOAD:') !== false) {
+                            if ($currentContext && $currentContext['type'] === 'create_order') {
+                                $currentContext['request'] = $data['context']['payload'] ?? [];
+                            }
+                        } elseif (strpos($message, 'RESPONSE:') !== false) {
+                            if ($currentContext && $currentContext['type'] === 'create_order') {
+                                $currentContext['response'] = [
+                                    'status' => $data['context']['status'] ?? 0,
+                                    'body' => $data['context']['body'] ?? [],
+                                ];
+                                $transactions[] = $currentContext;
+                                $currentContext = null;
+                            }
+                        } elseif (strpos($message, '=== WEBHOOK RECEBIDO ===') !== false) {
+                            $webhooks[] = [
+                                'timestamp' => $data['context']['timestamp'] ?? date('c'),
+                                'data' => $data['context']['webhook_data'] ?? [],
+                            ];
+                        }
+                    }
+                }
+            }
+
+            $exportData = [
+                'export_info' => [
+                    'generated_at' => now()->toISOString(),
+                    'system' => 'WiFi Tocantins',
+                    'purpose' => 'Validação de integração PagBank',
+                    'environment' => config('wifi.payment_gateways.pix.environment', 'sandbox'),
+                ],
+                'statistics' => [
+                    'total_transactions' => count($transactions),
+                    'total_webhooks' => count($webhooks),
+                ],
+                'transactions' => $transactions,
+                'webhooks' => $webhooks,
+            ];
+
+            // Salvar arquivo JSON
+            $outputPath = storage_path('logs/pagbank_validation_export.json');
+            file_put_contents($outputPath, json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Logs exportados com sucesso',
+                'file_path' => $outputPath,
+                'statistics' => $exportData['statistics'],
+                'download_url' => url('/storage/logs/pagbank_validation_export.json'),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao exportar logs PagBank: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao exportar logs: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
