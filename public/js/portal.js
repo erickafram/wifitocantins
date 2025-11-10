@@ -706,7 +706,7 @@ class WiFiPortal {
                     'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    amount: 5.99, // 🎯 VALOR ATUALIZADO
+                    amount: window.WIFI_PRICE || 5.99, // 🎯 VALOR DINÂMICO DO BANCO
                     mac_address: this.deviceMac,
                     user_id: this.currentUserId,
                     ip_address: this.deviceIp

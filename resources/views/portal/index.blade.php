@@ -378,7 +378,7 @@
                             
                              <p class="text-white text-xs sm:text-sm font-semibold mb-1 sm:mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
                             <div class="flex items-center justify-center space-x-2 mb-2">
-                                <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ 5,99</p>
+                                <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ {{ number_format($price, 2, ',', '.') }}</p>
                                 <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ">
                                     -50%
                                 </div>
@@ -618,7 +618,7 @@
                             
                             <p class="text-white text-sm font-semibold mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
                             <div class="flex items-center justify-center space-x-2 mb-2">
-                                <p class="text-white text-2xl font-bold relative z-10">R$ 5,99</p>
+                                <p class="text-white text-2xl font-bold relative z-10">R$ {{ number_format($price, 2, ',', '.') }}</p>
                                 <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ">
                                     -50%
                                 </div>
@@ -792,7 +792,7 @@
                 </div>
                 
                 <div class="bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 rounded-2xl p-3 sm:p-4 md:p-6 mb-4 border border-green-200 shadow-inner">
-                    <p class="text-center text-xl sm:text-2xl md:text-3xl font-bold text-green-700">R$ 5,99</p>
+                    <p class="text-center text-xl sm:text-2xl md:text-3xl font-bold text-green-700">R$ {{ number_format($price, 2, ',', '.') }}</p>
                     <p class="text-center text-xs sm:text-sm text-gray-600">Internet durante toda a viagem</p>
                 </div>
                 
@@ -1045,6 +1045,12 @@
             });
         });
     </script>
+    
+    <!-- Configuração Global do Preço -->
+    <script>
+        window.WIFI_PRICE = {{ $price }};
+    </script>
+    
     <script src="{{ asset('js/mac-detector.js') }}"></script>
     <script src="{{ asset('js/portal.js') }}"></script>
 </body>
