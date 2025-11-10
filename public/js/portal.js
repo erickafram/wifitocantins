@@ -823,8 +823,8 @@ class WiFiPortal {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         modal.innerHTML = `
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl border border-gray-200">
+            <div class="flex items-center justify-center min-h-screen p-4 overflow-y-auto">
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl border border-gray-200 my-4 max-h-[95vh] overflow-y-auto">
                     
                     <!-- Header -->
                     <div class="flex justify-between items-center mb-6">

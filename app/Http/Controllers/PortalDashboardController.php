@@ -30,7 +30,7 @@ class PortalDashboardController extends Controller
             'user' => $user,
             'payments' => $payments,
             'latestPayment' => $latestPayment,
-            'defaultPrice' => config('wifi.pricing.default_price', 5.99),
+            'defaultPrice' => \App\Helpers\SettingsHelper::getWifiPrice(),
         ]);
     }
 
@@ -42,7 +42,7 @@ class PortalDashboardController extends Controller
 
         $user = $request->user();
 
-        $amount = config('wifi.pricing.default_price', 5.99);
+        $amount = \App\Helpers\SettingsHelper::getWifiPrice();
         if ($request->filled('payment_id')) {
             $payment = $user->payments()
                 ->where('id', $request->payment_id)

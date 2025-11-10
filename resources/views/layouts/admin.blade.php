@@ -104,7 +104,7 @@
                     </a>
 
                     <!-- Configurações -->
-                    <a href="{{ route('admin.settings') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.settings*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Configurações">
+                    <a href="{{ route('admin.settings.index') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.settings*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Configurações">
                         <span class="text-xl">⚙️</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.settings*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
@@ -241,7 +241,7 @@
                                     <span class="mr-2">📱</span>
                                     Dispositivos
                                 </a>
-                                <a href="{{ route('admin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center {{ request()->routeIs('admin.settings*') ? 'bg-tocantins-green/10 text-tocantins-green font-medium' : '' }}">
+                                <a href="{{ route('admin.settings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center {{ request()->routeIs('admin.settings*') ? 'bg-tocantins-green/10 text-tocantins-green font-medium' : '' }}">
                                     <span class="mr-2">⚙️</span>
                                     Configurações
                                 </a>

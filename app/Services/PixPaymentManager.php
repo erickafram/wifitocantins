@@ -37,8 +37,8 @@ class PixPaymentManager
 
         $this->updateUserDeviceMetadata($user, $macAddress, $ipAddress);
 
-        $gateway = config('wifi.payment.default_gateway', config('wifi.payment_gateways.pix.gateway'));
-        $amount = max($amount, config('wifi.pricing.default_price', 5.99));
+        $gateway = \App\Helpers\SettingsHelper::getPixGateway();
+        $amount = max($amount, \App\Helpers\SettingsHelper::getWifiPrice());
 
         return DB::transaction(function () use ($user, $amount, $macAddress, $ipAddress, $gateway, $context) {
             $this->cancelPreviousPending($user, $context['cancel_previous'] ?? true);

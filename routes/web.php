@@ -11,6 +11,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PortalDashboardController;
 use App\Http\Controllers\PortalAuthController;
+use App\Http\Controllers\Admin\SettingsController;
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
@@ -62,5 +63,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     // Rotas de Relatórios
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
     Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
+    
+    // Rotas de Configurações do Sistema
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });
 
