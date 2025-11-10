@@ -60,7 +60,7 @@ class DebugQrCode extends Command
             
             $payment = Payment::create([
                 'user_id' => $user->id,
-                'amount' => 0.10,
+                'amount' => 1.00,
                 'payment_type' => 'pix',
                 'status' => 'pending',
                 'transaction_id' => 'TXN_DEBUG_' . time()

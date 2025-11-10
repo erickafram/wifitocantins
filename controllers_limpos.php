@@ -29,12 +29,12 @@ class PagamentoLimpoController extends Controller
     {
         $request->validate([
             'mac_address' => 'required|string',
-            'amount' => 'numeric|min:0.05'
+            'amount' => 'numeric|min:1.00'
         ]);
         
         $resultado = $this->sistemaPagamento->gerarQRCodePix(
             $request->mac_address,
-            $request->amount ?? 0.10
+            $request->amount ?? 1.00
         );
         
         return response()->json($resultado);

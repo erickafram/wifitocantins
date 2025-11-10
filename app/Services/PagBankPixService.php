@@ -90,8 +90,9 @@ class PagBankPixService
                     [
                         'amount' => [
                             'value' => $amountCents
-                        ],
-                        'arrangements' => ['PAGBANK'] // OBRIGATÓRIO para Pagar com PagBank
+                        ]
+                        // Sem 'arrangements' = PIX padrão (aceita qualquer banco)
+                        // Com 'arrangements' => ['PAGBANK'] = Apenas contas PagBank
                     ]
                 ],
                 'notification_urls' => [
@@ -406,8 +407,8 @@ class PagBankPixService
                 ],
                 'qr_codes' => [
                     [
-                        'amount' => ['value' => 100],
-                        'arrangements' => ['PAGBANK']
+                        'amount' => ['value' => 100]
+                        // Sem arrangements = PIX padrão
                     ]
                 ]
             ];
