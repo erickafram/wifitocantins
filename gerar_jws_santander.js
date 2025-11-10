@@ -23,7 +23,7 @@ const payload = {
     expiracao: 900 // 15 minutos
   },
   valor: { 
-    original: "0.05" // R$ 0,05
+    original: "5.99" // R$ 0,05
   },
   chave: "pix@tocantinstransportewifi.com.br",
   solicitacaoPagador: "Teste WiFi Tocantins"
