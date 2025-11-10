@@ -34,7 +34,7 @@ class SistemaPagamentoLimpo
     /**
      * 1. GERAR QR CODE PIX
      */
-    public function gerarQRCodePix($macAddress, $valor = 1.00)
+    public function gerarQRCodePix($macAddress, $valor = 5.99)
     {
         try {
             // Criar usuário no banco

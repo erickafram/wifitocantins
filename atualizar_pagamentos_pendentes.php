@@ -16,7 +16,7 @@ echo str_repeat("=", 70) . "\n\n";
 
 // Buscar pagamentos pendentes com valor < 1.00
 $payments = Payment::where('status', 'pending')
-    ->where('amount', '<', 1.00)
+    ->where('amount', '<', 5.99)
     ->get();
 
 if ($payments->isEmpty()) {
@@ -46,7 +46,7 @@ echo "\n🔄 Atualizando pagamentos...\n\n";
 $updated = 0;
 foreach ($payments as $payment) {
     $oldAmount = $payment->amount;
-    $payment->amount = 1.00;
+    $payment->amount = 5.99;
     $payment->save();
     
     echo "   ✅ ID {$payment->id}: R$ {$oldAmount} → R$ 1.00\n";
