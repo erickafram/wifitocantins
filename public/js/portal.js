@@ -816,66 +816,132 @@ class WiFiPortal {
      */
     showPixQRCode(data) {
         const modal = document.createElement('div');
-        modal.id = 'pix-qr-modal';
+        modal.id = 'pix-modal';
         modal.className = 'fixed inset-0 bg-black bg-opacity-60 z-50 backdrop-blur-sm';
         
+        // Detectar se é dispositivo móvel
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
         modal.innerHTML = `
-            <div class="flex items-center justify-center h-full p-4">
-                <div class="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-gray-800">💳 PIX QR Code</h3>
-                        <button id="close-pix-modal" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl border border-gray-200">
+                    
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">Pagamento PIX</h3>
+                        </div>
+                        <button id="close-pix-modal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
                     </div>
                     
-                    <!-- Aviso importante -->
-                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-lg">
+                    <!-- Aviso Importante -->
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-orange-500 p-4 mb-6 rounded-xl shadow-sm">
                         <div class="flex items-start">
                             <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                <svg class="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm font-semibold text-red-800">⚠️ NÃO FECHE ESTA TELA!</p>
-                                <p class="text-xs text-red-700 mt-1">Mantenha esta janela aberta até realizar o pagamento</p>
+                                <p class="text-sm font-bold text-orange-800">⚠️ Importante!</p>
+                                <p class="text-xs text-orange-700 mt-1">Mantenha esta tela aberta até confirmar o pagamento</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="text-center mb-4">
-                        <div class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-4">
-                            <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-48 h-48 mx-auto">
+                    <!-- Valor -->
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 mb-5 shadow-lg">
+                        <p class="text-center text-xs text-green-100 mb-1">Valor a pagar</p>
+                        <p class="text-center text-2xl font-bold text-white">R$ ${data.qr_code.amount}</p>
+                    </div>
+                    
+                    ${!isMobile ? `
+                    <!-- QR Code (apenas desktop) -->
+                    <div class="bg-white p-6 rounded-2xl border-2 border-dashed border-gray-300 mb-6 shadow-inner">
+                        <div class="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl">
+                            <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-56 h-56 mx-auto">
                         </div>
-                        
-                        <div class="bg-green-50 rounded-xl p-4 mb-4">
-                            <p class="text-green-800 font-bold text-xl">R$ ${data.qr_code.amount}</p>
-                            <p class="text-green-600 text-sm">Escaneie o código ou use copia e cola</p>
+                        <p class="text-center text-sm text-gray-600 mt-4">
+                            <span class="inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Escaneie com seu celular
+                            </span>
+                        </p>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Código PIX -->
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-bold text-blue-900">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Código Pix Copia e Cola
+                            </p>
+                            ${isMobile ? '<span class="text-xs bg-green-500 text-white px-2 py-1 rounded-full">Recomendado</span>' : ''}
                         </div>
-                        
-                        <div class="bg-gray-50 rounded-xl p-3 mb-4">
-                            <p class="text-xs text-gray-600 mb-2">Código PIX:</p>
-                            <div class="bg-white border rounded-lg p-2 text-xs break-all" id="pix-code">
+                        <div class="bg-white border-2 border-blue-200 rounded-xl p-3 mb-3 max-h-24 overflow-y-auto">
+                            <p class="text-xs text-gray-700 break-all font-mono leading-relaxed" id="pix-code">
                                 ${data.qr_code.emv_string}
+                            </p>
+                        </div>
+                        <button id="copy-pix-code" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-all transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>Copiar Código PIX</span>
+                        </button>
+                        ${isMobile ? `
+                        <p class="text-xs text-center text-blue-700 mt-3 bg-blue-100 rounded-lg p-2">
+                            💡 Cole o código no seu app de pagamento
+                        </p>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Timer e Status -->
+                    <div class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-4 mb-6 border border-yellow-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-yellow-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p id="pix-timer-text" class="text-sm font-bold text-yellow-800">Expira em: 05:00</p>
                             </div>
-                            <button id="copy-pix-code" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-xs hover:bg-blue-600 transition-colors">
-                                📋 Copiar Código
-                            </button>
-                        </div>
-                        
-                        <div class="bg-yellow-50 rounded-xl p-3 mb-4">
-                            <p id="pix-timer-text" class="text-sm font-semibold text-yellow-700">⏱️ Tempo restante: 05:00</p>
-                            <p id="pix-status-hint" class="text-xs text-yellow-600 mt-1">Finalize o pagamento em até 5 minutos.</p>
-                        </div>
-                        
-                        <div class="flex space-x-2">
-                            <button id="check-payment-status" class="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg text-sm hover:bg-green-600 transition-colors">
-                                🔄 Verificar Status
-                            </button>
-                            <button id="cancel-payment" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg text-sm hover:bg-gray-600 transition-colors">
-                                ❌ Cancelar
-                            </button>
+                            <div id="pix-status-indicator" class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                                <span class="text-xs text-yellow-700 font-medium">Aguardando</span>
+                            </div>
                         </div>
                     </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="check-payment-status" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-4 rounded-xl transition-all transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2">
+                            <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="animation-play-state: paused;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>Verificar</span>
+                        </button>
+                        <button id="cancel-payment" class="bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 px-4 rounded-xl transition-all transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span>Cancelar</span>
+                        </button>
+                    </div>
+                    
                 </div>
             </div>
         `;
