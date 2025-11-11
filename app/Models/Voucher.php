@@ -3,17 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Voucher extends Model
 {
     protected $fillable = [
         'code',
-        'discount',
-        'discount_percent',
+        'driver_name',
+        'driver_document',
+        'daily_hours',
+        'daily_hours_used',
+        'last_used_date',
         'expires_at',
-        'max_uses',
-        'used_count',
+        'activated_at',
         'is_active',
+        'voucher_type',
         'description',
     ];
 
@@ -21,13 +25,16 @@ class Voucher extends Model
     {
         return [
             'expires_at' => 'datetime',
-            'discount' => 'decimal:2',
+            'activated_at' => 'datetime',
+            'last_used_date' => 'date',
             'is_active' => 'boolean',
+            'daily_hours' => 'integer',
+            'daily_hours_used' => 'integer',
         ];
     }
 
     /**
-     * Verifica se o voucher é válido
+     * Verifica se o voucher é válido para uso
      */
     public function isValid(): bool
     {
@@ -39,23 +46,113 @@ class Voucher extends Model
             return false;
         }
 
-        if ($this->used_count >= $this->max_uses) {
-            return false;
+        // Se for ilimitado, sempre válido (desde que ativo e não expirado)
+        if ($this->voucher_type === 'unlimited') {
+            return true;
         }
 
-        return true;
+        // Para vouchers limitados, verifica horas diárias
+        return $this->hasHoursAvailableToday();
     }
 
     /**
-     * Usa o voucher
+     * Verifica se ainda tem horas disponíveis hoje
      */
-    public function use(): bool
+    public function hasHoursAvailableToday(): bool
+    {
+        // Se for ilimitado, sempre tem horas
+        if ($this->voucher_type === 'unlimited') {
+            return true;
+        }
+
+        // Reseta contador se for um novo dia
+        if ($this->last_used_date && !$this->last_used_date->isToday()) {
+            $this->daily_hours_used = 0;
+            $this->last_used_date = now()->toDateString();
+            $this->save();
+        }
+
+        return $this->daily_hours_used < $this->daily_hours;
+    }
+
+    /**
+     * Obtém horas restantes para hoje
+     */
+    public function getRemainingHoursToday(): int
+    {
+        if ($this->voucher_type === 'unlimited') {
+            return 999; // Valor simbólico para ilimitado
+        }
+
+        // Reseta se for novo dia
+        if ($this->last_used_date && !$this->last_used_date->isToday()) {
+            return $this->daily_hours;
+        }
+
+        return max(0, $this->daily_hours - $this->daily_hours_used);
+    }
+
+    /**
+     * Registra uso do voucher
+     */
+    public function recordUsage(int $hours = 24): bool
     {
         if (!$this->isValid()) {
             return false;
         }
 
-        $this->increment('used_count');
+        // Ativa o voucher se for o primeiro uso
+        if (!$this->activated_at) {
+            $this->activated_at = now();
+        }
+
+        // Para vouchers ilimitados, apenas atualiza data
+        if ($this->voucher_type === 'unlimited') {
+            $this->last_used_date = now()->toDateString();
+            $this->save();
+            return true;
+        }
+
+        // Para vouchers limitados, incrementa horas usadas
+        $today = now()->toDateString();
+        
+        if (!$this->last_used_date || $this->last_used_date != $today) {
+            $this->daily_hours_used = 0;
+        }
+
+        $this->daily_hours_used += $hours;
+        $this->last_used_date = $today;
+        $this->save();
+
         return true;
+    }
+
+    /**
+     * Reseta contador diário (executado automaticamente)
+     */
+    public function resetDailyUsage(): void
+    {
+        $this->daily_hours_used = 0;
+        $this->save();
+    }
+
+    /**
+     * Scope para vouchers ativos
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)
+                    ->where(function($q) {
+                        $q->whereNull('expires_at')
+                          ->orWhere('expires_at', '>', now());
+                    });
+    }
+
+    /**
+     * Scope para vouchers de motoristas
+     */
+    public function scopeDriverVouchers($query)
+    {
+        return $query->whereNotNull('driver_name');
     }
 }

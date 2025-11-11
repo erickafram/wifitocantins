@@ -12,6 +12,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PortalDashboardController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
@@ -67,5 +68,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     // Rotas de Configurações do Sistema
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    
+    // Rotas de Vouchers
+    Route::get('/vouchers', [AdminVoucherController::class, 'index'])->name('vouchers.index');
+    Route::get('/vouchers/create', [AdminVoucherController::class, 'create'])->name('vouchers.create');
+    Route::post('/vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');
+    Route::get('/vouchers/{voucher}/edit', [AdminVoucherController::class, 'edit'])->name('vouchers.edit');
+    Route::put('/vouchers/{voucher}', [AdminVoucherController::class, 'update'])->name('vouchers.update');
+    Route::post('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'toggleStatus'])->name('vouchers.toggle');
+    Route::post('/vouchers/{voucher}/reset', [AdminVoucherController::class, 'resetDaily'])->name('vouchers.reset');
+    Route::delete('/vouchers/{voucher}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
 });
 

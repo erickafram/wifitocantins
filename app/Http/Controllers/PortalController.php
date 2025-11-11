@@ -524,4 +524,141 @@ class PortalController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Valida e ativa voucher de motorista
+     */
+    public function validateVoucher(Request $request)
+    {
+        try {
+            $request->validate([
+                'voucher_code' => 'required|string',
+            ]);
+
+            $voucherCode = strtoupper(trim($request->voucher_code));
+            
+            // Busca voucher
+            $voucher = \App\Models\Voucher::where('code', $voucherCode)->first();
+
+            if (!$voucher) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Voucher inválido. Verifique o código e tente novamente.'
+                ], 404);
+            }
+
+            // Valida voucher
+            if (!$voucher->isValid()) {
+                $reason = !$voucher->is_active ? 'Voucher desativado' : 
+                         ($voucher->expires_at && $voucher->expires_at->isPast() ? 'Voucher expirado' : 
+                         'Limite de horas diárias atingido');
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $reason
+                ], 400);
+            }
+
+            // Obtém informações do cliente
+            $clientInfo = $this->getClientInfo($request);
+            $macAddress = $clientInfo['mac_address'];
+            $ipAddress = $clientInfo['ip_address'];
+
+            Log::info('🎫 Validando voucher de motorista', [
+                'voucher' => $voucherCode,
+                'driver' => $voucher->driver_name,
+                'mac' => $macAddress,
+                'ip' => $ipAddress,
+                'type' => $voucher->voucher_type,
+                'daily_hours' => $voucher->daily_hours,
+                'hours_used' => $voucher->daily_hours_used,
+            ]);
+
+            // Cria ou atualiza usuário
+            $user = User::updateOrCreate(
+                ['mac_address' => $macAddress],
+                [
+                    'name' => $voucher->driver_name,
+                    'ip_address' => $ipAddress,
+                    'device_name' => $clientInfo['device_type'],
+                    'status' => 'active',
+                    'connected_at' => now(),
+                    'expires_at' => now()->addHours($voucher->getRemainingHoursToday()),
+                ]
+            );
+
+            // Registra uso do voucher
+            $hoursGranted = min($voucher->getRemainingHoursToday(), 24);
+            $voucher->recordUsage($hoursGranted);
+
+            // Libera acesso no Mikrotik
+            $this->liberarAcessoMikrotik($macAddress, $ipAddress, $hoursGranted);
+
+            // Cria sessão WiFi
+            $session = \App\Models\Session::create([
+                'user_id' => $user->id,
+                'payment_id' => null,
+                'started_at' => now(),
+                'session_status' => 'active'
+            ]);
+
+            Log::info('✅ Voucher validado e acesso liberado', [
+                'voucher' => $voucherCode,
+                'driver' => $voucher->driver_name,
+                'hours_granted' => $hoursGranted,
+                'expires_at' => $user->expires_at,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Bem-vindo, {$voucher->driver_name}! Acesso liberado.",
+                'driver_name' => $voucher->driver_name,
+                'hours_granted' => $hoursGranted,
+                'voucher_type' => $voucher->voucher_type,
+                'expires_at' => $user->expires_at->format('Y-m-d H:i:s'),
+                'remaining_hours_today' => $voucher->getRemainingHoursToday(),
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Código do voucher é obrigatório.'
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao validar voucher', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar voucher. Tente novamente.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Libera acesso no Mikrotik (reutiliza lógica existente)
+     */
+    private function liberarAcessoMikrotik($macAddress, $ipAddress, $hours = 24)
+    {
+        try {
+            // Usa o controller existente do Mikrotik
+            $mikrotikController = new \App\Http\Controllers\MikrotikLiberacaoController();
+            $mikrotikController->liberarAcesso($macAddress, $ipAddress, $hours);
+
+            Log::info('🌐 Acesso liberado no Mikrotik via voucher', [
+                'mac' => $macAddress,
+                'ip' => $ipAddress,
+                'hours' => $hours
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao liberar acesso no Mikrotik', [
+                'mac' => $macAddress,
+                'ip' => $ipAddress,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
 }

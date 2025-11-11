@@ -14,6 +14,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
         config()->set('wifi.payment.default_gateway', config('wifi.payment.default_gateway', 'santander'));
     }
 }

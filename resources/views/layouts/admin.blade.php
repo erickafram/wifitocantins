@@ -74,7 +74,7 @@
                     </a>
 
                     <!-- Vouchers -->
-                    <a href="{{ route('admin.vouchers') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.vouchers*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Vouchers">
+                    <a href="{{ route('admin.vouchers.index') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.vouchers*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Vouchers">
                         <span class="text-xl">🎫</span>
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.vouchers*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
@@ -89,16 +89,6 @@
                         <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.reports*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
                         <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                             Relatórios
-                            <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
-                        </div>
-                    </a>
-
-                    <!-- Integrações API -->
-                    <a href="{{ route('admin.api') }}" class="menu-item w-14 h-14 rounded-2xl {{ request()->routeIs('admin.api*') ? 'bg-gradient-to-br from-tocantins-green to-tocantins-dark-green text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-tocantins-green hover:to-tocantins-dark-green hover:text-white' }} flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-300 group relative" title="Integrações API">
-                        <span class="text-xl">🔌</span>
-                        <div class="absolute -inset-1 bg-gradient-to-r from-tocantins-gold to-tocantins-green rounded-2xl {{ request()->routeIs('admin.api*') ? 'opacity-30' : 'opacity-0 group-hover:opacity-30' }} blur transition-opacity duration-300"></div>
-                        <div class="absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
-                            Integrações API
                             <div class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                         </div>
                     </a>
@@ -225,7 +215,7 @@
                                     <span class="mr-2">👥</span>
                                     Usuários
                                 </a>
-                                <a href="{{ route('admin.vouchers') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center {{ request()->routeIs('admin.vouchers*') ? 'bg-tocantins-green/10 text-tocantins-green font-medium' : '' }}">
+                                <a href="{{ route('admin.vouchers.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center {{ request()->routeIs('admin.vouchers*') ? 'bg-tocantins-green/10 text-tocantins-green font-medium' : '' }}">
                                     <span class="mr-2">🎫</span>
                                     Vouchers
                                 </a>

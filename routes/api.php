@@ -62,6 +62,7 @@ Route::prefix('payment')->group(function () {
 Route::prefix('voucher')->group(function () {
     Route::post('/apply', [VoucherController::class, 'apply']);
     Route::get('/validate/{code}', [VoucherController::class, 'validate']);
+    Route::post('/validate', [PortalController::class, 'validateVoucher']); // Novo endpoint para motoristas
 });
 
 // Instagram Free Access

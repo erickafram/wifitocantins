@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Voucher;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class VoucherController extends Controller
+{
+    /**
+     * Lista todos os vouchers
+     */
+    public function index()
+    {
+        $vouchers = Voucher::driverVouchers()
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('admin.vouchers.index', compact('vouchers'));
+    }
+
+    /**
+     * Formulário de criação
+     */
+    public function create()
+    {
+        return view('admin.vouchers.create');
+    }
+
+    /**
+     * Armazena novo voucher
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'driver_name' => 'required|string|max:191',
+            'driver_document' => 'nullable|string|max:191',
+            'daily_hours' => 'required|integer|min:1|max:24',
+            'expires_at' => 'nullable|date|after:today',
+            'voucher_type' => 'required|in:limited,unlimited',
+            'description' => 'nullable|string|max:191',
+        ]);
+
+        // Gera código único
+        do {
+            $code = $this->generateVoucherCode();
+        } while (Voucher::where('code', $code)->exists());
+
+        $voucher = Voucher::create([
+            'code' => $code,
+            'driver_name' => $validated['driver_name'],
+            'driver_document' => $validated['driver_document'] ?? null,
+            'daily_hours' => $validated['daily_hours'],
+            'expires_at' => $validated['expires_at'] ?? null,
+            'voucher_type' => $validated['voucher_type'],
+            'description' => $validated['description'] ?? null,
+            'is_active' => true,
+            'daily_hours_used' => 0,
+        ]);
+
+        return redirect()
+            ->route('admin.vouchers.index')
+            ->with('success', "Voucher criado com sucesso! Código: {$voucher->code}");
+    }
+
+    /**
+     * Formulário de edição
+     */
+    public function edit(Voucher $voucher)
+    {
+        return view('admin.vouchers.edit', compact('voucher'));
+    }
+
+    /**
+     * Atualiza voucher
+     */
+    public function update(Request $request, Voucher $voucher)
+    {
+        $validated = $request->validate([
+            'driver_name' => 'required|string|max:191',
+            'driver_document' => 'nullable|string|max:191',
+            'daily_hours' => 'required|integer|min:1|max:24',
+            'expires_at' => 'nullable|date',
+            'voucher_type' => 'required|in:limited,unlimited',
+            'description' => 'nullable|string|max:191',
+            'is_active' => 'boolean',
+        ]);
+
+        $voucher->update($validated);
+
+        return redirect()
+            ->route('admin.vouchers.index')
+            ->with('success', 'Voucher atualizado com sucesso!');
+    }
+
+    /**
+     * Ativa/Desativa voucher
+     */
+    public function toggleStatus(Voucher $voucher)
+    {
+        $voucher->update(['is_active' => !$voucher->is_active]);
+
+        $status = $voucher->is_active ? 'ativado' : 'desativado';
+        
+        return redirect()
+            ->route('admin.vouchers.index')
+            ->with('success', "Voucher {$status} com sucesso!");
+    }
+
+    /**
+     * Reseta uso diário
+     */
+    public function resetDaily(Voucher $voucher)
+    {
+        $voucher->resetDailyUsage();
+
+        return redirect()
+            ->route('admin.vouchers.index')
+            ->with('success', 'Uso diário resetado com sucesso!');
+    }
+
+    /**
+     * Deleta voucher
+     */
+    public function destroy(Voucher $voucher)
+    {
+        $voucher->delete();
+
+        return redirect()
+            ->route('admin.vouchers.index')
+            ->with('success', 'Voucher excluído com sucesso!');
+    }
+
+    /**
+     * Gera código único de voucher
+     */
+    private function generateVoucherCode(): string
+    {
+        // Formato: WIFI-XXXX-XXXX (ex: WIFI-A3B7-K9M2)
+        $part1 = strtoupper(Str::random(4));
+        $part2 = strtoupper(Str::random(4));
+        
+        return "WIFI-{$part1}-{$part2}";
+    }
+}
