@@ -1,0 +1,36 @@
+========================================
+ATUALIZAR VALOR MÍNIMO NO .ENV
+========================================
+
+No arquivo: c:\wamp64\www\wifitocantins\.env
+
+Localize a linha 67 e substitua:
+
+ANTES:
+WIFI_DEFAULT_PRICE=0.05
+
+DEPOIS:
+WIFI_DEFAULT_PRICE=1.00
+
+========================================
+APÓS SALVAR, EXECUTE:
+========================================
+
+cd c:\wamp64\www\wifitocantins
+php artisan config:clear
+php artisan cache:clear
+
+========================================
+ARQUIVOS JÁ ATUALIZADOS:
+========================================
+
+✅ controllers_limpos.php (min: 1.00, default: 1.00)
+✅ sistema_pagamento_limpo.php (default: 1.00)
+✅ config/wifi.php (default: 1.00)
+✅ app/Services/PixPaymentManager.php (min: 1.00)
+✅ app/Http/Controllers/PortalDashboardController.php (default: 1.00)
+✅ app/Http/Controllers/PortalController.php (default: 1.00)
+✅ app/Console/Commands/DebugQrCode.php (valor: 1.00)
+✅ tests/Feature/PixQRCodeTest.php (valor: 1.00)
+
+========================================

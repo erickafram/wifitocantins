@@ -1,0 +1,454 @@
+<?php
+
+namespace App\Services;
+
+use Exception;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class WooviPixService
+{
+    private $appId;
+    private $appSecret;
+    private array $webhookSecrets = [];
+    private $baseUrl;
+    private $environment;
+
+    public function __construct()
+    {
+        $this->appId = config('wifi.payment_gateways.pix.woovi_app_id');
+        $this->appSecret = config('wifi.payment_gateways.pix.woovi_app_secret');
+        $this->environment = config('wifi.payment_gateways.pix.environment', 'sandbox');
+        $this->webhookSecrets = $this->resolveInitialWebhookSecrets();
+
+        // URLs da Woovi
+        $this->baseUrl = $this->environment === 'production'
+            ? 'https://api.woovi.com'
+            : 'https://api.woovi.com'; // Woovi usa mesma URL para sandbox/prod
+    }
+
+    private function resolveInitialWebhookSecrets(): array
+    {
+        $secrets = [];
+
+        $globalSecret = env('WOOVI_WEBHOOK_SECRET');
+        if (! empty($globalSecret)) {
+            $secrets['GLOBAL'] = $globalSecret;
+        }
+
+        $mapping = env('WOOVI_WEBHOOK_SECRETS');
+        if (! empty($mapping)) {
+            foreach (explode(',', $mapping) as $pair) {
+                $pair = trim($pair);
+
+                if (empty($pair) || ! str_contains($pair, ':')) {
+                    continue;
+                }
+
+                [$eventKey, $secretValue] = array_map('trim', explode(':', $pair, 2));
+
+                if ($eventKey !== '' && $secretValue !== '') {
+                    $secrets[strtoupper($eventKey)] = $secretValue;
+                }
+            }
+        }
+
+        return $secrets;
+    }
+
+    private function resolveSigningSecrets(?string $event = null): array
+    {
+        $secrets = $this->webhookSecrets;
+
+        if ($event) {
+            $key = strtoupper($event);
+            if (isset($secrets[$key])) {
+                return [$key => $secrets[$key]];
+            }
+        }
+
+        if (! empty($secrets)) {
+            return $secrets;
+        }
+
+        if (! empty($this->appSecret)) {
+            $decoded = base64_decode($this->appSecret, true);
+            return ['FALLBACK' => $decoded !== false ? $decoded : $this->appSecret];
+        }
+
+        return [];
+    }
+
+    /**
+     * Criar cobrança PIX na Woovi
+     */
+    public function createPixPayment(float $amount, string $description, ?string $correlationId = null): array
+    {
+        try {
+            // Converter valor para centavos
+            $amountCents = intval($amount * 100);
+            
+        $payload = [
+                'correlationID' => $correlationId ?: 'WIFI_' . time() . '_' . rand(1000, 9999),
+                'value' => $amountCents,
+                'comment' => $description,
+                'expiresIn' => 900, // 15 minutos em segundos
+                'customer' => [
+                    'name' => 'ERICK VINICIUS RODRIGUES',
+                    'email' => 'cliente@wifitocantins.com.br',
+                    'phone' => '6399999999',
+                    'taxID' => '57732545000100'
+                ]
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => $this->appId,
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'WiFi-Tocantins-Express/1.0',
+            ])->post($this->baseUrl . '/api/v1/charge', $payload);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                // Processar imagem do QR Code da Woovi
+                $qrCodeImage = $data['charge']['qrCodeImage'] ?? '';
+                $isImageUrl = false;
+                
+                // Verificar se é uma URL ao invés de base64
+                if (filter_var($qrCodeImage, FILTER_VALIDATE_URL)) {
+                    Log::info('Woovi retornou URL de imagem: ' . $qrCodeImage);
+                    $isImageUrl = true;
+                } else {
+                    // Remover prefixo data:image se existir
+                    if (strpos($qrCodeImage, 'data:image') === 0) {
+                        $qrCodeImage = explode(',', $qrCodeImage, 2)[1] ?? $qrCodeImage;
+                    }
+                    
+                    // Validar se é base64 válido
+                    if (!base64_decode($qrCodeImage, true)) {
+                        Log::warning('QR Code image inválida da Woovi, usando fallback');
+                        $qrCodeImage = '';
+                    }
+                }
+
+                return [
+                    'success' => true,
+                    'charge_id' => $data['charge']['correlationID'],
+                    'woovi_id' => $data['charge']['globalID'],
+                    'qr_code_text' => $data['charge']['brCode'], // String EMV
+                    'qr_code_image' => $qrCodeImage, // Base64 limpo da imagem ou URL
+                    'qr_code_is_url' => $isImageUrl, // Indica se é URL ou base64
+                    'amount' => $amount,
+                    'status' => strtolower($data['charge']['status']), // ACTIVE, COMPLETED, etc
+                    'correlation_id' => $data['charge']['correlationID'],
+                    'expires_at' => $data['charge']['expiresDate'],
+                    'payment_link' => $data['charge']['paymentLinkUrl'] ?? null,
+                ];
+            }
+
+            throw new Exception('Erro na API Woovi: ' . $response->body());
+
+        } catch (Exception $e) {
+            Log::error('Erro ao criar pagamento PIX Woovi: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Consultar status do pagamento
+     */
+    public function getPaymentStatus(string $correlationId): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $this->appId,
+                'User-Agent' => 'WiFi-Tocantins-Express/1.0',
+            ])->get($this->baseUrl . '/api/v1/charge/' . $correlationId);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $charge = $data['charge'];
+                
+                return [
+                    'success' => true,
+                    'status' => strtolower($charge['status']), // active, completed, expired
+                    'amount' => $charge['value'] / 100, // Converter de centavos
+                    'paid_at' => $charge['paidAt'] ?? null,
+                    'payer_name' => $charge['payer']['name'] ?? null,
+                    'payer_email' => $charge['payer']['email'] ?? null,
+                    'payer_phone' => $charge['payer']['phone'] ?? null,
+                    'correlation_id' => $charge['correlationID'],
+                    'woovi_id' => $charge['globalID'],
+                ];
+            }
+
+            throw new Exception('Erro ao consultar pagamento: ' . $response->body());
+
+        } catch (Exception $e) {
+            Log::error('Erro ao consultar status PIX Woovi: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Listar todas as cobranças
+     */
+    public function listCharges(int $skip = 0, int $limit = 10): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $this->appId,
+                'User-Agent' => 'WiFi-Tocantins-Express/1.0',
+            ])->get($this->baseUrl . '/api/v1/charge', [
+                'skip' => $skip,
+                'limit' => $limit
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                return [
+                    'success' => true,
+                    'charges' => $data['charges'],
+                    'total' => count($data['charges']),
+                ];
+            }
+
+            throw new Exception('Erro ao listar cobranças: ' . $response->body());
+
+        } catch (Exception $e) {
+            Log::error('Erro ao listar cobranças Woovi: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Processar webhook da Woovi
+     */
+    public function processWebhook(array $webhookData, ?string $eventOverride = null): array
+    {
+        try {
+            $signature = request()->header('x-webhook-signature') ?? request()->header('x-openpix-signature');
+
+            if (! $this->validateWebhook($webhookData, $signature, $eventOverride ?? ($webhookData['event'] ?? null))) {
+                return [
+                    'success' => false,
+                    'message' => 'Assinatura inválida ou segredo não configurado',
+                ];
+            }
+
+            $event = $eventOverride ?? ($webhookData['event'] ?? '');
+            $charge = $webhookData['charge'] ?? [];
+
+            if ($event === 'OPENPIX:CHARGE_COMPLETED' && !empty($charge)) {
+                // Somente trata como pago quando o status for de fato COMPLETED
+                $status = strtoupper($charge['status'] ?? '');
+
+                if (! in_array($status, ['COMPLETED', 'CONFIRMED'], true)) {
+                    return [
+                        'success' => true,
+                        'payment_approved' => false,
+                        'event' => $event,
+                        'status' => $status,
+                    ];
+                }
+
+                // Pagamento confirmado
+                return [
+                    'success' => true,
+                    'payment_approved' => true,
+                    'event' => $event,
+                    'status' => $status,
+                    'correlation_id' => $charge['correlationID'] ?? null,
+                    'woovi_id' => $charge['globalID'] ?? null,
+                    'amount' => $charge['value'] ?? 0,
+                    'paid_at' => $charge['paidAt'] ?? now(),
+                    'payer_name' => $charge['payer']['name'] ?? null,
+                    'payer_email' => $charge['payer']['email'] ?? null,
+                    'transaction_id' => $charge['transactionID'] ?? null,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'payment_approved' => false,
+                'event' => $event,
+                'status' => strtoupper($charge['status'] ?? ''),
+                'correlation_id' => $charge['correlationID'] ?? null,
+                'woovi_id' => $charge['globalID'] ?? null,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Erro ao processar webhook Woovi: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Validar webhook da Woovi
+     */
+    private function validateWebhook(array $webhookData, ?string $signature, ?string $event = null): bool
+    {
+        if (empty($signature)) {
+            Log::warning('Woovi webhook sem assinatura', [
+                'headers' => request()->headers->all(),
+            ]);
+
+            return false;
+        }
+
+        try {
+            $payload = json_encode($webhookData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            if ($payload === false) {
+                Log::warning('Woovi webhook: falha ao serializar payload para validação');
+
+                return false;
+            }
+
+            $secrets = $this->resolveSigningSecrets($event);
+
+            foreach ($secrets as $secretLabel => $secretValue) {
+                if (empty($secretValue)) {
+                    continue;
+                }
+
+                $rawHash = hash_hmac('sha256', $payload, $secretValue, true);
+                $expectedSignature = base64_encode($rawHash);
+
+                if (hash_equals($expectedSignature, $signature)) {
+                    Log::info('✅ Assinatura Woovi validada', [
+                        'secret_label' => $secretLabel,
+                        'payload_size' => strlen($payload),
+                    ]);
+
+                    return true;
+                }
+            }
+
+            Log::warning('Woovi webhook assinatura inválida para segredos conhecidos', [
+                'received' => $signature,
+                'payload_size' => strlen($payload),
+                'available_secrets' => array_keys($secrets),
+            ]);
+
+            return false;
+
+        } catch (Exception $e) {
+            Log::error('Erro ao validar assinatura Woovi', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    private function resolveSigningSecret(): ?string
+    {
+        if (! empty($this->webhookSecret)) {
+            return $this->webhookSecret;
+        }
+
+        if (! empty($this->appSecret)) {
+            $decoded = base64_decode($this->appSecret, true);
+
+            if ($decoded !== false) {
+                return $decoded;
+            }
+
+            return $this->appSecret;
+        }
+
+        return null;
+    }
+
+    /**
+     * Testar conectividade com a API
+     */
+    public function testConnection(): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $this->appId,
+                'User-Agent' => 'WiFi-Tocantins-Express/1.0',
+            ])->get($this->baseUrl . '/api/v1/charge?limit=1');
+            
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'message' => 'Conexão com Woovi estabelecida com sucesso',
+                    'environment' => $this->environment,
+                    'status_code' => $response->status(),
+                ];
+            }
+
+            throw new Exception('Erro na API: ' . $response->status());
+
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Erro na conexão: ' . $e->getMessage(),
+                'environment' => $this->environment,
+            ];
+        }
+    }
+
+    /**
+     * Gerar URL para imagem QR Code (Woovi já fornece)
+     */
+    public function generateQRCodeImageUrl(string $emvText): string
+    {
+        // Woovi já fornece a imagem, mas se precisar gerar externamente:
+        $size = '300x300';
+        $encodedData = urlencode($emvText);
+        
+        return "https://api.qrserver.com/v1/create-qr-code/?size={$size}&data={$encodedData}";
+    }
+
+    /**
+     * Cancelar cobrança
+     */
+    public function cancelCharge(string $correlationId): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $this->appId,
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'WiFi-Tocantins-Express/1.0',
+            ])->delete($this->baseUrl . '/api/v1/charge/' . $correlationId);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'message' => 'Cobrança cancelada com sucesso',
+                ];
+            }
+
+            throw new Exception('Erro ao cancelar cobrança: ' . $response->body());
+
+        } catch (Exception $e) {
+            Log::error('Erro ao cancelar cobrança Woovi: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+}
