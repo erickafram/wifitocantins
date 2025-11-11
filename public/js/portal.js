@@ -804,10 +804,10 @@ class WiFiPortal {
 
     startPixCountdown() {
         this.stopPixCountdown();
-        this.pixCountdownSeconds = 900; // 15 minutos
+        this.pixCountdownSeconds = 180; // 3 minutos
         this.pixPaymentConfirmed = false;
         this.updatePixTimerDisplay();
-        this.updatePixStatusHint('Finalize o pagamento em até 15 minutos.');
+        this.updatePixStatusHint('Finalize o pagamento em até 3 minutos.');
 
         this.pixTimerInterval = setInterval(() => {
             if (this.pixPaymentConfirmed) {
@@ -1099,7 +1099,7 @@ class WiFiPortal {
      * Fecha modal do PIX
      */
     closePixModal() {
-        const modal = document.getElementById('pix-qr-modal');
+        const modal = document.getElementById('pix-modal');
         if (modal) {
             if (this.paymentCheckInterval) {
                 clearInterval(this.paymentCheckInterval);
