@@ -359,350 +359,181 @@
                  <!-- Mobile Layout -->
          <div class="lg:hidden space-y-6 mb-8">
 
-             <!-- Payment Section - Mobile (Logo após serviços WiFi) -->
-             <div class="space-y-6">
-                 <!-- Price & Connect Button -->
-                 <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up  relative overflow-hidden">
-                    
-
-
-                     <div class="text-center mb-4 sm:mb-6">
-                        <!-- Preço Original Riscado -->
-                        <div class="mb-2">
-                            <p class="text-gray-500 line-through text-xs sm:text-sm">De R$ 11,99</p>
-                            <p class="text-red-600 font-bold text-xs">🎉 50% DE DESCONTO!</p>
-                        </div>
-
-                         <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
-                             
-                            
-                             <p class="text-white text-xs sm:text-sm font-semibold mb-1 sm:mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
-                            <div class="flex items-center justify-center space-x-2 mb-2">
-                                <p class="text-white text-xl sm:text-2xl font-bold relative z-10">R$ {{ number_format($price, 2, ',', '.') }}</p>
-                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ">
-                                    -50%
-                                </div>
-                            </div>
-                            <p class="text-green-100 text-xs relative z-10">✅ Internet ilimitada + Alta velocidade</p>
+             <!-- Payment Section - Mobile -->
+             <div class="space-y-4">
+                 <div class="elegant-card rounded-2xl shadow-xl p-4 animate-slide-up">
+                     <div class="text-center">
+                         <!-- Preço -->
+                         <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 rounded-xl p-4 mb-4 shadow-lg">
+                             <p class="text-white text-xs font-medium mb-1">🚌 Acesso Durante a Viagem</p>
+                             <div class="flex items-center justify-center gap-2">
+                                 <p class="text-white text-2xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</p>
+                             </div>
                          </div>
 
-                        <!-- Benefícios -->
-                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-3 mb-4 border border-green-200">
-                            <div class="grid grid-cols-2 gap-2 text-xs">
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-1">✅</span>
-                                    <span class="text-gray-700">Conexão instantânea</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-1">✅</span>
-                                    <span class="text-gray-700">Sem limite de dados</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-1">✅</span>
-                                    <span class="text-gray-700">Velocidade máxima</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-1">✅</span>
-                                    <span class="text-gray-700">Pagamento seguro</span>
-                                </div>
-                            </div>
-                        </div>
+                         <!-- Benefícios Compactos -->
+                         <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+                             <div class="flex items-center justify-center bg-green-50 rounded-lg py-2">
+                                 <span class="text-green-500 mr-1">✅</span>
+                                 <span class="text-gray-700">Ilimitado</span>
+                             </div>
+                             <div class="flex items-center justify-center bg-green-50 rounded-lg py-2">
+                                 <span class="text-green-500 mr-1">⚡</span>
+                                 <span class="text-gray-700">Alta Velocidade</span>
+                             </div>
+                         </div>
 
-                         
+                         <!-- Botão -->
                          <button 
                              id="connect-btn" 
-                             class="connect-button w-full text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale"
+                             class="connect-button w-full text-white font-bold py-3 px-4 rounded-xl shadow-xl mb-3"
                          >
                              🚀 CONECTAR AGORA
                          </button>
 
-                       
-                    </div>
-                     
-                     <!-- Payment Methods -->
-                     <div class="text-center">
-                         <p class="text-tocantins-gray-green font-medium mb-4 text-xs sm:text-sm">💳 Pagamento rápido e seguro:</p>
-                         <div class="flex justify-center">
-                             <div class="flex items-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-xl px-4 sm:px-6 py-2 sm:py-3 border border-tocantins-gold/40 shadow-lg">
-                                 <span class="text-lg sm:text-xl mr-2 sm:mr-3 text-tocantins-green">📱</span>
-                                 <span class="text-sm sm:text-lg font-bold text-tocantins-green">PIX</span>
-                                <span class="text-xs text-gray-500 ml-2">Instantâneo</span>
-                    </div>
-                    </div>
-                        
-                        <!-- Confiança -->
-                        <div class="mt-4 flex justify-center items-center space-x-4 text-xs text-gray-500">
-                            <div class="flex items-center">
-                                <span class="text-green-500 mr-1">🔒</span>
-                                <span>Pagamento Seguro</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="text-blue-500 mr-1">⚡</span>
-                                <span>Conexão Imediata</span>
-                            </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Welcome Card - Mobile (Movida para após pagamento) -->
-            <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up relative overflow-hidden">
-                <!-- Welcome Section -->
-                <div class="text-center mb-8">
-                    <h2 class="text-base sm:text-lg font-bold text-tocantins-gray-green mb-4 gradient-text">
-                        Bem-vindo ao WiFi a bordo! 🚌
-                    </h2>
-                    
-                    <!-- Service Info -->
-                    <div class="grid grid-cols-3 gap-3 sm:gap-6 mb-8">
-                        <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group">
-                            <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">📶</div>
-                            <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Velocidade</p>
-                            <p class="text-sm sm:text-base font-bold gradient-text">100+ Mbps</p>
-                            <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </div>
-                        <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group" style="animation-delay: 1s;">
-                            <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">⏱️</div>
-                            <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Durante</p>
-                            <p class="text-sm sm:text-base font-bold gradient-text">A Viagem</p>
-                            <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </div>
-                        <div class="service-card text-center glass-effect rounded-2xl p-3 sm:p-4 shadow-xl border border-tocantins-gold/40 modern-glow floating-animation relative group" style="animation-delay: 2s;">
-                            <div class="text-2xl sm:text-3xl mb-2 text-tocantins-green transform group-hover:scale-110 transition-transform duration-300">🔒</div>
-                            <p class="text-xs sm:text-sm text-tocantins-gray-green font-semibold mb-1">Conexão</p>
-                            <p class="text-sm sm:text-base font-bold gradient-text">Segura</p>
-                            <div class="absolute inset-0 bg-gradient-to-r from-tocantins-green/10 to-tocantins-gold/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            </div>
-                    </div>
-                </div>
-            </div>
-
-             </div>
-
-             <!-- WhatsApp Cards - Mobile (Por último) -->
-             <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-5 animate-slide-up relative overflow-hidden z-10">
-                 <div class="grid grid-cols-2 gap-2 mb-4">
-                     <!-- Card Passagens Compacto -->
-                     <button 
-                         type="button"
-                         onclick="openPassagensModal()" 
-                         class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
-                         style="touch-action: manipulation;"
-                     >
-                         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
-                             <div class="text-lg mb-1">🎫</div>
-                             <p class="text-white text-xs font-bold">PASSAGENS</p>
-                         </div>
-                         <p class="text-xs text-tocantins-gray-green">Compre sua passagem</p>
-                     </button>
-
-                     <!-- Card Turismo Compacto -->
-                     <button 
-                         type="button"
-                         onclick="openTurismoModal()" 
-                         class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
-                         style="touch-action: manipulation;"
-                     >
-                         <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
-                             <div class="text-lg mb-1">🏖️</div>
-                             <p class="text-white text-xs font-bold">TURISMO</p>
-                         </div>
-                         <p class="text-xs text-tocantins-gray-green">Alugue conosco</p>
-                     </button>
-                 </div>
-             </div>
-         </div>
-
-         <!-- Desktop Layout -->
-         <div class="hidden lg:grid lg:grid-cols-2 gap-6 lg:gap-12 mb-8">
-             
-             <!-- Left Column - Main Card -->
-             <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-10 animate-slide-up relative overflow-hidden">
-                 
-                 <!-- Welcome Section -->
-            <div class="text-center mb-6">
-                     <h2 class="text-sm sm:text-base font-bold text-tocantins-gray-green mb-3">
-                         Bem-vindo ao WiFi a bordo! 🚌
-                     </h2>
-                     
-                     <!-- Service Info -->
-                     <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
-                         <div class="service-card text-center glass-effect rounded-xl p-2 sm:p-3 shadow-lg border border-tocantins-gold/30">
-                             <div class="text-lg sm:text-xl mb-1 text-tocantins-green">📶</div>
-                             <p class="text-xs text-tocantins-gray-green font-medium">Velocidade</p>
-                             <p class="text-xs sm:text-sm font-bold text-tocantins-green">100+ Mbps</p>
-                         </div>
-                         <div class="service-card text-center glass-effect rounded-xl p-2 sm:p-3 shadow-lg border border-tocantins-gold/30">
-                             <div class="text-lg sm:text-xl mb-1 text-tocantins-green">⏱️</div>
-                             <p class="text-xs text-tocantins-gray-green font-medium">Durante</p>
-                             <p class="text-xs sm:text-sm font-bold text-tocantins-green">A Viagem</p>
-                         </div>
-                         <div class="service-card text-center glass-effect rounded-xl p-2 sm:p-3 shadow-lg border border-tocantins-gold/30">
-                             <div class="text-lg sm:text-xl mb-1 text-tocantins-green">🔒</div>
-                             <p class="text-xs text-tocantins-gray-green font-medium">Conexão</p>
-                             <p class="text-xs sm:text-sm font-bold text-tocantins-green">Segura</p>
+                         <!-- PIX -->
+                         <div class="flex items-center justify-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-lg px-4 py-2 border border-tocantins-gold/40">
+                             <span class="text-lg mr-2 text-tocantins-green">📱</span>
+                             <span class="text-sm font-bold text-tocantins-green">PIX</span>
+                             <span class="text-xs text-gray-500 ml-2">Instantâneo</span>
                          </div>
                      </div>
                  </div>
+             </div>
 
-                 <!-- Serviços WhatsApp - Compactos -->
-                 <div class="border-t border-tocantins-gold/30 pt-4 mb-6">
-                     <div class="grid grid-cols-2 gap-2 mb-4">
-                         
-                         <!-- Card Passagens Compacto -->
-                         <button 
-                            type="button"
-                             onclick="openPassagensModal()" 
-                            class="glass-effect rounded-xl p-2 shadow-lg border border-blue-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
-                            style="touch-action: manipulation;"
-                         >
-                             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 mb-1">
-                                 <div class="text-lg mb-1">🎫</div>
-                                 <p class="text-white text-xs font-bold">PASSAGENS</p>
-                             </div>
-                             <p class="text-xs text-tocantins-gray-green">Compre sua passagem</p>
-                         </button>
-
-                         <!-- Card Turismo Compacto -->
-                         <button 
-                            type="button"
-                             onclick="openTurismoModal()" 
-                            class="glass-effect rounded-xl p-2 shadow-lg border border-orange-300/30 hover:shadow-xl transform transition hover:scale-105 active:scale-95 text-center w-full relative z-10 cursor-pointer"
-                            style="touch-action: manipulation;"
-                         >
-                             <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 mb-1">
-                                 <div class="text-lg mb-1">🏖️</div>
-                                 <p class="text-white text-xs font-bold">TURISMO</p>
-                             </div>
-                             <p class="text-xs text-tocantins-gray-green">Alugue conosco</p>
-                         </button>
-                </div>
-            </div>
-
-                 <!-- Voucher Section - Visível apenas no DESKTOP -->
-                 <div class="border-t border-tocantins-gold/30 pt-6 mb-6">
-                     <p class="text-center text-tocantins-gray-green font-medium mb-4 text-sm">🎫 Tem um código promocional?</p>
-                     <div class="flex space-x-3">
+             <!-- Voucher Mobile -->
+             <div class="elegant-card rounded-2xl shadow-xl p-4">
+                 <div class="text-center">
+                     <p class="text-gray-700 font-medium mb-3 text-sm">🎫 Código promocional?</p>
+                     <div class="flex gap-2">
                          <input 
                              type="text" 
-                             id="voucher-code"
+                             id="voucher-code-mobile"
                              placeholder="Digite seu voucher"
-                             class="flex-1 border-2 border-tocantins-green/50 rounded-lg px-3 py-2 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                             class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-tocantins-green focus:border-tocantins-green"
                          >
                          <button 
-                             id="voucher-btn"
-                             class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold px-4 py-2 rounded-lg hover:from-tocantins-dark-green hover:to-tocantins-green transition-all shadow-lg text-sm whitespace-nowrap"
+                             id="apply-voucher-mobile"
+                             class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold px-4 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
                          >
                              OK
                          </button>
                      </div>
                  </div>
-                </div>
+             </div>
+         </div>
+
+         <!-- Desktop - 2 Colunas -->
+         <div class="hidden lg:grid lg:grid-cols-2 gap-6 mb-8">
+             <!-- Left Column - Serviços -->
+             <div class="space-y-4">
+                 <!-- Serviços WiFi -->
+                 <div class="elegant-card rounded-2xl shadow-xl p-5">
+                     <h3 class="text-lg font-bold text-tocantins-green mb-3 flex items-center">
+                         <span class="text-2xl mr-2">📡</span>
+                         Serviços WiFi
+                     </h3>
+                     <div class="space-y-2 text-sm">
+                         <div class="flex items-center p-2 bg-green-50 rounded-lg">
+                             <span class="text-green-500 mr-2">✅</span>
+                             <span class="text-gray-700">Internet ilimitada</span>
+                         </div>
+                         <div class="flex items-center p-2 bg-blue-50 rounded-lg">
+                             <span class="text-blue-500 mr-2">⚡</span>
+                             <span class="text-gray-700">Alta velocidade</span>
+                         </div>
+                         <div class="flex items-center p-2 bg-purple-50 rounded-lg">
+                             <span class="text-purple-500 mr-2">🔒</span>
+                             <span class="text-gray-700">Conexão segura</span>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- WhatsApp Services Desktop -->
+                 <div class="elegant-card rounded-2xl shadow-xl p-4">
+                     <div class="grid grid-cols-2 gap-3">
+                         <button 
+                             type="button"
+                             onclick="openPassagensModal()" 
+                             class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 text-center hover:shadow-lg transition-all"
+                         >
+                             <div class="text-2xl mb-1">🎫</div>
+                             <p class="text-white text-xs font-bold">PASSAGENS</p>
+                         </button>
+                         <button 
+                             type="button"
+                             onclick="openTurismoModal()" 
+                             class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 text-center hover:shadow-lg transition-all"
+                         >
+                             <div class="text-2xl mb-1">🏖️</div>
+                             <p class="text-white text-xs font-bold">TURISMO</p>
+                         </button>
+                     </div>
+                 </div>
+
+                 <!-- Voucher Desktop -->
+                 <div class="elegant-card rounded-2xl shadow-xl p-4">
+                     <p class="text-gray-700 font-medium mb-3 text-sm text-center">🎫 Código promocional?</p>
+                     <div class="flex gap-2">
+                         <input 
+                             type="text" 
+                             id="voucher-code-desktop"
+                             placeholder="Digite seu voucher"
+                             class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-tocantins-green focus:border-tocantins-green"
+                         >
+                         <button 
+                             id="apply-voucher-desktop"
+                             class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold px-4 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
+                         >
+                             OK
+                         </button>
+                     </div>
+                 </div>
+             </div>
              
-             <!-- Right Column - Payment Options -->
-             <div class="space-y-6">
-                
-                <!-- Price & Connect Button (PRIMEIRO) -->
-                <div class="elegant-card rounded-3xl shadow-2xl p-4 sm:p-6 animate-slide-up  relative overflow-hidden">
-                    
+             <!-- Right Column - Pagamento -->
+             <div class="space-y-4">
+                 <div class="elegant-card rounded-2xl shadow-xl p-5 animate-slide-up">
+                     <div class="text-center">
+                         <!-- Preço Desktop -->
+                         <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 rounded-xl p-5 mb-4 shadow-lg">
+                             <p class="text-white text-sm font-medium mb-2">🚌 Acesso Durante a Viagem</p>
+                             <div class="flex items-center justify-center gap-2">
+                                 <p class="text-white text-3xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</p>
+                             </div>
+                         </div>
 
+                         <!-- Benefícios Desktop -->
+                         <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
+                             <div class="flex items-center justify-center bg-green-50 rounded-lg py-2">
+                                 <span class="text-green-500 mr-1">✅</span>
+                                 <span class="text-gray-700">Ilimitado</span>
+                             </div>
+                             <div class="flex items-center justify-center bg-green-50 rounded-lg py-2">
+                                 <span class="text-green-500 mr-1">⚡</span>
+                                 <span class="text-gray-700">Alta Velocidade</span>
+                             </div>
+                         </div>
 
-                    <div class="text-center mb-4 sm:mb-6">
-                        <!-- Preço Original Riscado Desktop -->
-                        <div class="mb-2">
-                            <p class="text-gray-500 line-through text-sm">De R$ 11,99</p>
-                            <p class="text-red-600 font-bold text-xs">🎉 50% DE DESCONTO!</p>
-                        </div>
+                         <!-- Botão Desktop -->
+                         <button 
+                             id="connect-btn-desktop" 
+                             class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl mb-3"
+                         >
+                             🚀 CONECTAR AGORA!
+                         </button>
 
-                        <div class="bg-gradient-to-br from-tocantins-dark-green via-tocantins-green to-green-600 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl border border-tocantins-gold/50 relative overflow-hidden">
-                            
-                            
-                            <p class="text-white text-sm font-semibold mb-2 relative z-10">🚌 Acesso Completo Durante a Viagem</p>
-                            <div class="flex items-center justify-center space-x-2 mb-2">
-                                <p class="text-white text-2xl font-bold relative z-10">R$ {{ number_format($price, 2, ',', '.') }}</p>
-                                <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ">
-                                    -50%
-                                </div>
-                            </div>
-                            <p class="text-green-100 text-sm relative z-10">✅ Internet ilimitada + Alta velocidade</p>
-                        </div>
+                         <!-- PIX Desktop -->
+                         <div class="flex items-center justify-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-lg px-6 py-3 border border-tocantins-gold/40">
+                             <span class="text-xl mr-3 text-tocantins-green">📱</span>
+                             <span class="text-lg font-bold text-tocantins-green">PIX</span>
+                             <span class="text-sm text-gray-500 ml-2">Instantâneo</span>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
 
-                        <!-- Benefícios Desktop -->
-                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 mb-4 border border-green-200">
-                            <div class="grid grid-cols-2 gap-3 text-sm">
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-2">✅</span>
-                                    <span class="text-gray-700">Conexão instantânea</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-2">✅</span>
-                                    <span class="text-gray-700">Sem limite de dados</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-2">✅</span>
-                                    <span class="text-gray-700">Velocidade máxima</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-500 mr-2">✅</span>
-                                    <span class="text-gray-700">Pagamento seguro</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        
-                        <button id="connect-btn-desktop" class="connect-button w-full text-white font-bold py-4 px-6 rounded-xl shadow-xl relative z-10 mb-3 animate-pulse-scale">
-                            🚀 CONECTAR AGORA!
-                </button>
-            </div>
-
-            <!-- Payment Methods -->
-                    <div class="text-center">
-                        <p class="text-tocantins-gray-green font-medium mb-4 text-sm">💳 Pagamento rápido e seguro:</p>
-                <div class="flex justify-center">
-                            <div class="flex items-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-xl px-6 py-3 border border-tocantins-gold/40 shadow-lg">
-                                <span class="text-xl mr-3 text-tocantins-green">📱</span>
-                                <span class="text-lg font-bold text-tocantins-green">PIX</span>
-                                <span class="text-sm text-gray-500 ml-2">Instantâneo</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Confiança Desktop -->
-                        <div class="mt-4 flex justify-center items-center space-x-6 text-sm text-gray-500">
-                            <div class="flex items-center">
-                                <span class="text-green-500 mr-2">🔒</span>
-                                <span>Pagamento Seguro</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="text-blue-500 mr-2">⚡</span>
-                                <span>Conexão Imediata</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                
-                </div>
-            </div>
-
-        <!-- Voucher Section - Visível apenas no CELULAR/TABLET -->
-        <div class="lg:hidden elegant-card rounded-3xl shadow-2xl p-5 mb-6 animate-slide-up relative overflow-hidden">
-            <div class="text-center">
-                <p class="text-tocantins-gray-green font-medium mb-4 text-sm">🎫 Tem um código promocional?</p>
-                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                    <input 
-                        type="text" 
-                        id="voucher-code-mobile"
-                        placeholder="Digite seu voucher"
-                        class="flex-1 border-2 border-tocantins-green/50 rounded-lg px-3 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                    >
-                    <button 
-                        id="voucher-btn-mobile"
-                        class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold px-6 py-3 rounded-lg hover:from-tocantins-dark-green hover:to-tocantins-green transition-all shadow-lg text-sm whitespace-nowrap"
-                    >
-                        OK
-                    </button>
-                </div>
-            </div>
-        </div>
 
     </div>
 
