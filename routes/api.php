@@ -34,6 +34,9 @@ Route::post('/register-for-payment', [RegistrationController::class, 'registerFo
 Route::post('/check-email', [RegistrationController::class, 'checkEmail']);
 Route::post('/check-user', [RegistrationController::class, 'checkUser']);
 
+// Verificar usuário por MAC
+Route::get('/user/check-mac/{mac}', [RegistrationController::class, 'checkMacAddress']);
+
 // Pagamentos
 Route::prefix('payment')->group(function () {
     Route::post('/pix', [PaymentController::class, 'processPix']);

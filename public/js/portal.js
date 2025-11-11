@@ -36,13 +36,13 @@ class WiFiPortal {
         // Botão principal de conectar (mobile)
         const connectBtn = document.getElementById('connect-btn');
         if (connectBtn) {
-            connectBtn.addEventListener('click', () => this.showRegistrationModal());
+            connectBtn.addEventListener('click', () => this.handleConnectClick());
         }
 
         // Botão principal de conectar (desktop)
         const connectBtnDesktop = document.getElementById('connect-btn-desktop');
         if (connectBtnDesktop) {
-            connectBtnDesktop.addEventListener('click', () => this.showRegistrationModal());
+            connectBtnDesktop.addEventListener('click', () => this.handleConnectClick());
         }
 
 
@@ -677,6 +677,49 @@ class WiFiPortal {
             setTimeout(() => {
                 errorDiv.classList.add('hidden');
             }, 5000);
+        }
+    }
+
+    /**
+     * Verifica se usuário existe e decide se mostra cadastro ou pagamento
+     */
+    async handleConnectClick() {
+        this.showLoading();
+
+        try {
+            // Verificar se já temos o MAC
+            if (!this.deviceMac) {
+                await this.ensureRealIdentifiers();
+            }
+
+            if (!this.deviceMac) {
+                this.hideLoading();
+                this.showErrorMessage('Não foi possível identificar seu dispositivo. Reconecte ao WiFi.');
+                return;
+            }
+
+            // Verificar se usuário já existe
+            const response = await fetch(`/api/user/check-mac/${this.deviceMac}`);
+            const data = await response.json();
+
+            this.hideLoading();
+
+            if (data.exists && data.user_id) {
+                // Usuário já existe - ir direto para pagamento
+                this.currentUserId = data.user_id;
+                console.log('✅ Usuário já cadastrado, indo direto para pagamento');
+                this.showPaymentModal();
+            } else {
+                // Usuário novo - mostrar cadastro
+                console.log('📝 Novo usuário, mostrando cadastro');
+                this.showRegistrationModal();
+            }
+
+        } catch (error) {
+            this.hideLoading();
+            console.error('Erro ao verificar usuário:', error);
+            // Em caso de erro, mostrar cadastro por segurança
+            this.showRegistrationModal();
         }
     }
 

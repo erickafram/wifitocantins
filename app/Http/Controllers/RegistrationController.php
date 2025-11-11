@@ -336,4 +336,39 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Verificar se usuário existe pelo MAC address
+     */
+    public function checkMacAddress(string $mac)
+    {
+        try {
+            // Normalizar MAC (uppercase e remover espaços)
+            $mac = strtoupper(trim($mac));
+            
+            // Buscar usuário pelo MAC
+            $user = User::where('mac_address', $mac)->first();
+            
+            if ($user) {
+                return response()->json([
+                    'exists' => true,
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                ]);
+            }
+            
+            return response()->json([
+                'exists' => false,
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Erro ao verificar MAC:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'exists' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
