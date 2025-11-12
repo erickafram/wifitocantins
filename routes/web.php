@@ -13,12 +13,6 @@ use App\Http\Controllers\PortalDashboardController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
-use App\Http\Controllers\MikrotikLoginController;
-
-// Rota especial para receber redirecionamentos do MikroTik (aceita HTTP e HTTPS)
-Route::match(['get', 'post'], '/login', [MikrotikLoginController::class, 'handleMikrotikLogin'])
-    ->name('mikrotik.login')
-    ->withoutMiddleware(['web']);
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');

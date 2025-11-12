@@ -5,10 +5,6 @@
 
     RewriteEngine On
 
-    # Permitir HTTP na rota /login para MikroTik (não forçar HTTPS)
-    RewriteCond %{REQUEST_URI} ^/login [NC]
-    RewriteRule ^ - [L]
-
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
