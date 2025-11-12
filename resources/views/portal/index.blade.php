@@ -365,14 +365,19 @@
                      <div class="text-center">
                          <!-- Preço -->
                          <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 rounded-xl p-4 mb-4 shadow-lg relative overflow-hidden">
-                            <!-- Badge de Desconto -->
+                            <!-- Badge de Desconto Dinâmico -->
+                            @if($discount_percentage > 0)
                             <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                                -63% OFF
+                                -{{ $discount_percentage }}% OFF
                             </div>
+                            @endif
+                            
                             <p class="text-white text-xs font-medium mb-1">🚌 Acesso Durante a Viagem</p>
                             <div class="flex items-center justify-center gap-2">
-                                <p class="text-white/70 text-sm line-through">R$ 15,99</p>
-                                <p class="text-white text-2xl font-bold">R$ 5,99</p>
+                                @if($discount_percentage > 0)
+                                <p class="text-white/70 text-sm line-through">R$ {{ number_format($original_price, 2, ',', '.') }}</p>
+                                @endif
+                                <p class="text-white text-2xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</p>
                             </div>
                         </div>
 
@@ -431,6 +436,30 @@
                              OK
                          </button>
                      </div>
+                 </div>
+             </div>
+
+             <!-- Cards de Serviços Mobile (PASSAGENS e TURISMO) -->
+             <div class="elegant-card rounded-2xl shadow-xl p-4">
+                 <div class="grid grid-cols-2 gap-3">
+                     <button 
+                        type="button"
+                        onclick="openPassagensModal()" 
+                        class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 text-center hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 transform relative overflow-hidden group"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                        <div class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">🎫</div>
+                        <p class="text-white text-xs font-bold">PASSAGENS</p>
+                    </button>
+                    <button 
+                        type="button"
+                        onclick="openTurismoModal()" 
+                        class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 text-center hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 transform relative overflow-hidden group"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                        <div class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">🏖️</div>
+                        <p class="text-white text-xs font-bold">TURISMO</p>
+                    </button>
                  </div>
              </div>
          </div>
@@ -511,14 +540,19 @@
                      <div class="text-center">
                          <!-- Preço Desktop -->
                         <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 rounded-xl p-5 mb-4 shadow-lg relative overflow-hidden">
-                            <!-- Badge de Desconto -->
+                            <!-- Badge de Desconto Dinâmico -->
+                            @if($discount_percentage > 0)
                             <div class="absolute top-3 right-3 bg-red-500 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-lg animate-pulse">
-                                -63% OFF
+                                -{{ $discount_percentage }}% OFF
                             </div>
+                            @endif
+                            
                             <p class="text-white text-sm font-medium mb-2">🚌 Acesso Durante a Viagem</p>
-                            <div class="flex items-center justify-center gap-2">
-                                <p class="text-white/70 text-lg line-through">R$ 15,99</p>
-                                <p class="text-white text-3xl font-bold">R$ 5,99</p>
+                            <div class="flex items-center justify-center gap-3">
+                                @if($discount_percentage > 0)
+                                <p class="text-white/70 text-lg line-through">R$ {{ number_format($original_price, 2, ',', '.') }}</p>
+                                @endif
+                                <p class="text-white text-3xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</p>
                             </div>
                         </div>
 

@@ -26,11 +26,15 @@ class PortalController extends Controller
         }
 
         $clientInfo = $this->getClientInfo($request);
+        $priceInfo = \App\Helpers\SettingsHelper::getPriceInfo();
 
         return view('portal.index', [
             'client_info' => $clientInfo,
             'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
-            'price' => \App\Helpers\SettingsHelper::getWifiPrice(),
+            'price' => $priceInfo['current_price'],
+            'original_price' => $priceInfo['original_price'],
+            'discount_percentage' => $priceInfo['discount_percentage'],
+            'savings' => $priceInfo['savings'],
             'speed' => '100+ Mbps',
         ]);
     }
