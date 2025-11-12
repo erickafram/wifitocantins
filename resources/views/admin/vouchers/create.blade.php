@@ -12,7 +12,7 @@
 @section('page-title', 'Criar Novo Voucher')
 
 @section('content')
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-8xl mx-auto">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green px-6 py-4">
                 <h2 class="text-xl font-bold text-white">📝 Dados do Voucher</h2>

@@ -45,13 +45,18 @@ class ReportsController extends Controller
     
     private function getGeneralStats($startDate, $endDate, $paymentStatus, $userStatus)
     {
+        // Receita total - apenas pagamentos completados
+        $totalRevenue = Payment::where('status', 'completed')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->sum('amount');
+        
+        // Total de pagamentos - respeitando filtro
         $query = Payment::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         
         if ($paymentStatus !== 'all') {
             $query->where('status', $paymentStatus);
         }
         
-        $totalRevenue = $query->sum('amount');
         $totalPayments = $query->count();
         
         // Pagamentos por status
@@ -77,8 +82,14 @@ class ReportsController extends Controller
             ->where('session_status', 'active')
             ->count();
         
+        // Pagamentos pendentes
+        $pendingPayments = Payment::where('status', 'pending')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->sum('amount');
+        
         return [
             'total_revenue' => $totalRevenue,
+            'pending_payments' => $pendingPayments,
             'total_payments' => $totalPayments,
             'total_users' => $totalUsers,
             'connected_users' => $connectedUsers,
@@ -98,7 +109,7 @@ class ReportsController extends Controller
         }
         
         return $query->orderBy('created_at', 'desc')
-            ->paginate(50);
+            ->paginate(10);
     }
     
     private function getUsersData($startDate, $endDate, $userStatus)

@@ -43,33 +43,20 @@ Route::get('/admin-access', function () {
 
 // Painel Administrativo (Protegido por autenticação)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
+    // Rotas acessíveis para Admin e Manager
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/users', [AdminController::class, 'users'])->name('users');
-    Route::get('/users/{id}', [AdminController::class, 'getUserDetails'])->name('users.details');
-    Route::post('/users/{id}/disconnect', [AdminController::class, 'disconnectUser'])->name('users.disconnect');
-    Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
     Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report');
-    Route::get('/vouchers', [AdminController::class, 'vouchers'])->name('vouchers');
-    Route::post('/vouchers', [AdminController::class, 'createVoucher'])->name('vouchers.create');
-    Route::delete('/vouchers/{id}', [AdminController::class, 'deactivateVoucher'])->name('vouchers.deactivate');
     Route::get('/devices', [AdminController::class, 'devices'])->name('devices');
     Route::get('/connection-logs', [AdminController::class, 'connectionLogs'])->name('connection-logs');
-    Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::get('/api/stats', [AdminController::class, 'apiStats'])->name('api.stats');
     Route::post('/export', [AdminController::class, 'exportReport'])->name('export');
-    Route::get('/api', [AdminController::class, 'apiSettings'])->name('api');
-    Route::post('/api/gateway', [AdminController::class, 'updateGateway'])->name('api.update-gateway');
     
-    // Rotas de Relatórios
+    // Rotas de Relatórios (Admin e Manager)
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
     Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
     
-    // Rotas de Configurações do Sistema
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
-    
-    // Rotas de Vouchers
+    // Rotas de Vouchers (Admin e Manager)
     Route::get('/vouchers', [AdminVoucherController::class, 'index'])->name('vouchers.index');
     Route::get('/vouchers/create', [AdminVoucherController::class, 'create'])->name('vouchers.create');
     Route::post('/vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');
@@ -78,5 +65,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::post('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'toggleStatus'])->name('vouchers.toggle');
     Route::post('/vouchers/{voucher}/reset', [AdminVoucherController::class, 'resetDaily'])->name('vouchers.reset');
     Route::delete('/vouchers/{voucher}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
+    
+    // Rotas APENAS para Administradores
+    Route::middleware(['admin.only'])->group(function () {
+        // Gerenciamento de Usuários
+        Route::get('/users', [AdminController::class, 'users'])->name('users');
+        Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');
+        Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
+        Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+        Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
+        Route::get('/users/{id}', [AdminController::class, 'getUserDetails'])->name('users.details');
+        Route::post('/users/{id}/disconnect', [AdminController::class, 'disconnectUser'])->name('users.disconnect');
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
+        
+        // Configurações do Sistema
+        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+        
+        // Configurações de API
+        Route::get('/api', [AdminController::class, 'apiSettings'])->name('api');
+        Route::post('/api/gateway', [AdminController::class, 'updateGateway'])->name('api.update-gateway');
+    });
 });
 

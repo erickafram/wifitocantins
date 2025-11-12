@@ -10,99 +10,99 @@
 @section('page-title', 'Gerenciamento de Vouchers')
 
 @section('content')
-    <div class="mb-6">
+    <div class="mb-4">
         <div class="flex justify-between items-center">
-            <p class="text-gray-600">Gerencie os vouchers de acesso para motoristas</p>
-            <a href="{{ route('admin.vouchers.create') }}" class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+            <p class="text-gray-500 text-xs">Gerencie os vouchers de acesso para motoristas</p>
+            <a href="{{ route('admin.vouchers.create') }}" class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white px-4 py-2 rounded-lg text-xs font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300">
                 ➕ Novo Voucher
             </a>
         </div>
     </div>
 
     @if(session('success'))
-        <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200">
-            <p class="text-green-800 font-medium">✅ {{ session('success') }}</p>
+        <div class="mb-4 p-3 rounded-lg bg-green-50 border border-green-200">
+            <p class="text-green-800 text-xs font-medium">✅ {{ session('success') }}</p>
         </div>
     @endif
 
     <!-- Estatísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 text-sm">Total de Vouchers</p>
-                    <p class="text-3xl font-bold text-tocantins-green mt-2">{{ $vouchers->total() }}</p>
+                    <p class="text-gray-500 text-xs">Total de Vouchers</p>
+                    <p class="text-2xl font-bold text-tocantins-green mt-1">{{ $vouchers->total() }}</p>
                 </div>
-                <div class="text-4xl">🎫</div>
+                <div class="text-2xl">🎫</div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+        <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 text-sm">Vouchers Ativos</p>
-                    <p class="text-3xl font-bold text-green-600 mt-2">{{ $vouchers->where('is_active', true)->count() }}</p>
+                    <p class="text-gray-500 text-xs">Vouchers Ativos</p>
+                    <p class="text-2xl font-bold text-green-600 mt-1">{{ $vouchers->where('is_active', true)->count() }}</p>
                 </div>
-                <div class="text-4xl">✅</div>
+                <div class="text-2xl">✅</div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+        <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 text-sm">Vouchers Inativos</p>
-                    <p class="text-3xl font-bold text-gray-600 mt-2">{{ $vouchers->where('is_active', false)->count() }}</p>
+                    <p class="text-gray-500 text-xs">Vouchers Inativos</p>
+                    <p class="text-2xl font-bold text-gray-600 mt-1">{{ $vouchers->where('is_active', false)->count() }}</p>
                 </div>
-                <div class="text-4xl">⏸️</div>
+                <div class="text-2xl">⏸️</div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+        <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 text-sm">Vouchers Ilimitados</p>
-                    <p class="text-3xl font-bold text-blue-600 mt-2">{{ $vouchers->where('voucher_type', 'unlimited')->count() }}</p>
+                    <p class="text-gray-500 text-xs">Vouchers Ilimitados</p>
+                    <p class="text-2xl font-bold text-blue-600 mt-1">{{ $vouchers->where('voucher_type', 'unlimited')->count() }}</p>
                 </div>
-                <div class="text-4xl">♾️</div>
+                <div class="text-2xl">♾️</div>
             </div>
         </div>
     </div>
 
     <!-- Tabela de Vouchers -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white">
                     <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold">Código</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold">Motorista</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold">Documento</th>
-                        <th class="px-6 py-4 text-center text-sm font-semibold">Tipo</th>
-                        <th class="px-6 py-4 text-center text-sm font-semibold">Horas Diárias</th>
-                        <th class="px-6 py-4 text-center text-sm font-semibold">Usado Hoje</th>
-                        <th class="px-6 py-4 text-center text-sm font-semibold">Expira em</th>
-                        <th class="px-6 py-4 text-center text-sm font-semibold">Status</th>
-                        <th class="px-6 py-4 text-center text-sm font-semibold">Ações</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold">Código</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold">Motorista</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold">Documento</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold">Tipo</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold">Horas Diárias</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold">Usado Hoje</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold">Expira em</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold">Status</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     @forelse($vouchers as $voucher)
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <span class="font-mono font-bold text-tocantins-green">{{ $voucher->code }}</span>
+                            <td class="px-4 py-3">
+                                <span class="font-mono text-xs font-bold text-tocantins-green">{{ $voucher->code }}</span>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div>
-                                    <p class="font-medium text-gray-900">{{ $voucher->driver_name }}</p>
+                                    <p class="text-xs font-medium text-gray-900">{{ $voucher->driver_name }}</p>
                                     @if($voucher->description)
                                         <p class="text-xs text-gray-500">{{ $voucher->description }}</p>
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-gray-600">
+                            <td class="px-4 py-3 text-xs text-gray-600">
                                 {{ $voucher->driver_document ?? '-' }}
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 @if($voucher->voucher_type === 'unlimited')
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                         ♾️ Ilimitado
@@ -113,15 +113,15 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-center font-medium text-gray-900">
+                            <td class="px-4 py-3 text-center text-xs font-medium text-gray-900">
                                 {{ $voucher->daily_hours }}h
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 @if($voucher->voucher_type === 'unlimited')
                                     <span class="text-gray-400">-</span>
                                 @else
                                     <div class="flex flex-col items-center">
-                                        <span class="font-medium {{ $voucher->daily_hours_used >= $voucher->daily_hours ? 'text-red-600' : 'text-gray-900' }}">
+                                        <span class="text-xs font-medium {{ $voucher->daily_hours_used >= $voucher->daily_hours ? 'text-red-600' : 'text-gray-900' }}">
                                             {{ $voucher->daily_hours_used }}h / {{ $voucher->daily_hours }}h
                                         </span>
                                         @if($voucher->last_used_date)
@@ -130,7 +130,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-center text-sm text-gray-600">
+                            <td class="px-4 py-3 text-center text-xs text-gray-600">
                                 @if($voucher->expires_at)
                                     <div class="flex flex-col items-center">
                                         <span>{{ $voucher->expires_at->format('d/m/Y') }}</span>
@@ -144,7 +144,7 @@
                                     <span class="text-gray-400">Sem expiração</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 @if($voucher->is_active)
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                         ✅ Ativo
@@ -155,7 +155,7 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('admin.vouchers.edit', $voucher) }}" 
                                        class="text-blue-600 hover:text-blue-800 font-medium text-sm"
@@ -200,11 +200,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                 <div class="flex flex-col items-center">
-                                    <span class="text-6xl mb-4">🎫</span>
-                                    <p class="text-lg font-medium">Nenhum voucher cadastrado</p>
-                                    <p class="text-sm mt-2">Clique em "Novo Voucher" para criar o primeiro</p>
+                                    <span class="text-4xl mb-2">🎫</span>
+                                    <p class="text-sm font-medium">Nenhum voucher cadastrado</p>
+                                    <p class="text-xs mt-1">Clique em "Novo Voucher" para criar o primeiro</p>
                                 </div>
                             </td>
                         </tr>
@@ -214,7 +214,7 @@
         </div>
 
         @if($vouchers->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-4 py-3 border-t border-gray-200">
                 {{ $vouchers->links() }}
             </div>
         @endif

@@ -76,19 +76,19 @@
     </div>
 
     <!-- Cards de Estatísticas -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         
-        <!-- Receita Total -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-lg hover:shadow-2xl p-6 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-tocantins-gold/10 to-yellow-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+        <!-- Receita Total (Pagos) -->
+        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-full -translate-y-12 translate-x-12"></div>
             <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-tocantins-gold to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-lg">💰</span>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-white text-sm">💵</span>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Receita Total</p>
-                        <p class="text-2xl font-bold text-tocantins-gray-green">R$ {{ number_format($stats['total_revenue'], 2, ',', '.') }}</p>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Receita (Pagos)</p>
+                        <p class="text-lg font-bold text-green-600">R$ {{ number_format($stats['total_revenue'], 2, ',', '.') }}</p>
                     </div>
                 </div>
                 <div class="text-xs text-gray-500">
@@ -97,17 +97,36 @@
             </div>
         </div>
 
-        <!-- Total de Pagamentos -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-lg hover:shadow-2xl p-6 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-full -translate-y-16 translate-x-16"></div>
+        <!-- Pagamentos Pendentes -->
+        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-full -translate-y-12 translate-x-12"></div>
             <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-lg">💳</span>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-white text-sm">⏳</span>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pendentes</p>
+                        <p class="text-lg font-bold text-orange-600">R$ {{ number_format($stats['pending_payments'], 2, ',', '.') }}</p>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500">
+                    Aguardando pagamento
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Pagamentos -->
+        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-full -translate-y-12 translate-x-12"></div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-white text-sm">💳</span>
                     </div>
                     <div class="text-right">
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pagamentos</p>
-                        <p class="text-2xl font-bold text-tocantins-gray-green">{{ $stats['total_payments'] }}</p>
+                        <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['total_payments'] }}</p>
                     </div>
                 </div>
                 <div class="text-xs text-gray-500">
@@ -117,16 +136,16 @@
         </div>
 
         <!-- Total de Usuários -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-lg hover:shadow-2xl p-6 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-tocantins-green/10 to-tocantins-dark-green/10 rounded-full -translate-y-16 translate-x-16"></div>
+        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-tocantins-green/10 to-tocantins-dark-green/10 rounded-full -translate-y-12 translate-x-12"></div>
             <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-tocantins-green to-tocantins-dark-green rounded-2xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-lg">👥</span>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-tocantins-green to-tocantins-dark-green rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-white text-sm">👥</span>
                     </div>
                     <div class="text-right">
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Usuários</p>
-                        <p class="text-2xl font-bold text-tocantins-gray-green">{{ $stats['total_users'] }}</p>
+                        <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['total_users'] }}</p>
                     </div>
                 </div>
                 <div class="text-xs text-gray-500">
@@ -136,16 +155,16 @@
         </div>
 
         <!-- Sessões Ativas -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-lg hover:shadow-2xl p-6 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-full -translate-y-16 translate-x-16"></div>
+        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-full -translate-y-12 translate-x-12"></div>
             <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-lg">🌐</span>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-white text-sm">🌐</span>
                     </div>
                     <div class="text-right">
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Sessões Ativas</p>
-                        <p class="text-2xl font-bold text-tocantins-gray-green">{{ $stats['active_sessions'] }}</p>
+                        <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['active_sessions'] }}</p>
                     </div>
                 </div>
                 <div class="text-xs text-gray-500">
@@ -274,8 +293,13 @@
             </div>
             
             @if($payments->hasPages())
-            <div class="mt-6">
-                {{ $payments->withQueryString()->links() }}
+            <div class="mt-6 flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Mostrando {{ $payments->firstItem() }} a {{ $payments->lastItem() }} de {{ $payments->total() }} pagamentos
+                </div>
+                <div>
+                    {{ $payments->withQueryString()->links() }}
+                </div>
             </div>
             @endif
         </div>
@@ -368,8 +392,13 @@
             </div>
             
             @if($users->hasPages())
-            <div class="mt-6">
-                {{ $users->withQueryString()->links() }}
+            <div class="mt-6 flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} usuários
+                </div>
+                <div>
+                    {{ $users->withQueryString()->links() }}
+                </div>
             </div>
             @endif
         </div>

@@ -12,7 +12,7 @@
 @section('page-title', 'Editar Voucher')
 
 @section('content')
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-8xl mx-auto">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-6">
             <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
                 <h2 class="text-xl font-bold text-white">🎫 Código: {{ $voucher->code }}</h2>

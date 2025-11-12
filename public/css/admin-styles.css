@@ -1,0 +1,291 @@
+/**
+ * WiFi Tocantins - Admin Panel Styles
+ * Estilos globais para o painel administrativo
+ */
+
+/* ========================================
+   PADRONIZAÇÃO GLOBAL DE TAMANHOS DE FONTE
+   ======================================== */
+
+* {
+    font-size: 0.875rem !important; /* 14px - text-sm - PADRÃO GLOBAL */
+}
+
+body {
+    font-size: 0.875rem !important;
+}
+
+/* ========================================
+   TÍTULOS
+   ======================================== */
+
+h1, .text-lg {
+    font-size: 1.125rem !important; /* 18px */
+}
+
+h2, .text-base {
+    font-size: 1rem !important; /* 16px */
+}
+
+h3, h4, .text-sm {
+    font-size: 0.875rem !important; /* 14px */
+}
+
+/* ========================================
+   TEXTOS PEQUENOS
+   ======================================== */
+
+.text-xs, small {
+    font-size: 0.75rem !important; /* 12px */
+}
+
+/* ========================================
+   TEXTOS GRANDES
+   Apenas quando explicitamente definido
+   ======================================== */
+
+.text-xl {
+    font-size: 1.25rem !important; /* 20px */
+}
+
+.text-2xl {
+    font-size: 1.5rem !important; /* 24px */
+}
+
+.text-3xl {
+    font-size: 1.875rem !important; /* 30px */
+}
+
+.text-4xl {
+    font-size: 2.25rem !important; /* 36px */
+}
+
+/* ========================================
+   FORMULÁRIOS
+   ======================================== */
+
+input, select, textarea, button {
+    font-size: 0.875rem !important;
+}
+
+/* ========================================
+   TABELAS
+   ======================================== */
+
+table, th, td {
+    font-size: 0.875rem !important;
+}
+
+/* ========================================
+   ANIMAÇÕES E TRANSIÇÕES
+   ======================================== */
+
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
+
+/* ========================================
+   SCROLLBAR CUSTOMIZADA
+   ======================================== */
+
+/* Para navegadores Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #228B22;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #006400;
+}
+
+/* ========================================
+   UTILITÁRIOS
+   ======================================== */
+
+.blur-sm {
+    filter: blur(4px);
+}
+
+.backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 640px) {
+    /* Ajustes para mobile */
+    h1, .text-lg {
+        font-size: 1rem !important;
+    }
+    
+    .text-xl {
+        font-size: 1.125rem !important;
+    }
+    
+    .text-2xl {
+        font-size: 1.25rem !important;
+    }
+}
+
+/* ========================================
+   ESTADOS DE HOVER E FOCUS
+   ======================================== */
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.focus-ring:focus {
+    outline: 2px solid #228B22;
+    outline-offset: 2px;
+}
+
+/* ========================================
+   GRADIENTES PERSONALIZADOS
+   ======================================== */
+
+.gradient-tocantins {
+    background: linear-gradient(135deg, #228B22 0%, #006400 100%);
+}
+
+.gradient-tocantins-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+}
+
+/* ========================================
+   SOMBRAS PERSONALIZADAS
+   ======================================== */
+
+.shadow-tocantins {
+    box-shadow: 0 4px 6px -1px rgba(34, 139, 34, 0.1), 
+                0 2px 4px -1px rgba(34, 139, 34, 0.06);
+}
+
+.shadow-tocantins-lg {
+    box-shadow: 0 10px 15px -3px rgba(34, 139, 34, 0.1), 
+                0 4px 6px -2px rgba(34, 139, 34, 0.05);
+}
+
+/* ========================================
+   LOADING SPINNER
+   ======================================== */
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #228B22;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   BADGES E TAGS
+   ======================================== */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+
+.card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(to right, #f9fafb, white);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ========================================
+   MODAIS
+   ======================================== */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 50;
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt !important;
+    }
+    
+    .sidebar-menu {
+        display: none !important;
+    }
+}

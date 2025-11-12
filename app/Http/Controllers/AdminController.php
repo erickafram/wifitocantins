@@ -39,7 +39,11 @@ class AdminController extends Controller
     {
         return [
             'connected_users' => User::where('status', 'connected')->count(),
+            'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
             'daily_revenue' => Payment::where('status', 'completed')
+                ->whereDate('created_at', today())
+                ->sum('amount'),
+            'pending_payments' => Payment::where('status', 'pending')
                 ->whereDate('created_at', today())
                 ->sum('amount'),
             'total_devices' => Device::count(),
@@ -317,6 +321,119 @@ class AdminController extends Controller
         ];
         
         return view('admin.users', compact('users', 'stats'));
+    }
+
+    /**
+     * Formulário para criar novo usuário
+     */
+    public function createUser()
+    {
+        return view('admin.users-create');
+    }
+
+    /**
+     * Armazenar novo usuário
+     */
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:user,manager,admin',
+            'status' => 'required|in:active,pending,offline',
+            'mac_address' => 'nullable|string|max:17',
+            'ip_address' => 'nullable|ip',
+            'device_name' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => bcrypt($request->password),
+                'role' => $request->role,
+                'status' => $request->status,
+                'mac_address' => $request->mac_address,
+                'ip_address' => $request->ip_address,
+                'device_name' => $request->device_name,
+                'registered_at' => now(),
+                'email_verified_at' => now(), // Verificar email automaticamente
+            ]);
+
+            return redirect()->route('admin.users')
+                ->with('success', 'Usuário criado com sucesso!');
+
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Erro ao criar usuário: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Formulário para editar usuário
+     */
+    public function editUser($id)
+    {
+        $user = User::findOrFail($id);
+        return view('admin.users-edit', compact('user'));
+    }
+
+    /**
+     * Atualizar usuário
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'phone' => 'nullable|string|max:20',
+            'role' => 'required|in:user,manager,admin',
+            'status' => 'required|in:active,pending,offline,connected',
+            'mac_address' => 'nullable|string|max:17',
+            'ip_address' => 'nullable|ip',
+            'device_name' => 'nullable|string|max:255',
+        ];
+
+        // Se a senha foi fornecida, adicionar validação
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|string|min:6|confirmed';
+        }
+
+        $request->validate($rules);
+
+        try {
+            $data = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'role' => $request->role,
+                'status' => $request->status,
+                'mac_address' => $request->mac_address,
+                'ip_address' => $request->ip_address,
+                'device_name' => $request->device_name,
+            ];
+
+            // Atualizar senha apenas se foi fornecida
+            if ($request->filled('password')) {
+                $data['password'] = bcrypt($request->password);
+            }
+
+            $user->update($data);
+
+            return redirect()->route('admin.users')
+                ->with('success', 'Usuário atualizado com sucesso!');
+
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Erro ao atualizar usuário: ' . $e->getMessage());
+        }
     }
 
     /**
