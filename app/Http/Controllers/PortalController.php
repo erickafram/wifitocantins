@@ -591,9 +591,9 @@ class PortalController extends Controller
                 ]
             );
 
-            // Registra uso do voucher
-            $hoursGranted = min($voucher->getRemainingHoursToday(), 24);
-            $voucher->recordUsage($hoursGranted);
+            // Registra uso do voucher (apenas marca como usado, não incrementa horas)
+            $hoursGranted = $voucher->getRemainingHoursToday();
+            $voucher->recordUsage();
 
             // Libera acesso no Mikrotik
             $this->liberarAcessoMikrotik($macAddress, $ipAddress, $hoursGranted);

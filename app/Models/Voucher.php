@@ -65,13 +65,18 @@ class Voucher extends Model
             return true;
         }
 
-        // Reseta contador se for um novo dia
-        if ($this->last_used_date && !$this->last_used_date->isToday()) {
-            $this->daily_hours_used = 0;
-            $this->last_used_date = now()->toDateString();
-            $this->save();
+        // Se nunca foi usado, está disponível
+        if (!$this->last_used_date) {
+            return true;
         }
 
+        // Se foi usado em outro dia, reseta e está disponível
+        if (!$this->last_used_date->isToday()) {
+            return true;
+        }
+
+        // Se foi usado hoje, verifica se ainda tem horas disponíveis
+        // Para vouchers limitados, o motorista pode usar até X horas por dia
         return $this->daily_hours_used < $this->daily_hours;
     }
 
@@ -113,14 +118,17 @@ class Voucher extends Model
             return true;
         }
 
-        // Para vouchers limitados, incrementa horas usadas
+        // Para vouchers limitados, apenas marca como usado hoje
+        // NÃO incrementa horas - o voucher dá acesso pelo período todo
         $today = now()->toDateString();
         
+        // Se for um novo dia, reseta o contador
         if (!$this->last_used_date || $this->last_used_date != $today) {
             $this->daily_hours_used = 0;
         }
 
-        $this->daily_hours_used += $hours;
+        // Marca que foi usado hoje (mas não incrementa as horas)
+        // O motorista tem direito às horas configuradas por dia
         $this->last_used_date = $today;
         $this->save();
 
