@@ -330,64 +330,6 @@ class MikrotikLiberacaoController extends Controller
     }
 
     /**
-     * Libera acesso para voucher de motorista
-     */
-    public function liberarAcesso($macAddress, $ipAddress, $hours = 24)
-    {
-        try {
-            Log::info('🎫 LIBERAÇÃO DE ACESSO VOUCHER INICIADA', [
-                'mac_address' => $macAddress,
-                'ip_address' => $ipAddress,
-                'hours' => $hours
-            ]);
-
-            // Criar usuário temporário para usar a lógica existente
-            $tempUser = new User([
-                'mac_address' => $macAddress,
-                'ip_address' => $ipAddress,
-                'expires_at' => now()->addHours($hours),
-                'status' => 'active'
-            ]);
-
-            // Buscar todos os MACs associados
-            $allMacs = $this->getAllUserMacs($tempUser);
-            
-            Log::info('📋 MACs encontrados para voucher', [
-                'primary_mac' => $macAddress,
-                'all_macs' => $allMacs,
-                'total_macs' => count($allMacs)
-            ]);
-
-            // Gerar comandos para o MikroTik
-            $mikrotikCommands = $this->generateMikrotikCommands($tempUser, $allMacs);
-            
-            // Executar comandos no MikroTik (se API habilitada)
-            if (config('wifi.mikrotik_api_enabled')) {
-                $this->executeMikrotikCommands($mikrotikCommands);
-            }
-
-            // Salvar comandos para o MikroTik buscar via polling
-            $this->savePendingCommands($tempUser, $mikrotikCommands);
-
-            Log::info('✅ LIBERAÇÃO DE ACESSO VOUCHER CONCLUÍDA', [
-                'mac_address' => $macAddress,
-                'commands_count' => count($mikrotikCommands)
-            ]);
-
-            return true;
-
-        } catch (\Exception $e) {
-            Log::error('❌ ERRO NA LIBERAÇÃO DE ACESSO VOUCHER', [
-                'mac_address' => $macAddress,
-                'ip_address' => $ipAddress,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
-    }
-
-    /**
      * Executa comandos diretamente no MikroTik via API (se habilitado)
      */
     private function executeMikrotikCommands($commands)

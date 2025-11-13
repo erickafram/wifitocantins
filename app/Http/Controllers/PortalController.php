@@ -424,25 +424,7 @@ class PortalController extends Controller
 
     private function isLikelyMockMac(string $mac): bool
     {
-        // Padrões de MACs fictícios/virtuais mais específicos
-        $mockPatterns = [
-            '/^02:7F:00:00:/',           // MACs gerados pelo sistema (baseados em IP)
-            '/^00:00:00:00:00:00$/',     // MAC nulo
-            '/^FF:FF:FF:FF:FF:FF$/',     // MAC broadcast
-            '/^02:00:00:00:00:/',        // Alguns MACs virtuais
-            '/^00:50:56:/',              // VMware MACs
-            '/^00:0C:29:/',              // VMware MACs
-            '/^00:05:69:/',              // VMware MACs
-            '/^08:00:27:/',              // VirtualBox MACs
-        ];
-        
-        foreach ($mockPatterns as $pattern) {
-            if (preg_match($pattern, $mac)) {
-                return true;
-            }
-        }
-        
-        return false;
+        return (bool) preg_match('/^(02:|00:00:00|FF:FF:FF)/i', $mac);
     }
 
     /**
@@ -569,98 +551,22 @@ class PortalController extends Controller
                 ], 404);
             }
 
-            // Obtém informações do cliente ANTES de validar
-            $clientInfo = $this->getClientInfo($request);
-            $macAddress = $clientInfo['mac_address'];
-            $ipAddress = $clientInfo['ip_address'];
-
-            Log::info('🔍 Detectando dispositivo', [
-                'mac' => $macAddress,
-                'ip' => $ipAddress,
-                'is_mock' => $this->isLikelyMockMac($macAddress)
-            ]);
-
-            // Verificar se é MAC fictício
-            if ($this->isLikelyMockMac($macAddress)) {
-                Log::error('❌ Tentativa de usar voucher com MAC fictício', [
-                    'voucher' => $voucherCode,
-                    'mac' => $macAddress,
-                    'ip' => $ipAddress
-                ]);
+            // Valida voucher
+            if (!$voucher->isValid()) {
+                $reason = !$voucher->is_active ? 'Voucher desativado' : 
+                         ($voucher->expires_at && $voucher->expires_at->isPast() ? 'Voucher expirado' : 
+                         'Limite de horas diárias atingido');
                 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Erro ao detectar dispositivo. Tente novamente.'
+                    'message' => $reason
                 ], 400);
             }
 
-            // Verificar se este MAC já usou o voucher hoje
-            $existingUser = User::where('mac_address', $macAddress)
-                ->whereIn('status', ['active', 'connected'])
-                ->where('expires_at', '>', now())
-                ->first();
-
-            if ($existingUser) {
-                // Calcular tempo restante corretamente (sempre positivo)
-                $now = now();
-                $expiresAt = $existingUser->expires_at;
-                
-                if ($expiresAt->isFuture()) {
-                    $remainingMinutes = $now->diffInMinutes($expiresAt, false);
-                    $remainingHours = floor(abs($remainingMinutes) / 60);
-                    $remainingMins = abs($remainingMinutes) % 60;
-                    
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Você já usou este voucher hoje. Tempo restante: {$remainingHours}h {$remainingMins}min",
-                        'already_active' => true,
-                        'remaining_time' => [
-                            'hours' => $remainingHours,
-                            'minutes' => $remainingMins,
-                            'expires_at' => $expiresAt->toISOString()
-                        ]
-                    ], 400);
-                } else {
-                    // Sessão expirada, remover usuário e permitir nova ativação
-                    $existingUser->update(['status' => 'expired']);
-                    // Continuar com a validação normal
-                }
-            }
-
-            // Valida voucher
-            if (!$voucher->isValid()) {
-                if (!$voucher->is_active) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Voucher desativado.'
-                    ], 400);
-                }
-                
-                if ($voucher->expires_at && $voucher->expires_at->isPast()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Voucher expirado.'
-                    ], 400);
-                }
-                
-                // Limite de horas atingido
-                if (!$voucher->hasHoursAvailableToday()) {
-                    $nextReset = now()->addDay()->startOfDay()->addMinute();
-                    $hoursUntilReset = $nextReset->diffInHours(now());
-                    $minutesUntilReset = $nextReset->diffInMinutes(now()) % 60;
-                    
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Você atingiu o limite de {$voucher->daily_hours}h de uso diário. Aguarde {$hoursUntilReset}h {$minutesUntilReset}min para usar novamente.",
-                        'limit_reached' => true,
-                        'next_reset' => [
-                            'hours' => $hoursUntilReset,
-                            'minutes' => $minutesUntilReset,
-                            'reset_at' => $nextReset->toISOString()
-                        ]
-                    ], 400);
-                }
-            }
+            // Obtém informações do cliente
+            $clientInfo = $this->getClientInfo($request);
+            $macAddress = $clientInfo['mac_address'];
+            $ipAddress = $clientInfo['ip_address'];
 
             Log::info('🎫 Validando voucher de motorista', [
                 'voucher' => $voucherCode,
@@ -672,28 +578,21 @@ class PortalController extends Controller
                 'hours_used' => $voucher->daily_hours_used,
             ]);
 
-            // Calcular horas a conceder (máximo disponível hoje)
+            // Cria ou atualiza usuário
+            $user = User::updateOrCreate(
+                ['mac_address' => $macAddress],
+                [
+                    'name' => $voucher->driver_name,
+                    'ip_address' => $ipAddress,
+                    'device_name' => $clientInfo['device_type'],
+                    'status' => 'active',
+                    'connected_at' => now(),
+                    'expires_at' => now()->addHours($voucher->getRemainingHoursToday()),
+                ]
+            );
+
+            // Registra uso do voucher (apenas marca como usado, não incrementa horas)
             $hoursGranted = $voucher->getRemainingHoursToday();
-            
-            if ($hoursGranted <= 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sem horas disponíveis hoje.'
-                ], 400);
-            }
-
-            // Criar novo usuário (não atualizar existente)
-            $user = User::create([
-                'name' => $voucher->driver_name,
-                'mac_address' => $macAddress,
-                'ip_address' => $ipAddress,
-                'device_name' => $clientInfo['device_type'],
-                'status' => 'active',
-                'connected_at' => now(),
-                'expires_at' => now()->addHours($hoursGranted),
-            ]);
-
-            // Registra uso do voucher
             $voucher->recordUsage();
 
             // Libera acesso no Mikrotik
@@ -765,93 +664,5 @@ class PortalController extends Controller
             ]);
             throw $e;
         }
-    }
-
-    /**
-     * API para obter status atualizado do voucher
-     */
-    public function getVoucherStatus(Request $request)
-    {
-        try {
-            $request->validate([
-                'voucher_code' => 'required|string',
-            ]);
-
-            $voucherCode = strtoupper(trim($request->voucher_code));
-            
-            // Buscar voucher
-            $voucher = \App\Models\Voucher::where('code', $voucherCode)->first();
-
-            if (!$voucher) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Voucher não encontrado.'
-                ], 404);
-            }
-
-            // Buscar usuário associado ao voucher
-            $user = \App\Models\User::where('name', $voucher->driver_name)
-                ->whereIn('status', ['active', 'connected'])
-                ->first();
-
-            // Calcular status atualizado
-            $voucherStatus = $this->calculateVoucherStatus($voucher, $user);
-
-            return response()->json([
-                'success' => true,
-                'voucher_status' => $voucherStatus,
-                'updated_at' => now()->toISOString()
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Código do voucher é obrigatório.'
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('❌ Erro ao obter status do voucher', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao obter status do voucher.'
-            ], 500);
-        }
-    }
-
-    /**
-     * Calcula status atual do voucher
-     */
-    private function calculateVoucherStatus(\App\Models\Voucher $voucher, $user = null): array
-    {
-        $now = now();
-        $remainingHours = $voucher->getRemainingHoursToday();
-        $isValid = $voucher->isValid();
-        
-        // Calcular tempo restante da sessão atual
-        $sessionTimeLeft = null;
-        if ($user && $user->expires_at && $user->expires_at->isFuture()) {
-            $sessionTimeLeft = $user->expires_at->diffInMinutes($now);
-        }
-        
-        // Calcular quando pode usar novamente (próximo reset)
-        $nextResetTime = null;
-        if (!$voucher->hasHoursAvailableToday()) {
-            $nextResetTime = $now->copy()->addDay()->startOfDay()->addMinute(); // 00:01 do próximo dia
-        }
-        
-        return [
-            'is_valid' => $isValid,
-            'remaining_hours_today' => $remainingHours,
-            'hours_used_today' => $voucher->daily_hours_used,
-            'total_daily_hours' => $voucher->daily_hours,
-            'session_time_left_minutes' => $sessionTimeLeft,
-            'next_reset_time' => $nextResetTime?->toISOString(),
-            'voucher_type' => $voucher->voucher_type,
-            'last_used_date' => $voucher->last_used_date?->toDateString(),
-            'can_use_today' => $voucher->hasHoursAvailableToday(),
-        ];
     }
 }

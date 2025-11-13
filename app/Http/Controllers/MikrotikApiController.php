@@ -88,7 +88,7 @@ class MikrotikApiController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
-            // 🚀 CONSULTA ULTRA-RÁPIDA - Buscar usuários pagos ativos E usuários com vouchers ativos
+            // 🚀 CONSULTA ULTRA-RÁPIDA - Buscar usuários pagos ativos
             $paidUsers = User::whereIn('status', ['connected', 'active'])
                            ->where('expires_at', '>', now())
                            ->whereNotNull('mac_address')
