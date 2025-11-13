@@ -136,6 +136,56 @@ class Voucher extends Model
     }
 
     /**
+     * Incrementa horas usadas quando sessão expira
+     */
+    public function incrementHoursUsed(int $hours = 1): void
+    {
+        // Só incrementa se for voucher limitado e for o mesmo dia
+        if ($this->voucher_type === 'limited' && 
+            $this->last_used_date && 
+            $this->last_used_date->isToday()) {
+            
+            $this->daily_hours_used = min(
+                $this->daily_hours_used + $hours, 
+                $this->daily_hours
+            );
+            $this->save();
+        }
+    }
+
+    /**
+     * Finaliza sessão do voucher e incrementa horas usadas
+     */
+    public function endSession(int $hoursUsed = null): void
+    {
+        if ($this->voucher_type === 'unlimited') {
+            return; // Vouchers ilimitados não têm controle de horas
+        }
+
+        // Se não especificou horas, usar 1 hora como padrão
+        if ($hoursUsed === null) {
+            $hoursUsed = 1;
+        }
+
+        // Só incrementa se for o mesmo dia
+        if ($this->last_used_date && $this->last_used_date->isToday()) {
+            $this->daily_hours_used = min(
+                $this->daily_hours_used + $hoursUsed, 
+                $this->daily_hours
+            );
+            $this->save();
+
+            Log::info('🎫 Sessão de voucher finalizada', [
+                'voucher_code' => $this->code,
+                'driver_name' => $this->driver_name,
+                'hours_used' => $hoursUsed,
+                'total_used_today' => $this->daily_hours_used,
+                'daily_limit' => $this->daily_hours,
+            ]);
+        }
+    }
+
+    /**
      * Reseta contador diário (executado automaticamente)
      */
     public function resetDailyUsage(): void
