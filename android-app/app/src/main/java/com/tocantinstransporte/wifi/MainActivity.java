@@ -292,12 +292,18 @@ public class MainActivity extends Activity {
     }
     
     private void showNotification(String timeRemaining) {
+        // Log para debug
+        android.util.Log.d("MainActivity", "showNotification chamada com tempo: " + timeRemaining);
+        
         String contentText = "✅ Conectado! Sua internet está liberada";
         String bigText = contentText;
         
         if (timeRemaining != null && !timeRemaining.isEmpty()) {
             contentText = "✅ Conectado! Tempo: " + timeRemaining;
-            bigText = "✅ Você está conectado!\n\n⏱️ Tempo disponível: " + timeRemaining + "\n\nAproveite sua navegação!";
+            bigText = "✅ Você está conectado!\n\n⏱️ Tempo disponível: " + timeRemaining + "\n\n🌐 Aproveite sua navegação!";
+        } else {
+            // Tentar obter tempo da sessão se não foi passado
+            bigText = "✅ Você está conectado!\n\n🌐 Sua internet está liberada!\n\nAproveite sua navegação!";
         }
         
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -308,7 +314,8 @@ public class MainActivity extends Activity {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setVibrate(new long[]{0, 500, 200, 500})
-                .setLights(Color.GREEN, 1000, 1000);
+                .setLights(Color.GREEN, 1000, 1000)
+                .setDefaults(NotificationCompat.DEFAULT_SOUND);
         
         if (notificationManager == null) {
             notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -316,6 +323,7 @@ public class MainActivity extends Activity {
         
         if (notificationManager != null) {
             notificationManager.notify(1, builder.build());
+            android.util.Log.d("MainActivity", "Notificação enviada!");
         }
     }
     

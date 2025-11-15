@@ -228,7 +228,7 @@ class PortalDashboard {
         // Tentar obter tempo do plano da página
         var timeText = "";
         
-        // Procurar por elementos que possam conter informação de tempo
+        // 1. Procurar em elementos com data attributes
         var planElements = document.querySelectorAll('[data-plan-duration], .plan-duration, [data-duration]');
         
         if (planElements.length > 0) {
@@ -249,8 +249,29 @@ class PortalDashboard {
             }
         }
         
+        // 2. Se não encontrou, procurar em todo o body
+        if (!timeText) {
+            var bodyText = document.body.textContent || '';
+            var match = bodyText.match(/(\d+)\s*(hora|horas|minuto|minutos|dia|dias)/i);
+            
+            if (match) {
+                var amount = match[1];
+                var unit = match[2].toLowerCase();
+                
+                if (unit.includes('hora')) {
+                    timeText = amount + (amount == 1 ? " hora" : " horas");
+                } else if (unit.includes('minuto')) {
+                    timeText = amount + (amount == 1 ? " minuto" : " minutos");
+                } else if (unit.includes('dia')) {
+                    timeText = amount + (amount == 1 ? " dia" : " dias");
+                }
+            }
+        }
+        
+        console.log('Tempo detectado:', timeText || 'Nenhum');
+        
         // Se não encontrou, usar padrão
-        return timeText || "Tempo disponível";
+        return timeText || "";
     }
 
     showToast(message, type = 'success') {

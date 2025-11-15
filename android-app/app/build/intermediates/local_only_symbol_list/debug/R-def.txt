@@ -8,6 +8,8 @@ drawable ic_launcher
 drawable ic_launcher_foreground
 drawable icon_circle
 drawable splash_background
+id app_name_text
+id decorative_line
 id icon_text
 id logo_container
 id progress_bar

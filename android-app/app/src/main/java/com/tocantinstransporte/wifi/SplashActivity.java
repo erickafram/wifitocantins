@@ -10,30 +10,67 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class SplashActivity extends Activity {
     
-    private static final int SPLASH_DISPLAY_LENGTH = 3500; // 3.5 segundos
+    private static final int SPLASH_DISPLAY_LENGTH = 6000; // 6 segundos - tempo para redirecionamento
+    private WebView hiddenWebView;
+    private boolean webViewReady = false;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         
+        // Iniciar animações
         animateIcon();
         animateTexts();
         animateProgressBar();
+        
+        // Pré-carregar site em background
+        preloadWebsite();
         
         // Aguardar antes de abrir a MainActivity
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
+                mainIntent.putExtra("preloaded", webViewReady);
                 startActivity(mainIntent);
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 finish();
             }
         }, SPLASH_DISPLAY_LENGTH);
+    }
+    
+    private void preloadWebsite() {
+        // Criar WebView invisível para pré-carregar o site
+        hiddenWebView = new WebView(this);
+        hiddenWebView.getSettings().setJavaScriptEnabled(true);
+        hiddenWebView.getSettings().setDomStorageEnabled(true);
+        
+        hiddenWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // Site carregado e redirecionamentos completos
+                webViewReady = true;
+                android.util.Log.d("SplashActivity", "Site pré-carregado: " + url);
+            }
+        });
+        
+        // Carregar site em background
+        hiddenWebView.loadUrl("https://www.tocantinstransportewifi.com.br");
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (hiddenWebView != null) {
+            hiddenWebView.destroy();
+        }
     }
     
     private void animateIcon() {
@@ -114,6 +151,17 @@ public class SplashActivity extends Activity {
             ObjectAnimator alpha = ObjectAnimator.ofFloat(progressBar, "alpha", 0f, 1f);
             alpha.setDuration(500);
             alpha.setStartDelay(1800);
+            alpha.start();
+        }
+        
+        // Animar texto de carregamento
+        View loadingText = findViewById(R.id.loading_text);
+        if (loadingText != null) {
+            ObjectAnimator alpha = ObjectAnimator.ofFloat(loadingText, "alpha", 0f, 0.8f, 0.5f, 0.8f);
+            alpha.setDuration(2000);
+            alpha.setStartDelay(2000);
+            alpha.setRepeatCount(ObjectAnimator.INFINITE);
+            alpha.setRepeatMode(ObjectAnimator.REVERSE);
             alpha.start();
         }
     }

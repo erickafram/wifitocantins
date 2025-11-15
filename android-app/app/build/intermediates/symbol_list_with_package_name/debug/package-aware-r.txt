@@ -3153,6 +3153,7 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id app_name_text
 id arc
 id asConfigured
 id async
@@ -3214,6 +3215,7 @@ id date_picker_actions
 id decelerate
 id decelerateAndComplete
 id decor_content_parent
+id decorative_line
 id default_activity_button
 id deltaRelative
 id dependency_ordering
