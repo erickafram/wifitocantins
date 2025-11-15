@@ -1,6 +1,8 @@
 class PortalDashboard {
     constructor() {
         this.paymentData = window.__portalQrCode || null;
+        this.checkingPayment = false;
+        this.processingModal = null;
         this.init();
     }
 
@@ -64,7 +66,10 @@ class PortalDashboard {
                         📋 Copiar código PIX
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 text-center">Use o código copia-e-cola se preferir pagar pelo app.</p>
+                <p class="text-xs text-gray-500 text-center mb-3">Use o código copia-e-cola se preferir pagar pelo app.</p>
+                <button class="w-full px-4 py-3 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition" data-check-payment>
+                    ✅ Já Paguei - Verificar Pagamento
+                </button>
             </div>
         `;
 
@@ -81,7 +86,135 @@ class PortalDashboard {
             });
         });
 
+        modal.querySelector('[data-check-payment]')?.addEventListener('click', () => {
+            this.showProcessingModal();
+            modal.remove();
+        });
+
         document.body.appendChild(modal);
+    }
+
+    showProcessingModal() {
+        const existing = document.getElementById('processing-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'processing-modal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4';
+
+        modal.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
+                <div class="mb-6">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
+                        <svg class="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">🚀 Processando Pagamento</h3>
+                    <p class="text-gray-600 mb-4">Verificando confirmação e liberando acesso...</p>
+                </div>
+                
+                <div class="bg-blue-50 rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-center gap-3 mb-4">
+                        <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
+                        <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                        <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                    </div>
+                    <p class="text-sm font-semibold text-blue-800" id="processing-status">Verificando pagamento...</p>
+                    <p class="text-xs text-blue-600 mt-2" id="processing-timer">Tempo estimado: <span class="font-bold" id="timer-seconds">60</span>s</p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                    <p class="text-sm text-yellow-800">
+                        <span class="font-bold">⚠️ Importante:</span> Mantenha esta tela aberta durante o processo.
+                    </p>
+                </div>
+                
+                <div class="space-y-2 text-left text-sm text-gray-600">
+                    <div class="flex items-start gap-2">
+                        <span class="text-green-500">✓</span>
+                        <span>Verificando confirmação do pagamento</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-blue-500">⏳</span>
+                        <span>Configurando liberação de internet</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-gray-400">○</span>
+                        <span>Ativando conexão Starlink</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        this.processingModal = modal;
+        
+        // Iniciar timer de 60 segundos
+        this.startProcessingTimer();
+    }
+
+    startProcessingTimer() {
+        let seconds = 60;
+        const timerElement = document.getElementById('timer-seconds');
+        const statusElement = document.getElementById('processing-status');
+        
+        const interval = setInterval(() => {
+            seconds--;
+            if (timerElement) {
+                timerElement.textContent = seconds;
+            }
+            
+            // Atualizar mensagens conforme o tempo
+            if (seconds === 45 && statusElement) {
+                statusElement.textContent = 'Pagamento confirmado! Configurando acesso...';
+            } else if (seconds === 30 && statusElement) {
+                statusElement.textContent = 'Liberando internet na rede Starlink...';
+            } else if (seconds === 15 && statusElement) {
+                statusElement.textContent = 'Finalizando configuração...';
+            } else if (seconds <= 0) {
+                clearInterval(interval);
+                this.showSuccessModal();
+            }
+        }, 1000);
+    }
+
+    showSuccessModal() {
+        if (this.processingModal) {
+            this.processingModal.remove();
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4';
+
+        modal.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
+                <div class="mb-6">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+                        <span class="text-5xl">✅</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Internet Liberada!</h3>
+                    <p class="text-gray-600">Sua conexão está ativa e pronta para uso.</p>
+                </div>
+                
+                <div class="bg-green-50 rounded-2xl p-6 mb-6">
+                    <p class="text-sm font-semibold text-green-800 mb-2">🌐 Você já pode navegar!</p>
+                    <p class="text-xs text-green-600">Aproveite sua viagem com internet de alta velocidade.</p>
+                </div>
+                
+                <button class="w-full px-4 py-3 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 transition" onclick="location.reload()">
+                    🎉 Começar a Navegar
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        
+        // Auto-fechar e recarregar após 5 segundos
+        setTimeout(() => {
+            location.reload();
+        }, 5000);
     }
 
     showToast(message, type = 'success') {
