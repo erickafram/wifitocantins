@@ -11,6 +11,7 @@ drawable splash_background
 id app_name_text
 id decorative_line
 id icon_text
+id loading_text
 id logo_container
 id progress_bar
 id webview

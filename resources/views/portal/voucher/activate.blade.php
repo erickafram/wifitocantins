@@ -21,27 +21,46 @@
             </div>
             <script>
                 // Notificar app Android quando voucher for ativado com sucesso
-                if (window.AndroidApp && typeof window.AndroidApp.showConnectionNotification === 'function') {
-                    // Extrair tempo da mensagem de sucesso se disponível
-                    var successMessage = "{{ session('success') }}";
-                    var timeMatch = successMessage.match(/(\d+)\s*(hora|horas|minuto|minutos|dia|dias)/i);
-                    var timeText = "";
+                (function() {
+                    console.log('Verificando AndroidApp interface...');
                     
-                    if (timeMatch) {
-                        var amount = timeMatch[1];
-                        var unit = timeMatch[2].toLowerCase();
+                    if (window.AndroidApp && typeof window.AndroidApp.showConnectionNotification === 'function') {
+                        console.log('AndroidApp detectado! Enviando notificação...');
                         
-                        if (unit.includes('hora')) {
-                            timeText = amount + (amount == 1 ? " hora" : " horas");
-                        } else if (unit.includes('minuto')) {
-                            timeText = amount + (amount == 1 ? " minuto" : " minutos");
-                        } else if (unit.includes('dia')) {
-                            timeText = amount + (amount == 1 ? " dia" : " dias");
+                        // Extrair tempo da mensagem de sucesso se disponível
+                        var successMessage = "{{ session('success') }}";
+                        console.log('Mensagem de sucesso:', successMessage);
+                        
+                        var timeMatch = successMessage.match(/(\d+)\s*(hora|horas|minuto|minutos|dia|dias)/i);
+                        var timeText = "";
+                        
+                        if (timeMatch) {
+                            var amount = timeMatch[1];
+                            var unit = timeMatch[2].toLowerCase();
+                            
+                            if (unit.includes('hora')) {
+                                timeText = amount + (amount == 1 ? " hora" : " horas");
+                            } else if (unit.includes('minuto')) {
+                                timeText = amount + (amount == 1 ? " minuto" : " minutos");
+                            } else if (unit.includes('dia')) {
+                                timeText = amount + (amount == 1 ? " dia" : " dias");
+                            }
                         }
+                        
+                        console.log('Tempo extraído:', timeText || 'Nenhum');
+                        
+                        // Enviar notificação
+                        window.AndroidApp.showConnectionNotification(timeText || "");
+                        console.log('Notificação enviada!');
+                        
+                        // Também mostrar toast visual
+                        setTimeout(function() {
+                            alert('✅ Conectado! Sua internet está liberada' + (timeText ? '\n⏱️ Tempo: ' + timeText : ''));
+                        }, 500);
+                    } else {
+                        console.log('AndroidApp não detectado (navegador web)');
                     }
-                    
-                    window.AndroidApp.showConnectionNotification(timeText || "Tempo disponível");
-                }
+                })();
             </script>
         @endif
 

@@ -42,6 +42,9 @@ public class MainActivity extends Activity {
         
         webView = findViewById(R.id.webview);
         
+        // Inicialmente invisível para evitar flash branco
+        webView.setVisibility(android.view.View.INVISIBLE);
+        
         // Inicializar notificações
         createNotificationChannel();
         
@@ -95,9 +98,15 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                
+                // Tornar WebView visível após carregamento
+                webView.setVisibility(android.view.View.VISIBLE);
+                
                 // Injetar CSS e JavaScript para melhorar experiência mobile
                 injectCustomCSS();
                 injectNotificationScript();
+                
+                android.util.Log.d("MainActivity", "Página carregada: " + url);
             }
         });
         

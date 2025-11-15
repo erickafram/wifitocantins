@@ -15,14 +15,18 @@ import android.webkit.WebViewClient;
 
 public class SplashActivity extends Activity {
     
-    private static final int SPLASH_DISPLAY_LENGTH = 6000; // 6 segundos - tempo para redirecionamento
+    private static final int SPLASH_MIN_LENGTH = 8000; // 8 segundos mínimo
+    private static final int SPLASH_MAX_LENGTH = 12000; // 12 segundos máximo
     private WebView hiddenWebView;
     private boolean webViewReady = false;
+    private long startTime;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        
+        startTime = System.currentTimeMillis();
         
         // Iniciar animações
         animateIcon();
@@ -32,17 +36,36 @@ public class SplashActivity extends Activity {
         // Pré-carregar site em background
         preloadWebsite();
         
-        // Aguardar antes de abrir a MainActivity
+        // Verificar periodicamente se pode avançar
+        checkAndProceed();
+    }
+    
+    private void checkAndProceed() {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-                mainIntent.putExtra("preloaded", webViewReady);
-                startActivity(mainIntent);
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                finish();
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                
+                // Só avança se:
+                // 1. Passou o tempo mínimo (8s) E site está pronto
+                // OU
+                // 2. Passou o tempo máximo (12s) independente do site
+                if ((elapsedTime >= SPLASH_MIN_LENGTH && webViewReady) || 
+                    elapsedTime >= SPLASH_MAX_LENGTH) {
+                    
+                    android.util.Log.d("SplashActivity", "Avançando após " + elapsedTime + "ms, site pronto: " + webViewReady);
+                    
+                    Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
+                    mainIntent.putExtra("preloaded", webViewReady);
+                    startActivity(mainIntent);
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    finish();
+                } else {
+                    // Verificar novamente em 500ms
+                    checkAndProceed();
+                }
             }
-        }, SPLASH_DISPLAY_LENGTH);
+        }, 500);
     }
     
     private void preloadWebsite() {
@@ -50,18 +73,53 @@ public class SplashActivity extends Activity {
         hiddenWebView = new WebView(this);
         hiddenWebView.getSettings().setJavaScriptEnabled(true);
         hiddenWebView.getSettings().setDomStorageEnabled(true);
+        hiddenWebView.getSettings().setLoadWithOverviewMode(true);
+        hiddenWebView.getSettings().setUseWideViewPort(true);
         
         hiddenWebView.setWebViewClient(new WebViewClient() {
+            private int redirectCount = 0;
+            private String lastUrl = "";
+            
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                android.util.Log.d("SplashActivity", "Carregando: " + url);
+                
+                // Contar redirecionamentos
+                if (!url.equals(lastUrl)) {
+                    redirectCount++;
+                    lastUrl = url;
+                }
+            }
+            
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // Site carregado e redirecionamentos completos
-                webViewReady = true;
-                android.util.Log.d("SplashActivity", "Site pré-carregado: " + url);
+                
+                // Aguardar um pouco para garantir que não há mais redirecionamentos
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        String currentUrl = view.getUrl();
+                        if (currentUrl != null && currentUrl.equals(lastUrl)) {
+                            // URL estável, redirecionamentos completos
+                            webViewReady = true;
+                            android.util.Log.d("SplashActivity", 
+                                "Site pronto após " + redirectCount + " redirecionamentos: " + currentUrl);
+                        }
+                    }
+                }, 1500); // Aguardar 1.5s para confirmar que não há mais redirecionamentos
+            }
+            
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // Permitir todos os redirecionamentos
+                return false;
             }
         });
         
         // Carregar site em background
+        android.util.Log.d("SplashActivity", "Iniciando pré-carregamento do site...");
         hiddenWebView.loadUrl("https://www.tocantinstransportewifi.com.br");
     }
     
