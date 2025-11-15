@@ -17,13 +17,15 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
-        if (auth()->check() && ! in_array(auth()->user()->role, ['admin', 'manager'], true)) {
-            return redirect()->route('portal.dashboard');
-        }
-
-        // Se deve forçar redirecionamento MikroTik, mostrar splash screen
+        // PRIORIDADE 1: Se deve forçar redirecionamento MikroTik, mostrar splash screen
+        // (isso deve acontecer ANTES de verificar autenticação)
         if ($this->shouldForceMikrotikRedirect($request)) {
             return $this->showSplashScreen($request);
+        }
+
+        // PRIORIDADE 2: Redirecionar usuários autenticados para dashboard
+        if (auth()->check() && ! in_array(auth()->user()->role, ['admin', 'manager'], true)) {
+            return redirect()->route('portal.dashboard');
         }
 
         $clientInfo = $this->getClientInfo($request);

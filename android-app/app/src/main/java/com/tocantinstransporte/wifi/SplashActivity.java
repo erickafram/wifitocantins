@@ -47,25 +47,58 @@ public class SplashActivity extends Activity {
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 
                 // Só avança se:
-                // 1. Passou o tempo mínimo (8s) E site está pronto
+                // 1. Passou o tempo mínimo (10s) E site está pronto
                 // OU
-                // 2. Passou o tempo máximo (12s) independente do site
+                // 2. Passou o tempo máximo (15s) independente do site
                 if ((elapsedTime >= SPLASH_MIN_LENGTH && webViewReady) || 
                     elapsedTime >= SPLASH_MAX_LENGTH) {
                     
                     android.util.Log.d("SplashActivity", "Avançando após " + elapsedTime + "ms, site pronto: " + webViewReady);
                     
-                    Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-                    mainIntent.putExtra("preloaded", webViewReady);
-                    startActivity(mainIntent);
-                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                    finish();
+                    // Fazer fade out de todos os elementos antes de transição
+                    fadeOutAndProceed();
                 } else {
                     // Verificar novamente em 500ms
                     checkAndProceed();
                 }
             }
         }, 500);
+    }
+    
+    private void fadeOutAndProceed() {
+        // Pegar todos os elementos visíveis
+        View logoContainer = findViewById(R.id.logo_container);
+        View rootLayout = findViewById(android.R.id.content);
+        
+        // Duração do fade out
+        int fadeDuration = 500;
+        
+        // Animar fade out do container do logo (inclui todos os elementos)
+        if (logoContainer != null) {
+            logoContainer.animate()
+                .alpha(0f)
+                .setDuration(fadeDuration)
+                .start();
+        }
+        
+        // Animar fade out do layout raiz (fundo)
+        if (rootLayout != null) {
+            rootLayout.animate()
+                .alpha(0f)
+                .setDuration(fadeDuration)
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Após fade out completo, ir para MainActivity
+                        Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
+                        mainIntent.putExtra("preloaded", webViewReady);
+                        startActivity(mainIntent);
+                        overridePendingTransition(0, 0); // Sem animação adicional
+                        finish();
+                    }
+                })
+                .start();
+        }
     }
     
     private void preloadWebsite() {
