@@ -147,14 +147,14 @@ class MikrotikApiController extends Controller
 
             if ($format === 'routeros') {
                 $lines = [];
-                $lines[] = 'STATUS|success|'.now()->toISOString();
+                $lines[] = 'STATUS|success|'.now()->format('Y-m-d\TH:i:s');
 
                 foreach ($paidUsers as $user) {
                     $lines[] = implode('|', [
                         'LIBERATE',
                         $user->mac_address,
                         $user->ip_address ?? '',
-                        optional($user->expires_at)->toISOString() ?? '',
+                        optional($user->expires_at)->format('Y-m-d\TH:i:s') ?? '',
                         (string) $user->id,
                     ]);
                 }
@@ -164,7 +164,7 @@ class MikrotikApiController extends Controller
                         'REMOVE',
                         $user->mac_address,
                         $user->ip_address ?? '',
-                        optional($user->expires_at)->toISOString() ?? '',
+                        optional($user->expires_at)->format('Y-m-d\TH:i:s') ?? '',
                         (string) $user->id,
                     ]);
                 }
@@ -185,12 +185,12 @@ class MikrotikApiController extends Controller
 
             $response = [
                 'success' => true,
-                'timestamp' => now()->toISOString(),
+                'timestamp' => now()->format('Y-m-d\TH:i:s'),
                 'liberate_macs' => $paidUsers->map(function ($user) {
                     return [
                         'mac_address' => $user->mac_address,
                         'ip_address' => $user->ip_address,
-                        'expires_at' => $user->expires_at->toISOString(),
+                        'expires_at' => $user->expires_at->format('Y-m-d\TH:i:s'),
                         'user_id' => $user->id,
                         'action' => 'LIBERATE',
                     ];
@@ -199,7 +199,7 @@ class MikrotikApiController extends Controller
                     return [
                         'mac_address' => $user->mac_address,
                         'ip_address' => $user->ip_address,
-                        'expired_at' => $user->expires_at->toISOString(),
+                        'expired_at' => $user->expires_at->format('Y-m-d\TH:i:s'),
                         'user_id' => $user->id,
                         'action' => 'REMOVE',
                     ];
