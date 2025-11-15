@@ -66,22 +66,45 @@ public class SplashActivity extends Activity {
     }
     
     private void fadeOutAndProceed() {
-        // Pegar todos os elementos visíveis
-        View logoContainer = findViewById(R.id.logo_container);
+        // Duração do fade out - AUMENTADA para 800ms
+        int fadeDuration = 800;
+        
+        // Pegar TODOS os elementos da tela
         View rootLayout = findViewById(android.R.id.content);
+        View logoContainer = findViewById(R.id.logo_container);
+        View iconText = findViewById(R.id.icon_text);
+        View welcomeText = findViewById(R.id.welcome_text);
+        View appNameText = findViewById(R.id.app_name_text);
+        View decorativeLine = findViewById(R.id.decorative_line);
+        View progressBar = findViewById(R.id.progress_bar);
+        View loadingText = findViewById(R.id.loading_text);
         
-        // Duração do fade out
-        int fadeDuration = 500;
+        android.util.Log.d("SplashActivity", "Iniciando fade out de todos os elementos");
         
-        // Animar fade out do container do logo (inclui todos os elementos)
+        // Fazer fade out SIMULTÂNEO de todos os elementos
+        if (iconText != null) {
+            iconText.animate().alpha(0f).setDuration(fadeDuration).start();
+        }
+        if (welcomeText != null) {
+            welcomeText.animate().alpha(0f).setDuration(fadeDuration).start();
+        }
+        if (appNameText != null) {
+            appNameText.animate().alpha(0f).setDuration(fadeDuration).start();
+        }
+        if (decorativeLine != null) {
+            decorativeLine.animate().alpha(0f).setDuration(fadeDuration).start();
+        }
+        if (progressBar != null) {
+            progressBar.animate().alpha(0f).setDuration(fadeDuration).start();
+        }
+        if (loadingText != null) {
+            loadingText.animate().alpha(0f).setDuration(fadeDuration).start();
+        }
         if (logoContainer != null) {
-            logoContainer.animate()
-                .alpha(0f)
-                .setDuration(fadeDuration)
-                .start();
+            logoContainer.animate().alpha(0f).setDuration(fadeDuration).start();
         }
         
-        // Animar fade out do layout raiz (fundo)
+        // Fade out do fundo (rootLayout) com callback para ir para MainActivity
         if (rootLayout != null) {
             rootLayout.animate()
                 .alpha(0f)
@@ -89,6 +112,7 @@ public class SplashActivity extends Activity {
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
+                        android.util.Log.d("SplashActivity", "Fade out completo, indo para MainActivity");
                         // Após fade out completo, ir para MainActivity
                         Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
                         mainIntent.putExtra("preloaded", webViewReady);

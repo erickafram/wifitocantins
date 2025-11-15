@@ -49,13 +49,16 @@ class PortalController extends Controller
     {
         $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
         
+        // URL de destino: onde o MikroTik deve redirecionar após capturar MAC/IP
+        // Importante: não usar fullUrl() pois pode criar loop
         $portalUrl = config('wifi.server_url', config('app.url'));
-        $desiredUrl = $request->fullUrl();
-        $destination = $portalUrl ?: $desiredUrl;
+        
+        // Construir URL de retorno com parâmetros que serão preenchidos pelo MikroTik
+        // O MikroTik vai substituir $(mac) e $(ip) pelos valores reais
+        $returnUrl = $portalUrl . '?source=mikrotik&captive=true&from_mikrotik=1';
         
         $query = [
-            'dst' => $destination,
-            'return_url' => $desiredUrl,
+            'dst' => $returnUrl,
             'from_portal' => 1,
         ];
         
@@ -68,6 +71,7 @@ class PortalController extends Controller
         
         Log::info('🎬 Exibindo splash screen com MikroTik em background', [
             'mikrotik_url' => $mikrotikUrl,
+            'return_url' => $returnUrl,
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);

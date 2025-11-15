@@ -178,6 +178,19 @@
                     if (iframeUrl.includes('{{ parse_url(config('app.url'), PHP_URL_HOST) }}')) {
                         mikrotikReady = true;
                         console.log('✅ Processo MikroTik completo!');
+                        
+                        // Extrair parâmetros MAC e IP da URL do iframe
+                        const urlParams = new URLSearchParams(new URL(iframeUrl).search);
+                        const mac = urlParams.get('mac') || urlParams.get('mikrotik_mac') || urlParams.get('client_mac');
+                        const ip = urlParams.get('ip') || urlParams.get('client_ip');
+                        
+                        if (mac && ip) {
+                            console.log('✅ MAC capturado:', mac);
+                            console.log('✅ IP capturado:', ip);
+                            // Armazenar para usar no redirecionamento
+                            window.capturedMac = mac;
+                            window.capturedIp = ip;
+                        }
                     }
                 } catch (e) {
                     // CORS bloqueou - assumir que está em domínio diferente (MikroTik)
@@ -200,8 +213,23 @@
                 console.log('📡 MikroTik pronto:', mikrotikReady);
                 console.log('🔄 Redirecionamentos:', redirectCount);
                 
-                // Redirecionar para a página principal com parâmetro indicando que já passou pelo splash
-                window.location.href = '{{ route('portal.index') }}?skip_login=1&from_splash=1';
+                // Construir URL com parâmetros capturados
+                let redirectUrl = '{{ route('portal.index') }}?source=mikrotik&captive=true&from_splash=1';
+                
+                // Adicionar MAC e IP se foram capturados
+                if (window.capturedMac) {
+                    redirectUrl += '&mac=' + encodeURIComponent(window.capturedMac);
+                    console.log('📤 Enviando MAC:', window.capturedMac);
+                }
+                if (window.capturedIp) {
+                    redirectUrl += '&ip=' + encodeURIComponent(window.capturedIp);
+                    console.log('📤 Enviando IP:', window.capturedIp);
+                }
+                
+                console.log('🔗 URL de redirecionamento:', redirectUrl);
+                
+                // Redirecionar para a página principal
+                window.location.href = redirectUrl;
             } else {
                 // Verificar novamente em 500ms
                 setTimeout(checkAndProceed, CHECK_INTERVAL);
