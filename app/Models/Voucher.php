@@ -86,7 +86,7 @@ class Voucher extends Model
     /**
      * Obtém horas restantes para hoje
      */
-    public function getRemainingHoursToday(): int
+    public function getRemainingHoursToday(): float
     {
         if ($this->voucher_type === 'unlimited') {
             return 999; // Valor simbólico para ilimitado
@@ -94,10 +94,32 @@ class Voucher extends Model
 
         // Reseta se for novo dia
         if ($this->last_used_date && !$this->last_used_date->isToday()) {
-            return $this->daily_hours;
+            return (float) $this->daily_hours;
         }
 
-        return max(0, $this->daily_hours - $this->daily_hours_used);
+        return max(0, (float) $this->daily_hours - (float) $this->daily_hours_used);
+    }
+
+    /**
+     * Formata horas em texto legível (ex: 2h 30min, 45min, 3min)
+     */
+    public function formatHours(float $hours): string
+    {
+        // Valor simbólico para ilimitado
+        if ($hours >= 999) {
+            return 'Ilimitado';
+        }
+        
+        if ($hours >= 1) {
+            $h = floor($hours);
+            $m = round(($hours - $h) * 60);
+            return $m > 0 ? "{$h}h {$m}min" : "{$h}h";
+        } else if ($hours > 0) {
+            $m = round($hours * 60);
+            return "{$m}min";
+        } else {
+            return "0min";
+        }
     }
 
     /**

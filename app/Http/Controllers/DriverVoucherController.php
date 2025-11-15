@@ -233,7 +233,10 @@ class DriverVoucherController extends Controller
 
             // 8. Calcular tempo de expiração baseado nas horas do voucher
             $hoursAvailable = $voucher->getRemainingHoursToday();
-            $expiresAt = now()->addHours($hoursAvailable);
+            
+            // Adicionar tempo usando minutos para maior precisão
+            $minutesToAdd = round($hoursAvailable * 60);
+            $expiresAt = now()->addMinutes($minutesToAdd);
 
             // Para vouchers limitados, nunca passar de hoje às 23:59
             if ($voucher->voucher_type === 'limited') {
@@ -242,6 +245,12 @@ class DriverVoucherController extends Controller
                     $expiresAt = $endOfDay;
                 }
             }
+            
+            Log::info('📅 Calculando expiração', [
+                'hours_available' => $hoursAvailable,
+                'minutes_to_add' => $minutesToAdd,
+                'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+            ]);
 
             // 9. Atualizar tempo de expiração
             $user->update([
@@ -270,17 +279,21 @@ class DriverVoucherController extends Controller
 
             DB::commit();
 
+            // Formatar tempo concedido
+            $timeGranted = $voucher->formatHours($hoursAvailable);
+
             Log::info('🎫 Voucher ativado para motorista', [
                 'user_id' => $user->id,
                 'voucher_code' => $voucherCode,
                 'driver_phone' => $driverPhone,
                 'mac_address' => $macAddress,
-                'expires_at' => $expiresAt->toISOString(),
+                'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
                 'hours_granted' => $hoursAvailable,
+                'time_granted' => $timeGranted,
             ]);
 
             return redirect()->route('voucher.status', ['phone' => $driverPhone])
-                ->with('success', 'Voucher ativado com sucesso! Você tem ' . $hoursAvailable . ' horas de acesso hoje.');
+                ->with('success', "Voucher ativado com sucesso! Você tem {$timeGranted} de acesso.");
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -342,6 +355,14 @@ class DriverVoucherController extends Controller
 
         // Calcular horas disponíveis hoje
         $hoursAvailableToday = $voucher ? $voucher->getRemainingHoursToday() : 0;
+        $hoursAvailableTodayFormatted = $voucher ? $voucher->formatHours($hoursAvailableToday) : '0h';
+        
+        // Formatar tempo restante
+        $timeRemainingFormatted = null;
+        if ($timeRemaining) {
+            $totalHours = $timeRemaining['total_minutes'] / 60;
+            $timeRemainingFormatted = $voucher->formatHours($totalHours);
+        }
 
         return view('portal.voucher.status', [
             'phone' => $driverPhone,
@@ -349,7 +370,9 @@ class DriverVoucherController extends Controller
             'voucher' => $voucher,
             'isActive' => $isActive,
             'timeRemaining' => $timeRemaining,
+            'timeRemainingFormatted' => $timeRemainingFormatted,
             'hoursAvailableToday' => $hoursAvailableToday,
+            'hoursAvailableTodayFormatted' => $hoursAvailableTodayFormatted,
         ]);
     }
 

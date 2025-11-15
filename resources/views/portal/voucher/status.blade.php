@@ -104,7 +104,7 @@
                             <div class="flex justify-between items-center py-3 border-b">
                                 <span class="text-gray-600 font-medium">⏰ Tempo Restante</span>
                                 <span class="font-bold text-green-600 text-xl">
-                                    {{ $timeRemaining['hours'] }}h {{ $timeRemaining['minutes'] }}min
+                                    {{ $timeRemainingFormatted ?? $timeRemaining['hours'] . 'h ' . $timeRemaining['minutes'] . 'min' }}
                                 </span>
                             </div>
 
@@ -115,8 +115,8 @@
                         @endif
 
                         <div class="flex justify-between items-center py-3 border-b">
-                            <span class="text-gray-600 font-medium">📅 Horas Disponíveis Hoje</span>
-                            <span class="font-bold text-blue-600">{{ $hoursAvailableToday }}h</span>
+                            <span class="text-gray-600 font-medium">📅 Tempo Disponível Hoje</span>
+                            <span class="font-bold text-blue-600">{{ $hoursAvailableTodayFormatted ?? $hoursAvailableToday . 'h' }}</span>
                         </div>
 
                         @if ($voucher)
@@ -173,7 +173,7 @@
                             Conexão Ativa
                         </h3>
                         <p>Seu voucher está ativo e você pode navegar livremente até {{ $user->expires_at->format('d/m/Y H:i') }}.</p>
-                        <p class="mt-2">Tempo restante: <strong>{{ $timeRemaining['total_minutes'] }} minutos</strong></p>
+                        <p class="mt-2">Tempo restante: <strong>{{ $timeRemainingFormatted ?? $timeRemaining['total_minutes'] . ' minutos' }}</strong></p>
                     </div>
                 @else
                     <div class="bg-yellow-50 rounded-2xl p-6 text-sm text-yellow-900">
@@ -183,7 +183,7 @@
                         </h3>
                         <p>Seu voucher expirou. Para continuar navegando, você precisa ativar o voucher novamente.</p>
                         @if ($hoursAvailableToday > 0)
-                            <p class="mt-2">Você ainda tem <strong>{{ $hoursAvailableToday }} horas</strong> disponíveis hoje!</p>
+                            <p class="mt-2">Você ainda tem <strong>{{ $hoursAvailableTodayFormatted }}</strong> disponíveis hoje!</p>
                         @else
                             <p class="mt-2 text-red-700">Você atingiu o limite diário. Tente novamente amanhã.</p>
                         @endif
