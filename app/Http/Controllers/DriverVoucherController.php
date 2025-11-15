@@ -147,7 +147,42 @@ class DriverVoucherController extends Controller
                 );
             }
 
-            // 5. Verificar se já usou o voucher hoje e atingiu o limite
+            // 5. VALIDAÇÃO DO INTERVALO ENTRE ATIVAÇÕES
+            // Verificar se já usou o voucher e quanto tempo se passou desde a última ativação
+            $lastUsedUser = User::where('driver_phone', $driverPhone)
+                ->where('voucher_id', $voucher->id)
+                ->whereNotNull('voucher_activated_at')
+                ->orderBy('voucher_activated_at', 'desc')
+                ->first();
+
+            if ($lastUsedUser && $lastUsedUser->voucher_activated_at) {
+                $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at);
+                $intervalRequired = $voucher->activation_interval_hours ?? 24;
+
+                if ($hoursSinceLastActivation < $intervalRequired) {
+                    DB::commit();
+
+                    // Calcular tempo restante até poder ativar novamente
+                    $nextAvailableTime = $lastUsedUser->voucher_activated_at->addHours($intervalRequired);
+                    $hoursRemaining = now()->diffInHours($nextAvailableTime);
+                    $minutesRemaining = now()->diff($nextAvailableTime)->i;
+                    
+                    // Formatar tempo de intervalo
+                    $intervalFormatted = $intervalRequired >= 1 
+                        ? floor($intervalRequired) . 'h' . ($intervalRequired != floor($intervalRequired) ? ' ' . (($intervalRequired - floor($intervalRequired)) * 60) . 'min' : '')
+                        : ($intervalRequired * 60) . ' minutos';
+                    
+                    return back()->with('error', 
+                        "⏰ AGUARDE O INTERVALO!\n\n" .
+                        "Este voucher requer um intervalo de {$intervalFormatted} entre ativações.\n\n" .
+                        "⏱️ Última ativação: " . $lastUsedUser->voucher_activated_at->format('d/m/Y H:i') . "\n" .
+                        "🕐 Próxima ativação disponível: " . $nextAvailableTime->format('d/m/Y H:i') . "\n\n" .
+                        "⏳ Aguarde mais: {$hoursRemaining}h {$minutesRemaining}min"
+                    );
+                }
+            }
+
+            // 6. Verificar se já usou o voucher hoje e atingiu o limite
             $existingExpiredUser = User::where('driver_phone', $driverPhone)
                 ->where('voucher_id', $voucher->id)
                 ->whereNotNull('voucher_activated_at')
@@ -169,7 +204,7 @@ class DriverVoucherController extends Controller
                 );
             }
 
-            // 6. Criar ou atualizar usuário motorista
+            // 7. Criar ou atualizar usuário motorista
             $user = User::where('driver_phone', $driverPhone)->first();
 
             if (!$user) {
@@ -197,7 +232,7 @@ class DriverVoucherController extends Controller
                 ]);
             }
 
-            // 7. Calcular tempo de expiração baseado nas horas do voucher
+            // 8. Calcular tempo de expiração baseado nas horas do voucher
             $hoursAvailable = $voucher->getRemainingHoursToday();
             $expiresAt = now()->addHours($hoursAvailable);
 
@@ -209,7 +244,7 @@ class DriverVoucherController extends Controller
                 }
             }
 
-            // 8. Atualizar tempo de expiração
+            // 9. Atualizar tempo de expiração
             $user->update([
                 'connected_at' => now(),
                 'expires_at' => $expiresAt,
@@ -217,10 +252,10 @@ class DriverVoucherController extends Controller
                 'voucher_daily_minutes_used' => 0, // Resetar contador diário
             ]);
 
-            // 9. Registrar uso do voucher
+            // 10. Registrar uso do voucher
             $voucher->recordUsage($hoursAvailable);
 
-            // 10. Criar sessão de acesso
+            // 11. Criar sessão de acesso
             Session::create([
                 'user_id' => $user->id,
                 'payment_id' => null, // Motorista não paga
@@ -228,10 +263,10 @@ class DriverVoucherController extends Controller
                 'session_status' => 'active',
             ]);
 
-            // 11. Registrar MAC no Mikrotik para liberação
+            // 12. Registrar MAC no Mikrotik para liberação
             $this->registerMacInMikrotik($macAddress, $ipAddress, $user->id);
 
-            // 12. Tentar liberar acesso imediatamente no Mikrotik
+            // 13. Tentar liberar acesso imediatamente no Mikrotik
             $this->liberateAccessOnMikrotik($user);
 
             DB::commit();

@@ -120,28 +120,71 @@
                     @enderror
                 </div>
 
-                <!-- Horas Diárias -->
+                <!-- Tempo Diário Permitido -->
                 <div id="daily_hours_container">
-                    <label for="daily_hours" class="block text-sm font-bold text-gray-700 mb-2">
-                        ⏰ Horas Diárias Permitidas *
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        ⏰ Tempo Diário Permitido *
                     </label>
-                    <div class="flex items-center gap-4">
-                        <input 
-                            type="number" 
-                            name="daily_hours" 
-                            id="daily_hours" 
-                            value="{{ old('daily_hours', 24) }}"
-                            min="1"
-                            max="24"
-                            class="w-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                            required
-                        >
-                        <span class="text-gray-600">horas por dia</span>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="daily_hours" class="block text-xs text-gray-600 mb-1">Horas</label>
+                            <input 
+                                type="number" 
+                                name="daily_hours" 
+                                id="daily_hours" 
+                                value="{{ old('daily_hours', 2) }}"
+                                min="0"
+                                max="24"
+                                step="0.01"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Formato</label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
+                                <option>Horas (aceita decimais)</option>
+                            </select>
+                        </div>
                     </div>
                     <p class="mt-2 text-sm text-gray-500">
-                        💡 Define quantas horas o motorista pode usar por dia (1-24 horas)
+                        💡 <strong>Exemplos:</strong> 2 = 2 horas | 2.5 = 2h30min | 0.5 = 30 minutos
                     </p>
                     @error('daily_hours')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Intervalo entre Ativações -->
+                <div>
+                    <label for="activation_interval_hours" class="block text-sm font-bold text-gray-700 mb-2">
+                        🕐 Intervalo entre Ativações *
+                    </label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <input 
+                                type="number" 
+                                name="activation_interval_hours" 
+                                id="activation_interval_hours" 
+                                value="{{ old('activation_interval_hours', 24) }}"
+                                min="0.5"
+                                max="168"
+                                step="0.5"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
+                                <option>Horas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        🔒 <strong>Tempo mínimo</strong> que o motorista deve aguardar para ativar novamente após o uso.<br>
+                        💡 <strong>Exemplos:</strong> 24 = pode usar 1x por dia | 12 = pode usar a cada 12h | 168 = pode usar 1x por semana
+                    </p>
+                    @error('activation_interval_hours')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>

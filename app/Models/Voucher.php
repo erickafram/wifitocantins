@@ -14,6 +14,7 @@ class Voucher extends Model
         'driver_phone',
         'daily_hours',
         'daily_hours_used',
+        'activation_interval_hours',
         'last_used_date',
         'expires_at',
         'activated_at',
@@ -29,8 +30,9 @@ class Voucher extends Model
             'activated_at' => 'datetime',
             'last_used_date' => 'date',
             'is_active' => 'boolean',
-            'daily_hours' => 'integer',
-            'daily_hours_used' => 'integer',
+            'daily_hours' => 'decimal:2',
+            'daily_hours_used' => 'decimal:2',
+            'activation_interval_hours' => 'decimal:2',
         ];
     }
 
