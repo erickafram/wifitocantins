@@ -137,113 +137,37 @@
         </div>
     </div>
     
-    <!-- Iframe invisível para processar redirecionamento do MikroTik -->
-    <iframe 
-        id="mikrotik-frame" 
-        src="{{ $mikrotik_url }}" 
-        style="display: none; width: 0; height: 0; border: none; position: absolute; left: -9999px;"
-        sandbox="allow-same-origin allow-scripts allow-forms"
-    ></iframe>
-    
     <script>
         // Configurações
-        const MIN_SPLASH_TIME = 10000; // 10 segundos mínimo
-        const MAX_SPLASH_TIME = 15000; // 15 segundos máximo
-        const CHECK_INTERVAL = 500; // Verificar a cada 500ms
+        const SPLASH_DISPLAY_TIME = 5000; // 5 segundos de splash antes de redirecionar
         
         let startTime = Date.now();
-        let mikrotikReady = false;
-        let redirectCount = 0;
         
         console.log('🚀 Splash iniciada');
-        console.log('⏱️ Tempo mínimo:', MIN_SPLASH_TIME / 1000, 'segundos');
-        console.log('⏱️ Tempo máximo:', MAX_SPLASH_TIME / 1000, 'segundos');
+        console.log('⏱️ Tempo de exibição:', SPLASH_DISPLAY_TIME / 1000, 'segundos');
+        console.log('🔗 URL do MikroTik:', '{{ $mikrotik_url }}');
         
-        // Monitorar iframe do MikroTik
-        const iframe = document.getElementById('mikrotik-frame');
-        
-        // Detectar quando o iframe terminou de carregar
-        iframe.addEventListener('load', function() {
-            redirectCount++;
-            console.log('📡 Iframe carregado (redirecionamento #' + redirectCount + ')');
+        // Após 5 segundos, redirecionar para o MikroTik
+        // O MikroTik vai capturar MAC/IP e redirecionar de volta para o site
+        setTimeout(function() {
+            console.log('✅ Redirecionando para MikroTik para captura de MAC/IP...');
+            console.log('⏱️ Tempo decorrido:', Math.round((Date.now() - startTime) / 1000), 'segundos');
             
-            // Aguardar um pouco para garantir que não há mais redirecionamentos
-            setTimeout(function() {
-                try {
-                    // Tentar acessar a URL do iframe (pode falhar por CORS)
-                    const iframeUrl = iframe.contentWindow.location.href;
-                    console.log('🔗 URL do iframe:', iframeUrl);
-                    
-                    // Se conseguiu acessar e a URL contém o domínio principal, processo completo
-                    if (iframeUrl.includes('{{ parse_url(config('app.url'), PHP_URL_HOST) }}')) {
-                        mikrotikReady = true;
-                        console.log('✅ Processo MikroTik completo!');
-                        
-                        // Extrair parâmetros MAC e IP da URL do iframe
-                        const urlParams = new URLSearchParams(new URL(iframeUrl).search);
-                        const mac = urlParams.get('mac') || urlParams.get('mikrotik_mac') || urlParams.get('client_mac');
-                        const ip = urlParams.get('ip') || urlParams.get('client_ip');
-                        
-                        if (mac && ip) {
-                            console.log('✅ MAC capturado:', mac);
-                            console.log('✅ IP capturado:', ip);
-                            // Armazenar para usar no redirecionamento
-                            window.capturedMac = mac;
-                            window.capturedIp = ip;
-                        }
-                    }
-                } catch (e) {
-                    // CORS bloqueou - assumir que está em domínio diferente (MikroTik)
-                    console.log('🔒 CORS bloqueado (esperado no MikroTik)');
-                }
-            }, 2000);
-        });
+            // Redirecionar para o MikroTik
+            // Ele vai capturar MAC/IP e redirecionar de volta com os parâmetros
+            window.location.href = '{{ $mikrotik_url }}';
+        }, SPLASH_DISPLAY_TIME);
         
-        // Função para verificar se pode avançar
-        function checkAndProceed() {
-            const elapsedTime = Date.now() - startTime;
-            
-            // Condições para avançar:
-            // 1. Passou o tempo mínimo E MikroTik está pronto
-            // OU
-            // 2. Passou o tempo máximo (independente do MikroTik)
-            if ((elapsedTime >= MIN_SPLASH_TIME && mikrotikReady) || elapsedTime >= MAX_SPLASH_TIME) {
-                console.log('✅ Avançando para página principal');
-                console.log('⏱️ Tempo decorrido:', Math.round(elapsedTime / 1000), 'segundos');
-                console.log('📡 MikroTik pronto:', mikrotikReady);
-                console.log('🔄 Redirecionamentos:', redirectCount);
-                
-                // Construir URL com parâmetros capturados
-                let redirectUrl = '{{ route('portal.index') }}?source=mikrotik&captive=true&from_splash=1';
-                
-                // Adicionar MAC e IP se foram capturados
-                if (window.capturedMac) {
-                    redirectUrl += '&mac=' + encodeURIComponent(window.capturedMac);
-                    console.log('📤 Enviando MAC:', window.capturedMac);
-                }
-                if (window.capturedIp) {
-                    redirectUrl += '&ip=' + encodeURIComponent(window.capturedIp);
-                    console.log('📤 Enviando IP:', window.capturedIp);
-                }
-                
-                console.log('🔗 URL de redirecionamento:', redirectUrl);
-                
-                // Redirecionar para a página principal
-                window.location.href = redirectUrl;
-            } else {
-                // Verificar novamente em 500ms
-                setTimeout(checkAndProceed, CHECK_INTERVAL);
-            }
-        }
-        
-        // Iniciar verificação
-        setTimeout(checkAndProceed, CHECK_INTERVAL);
-        
-        // Log de progresso a cada 2 segundos
-        setInterval(function() {
+        // Log de progresso a cada segundo
+        const progressInterval = setInterval(function() {
             const elapsed = Math.round((Date.now() - startTime) / 1000);
-            console.log('⏳ Tempo decorrido:', elapsed + 's', '| MikroTik pronto:', mikrotikReady, '| Redirecionamentos:', redirectCount);
-        }, 2000);
+            const remaining = Math.max(0, Math.round(SPLASH_DISPLAY_TIME / 1000) - elapsed);
+            console.log('⏳ Tempo decorrido:', elapsed + 's', '| Restante:', remaining + 's');
+            
+            if (remaining === 0) {
+                clearInterval(progressInterval);
+            }
+        }, 1000);
     </script>
 </body>
 </html>

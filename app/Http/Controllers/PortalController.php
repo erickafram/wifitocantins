@@ -96,6 +96,11 @@ class PortalController extends Controller
         if ($request->has('skip_login') || $request->boolean('skip_login')) {
             return false;
         }
+        
+        // Se veio do MikroTik (from_mikrotik ou from_splash), não mostrar splash novamente
+        if ($request->has('from_mikrotik') || $request->has('from_splash')) {
+            return false;
+        }
 
         if (app()->environment('local') && !($mikrotikConfig['force_login_redirect_local'] ?? false)) {
             return false;
