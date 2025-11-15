@@ -77,6 +77,28 @@
                     @enderror
                 </div>
 
+                <!-- Telefone do Motorista -->
+                <div>
+                    <label for="driver_phone" class="block text-sm font-bold text-gray-700 mb-2">
+                        📱 Telefone do Motorista *
+                    </label>
+                    <input 
+                        type="tel" 
+                        name="driver_phone" 
+                        id="driver_phone" 
+                        value="{{ old('driver_phone', $voucher->driver_phone) }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
+                        placeholder="(00) 00000-0000"
+                        required
+                    >
+                    <p class="mt-2 text-sm text-gray-500">
+                        💡 O telefone será vinculado ao voucher para segurança e rastreamento
+                    </p>
+                    @error('driver_phone')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Tipo de Voucher -->
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-3">
@@ -118,30 +140,76 @@
                     @enderror
                 </div>
 
-                <!-- Horas Diárias -->
+                <!-- Tempo Diário Permitido -->
                 <div id="daily_hours_container">
-                    <label for="daily_hours" class="block text-sm font-bold text-gray-700 mb-2">
-                        ⏰ Horas Diárias Permitidas *
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        ⏰ Tempo Diário Permitido *
                     </label>
-                    <div class="flex items-center gap-4">
-                        <input 
-                            type="number" 
-                            name="daily_hours" 
-                            id="daily_hours" 
-                            value="{{ old('daily_hours', $voucher->daily_hours) }}"
-                            min="1"
-                            max="24"
-                            class="w-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                            required
-                        >
-                        <span class="text-gray-600">horas por dia</span>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="daily_hours" class="block text-xs text-gray-600 mb-1">Horas</label>
+                            <input 
+                                type="number" 
+                                name="daily_hours" 
+                                id="daily_hours" 
+                                value="{{ old('daily_hours', $voucher->daily_hours) }}"
+                                min="0.01"
+                                max="24"
+                                step="0.01"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Formato</label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
+                                <option>Horas (aceita decimais)</option>
+                            </select>
+                        </div>
                     </div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        💡 <strong>Exemplos:</strong> 2 = 2 horas | 2.5 = 2h30min | 0.5 = 30 minutos | 0.05 = 3 minutos
+                    </p>
                     @if($voucher->voucher_type === 'limited')
-                        <p class="mt-2 text-sm text-gray-500">
-                            💡 Usado hoje: <strong>{{ $voucher->daily_hours_used }}h</strong> de <strong>{{ $voucher->daily_hours }}h</strong>
+                        <p class="mt-2 text-sm text-blue-600">
+                            📊 Usado hoje: <strong>{{ $voucher->daily_hours_used }}h</strong> de <strong>{{ $voucher->daily_hours }}h</strong>
                         </p>
                     @endif
                     @error('daily_hours')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Intervalo entre Ativações -->
+                <div>
+                    <label for="activation_interval_hours" class="block text-sm font-bold text-gray-700 mb-2">
+                        🕐 Intervalo entre Ativações *
+                    </label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <input 
+                                type="number" 
+                                name="activation_interval_hours" 
+                                id="activation_interval_hours" 
+                                value="{{ old('activation_interval_hours', $voucher->activation_interval_hours ?? 24) }}"
+                                min="0.01"
+                                max="168"
+                                step="0.01"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
+                                <option>Horas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        🔒 <strong>Tempo mínimo</strong> que o motorista deve aguardar para ativar novamente após o uso.<br>
+                        💡 <strong>Exemplos:</strong> 24 = 1x por dia | 12 = a cada 12h | 0.1 = a cada 6 minutos (teste)
+                    </p>
+                    @error('activation_interval_hours')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -229,6 +297,27 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', toggleDailyHours);
+        // Formatar telefone enquanto digita
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleDailyHours();
+            
+            const phoneInput = document.getElementById('driver_phone');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) value = value.slice(0, 11);
+                    
+                    if (value.length > 10) {
+                        value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+                    } else if (value.length > 6) {
+                        value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+                    } else if (value.length > 2) {
+                        value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                    }
+                    
+                    e.target.value = value;
+                });
+            }
+        });
     </script>
 @endsection

@@ -114,11 +114,11 @@ class DriverVoucherController extends Controller
                 ->first();
 
             if ($activeUser) {
+                DB::rollback();
+                
                 // Se o MAC for diferente, bloquear
                 if ($activeUser->mac_address !== $macAddress) {
-                    DB::commit();
-                    
-                    $timeRemaining = now()->diff($activeUser->expires_at);
+                    $timeRemaining = $activeUser->expires_at->diff(now());
                     $hoursRemaining = $timeRemaining->h;
                     $minutesRemaining = $timeRemaining->i;
                     
@@ -132,10 +132,8 @@ class DriverVoucherController extends Controller
                     );
                 }
                 
-                // Se for o mesmo MAC, apenas renovar
-                DB::commit();
-
-                $timeRemaining = now()->diff($activeUser->expires_at);
+                // Se for o mesmo MAC, apenas avisar que já está ativo
+                $timeRemaining = $activeUser->expires_at->diff(now());
                 $hoursRemaining = $timeRemaining->h;
                 $minutesRemaining = $timeRemaining->i;
                 
@@ -156,21 +154,22 @@ class DriverVoucherController extends Controller
                 ->first();
 
             if ($lastUsedUser && $lastUsedUser->voucher_activated_at) {
-                $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at);
+                $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at, false);
                 $intervalRequired = $voucher->activation_interval_hours ?? 24;
 
                 if ($hoursSinceLastActivation < $intervalRequired) {
-                    DB::commit();
+                    DB::rollback();
 
                     // Calcular tempo restante até poder ativar novamente
-                    $nextAvailableTime = $lastUsedUser->voucher_activated_at->addHours($intervalRequired);
-                    $hoursRemaining = now()->diffInHours($nextAvailableTime);
-                    $minutesRemaining = now()->diff($nextAvailableTime)->i;
+                    $nextAvailableTime = $lastUsedUser->voucher_activated_at->copy()->addHours($intervalRequired);
+                    $timeUntilNext = $nextAvailableTime->diff(now());
+                    $hoursRemaining = $timeUntilNext->h + ($timeUntilNext->days * 24);
+                    $minutesRemaining = $timeUntilNext->i;
                     
                     // Formatar tempo de intervalo
                     $intervalFormatted = $intervalRequired >= 1 
-                        ? floor($intervalRequired) . 'h' . ($intervalRequired != floor($intervalRequired) ? ' ' . (($intervalRequired - floor($intervalRequired)) * 60) . 'min' : '')
-                        : ($intervalRequired * 60) . ' minutos';
+                        ? floor($intervalRequired) . 'h' . ($intervalRequired != floor($intervalRequired) ? ' ' . round((($intervalRequired - floor($intervalRequired)) * 60)) . 'min' : '')
+                        : round($intervalRequired * 60) . ' minutos';
                     
                     return back()->with('error', 
                         "⏰ AGUARDE O INTERVALO!\n\n" .
@@ -191,7 +190,7 @@ class DriverVoucherController extends Controller
                 ->first();
 
             if ($existingExpiredUser && !$voucher->hasHoursAvailableToday()) {
-                DB::commit();
+                DB::rollback();
 
                 $nextAvailableTime = now()->addDay()->startOfDay();
                 $hoursUntilReset = now()->diffInHours($nextAvailableTime);

@@ -133,7 +133,7 @@
                                 name="daily_hours" 
                                 id="daily_hours" 
                                 value="{{ old('daily_hours', 2) }}"
-                                min="0"
+                                min="0.01"
                                 max="24"
                                 step="0.01"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
@@ -148,7 +148,7 @@
                         </div>
                     </div>
                     <p class="mt-2 text-sm text-gray-500">
-                        💡 <strong>Exemplos:</strong> 2 = 2 horas | 2.5 = 2h30min | 0.5 = 30 minutos
+                        💡 <strong>Exemplos:</strong> 2 = 2 horas | 2.5 = 2h30min | 0.5 = 30 minutos | 0.05 = 3 minutos
                     </p>
                     @error('daily_hours')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -167,9 +167,9 @@
                                 name="activation_interval_hours" 
                                 id="activation_interval_hours" 
                                 value="{{ old('activation_interval_hours', 24) }}"
-                                min="0.5"
+                                min="0.01"
                                 max="168"
-                                step="0.5"
+                                step="0.01"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
                                 required
                             >
@@ -182,7 +182,7 @@
                     </div>
                     <p class="mt-2 text-sm text-gray-500">
                         🔒 <strong>Tempo mínimo</strong> que o motorista deve aguardar para ativar novamente após o uso.<br>
-                        💡 <strong>Exemplos:</strong> 24 = pode usar 1x por dia | 12 = pode usar a cada 12h | 168 = pode usar 1x por semana
+                        💡 <strong>Exemplos:</strong> 24 = 1x por dia | 12 = a cada 12h | 0.1 = a cada 6 minutos (teste)
                     </p>
                     @error('activation_interval_hours')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
