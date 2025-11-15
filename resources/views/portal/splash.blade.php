@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="5;url={{ $mikrotik_url }}">
     <title>WiFi Tocantins - Conectando...</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -147,15 +148,32 @@
         console.log('⏱️ Tempo de exibição:', SPLASH_DISPLAY_TIME / 1000, 'segundos');
         console.log('🔗 URL do MikroTik:', '{{ $mikrotik_url }}');
         
+        // Função para fazer redirecionamento forçado (bypass de Mixed Content)
+        function forceRedirect(url) {
+            console.log('🔄 Redirecionamento forçado para:', url);
+            
+            // Criar um link temporário e clicar nele
+            // Isso bypassa algumas restrições de Mixed Content
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Fallback: se o link não funcionar, usar location.href
+            setTimeout(function() {
+                window.location.href = url;
+            }, 100);
+        }
+        
         // Após 5 segundos, redirecionar para o MikroTik
-        // O MikroTik vai capturar MAC/IP e redirecionar de volta para o site
         setTimeout(function() {
             console.log('✅ Redirecionando para MikroTik para captura de MAC/IP...');
             console.log('⏱️ Tempo decorrido:', Math.round((Date.now() - startTime) / 1000), 'segundos');
             
-            // Redirecionar para o MikroTik
-            // Ele vai capturar MAC/IP e redirecionar de volta com os parâmetros
-            window.location.href = '{{ $mikrotik_url }}';
+            // Usar redirecionamento forçado
+            forceRedirect('{{ $mikrotik_url }}');
         }, SPLASH_DISPLAY_TIME);
         
         // Log de progresso a cada segundo
@@ -168,6 +186,19 @@
                 clearInterval(progressInterval);
             }
         }, 1000);
+        
+        // Detectar se o navegador bloqueou o redirecionamento
+        window.addEventListener('beforeunload', function() {
+            console.log('🚪 Saindo da página...');
+        });
+        
+        // Se após 6 segundos ainda estiver na página, tentar novamente
+        setTimeout(function() {
+            if (window.location.href.includes('{{ parse_url(config('app.url'), PHP_URL_HOST) }}')) {
+                console.log('⚠️ Ainda na página, tentando redirecionamento novamente...');
+                window.location.replace('{{ $mikrotik_url }}');
+            }
+        }, SPLASH_DISPLAY_TIME + 1000);
     </script>
 </body>
 </html>
