@@ -138,6 +138,9 @@
         </div>
     </div>
     
+    <!-- Botão invisível para forçar navegação -->
+    <a id="redirect-link" href="{{ $mikrotik_url }}" style="display: none; position: absolute; left: -9999px;">Ir para o site</a>
+    
     <script>
         // Configurações
         const SPLASH_DISPLAY_TIME = 5000; // 5 segundos de splash antes de redirecionar
@@ -149,22 +152,33 @@
         console.log('🔗 URL do MikroTik:', '{{ $mikrotik_url }}');
         
         // Função para fazer redirecionamento forçado (bypass de Mixed Content)
-        function forceRedirect(url) {
-            console.log('🔄 Redirecionamento forçado para:', url);
+        function forceRedirect() {
+            console.log('🔄 Redirecionamento forçado - clicando no link...');
             
-            // Criar um link temporário e clicar nele
-            // Isso bypassa algumas restrições de Mixed Content
-            const link = document.createElement('a');
-            link.href = url;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Método 1: Clicar no link invisível (mais confiável)
+            const redirectLink = document.getElementById('redirect-link');
+            if (redirectLink) {
+                console.log('✅ Clicando no link de redirecionamento');
+                redirectLink.click();
+            }
             
-            // Fallback: se o link não funcionar, usar location.href
+            // Método 2: Fallback com dispatchEvent (simula clique real)
             setTimeout(function() {
-                window.location.href = url;
+                if (redirectLink) {
+                    const clickEvent = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    redirectLink.dispatchEvent(clickEvent);
+                }
             }, 100);
+            
+            // Método 3: Fallback final com window.location
+            setTimeout(function() {
+                console.log('⚠️ Fallback: usando window.location');
+                window.location.href = '{{ $mikrotik_url }}';
+            }, 500);
         }
         
         // Após 5 segundos, redirecionar para o MikroTik
@@ -173,7 +187,7 @@
             console.log('⏱️ Tempo decorrido:', Math.round((Date.now() - startTime) / 1000), 'segundos');
             
             // Usar redirecionamento forçado
-            forceRedirect('{{ $mikrotik_url }}');
+            forceRedirect();
         }, SPLASH_DISPLAY_TIME);
         
         // Log de progresso a cada segundo

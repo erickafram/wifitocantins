@@ -13,8 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class SplashActivity extends AppCompatActivity {
 
-    private static final int SPLASH_MIN_LENGTH = 20000; // 18 segundos mínimo (para passar splash do Laravel)
-    private static final int SPLASH_MAX_LENGTH = 25000; // 25 segundos máximo
+    private static final int SPLASH_MIN_LENGTH = 12000; // 12 segundos mínimo (tempo para MikroTik + Laravel)
+    private static final int SPLASH_MAX_LENGTH = 15000; // 15 segundos máximo
     private WebView hiddenWebView;
     private boolean webViewReady = false;
     private long startTime;
@@ -45,9 +45,9 @@ public class SplashActivity extends AppCompatActivity {
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
                 // Só avança se:
-                // 1. Passou o tempo mínimo (18s) E site está pronto
+                // 1. Passou o tempo mínimo (12s) E site está pronto
                 // OU
-                // 2. Passou o tempo máximo (25s) independente do site
+                // 2. Passou o tempo máximo (15s) independente do site
                 if ((elapsedTime >= SPLASH_MIN_LENGTH && webViewReady) ||
                     elapsedTime >= SPLASH_MAX_LENGTH) {
 
