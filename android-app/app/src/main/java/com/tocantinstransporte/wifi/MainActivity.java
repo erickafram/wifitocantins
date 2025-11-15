@@ -39,8 +39,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Manter fundo da splash (verde) durante transição
-        getWindow().setBackgroundDrawableResource(R.drawable.splash_background);
+        // Manter a Activity completamente transparente até o WebView estar pronto
+        getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         
         setContentView(R.layout.activity_main);
         
