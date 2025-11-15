@@ -1,0 +1,6 @@
+com.tocantinstransporte.wifi.test.app-annotation-experimental-1.3.0-0 C:\Users\Erick\.gradle\caches\8.9\transforms\1dbda0b449aa913df55f2939a2bb20c6\transformed\annotation-experimental-1.3.0\res
+com.tocantinstransporte.wifi.test.app-core-1.5.0-1 C:\Users\Erick\.gradle\caches\8.9\transforms\f66e3ff9c668eeb298970145cefe3146\transformed\core-1.5.0\res
+com.tocantinstransporte.wifi.test.app-androidTest-2 C:\wamp64\www\wifitocantins\android-app\app\build\generated\res\resValues\androidTest\debug
+com.tocantinstransporte.wifi.test.app-mergeDebugAndroidTestResources-3 C:\wamp64\www\wifitocantins\android-app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.tocantinstransporte.wifi.test.app-mergeDebugAndroidTestResources-4 C:\wamp64\www\wifitocantins\android-app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.tocantinstransporte.wifi.test.app-merged_res-5 C:\wamp64\www\wifitocantins\android-app\app\build\intermediates\merged_res\debugAndroidTest

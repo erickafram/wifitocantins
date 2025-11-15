@@ -19,6 +19,30 @@
                     <span>{{ session('success') }}</span>
                 </div>
             </div>
+            <script>
+                // Notificar app Android quando voucher for ativado com sucesso
+                if (window.AndroidApp && typeof window.AndroidApp.showConnectionNotification === 'function') {
+                    // Extrair tempo da mensagem de sucesso se disponível
+                    var successMessage = "{{ session('success') }}";
+                    var timeMatch = successMessage.match(/(\d+)\s*(hora|horas|minuto|minutos|dia|dias)/i);
+                    var timeText = "";
+                    
+                    if (timeMatch) {
+                        var amount = timeMatch[1];
+                        var unit = timeMatch[2].toLowerCase();
+                        
+                        if (unit.includes('hora')) {
+                            timeText = amount + (amount == 1 ? " hora" : " horas");
+                        } else if (unit.includes('minuto')) {
+                            timeText = amount + (amount == 1 ? " minuto" : " minutos");
+                        } else if (unit.includes('dia')) {
+                            timeText = amount + (amount == 1 ? " dia" : " dias");
+                        }
+                    }
+                    
+                    window.AndroidApp.showConnectionNotification(timeText || "Tempo disponível");
+                }
+            </script>
         @endif
 
         @if (session('error'))

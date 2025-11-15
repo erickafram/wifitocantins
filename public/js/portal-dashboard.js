@@ -184,6 +184,13 @@ class PortalDashboard {
         if (this.processingModal) {
             this.processingModal.remove();
         }
+        
+        // Notificar app Android se disponível
+        if (window.AndroidApp && typeof window.AndroidApp.showConnectionNotification === 'function') {
+            // Tentar obter tempo do plano comprado
+            var timeText = this.getTimeFromPlan();
+            window.AndroidApp.showConnectionNotification(timeText);
+        }
 
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4';
@@ -215,6 +222,35 @@ class PortalDashboard {
         setTimeout(() => {
             location.reload();
         }, 5000);
+    }
+
+    getTimeFromPlan() {
+        // Tentar obter tempo do plano da página
+        var timeText = "";
+        
+        // Procurar por elementos que possam conter informação de tempo
+        var planElements = document.querySelectorAll('[data-plan-duration], .plan-duration, [data-duration]');
+        
+        if (planElements.length > 0) {
+            var durationText = planElements[0].textContent || planElements[0].getAttribute('data-plan-duration') || planElements[0].getAttribute('data-duration');
+            var match = durationText.match(/(\d+)\s*(hora|horas|minuto|minutos|dia|dias)/i);
+            
+            if (match) {
+                var amount = match[1];
+                var unit = match[2].toLowerCase();
+                
+                if (unit.includes('hora')) {
+                    timeText = amount + (amount == 1 ? " hora" : " horas");
+                } else if (unit.includes('minuto')) {
+                    timeText = amount + (amount == 1 ? " minuto" : " minutos");
+                } else if (unit.includes('dia')) {
+                    timeText = amount + (amount == 1 ? " dia" : " dias");
+                }
+            }
+        }
+        
+        // Se não encontrou, usar padrão
+        return timeText || "Tempo disponível";
     }
 
     showToast(message, type = 'success') {
