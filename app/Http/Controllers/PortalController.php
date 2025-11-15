@@ -21,8 +21,9 @@ class PortalController extends Controller
             return redirect()->route('portal.dashboard');
         }
 
+        // Se deve forçar redirecionamento MikroTik, mostrar splash screen
         if ($this->shouldForceMikrotikRedirect($request)) {
-            return $this->redirectToMikrotikLogin($request);
+            return $this->showSplashScreen($request);
         }
 
         $clientInfo = $this->getClientInfo($request);
@@ -36,6 +37,41 @@ class PortalController extends Controller
             'discount_percentage' => $priceInfo['discount_percentage'],
             'savings' => $priceInfo['savings'],
             'speed' => '100+ Mbps',
+        ]);
+    }
+    
+    /**
+     * Exibe a splash screen com iframe do MikroTik em background
+     */
+    private function showSplashScreen(Request $request)
+    {
+        $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
+        
+        $portalUrl = config('wifi.server_url', config('app.url'));
+        $desiredUrl = $request->fullUrl();
+        $destination = $portalUrl ?: $desiredUrl;
+        
+        $query = [
+            'dst' => $destination,
+            'return_url' => $desiredUrl,
+            'from_portal' => 1,
+        ];
+        
+        if ($request->has('device')) {
+            $query['device'] = $request->get('device');
+        }
+        
+        $glue = Str::contains($loginUrl, '?') ? '&' : '?';
+        $mikrotikUrl = $loginUrl . $glue . http_build_query($query);
+        
+        Log::info('🎬 Exibindo splash screen com MikroTik em background', [
+            'mikrotik_url' => $mikrotikUrl,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+        
+        return view('portal.splash', [
+            'mikrotik_url' => $mikrotikUrl,
         ]);
     }
 

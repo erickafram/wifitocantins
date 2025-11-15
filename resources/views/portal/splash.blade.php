@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Tocantins - Conectando...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .animate-pulse-text {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .animate-spin-slow {
+            animation: spin 3s linear infinite;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #10B981 0%, #059669 50%, #047857 100%);
+        }
+        
+        .icon-circle {
+            width: 140px;
+            height: 140px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .loading-dots span {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center overflow-hidden">
+    
+    <!-- Formas decorativas de fundo -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-10 right-10 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-white/5 rounded-full blur-2xl"></div>
+    </div>
+    
+    <!-- Conteúdo Principal -->
+    <div class="relative z-10 text-center px-4">
+        
+        <!-- Ícone/Logo -->
+        <div class="mb-8 flex justify-center animate-fade-in animate-float">
+            <div class="icon-circle">
+                <svg class="w-20 h-20 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Texto de Boas-vindas -->
+        <div class="mb-6 space-y-3 animate-fade-in" style="animation-delay: 0.2s;">
+            <h1 class="text-white text-4xl md:text-5xl font-bold tracking-tight">
+                Bem-vindo ao
+            </h1>
+            <h2 class="text-white text-3xl md:text-4xl font-extrabold">
+                WiFi Tocantins
+            </h2>
+            <div class="w-24 h-1 bg-white mx-auto rounded-full"></div>
+        </div>
+        
+        <!-- Tagline -->
+        <p class="text-white/90 text-lg md:text-xl mb-8 animate-fade-in" style="animation-delay: 0.4s;">
+            Internet a bordo durante toda a viagem
+        </p>
+        
+        <!-- Loading Indicator -->
+        <div class="animate-fade-in" style="animation-delay: 0.6s;">
+            <div class="inline-flex items-center justify-center space-x-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full">
+                <div class="w-2 h-2 bg-white rounded-full animate-spin-slow"></div>
+                <span class="text-white font-medium animate-pulse-text">Conectando ao WiFi</span>
+                <span class="loading-dots text-white font-bold">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Informações adicionais -->
+        <div class="mt-12 flex flex-wrap justify-center gap-4 animate-fade-in" style="animation-delay: 0.8s;">
+            <div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <span class="text-white text-sm">⚡ Alta Velocidade</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <span class="text-white text-sm">🔒 Conexão Segura</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <span class="text-white text-sm">🚌 WiFi a Bordo</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Iframe invisível para processar redirecionamento do MikroTik -->
+    <iframe 
+        id="mikrotik-frame" 
+        src="{{ $mikrotik_url }}" 
+        style="display: none; width: 0; height: 0; border: none; position: absolute; left: -9999px;"
+        sandbox="allow-same-origin allow-scripts allow-forms"
+    ></iframe>
+    
+    <script>
+        // Configurações
+        const MIN_SPLASH_TIME = 10000; // 10 segundos mínimo
+        const MAX_SPLASH_TIME = 15000; // 15 segundos máximo
+        const CHECK_INTERVAL = 500; // Verificar a cada 500ms
+        
+        let startTime = Date.now();
+        let mikrotikReady = false;
+        let redirectCount = 0;
+        
+        console.log('🚀 Splash iniciada');
+        console.log('⏱️ Tempo mínimo:', MIN_SPLASH_TIME / 1000, 'segundos');
+        console.log('⏱️ Tempo máximo:', MAX_SPLASH_TIME / 1000, 'segundos');
+        
+        // Monitorar iframe do MikroTik
+        const iframe = document.getElementById('mikrotik-frame');
+        
+        // Detectar quando o iframe terminou de carregar
+        iframe.addEventListener('load', function() {
+            redirectCount++;
+            console.log('📡 Iframe carregado (redirecionamento #' + redirectCount + ')');
+            
+            // Aguardar um pouco para garantir que não há mais redirecionamentos
+            setTimeout(function() {
+                try {
+                    // Tentar acessar a URL do iframe (pode falhar por CORS)
+                    const iframeUrl = iframe.contentWindow.location.href;
+                    console.log('🔗 URL do iframe:', iframeUrl);
+                    
+                    // Se conseguiu acessar e a URL contém o domínio principal, processo completo
+                    if (iframeUrl.includes('{{ parse_url(config('app.url'), PHP_URL_HOST) }}')) {
+                        mikrotikReady = true;
+                        console.log('✅ Processo MikroTik completo!');
+                    }
+                } catch (e) {
+                    // CORS bloqueou - assumir que está em domínio diferente (MikroTik)
+                    console.log('🔒 CORS bloqueado (esperado no MikroTik)');
+                }
+            }, 2000);
+        });
+        
+        // Função para verificar se pode avançar
+        function checkAndProceed() {
+            const elapsedTime = Date.now() - startTime;
+            
+            // Condições para avançar:
+            // 1. Passou o tempo mínimo E MikroTik está pronto
+            // OU
+            // 2. Passou o tempo máximo (independente do MikroTik)
+            if ((elapsedTime >= MIN_SPLASH_TIME && mikrotikReady) || elapsedTime >= MAX_SPLASH_TIME) {
+                console.log('✅ Avançando para página principal');
+                console.log('⏱️ Tempo decorrido:', Math.round(elapsedTime / 1000), 'segundos');
+                console.log('📡 MikroTik pronto:', mikrotikReady);
+                console.log('🔄 Redirecionamentos:', redirectCount);
+                
+                // Redirecionar para a página principal com parâmetro indicando que já passou pelo splash
+                window.location.href = '{{ route('portal.index') }}?skip_login=1&from_splash=1';
+            } else {
+                // Verificar novamente em 500ms
+                setTimeout(checkAndProceed, CHECK_INTERVAL);
+            }
+        }
+        
+        // Iniciar verificação
+        setTimeout(checkAndProceed, CHECK_INTERVAL);
+        
+        // Log de progresso a cada 2 segundos
+        setInterval(function() {
+            const elapsed = Math.round((Date.now() - startTime) / 1000);
+            console.log('⏳ Tempo decorrido:', elapsed + 's', '| MikroTik pronto:', mikrotikReady, '| Redirecionamentos:', redirectCount);
+        }, 2000);
+    </script>
+</body>
+</html>

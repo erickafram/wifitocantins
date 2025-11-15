@@ -8,6 +8,7 @@
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">tocantinstransportewifi.com.br</domain>
+        <domain includeSubdomains="true">tocantinswifi.local</domain>
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">10.0.0.0</domain>
     </domain-config>

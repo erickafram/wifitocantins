@@ -38,12 +38,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Manter fundo da splash (verde) durante transição
+        getWindow().setBackgroundDrawableResource(R.drawable.splash_background);
+        
         setContentView(R.layout.activity_main);
         
         webView = findViewById(R.id.webview);
         
-        // Inicialmente invisível para evitar flash branco
-        webView.setVisibility(android.view.View.INVISIBLE);
+        // COMPLETAMENTE invisível - não mostra NADA até estar pronto
+        webView.setVisibility(android.view.View.GONE);
+        webView.setAlpha(0f);
         
         // Inicializar notificações
         createNotificationChannel();
@@ -95,18 +100,52 @@ public class MainActivity extends Activity {
                 return true;
             }
             
+            private boolean isFirstPageLoad = true;
+            private String lastUrl = "";
+            private android.os.Handler handler = new android.os.Handler();
+            
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                android.util.Log.d("MainActivity", "Iniciando carregamento: " + url);
+            }
+            
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                
-                // Tornar WebView visível após carregamento
-                webView.setVisibility(android.view.View.VISIBLE);
-                
-                // Injetar CSS e JavaScript para melhorar experiência mobile
-                injectCustomCSS();
-                injectNotificationScript();
-                
                 android.util.Log.d("MainActivity", "Página carregada: " + url);
+                
+                // Aguardar 1.5 segundos para garantir que não há mais redirecionamentos
+                handler.removeCallbacksAndMessages(null);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        String currentUrl = view.getUrl();
+                        if (currentUrl != null && currentUrl.equals(lastUrl)) {
+                            // URL estável, mostrar WebView com animação suave
+                            android.util.Log.d("MainActivity", "✅ URL estável, mostrando WebView: " + currentUrl);
+                            
+                            // Primeiro mudar o fundo para branco
+                            getWindow().setBackgroundDrawableResource(android.R.color.white);
+                            
+                            // Depois mostrar o WebView com fade in
+                            webView.setVisibility(android.view.View.VISIBLE);
+                            webView.animate()
+                                .alpha(1f)
+                                .setDuration(400)
+                                .start();
+                            
+                            // Injetar CSS e JavaScript
+                            if (isFirstPageLoad) {
+                                injectCustomCSS();
+                                injectNotificationScript();
+                                isFirstPageLoad = false;
+                            }
+                        }
+                    }
+                }, 1500);
+                
+                lastUrl = url;
             }
         });
         

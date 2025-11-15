@@ -15,8 +15,8 @@ import android.webkit.WebViewClient;
 
 public class SplashActivity extends Activity {
     
-    private static final int SPLASH_MIN_LENGTH = 8000; // 8 segundos mínimo
-    private static final int SPLASH_MAX_LENGTH = 12000; // 12 segundos máximo
+    private static final int SPLASH_MIN_LENGTH = 10000; // 10 segundos mínimo
+    private static final int SPLASH_MAX_LENGTH = 15000; // 15 segundos máximo
     private WebView hiddenWebView;
     private boolean webViewReady = false;
     private long startTime;
@@ -79,11 +79,12 @@ public class SplashActivity extends Activity {
         hiddenWebView.setWebViewClient(new WebViewClient() {
             private int redirectCount = 0;
             private String lastUrl = "";
+            private Handler stabilityHandler = new Handler();
             
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                android.util.Log.d("SplashActivity", "Carregando: " + url);
+                android.util.Log.d("SplashActivity", "[" + redirectCount + "] Carregando: " + url);
                 
                 // Contar redirecionamentos
                 if (!url.equals(lastUrl)) {
@@ -95,9 +96,14 @@ public class SplashActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                android.util.Log.d("SplashActivity", "[" + redirectCount + "] Página carregada: " + url);
                 
-                // Aguardar um pouco para garantir que não há mais redirecionamentos
-                new Handler().postDelayed(new Runnable() {
+                // Cancelar verificações anteriores
+                stabilityHandler.removeCallbacksAndMessages(null);
+                
+                // Aguardar 2 segundos para garantir que não há mais redirecionamentos
+                // Tempo maior para garantir que o MikroTik complete o processo
+                stabilityHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         String currentUrl = view.getUrl();
@@ -105,16 +111,23 @@ public class SplashActivity extends Activity {
                             // URL estável, redirecionamentos completos
                             webViewReady = true;
                             android.util.Log.d("SplashActivity", 
-                                "Site pronto após " + redirectCount + " redirecionamentos: " + currentUrl);
+                                "✅ Site pronto após " + redirectCount + " redirecionamentos: " + currentUrl);
                         }
                     }
-                }, 1500); // Aguardar 1.5s para confirmar que não há mais redirecionamentos
+                }, 2000); // Aguardar 2s para confirmar estabilidade
             }
             
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // Permitir todos os redirecionamentos
+                android.util.Log.d("SplashActivity", "Redirecionando para: " + url);
+                // Permitir TODOS os redirecionamentos, incluindo login.tocantinswifi.local
                 return false;
+            }
+            
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                android.util.Log.e("SplashActivity", "Erro ao carregar " + failingUrl + ": " + description);
             }
         });
         
@@ -166,6 +179,7 @@ public class SplashActivity extends Activity {
         // Animar "Bem-vindo ao"
         View welcomeText = findViewById(R.id.welcome_text);
         if (welcomeText != null) {
+            // Fade in inicial
             ObjectAnimator alpha1 = ObjectAnimator.ofFloat(welcomeText, "alpha", 0f, 1f);
             ObjectAnimator translateY1 = ObjectAnimator.ofFloat(welcomeText, "translationY", 30f, 0f);
             alpha1.setDuration(800);
@@ -174,11 +188,20 @@ public class SplashActivity extends Activity {
             translateY1.setStartDelay(800);
             alpha1.start();
             translateY1.start();
+            
+            // Pulsação suave contínua
+            ObjectAnimator pulse1 = ObjectAnimator.ofFloat(welcomeText, "alpha", 1f, 0.7f, 1f);
+            pulse1.setDuration(2500);
+            pulse1.setStartDelay(2000);
+            pulse1.setRepeatCount(ObjectAnimator.INFINITE);
+            pulse1.setRepeatMode(ObjectAnimator.RESTART);
+            pulse1.start();
         }
         
         // Animar nome do app
         View appNameText = findViewById(R.id.app_name_text);
         if (appNameText != null) {
+            // Fade in inicial
             ObjectAnimator alpha2 = ObjectAnimator.ofFloat(appNameText, "alpha", 0f, 1f);
             ObjectAnimator translateY2 = ObjectAnimator.ofFloat(appNameText, "translationY", 30f, 0f);
             alpha2.setDuration(800);
@@ -187,11 +210,20 @@ public class SplashActivity extends Activity {
             translateY2.setStartDelay(1100);
             alpha2.start();
             translateY2.start();
+            
+            // Pulsação suave contínua (levemente defasada)
+            ObjectAnimator pulse2 = ObjectAnimator.ofFloat(appNameText, "alpha", 1f, 0.8f, 1f);
+            pulse2.setDuration(2500);
+            pulse2.setStartDelay(2300);
+            pulse2.setRepeatCount(ObjectAnimator.INFINITE);
+            pulse2.setRepeatMode(ObjectAnimator.RESTART);
+            pulse2.start();
         }
         
         // Animar linha decorativa
         View decorativeLine = findViewById(R.id.decorative_line);
         if (decorativeLine != null) {
+            // Fade in inicial
             ObjectAnimator alpha3 = ObjectAnimator.ofFloat(decorativeLine, "alpha", 0f, 1f);
             ObjectAnimator scaleX = ObjectAnimator.ofFloat(decorativeLine, "scaleX", 0f, 1f);
             alpha3.setDuration(600);
@@ -200,6 +232,14 @@ public class SplashActivity extends Activity {
             scaleX.setStartDelay(1400);
             alpha3.start();
             scaleX.start();
+            
+            // Pulsação suave contínua
+            ObjectAnimator pulse3 = ObjectAnimator.ofFloat(decorativeLine, "alpha", 1f, 0.6f, 1f);
+            pulse3.setDuration(2000);
+            pulse3.setStartDelay(2500);
+            pulse3.setRepeatCount(ObjectAnimator.INFINITE);
+            pulse3.setRepeatMode(ObjectAnimator.RESTART);
+            pulse3.start();
         }
     }
     
@@ -212,15 +252,22 @@ public class SplashActivity extends Activity {
             alpha.start();
         }
         
-        // Animar texto de carregamento
+        // Animar texto de carregamento com pulsação mais visível
         View loadingText = findViewById(R.id.loading_text);
         if (loadingText != null) {
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(loadingText, "alpha", 0f, 0.8f, 0.5f, 0.8f);
-            alpha.setDuration(2000);
-            alpha.setStartDelay(2000);
-            alpha.setRepeatCount(ObjectAnimator.INFINITE);
-            alpha.setRepeatMode(ObjectAnimator.REVERSE);
-            alpha.start();
+            // Fade in inicial
+            ObjectAnimator fadeIn = ObjectAnimator.ofFloat(loadingText, "alpha", 0f, 1f);
+            fadeIn.setDuration(500);
+            fadeIn.setStartDelay(2000);
+            fadeIn.start();
+            
+            // Pulsação contínua
+            ObjectAnimator pulse = ObjectAnimator.ofFloat(loadingText, "alpha", 1f, 0.4f, 1f);
+            pulse.setDuration(1500);
+            pulse.setStartDelay(2500);
+            pulse.setRepeatCount(ObjectAnimator.INFINITE);
+            pulse.setRepeatMode(ObjectAnimator.RESTART);
+            pulse.start();
         }
     }
 }
