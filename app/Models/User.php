@@ -32,6 +32,11 @@ class User extends Authenticatable
         'role',
         'registered_at',
         'email_verified_at',
+        'voucher_id',
+        'driver_phone',
+        'voucher_activated_at',
+        'voucher_last_connection',
+        'voucher_daily_minutes_used',
     ];
 
     /**
@@ -57,6 +62,8 @@ class User extends Authenticatable
             'connected_at' => 'datetime',
             'expires_at' => 'datetime',
             'registered_at' => 'datetime',
+            'voucher_activated_at' => 'datetime',
+            'voucher_last_connection' => 'datetime',
         ];
     }
 
@@ -73,11 +80,35 @@ class User extends Authenticatable
         return $this->hasMany(Session::class);
     }
 
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
+    }
+
     /**
      * Verifica se o usuário está conectado
      */
     public function isConnected(): bool
     {
         return $this->status === 'connected' && $this->expires_at && $this->expires_at->isFuture();
+    }
+
+    /**
+     * Verifica se é um motorista com voucher
+     */
+    public function isDriver(): bool
+    {
+        return !empty($this->voucher_id) && !empty($this->driver_phone);
+    }
+
+    /**
+     * Verifica se tem voucher ativo
+     */
+    public function hasActiveVoucher(): bool
+    {
+        return $this->isDriver() 
+            && $this->voucher 
+            && $this->voucher->isValid() 
+            && $this->isConnected();
     }
 }

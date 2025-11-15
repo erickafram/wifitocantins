@@ -578,25 +578,53 @@ class PortalController extends Controller
                 'hours_used' => $voucher->daily_hours_used,
             ]);
 
-            // Cria ou atualiza usuário
+            // Calcular tempo de expiração baseado nas horas do voucher
+            $hoursAvailable = $voucher->getRemainingHoursToday();
+            $expiresAt = now()->addHours($hoursAvailable);
+
+            // Para vouchers limitados, nunca passar de hoje às 23:59
+            if ($voucher->voucher_type === 'limited') {
+                $endOfDay = now()->endOfDay();
+                if ($expiresAt->gt($endOfDay)) {
+                    $expiresAt = $endOfDay;
+                }
+            }
+
+            // Cria ou atualiza usuário com os campos do voucher
             $user = User::updateOrCreate(
                 ['mac_address' => $macAddress],
                 [
                     'name' => $voucher->driver_name,
                     'ip_address' => $ipAddress,
                     'device_name' => $clientInfo['device_type'],
-                    'status' => 'active',
+                    'status' => 'connected',
                     'connected_at' => now(),
-                    'expires_at' => now()->addHours($voucher->getRemainingHoursToday()),
+                    'expires_at' => $expiresAt,
+                    'voucher_id' => $voucher->id,
+                    'voucher_activated_at' => now(),
+                    'voucher_last_connection' => now(),
+                    'voucher_daily_minutes_used' => 0,
                 ]
             );
 
             // Registra uso do voucher (apenas marca como usado, não incrementa horas)
-            $hoursGranted = $voucher->getRemainingHoursToday();
-            $voucher->recordUsage();
+            $voucher->recordUsage($hoursAvailable);
+
+            // Registrar MAC na tabela Mikrotik
+            \App\Models\MikrotikMacReport::updateOrCreate(
+                [
+                    'ip_address' => $ipAddress,
+                    'mac_address' => $macAddress,
+                ],
+                [
+                    'transaction_id' => 'VOUCHER_' . $user->id,
+                    'mikrotik_ip' => null,
+                    'reported_at' => now(),
+                ]
+            );
 
             // Libera acesso no Mikrotik
-            $this->liberarAcessoMikrotik($macAddress, $ipAddress, $hoursGranted);
+            $this->liberarAcessoMikrotik($macAddress, $ipAddress, $hoursAvailable);
 
             // Cria sessão WiFi
             $session = \App\Models\Session::create([
@@ -609,7 +637,7 @@ class PortalController extends Controller
             Log::info('✅ Voucher validado e acesso liberado', [
                 'voucher' => $voucherCode,
                 'driver' => $voucher->driver_name,
-                'hours_granted' => $hoursGranted,
+                'hours_granted' => $hoursAvailable,
                 'expires_at' => $user->expires_at,
             ]);
 
@@ -617,7 +645,7 @@ class PortalController extends Controller
                 'success' => true,
                 'message' => "Bem-vindo, {$voucher->driver_name}! Acesso liberado.",
                 'driver_name' => $voucher->driver_name,
-                'hours_granted' => $hoursGranted,
+                'hours_granted' => $hoursAvailable,
                 'voucher_type' => $voucher->voucher_type,
                 'expires_at' => $user->expires_at->format('Y-m-d H:i:s'),
                 'remaining_hours_today' => $voucher->getRemainingHoursToday(),
@@ -647,22 +675,60 @@ class PortalController extends Controller
     private function liberarAcessoMikrotik($macAddress, $ipAddress, $hours = 24)
     {
         try {
-            // Usa o controller existente do Mikrotik
-            $mikrotikController = new \App\Http\Controllers\MikrotikLiberacaoController();
-            $mikrotikController->liberarAcesso($macAddress, $ipAddress, $hours);
+            // Buscar usuário pelo MAC
+            $user = User::where('mac_address', $macAddress)->first();
+            
+            if (!$user) {
+                Log::warning('⚠️ Usuário não encontrado para liberação Mikrotik', [
+                    'mac' => $macAddress
+                ]);
+                return false;
+            }
 
-            Log::info('🌐 Acesso liberado no Mikrotik via voucher', [
+            // Tentar liberar via webhook service primeiro
+            if (class_exists('\App\Services\MikrotikWebhookService')) {
+                $webhookService = new \App\Services\MikrotikWebhookService;
+                $liberado = $webhookService->liberarMacAddress($macAddress);
+                
+                if ($liberado) {
+                    Log::info('🎉 Acesso liberado no Mikrotik via webhook (Voucher)', [
+                        'user_id' => $user->id,
+                        'mac' => $macAddress,
+                        'hours' => $hours
+                    ]);
+                    return true;
+                }
+            }
+
+            // Fallback: tentar controller MikrotikLiberacao
+            if (class_exists('\App\Http\Controllers\MikrotikLiberacaoController')) {
+                $mikrotikController = new \App\Http\Controllers\MikrotikLiberacaoController();
+                $resultado = $mikrotikController->liberarAcessoImediato($user->id);
+                
+                if ($resultado) {
+                    Log::info('✅ Acesso liberado no Mikrotik via controller (Voucher)', [
+                        'user_id' => $user->id,
+                        'mac' => $macAddress,
+                        'hours' => $hours
+                    ]);
+                    return true;
+                }
+            }
+
+            Log::info('ℹ️ Liberação será feita via sync automático do Mikrotik', [
                 'mac' => $macAddress,
-                'ip' => $ipAddress,
-                'hours' => $hours
+                'note' => 'Será liberado no próximo sync (10s)'
             ]);
+            
+            return true;
+
         } catch (\Exception $e) {
-            Log::error('❌ Erro ao liberar acesso no Mikrotik', [
+            Log::warning('⚠️ Erro ao tentar liberar no Mikrotik, mas acesso será liberado no próximo sync', [
                 'mac' => $macAddress,
-                'ip' => $ipAddress,
                 'error' => $e->getMessage()
             ]);
-            throw $e;
+            // Não lançar exceção - o acesso será liberado via sync automático
+            return true;
         }
     }
 }

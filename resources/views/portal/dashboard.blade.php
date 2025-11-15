@@ -26,6 +26,35 @@
             </div>
         @endif
 
+        <!-- Botão de Acesso Rápido para Voucher (apenas se não for usuário pagante ativo) -->
+        @if (!$latestPayment || $latestPayment->status !== 'completed')
+            <div class="mb-6 bg-gradient-to-r from-green-100 to-blue-100 rounded-3xl p-6 shadow-xl border-2 border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg">
+                            <span class="text-3xl">🎫</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Motorista?</h3>
+                            <p class="text-sm text-gray-600">Ative seu voucher aqui</p>
+                        </div>
+                    </div>
+                    @php
+                        $macParam = request()->query('mac') ?? $user->mac_address ?? '';
+                        $ipParam = request()->query('ip') ?? $user->ip_address ?? '';
+                        $voucherUrl = route('voucher.activate');
+                        if ($macParam && $ipParam) {
+                            $voucherUrl .= '?source=mikrotik&mac=' . urlencode($macParam) . '&ip=' . urlencode($ipParam);
+                        }
+                    @endphp
+                    <a href="{{ $voucherUrl }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-105 flex items-center gap-2">
+                        <span>Ativar Voucher</span>
+                        <span>→</span>
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <div class="grid gap-6 md:grid-cols-2">
             <div class="elegant-card rounded-3xl p-6 shadow-2xl">
                 <div class="flex items-center justify-between mb-4">

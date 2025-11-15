@@ -13,6 +13,7 @@ use App\Http\Controllers\PortalDashboardController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
+use App\Http\Controllers\DriverVoucherController;
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
@@ -24,6 +25,15 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/entrar', [PortalAuthController::class, 'showLogin'])->name('portal.login');
 Route::post('/entrar', [PortalAuthController::class, 'login'])->name('portal.login.submit');
 Route::post('/sair', [PortalAuthController::class, 'logout'])->middleware('auth')->name('portal.logout');
+
+// Rotas de Vouchers para Motoristas (Não requer autenticação)
+Route::prefix('voucher')->name('voucher.')->group(function () {
+    Route::get('/ativar', [DriverVoucherController::class, 'showActivate'])->name('activate');
+    Route::post('/ativar', [DriverVoucherController::class, 'activate'])->name('activate.submit');
+    Route::get('/status', [DriverVoucherController::class, 'showStatus'])->name('status');
+    Route::post('/status', [DriverVoucherController::class, 'checkStatus'])->name('status.check');
+    Route::post('/desconectar', [DriverVoucherController::class, 'disconnect'])->name('disconnect');
+});
 
 // Rota alternativa para /portal (redireciona para raiz)
 Route::get('/portal', function () {

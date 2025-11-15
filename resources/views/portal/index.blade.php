@@ -936,76 +936,98 @@
             });
 
         // ===== VOUCHER SYSTEM =====
-        function applyVoucher(inputId, buttonId) {
-            const input = document.getElementById(inputId);
-            const button = document.getElementById(buttonId);
-            const voucherCode = input.value.trim().toUpperCase();
+        // Aguardar DOM carregar completamente
+        document.addEventListener('DOMContentLoaded', function() {
+            function applyVoucher(inputId, buttonId) {
+                const input = document.getElementById(inputId);
+                const button = document.getElementById(buttonId);
+                
+                // Verificar se os elementos existem
+                if (!input || !button) {
+                    console.error('Elementos do voucher não encontrados:', { inputId, buttonId });
+                    return;
+                }
 
-            if (!voucherCode) {
-                alert('❌ Por favor, digite o código do voucher');
-                return;
+                const voucherCode = input.value.trim().toUpperCase();
+
+                if (!voucherCode) {
+                    alert('❌ Por favor, digite o código do voucher');
+                    return;
+                }
+
+                // Desabilita botão e mostra loading
+                button.disabled = true;
+                button.innerHTML = '⏳';
+
+                fetch('/api/voucher/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        voucher_code: voucherCode
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Sucesso - mostra mensagem e redireciona
+                        alert(`✅ ${data.message}\n\n` +
+                              `🎫 Tipo: ${data.voucher_type === 'unlimited' ? 'Ilimitado' : 'Limitado'}\n` +
+                              `⏰ Horas concedidas: ${data.hours_granted}h\n` +
+                              `📅 Válido até: ${new Date(data.expires_at).toLocaleString('pt-BR')}\n` +
+                              (data.voucher_type === 'limited' ? `⏱️ Horas restantes hoje: ${data.remaining_hours_today}h` : ''));
+                        
+                        // Redireciona para o Google após sucesso
+                        setTimeout(() => {
+                            window.location.href = 'https://www.google.com';
+                        }, 2000);
+                    } else {
+                        alert(`❌ ${data.message}`);
+                        if (button) {
+                            button.disabled = false;
+                            button.innerHTML = 'OK';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao validar voucher:', error);
+                    alert('❌ Erro ao processar voucher. Tente novamente.');
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = 'OK';
+                    }
+                });
             }
 
-            // Desabilita botão e mostra loading
-            button.disabled = true;
-            button.innerHTML = '⏳';
+            // Event listeners para vouchers - com verificação de existência
+            const applyVoucherMobile = document.getElementById('apply-voucher-mobile');
+            if (applyVoucherMobile) {
+                applyVoucherMobile.addEventListener('click', function() {
+                    applyVoucher('voucher-code-mobile', 'apply-voucher-mobile');
+                });
+            }
 
-            fetch('/api/voucher/validate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    voucher_code: voucherCode
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Sucesso - mostra mensagem e redireciona
-                    alert(`✅ ${data.message}\n\n` +
-                          `🎫 Tipo: ${data.voucher_type === 'unlimited' ? 'Ilimitado' : 'Limitado'}\n` +
-                          `⏰ Horas concedidas: ${data.hours_granted}h\n` +
-                          `📅 Válido até: ${new Date(data.expires_at).toLocaleString('pt-BR')}\n` +
-                          (data.voucher_type === 'limited' ? `⏱️ Horas restantes hoje: ${data.remaining_hours_today}h` : ''));
-                    
-                    // Redireciona para dashboard
-                    setTimeout(() => {
-                        window.location.href = '/portal/dashboard';
-                    }, 2000);
-                } else {
-                    alert(`❌ ${data.message}`);
-                    button.disabled = false;
-                    button.innerHTML = 'OK';
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao validar voucher:', error);
-                alert('❌ Erro ao processar voucher. Tente novamente.');
-                button.disabled = false;
-                button.innerHTML = 'OK';
-            });
-        }
+            const applyVoucherDesktop = document.getElementById('apply-voucher-desktop');
+            if (applyVoucherDesktop) {
+                applyVoucherDesktop.addEventListener('click', function() {
+                    applyVoucher('voucher-code-desktop', 'apply-voucher-desktop');
+                });
+            }
 
-        // Event listeners para vouchers
-        document.getElementById('apply-voucher-mobile').addEventListener('click', function() {
-            applyVoucher('voucher-code-mobile', 'apply-voucher-mobile');
-        });
-
-        document.getElementById('apply-voucher-desktop').addEventListener('click', function() {
-            applyVoucher('voucher-code-desktop', 'apply-voucher-desktop');
-        });
-
-        // Permitir Enter para aplicar voucher
-        ['voucher-code-mobile', 'voucher-code-desktop'].forEach(inputId => {
-            document.getElementById(inputId).addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    const buttonId = inputId.replace('code', 'apply').replace('voucher-', 'apply-voucher-');
-                    applyVoucher(inputId, buttonId);
+            // Permitir Enter para aplicar voucher
+            ['voucher-code-mobile', 'voucher-code-desktop'].forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            const buttonId = inputId.replace('code', 'apply').replace('voucher-', 'apply-voucher-');
+                            applyVoucher(inputId, buttonId);
+                        }
+                    });
                 }
             });
-        });
         });
     </script>
     
