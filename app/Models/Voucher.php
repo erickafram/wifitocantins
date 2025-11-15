@@ -11,6 +11,7 @@ class Voucher extends Model
         'code',
         'driver_name',
         'driver_document',
+        'driver_phone',
         'daily_hours',
         'daily_hours_used',
         'last_used_date',

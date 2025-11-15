@@ -64,32 +64,15 @@
                         type="text" 
                         id="voucher_code" 
                         name="voucher_code" 
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition uppercase"
-                        placeholder="Ex: ABC123"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition uppercase text-center text-xl font-bold"
+                        placeholder="Ex: WIFI-ABCD-1234"
                         value="{{ old('voucher_code') }}"
                         required
                         maxlength="20"
                         style="text-transform: uppercase;"
+                        autofocus
                     >
                     <p class="text-xs text-gray-500 mt-1">Digite o código fornecido pela empresa</p>
-                </div>
-
-                <!-- Telefone do Motorista -->
-                <div class="mb-6">
-                    <label for="driver_phone" class="block text-sm font-semibold text-gray-700 mb-2">
-                        📱 Seu Telefone
-                    </label>
-                    <input 
-                        type="tel" 
-                        id="driver_phone" 
-                        name="driver_phone" 
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
-                        placeholder="(00) 00000-0000"
-                        value="{{ old('driver_phone') }}"
-                        required
-                        maxlength="20"
-                    >
-                    <p class="text-xs text-gray-500 mt-1">Necessário para verificar o status do voucher</p>
                 </div>
 
                 <!-- Campos ocultos para MAC e IP -->
@@ -113,26 +96,20 @@
                 </button>
             </form>
 
+            <!-- Informação sobre Telefone -->
+            <div class="mt-6 bg-gray-50 rounded-xl p-4 text-xs text-gray-600">
+                <p class="flex items-center gap-2">
+                    <span>ℹ️</span>
+                    <span><strong>Importante:</strong> Este voucher está vinculado a um telefone específico cadastrado pela empresa.</span>
+                </p>
+            </div>
+
             <!-- Link para Verificar Status -->
             <div class="mt-6 text-center">
                 <a href="{{ route('voucher.status') }}" class="text-sm text-gray-600 hover:text-green-600 transition">
                     Já ativou? Verificar status do voucher →
                 </a>
             </div>
-        </div>
-
-        <!-- Informações Adicionais -->
-        <div class="mt-6 bg-blue-50 rounded-2xl p-6 text-sm text-blue-900">
-            <h3 class="font-bold mb-2 flex items-center gap-2">
-                <span class="text-lg">ℹ️</span>
-                Como funciona?
-            </h3>
-            <ul class="space-y-2 list-disc list-inside">
-                <li>Cada voucher tem um limite de horas diárias</li>
-                <li>O acesso expira automaticamente ao fim do período</li>
-                <li>Você pode verificar o tempo restante a qualquer momento</li>
-                <li>Use o mesmo telefone para acessar o voucher em outros dias</li>
-            </ul>
         </div>
     </div>
 </div>
@@ -172,24 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
         detectDevice();
     }
 
-    // Formatar telefone enquanto digita
-    const phoneInput = document.getElementById('driver_phone');
-    phoneInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 11) value = value.slice(0, 11);
-        
-        if (value.length > 10) {
-            value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
-        } else if (value.length > 6) {
-            value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
-        } else if (value.length > 2) {
-            value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
-        }
-        
-        e.target.value = value;
-    });
-
-    // Converter código do voucher para maiúsculas
+    // Converter código do voucher para maiúsculas automaticamente
     const voucherInput = document.getElementById('voucher_code');
     voucherInput.addEventListener('input', function(e) {
         e.target.value = e.target.value.toUpperCase();

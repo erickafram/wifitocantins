@@ -37,11 +37,15 @@ class VoucherController extends Controller
         $validated = $request->validate([
             'driver_name' => 'required|string|max:191',
             'driver_document' => 'nullable|string|max:191',
+            'driver_phone' => 'required|string|max:20',
             'daily_hours' => 'required|integer|min:1|max:24',
             'expires_at' => 'nullable|date|after:today',
             'voucher_type' => 'required|in:limited,unlimited',
             'description' => 'nullable|string|max:191',
         ]);
+
+        // Limpar telefone (apenas números)
+        $driverPhone = preg_replace('/\D/', '', $validated['driver_phone']);
 
         // Gera código único
         do {
@@ -52,6 +56,7 @@ class VoucherController extends Controller
             'code' => $code,
             'driver_name' => $validated['driver_name'],
             'driver_document' => $validated['driver_document'] ?? null,
+            'driver_phone' => $driverPhone,
             'daily_hours' => $validated['daily_hours'],
             'expires_at' => $validated['expires_at'] ?? null,
             'voucher_type' => $validated['voucher_type'],
@@ -62,7 +67,7 @@ class VoucherController extends Controller
 
         return redirect()
             ->route('admin.vouchers.index')
-            ->with('success', "Voucher criado com sucesso! Código: {$voucher->code}");
+            ->with('success', "Voucher criado com sucesso! Código: {$voucher->code} | Telefone: {$driverPhone}");
     }
 
     /**
@@ -81,12 +86,18 @@ class VoucherController extends Controller
         $validated = $request->validate([
             'driver_name' => 'required|string|max:191',
             'driver_document' => 'nullable|string|max:191',
+            'driver_phone' => 'required|string|max:20',
             'daily_hours' => 'required|integer|min:1|max:24',
             'expires_at' => 'nullable|date',
             'voucher_type' => 'required|in:limited,unlimited',
             'description' => 'nullable|string|max:191',
             'is_active' => 'boolean',
         ]);
+
+        // Limpar telefone (apenas números)
+        if (isset($validated['driver_phone'])) {
+            $validated['driver_phone'] = preg_replace('/\D/', '', $validated['driver_phone']);
+        }
 
         $voucher->update($validated);
 

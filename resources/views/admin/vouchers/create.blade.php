@@ -57,6 +57,28 @@
                     @enderror
                 </div>
 
+                <!-- Telefone do Motorista -->
+                <div>
+                    <label for="driver_phone" class="block text-sm font-bold text-gray-700 mb-2">
+                        📱 Telefone do Motorista *
+                    </label>
+                    <input 
+                        type="tel" 
+                        name="driver_phone" 
+                        id="driver_phone" 
+                        value="{{ old('driver_phone') }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
+                        placeholder="(00) 00000-0000"
+                        required
+                    >
+                    <p class="mt-2 text-sm text-gray-500">
+                        💡 O telefone será vinculado ao voucher para segurança e rastreamento
+                    </p>
+                    @error('driver_phone')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Tipo de Voucher -->
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-3">
@@ -210,7 +232,27 @@
             }
         }
 
-        // Inicializa o estado correto ao carregar a página
-        document.addEventListener('DOMContentLoaded', toggleDailyHours);
+        // Formatar telefone enquanto digita
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleDailyHours();
+            
+            const phoneInput = document.getElementById('driver_phone');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) value = value.slice(0, 11);
+                    
+                    if (value.length > 10) {
+                        value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+                    } else if (value.length > 6) {
+                        value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+                    } else if (value.length > 2) {
+                        value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                    }
+                    
+                    e.target.value = value;
+                });
+            }
+        });
     </script>
 @endsection

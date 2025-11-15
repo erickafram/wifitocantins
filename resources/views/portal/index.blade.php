@@ -418,24 +418,18 @@
                  </div>
              </div>
 
-             <!-- Voucher Mobile -->
-             <div class="elegant-card rounded-2xl shadow-xl p-4">
+             <!-- Botão para Motoristas (Mobile) -->
+             <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl shadow-xl p-6 border-2 border-green-300">
                  <div class="text-center">
-                     <p class="text-gray-700 font-medium mb-3 text-sm">🎫 Código promocional?</p>
-                     <div class="flex gap-2">
-                         <input 
-                             type="text" 
-                             id="voucher-code-mobile"
-                             placeholder="Digite seu voucher"
-                             class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-tocantins-green focus:border-tocantins-green"
-                         >
-                         <button 
-                             id="apply-voucher-mobile"
-                             class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold px-4 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
-                         >
-                             OK
-                         </button>
-                     </div>
+                     <div class="text-4xl mb-3">🎫</div>
+                     <h3 class="text-lg font-bold text-gray-800 mb-2">Motorista?</h3>
+                     <p class="text-sm text-gray-600 mb-4">Ative seu voucher aqui</p>
+                     <a 
+                         href="{{ route('voucher.activate') }}{{ request()->has('mac') ? '?source=mikrotik&mac=' . request('mac') . '&ip=' . request('ip') : '' }}" 
+                         class="block bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-105"
+                     >
+                         Ativar Voucher →
+                     </a>
                  </div>
              </div>
 
@@ -514,22 +508,25 @@
                      </div>
                  </div>
 
-                 <!-- Voucher Desktop -->
-                 <div class="elegant-card rounded-2xl shadow-xl p-4">
-                     <p class="text-gray-700 font-medium mb-3 text-sm text-center">🎫 Código promocional?</p>
-                     <div class="flex gap-2">
-                         <input 
-                             type="text" 
-                             id="voucher-code-desktop"
-                             placeholder="Digite seu voucher"
-                             class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-tocantins-green focus:border-tocantins-green"
+                 <!-- Botão para Motoristas (Desktop) -->
+                 <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl shadow-xl p-6 border-2 border-green-300">
+                     <div class="flex items-center justify-between">
+                         <div class="flex items-center gap-3">
+                             <div class="bg-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
+                                 <span class="text-2xl">🎫</span>
+                             </div>
+                             <div>
+                                 <h3 class="text-base font-bold text-gray-800">Motorista?</h3>
+                                 <p class="text-xs text-gray-600">Ative seu voucher aqui</p>
+                             </div>
+                         </div>
+                         <a 
+                             href="{{ route('voucher.activate') }}{{ request()->has('mac') ? '?source=mikrotik&mac=' . request('mac') . '&ip=' . request('ip') : '' }}" 
+                             class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition transform hover:scale-105 flex items-center gap-2 text-sm"
                          >
-                         <button 
-                             id="apply-voucher-desktop"
-                             class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold px-4 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
-                         >
-                             OK
-                         </button>
+                             <span>Ativar Voucher</span>
+                             <span>→</span>
+                         </a>
                      </div>
                  </div>
              </div>

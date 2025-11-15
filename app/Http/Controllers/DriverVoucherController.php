@@ -61,7 +61,6 @@ class DriverVoucherController extends Controller
     {
         $request->validate([
             'voucher_code' => 'required|string|max:20',
-            'driver_phone' => 'required|string|max:20',
         ]);
 
         // MAC e IP vêm da sessão (capturados do Mikrotik) ou do request
@@ -77,7 +76,6 @@ class DriverVoucherController extends Controller
             DB::beginTransaction();
 
             $voucherCode = strtoupper(trim($request->voucher_code));
-            $driverPhone = preg_replace('/\D/', '', $request->driver_phone);
             $macAddress = strtoupper($macAddress);
             $ipAddress = $ipAddress;
 
@@ -88,7 +86,14 @@ class DriverVoucherController extends Controller
                 return back()->with('error', 'Voucher não encontrado. Verifique o código e tente novamente.');
             }
 
-            // 2. Validar voucher
+            // 2. Usar telefone do voucher (cadastrado no admin)
+            $driverPhone = $voucher->driver_phone;
+            
+            if (!$driverPhone) {
+                return back()->with('error', 'Este voucher não possui telefone cadastrado. Entre em contato com o administrador.');
+            }
+
+            // 3. Validar voucher
             if (!$voucher->is_active) {
                 return back()->with('error', 'Este voucher está desativado. Entre em contato com o administrador.');
             }
@@ -101,17 +106,36 @@ class DriverVoucherController extends Controller
                 return back()->with('error', 'Este voucher já atingiu o limite de horas para hoje. Tente novamente amanhã.');
             }
 
-            // 3. Verificar se o motorista já tem voucher ativo HOJE
-            $existingUser = User::where('driver_phone', $driverPhone)
+            // 4. VALIDAÇÃO DE SEGURANÇA: Verificar se o voucher já está ativo em OUTRO dispositivo
+            $activeUser = User::where('driver_phone', $driverPhone)
                 ->whereNotNull('voucher_id')
-                ->whereNotNull('voucher_activated_at')
+                ->where('voucher_id', $voucher->id)
                 ->where('expires_at', '>', now())
                 ->first();
 
-            if ($existingUser) {
+            if ($activeUser) {
+                // Se o MAC for diferente, bloquear
+                if ($activeUser->mac_address !== $macAddress) {
+                    DB::commit();
+                    
+                    $timeRemaining = now()->diff($activeUser->expires_at);
+                    $hoursRemaining = $timeRemaining->h;
+                    $minutesRemaining = $timeRemaining->i;
+                    
+                    return back()->with('error', 
+                        "🔒 VOUCHER JÁ ESTÁ EM USO!\n\n" .
+                        "Este voucher está ativo em outro dispositivo.\n" .
+                        "Tempo restante: {$hoursRemaining}h {$minutesRemaining}min\n" .
+                        "Dispositivo registrado: " . substr($activeUser->mac_address, -8) . "\n\n" .
+                        "⚠️ Por segurança, um voucher só pode ser usado em um dispositivo por vez.\n" .
+                        "Aguarde o término da sessão atual para usar em outro dispositivo."
+                    );
+                }
+                
+                // Se for o mesmo MAC, apenas renovar
                 DB::commit();
 
-                $timeRemaining = now()->diff($existingUser->expires_at);
+                $timeRemaining = now()->diff($activeUser->expires_at);
                 $hoursRemaining = $timeRemaining->h;
                 $minutesRemaining = $timeRemaining->i;
                 
@@ -119,12 +143,11 @@ class DriverVoucherController extends Controller
                     "⚠️ Voucher já está ativo!\n\n" .
                     "Você já tem um voucher ativo no momento.\n" .
                     "Tempo restante: {$hoursRemaining}h {$minutesRemaining}min\n" .
-                    "Válido até: " . $existingUser->expires_at->format('d/m/Y H:i') . "\n\n" .
-                    "Aguarde o término do período atual para ativar novamente."
+                    "Válido até: " . $activeUser->expires_at->format('d/m/Y H:i')
                 );
             }
 
-            // 4. Verificar se já usou o voucher hoje e atingiu o limite
+            // 5. Verificar se já usou o voucher hoje e atingiu o limite
             $existingExpiredUser = User::where('driver_phone', $driverPhone)
                 ->where('voucher_id', $voucher->id)
                 ->whereNotNull('voucher_activated_at')
@@ -146,7 +169,7 @@ class DriverVoucherController extends Controller
                 );
             }
 
-            // 5. Criar ou atualizar usuário motorista
+            // 6. Criar ou atualizar usuário motorista
             $user = User::where('driver_phone', $driverPhone)->first();
 
             if (!$user) {
@@ -174,7 +197,7 @@ class DriverVoucherController extends Controller
                 ]);
             }
 
-            // 6. Calcular tempo de expiração baseado nas horas do voucher
+            // 7. Calcular tempo de expiração baseado nas horas do voucher
             $hoursAvailable = $voucher->getRemainingHoursToday();
             $expiresAt = now()->addHours($hoursAvailable);
 
@@ -186,7 +209,7 @@ class DriverVoucherController extends Controller
                 }
             }
 
-            // 7. Atualizar tempo de expiração
+            // 8. Atualizar tempo de expiração
             $user->update([
                 'connected_at' => now(),
                 'expires_at' => $expiresAt,
@@ -194,10 +217,10 @@ class DriverVoucherController extends Controller
                 'voucher_daily_minutes_used' => 0, // Resetar contador diário
             ]);
 
-            // 8. Registrar uso do voucher
+            // 9. Registrar uso do voucher
             $voucher->recordUsage($hoursAvailable);
 
-            // 9. Criar sessão de acesso
+            // 10. Criar sessão de acesso
             Session::create([
                 'user_id' => $user->id,
                 'payment_id' => null, // Motorista não paga
@@ -205,10 +228,10 @@ class DriverVoucherController extends Controller
                 'session_status' => 'active',
             ]);
 
-            // 10. Registrar MAC no Mikrotik para liberação
+            // 11. Registrar MAC no Mikrotik para liberação
             $this->registerMacInMikrotik($macAddress, $ipAddress, $user->id);
 
-            // 11. Tentar liberar acesso imediatamente no Mikrotik
+            // 12. Tentar liberar acesso imediatamente no Mikrotik
             $this->liberateAccessOnMikrotik($user);
 
             DB::commit();
