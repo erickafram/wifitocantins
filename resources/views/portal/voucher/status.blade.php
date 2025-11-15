@@ -9,7 +9,6 @@
                 <span class="text-4xl">📊</span>
             </div>
             <h1 class="text-3xl font-bold text-gray-800">Status do Voucher</h1>
-            <p class="text-gray-600 mt-2">Motorista Tocantins Transporte</p>
         </div>
 
         <!-- Mensagens -->

@@ -422,7 +422,6 @@
              <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl shadow-xl p-6 border-2 border-green-300">
                  <div class="text-center">
                      <div class="text-4xl mb-3">🎫</div>
-                     <h3 class="text-lg font-bold text-gray-800 mb-2">Motorista?</h3>
                      <p class="text-sm text-gray-600 mb-4">Ative seu voucher aqui</p>
                      <a 
                          href="{{ route('voucher.activate') }}{{ request()->has('mac') ? '?source=mikrotik&mac=' . request('mac') . '&ip=' . request('ip') : '' }}" 
@@ -516,7 +515,6 @@
                                  <span class="text-2xl">🎫</span>
                              </div>
                              <div>
-                                 <h3 class="text-base font-bold text-gray-800">Motorista?</h3>
                                  <p class="text-xs text-gray-600">Ative seu voucher aqui</p>
                              </div>
                          </div>

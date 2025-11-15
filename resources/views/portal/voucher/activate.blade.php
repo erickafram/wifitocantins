@@ -9,7 +9,6 @@
                 <span class="text-4xl">🎫</span>
             </div>
             <h1 class="text-3xl font-bold text-gray-800">Ativar Voucher</h1>
-            <p class="text-gray-600 mt-2">Motorista Tocantins Transporte</p>
         </div>
 
         <!-- Mensagens -->
@@ -24,9 +23,9 @@
 
         @if (session('error'))
             <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
-                <div class="flex items-center">
+                <div class="flex items-start">
                     <span class="text-xl mr-2">❌</span>
-                    <span style="white-space: pre-line;">{{ session('error') }}</span>
+                    <span class="text-sm" style="white-space: pre-line;">{{ session('error') }}</span>
                 </div>
             </div>
         @endif

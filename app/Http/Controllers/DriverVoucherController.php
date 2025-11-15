@@ -155,7 +155,7 @@ class DriverVoucherController extends Controller
 
             if ($lastUsedUser && $lastUsedUser->voucher_activated_at) {
                 $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at, false);
-                $intervalRequired = $voucher->activation_interval_hours ?? 24;
+                $intervalRequired = (float) ($voucher->activation_interval_hours ?? 24);
 
                 if ($hoursSinceLastActivation < $intervalRequired) {
                     DB::rollback();

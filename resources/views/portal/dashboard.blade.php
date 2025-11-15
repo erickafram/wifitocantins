@@ -35,7 +35,6 @@
                             <span class="text-3xl">🎫</span>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-gray-800">Motorista?</h3>
                             <p class="text-sm text-gray-600">Ative seu voucher aqui</p>
                         </div>
                     </div>
