@@ -6,9 +6,13 @@ color colorPrimaryDark
 color ic_launcher_background
 drawable ic_launcher
 drawable ic_launcher_foreground
+drawable icon_circle
 drawable splash_background
+id icon_text
 id logo_container
+id progress_bar
 id webview
+id welcome_text
 layout activity_main
 layout activity_splash
 string app_name

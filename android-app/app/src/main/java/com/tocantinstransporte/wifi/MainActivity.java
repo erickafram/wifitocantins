@@ -1,5 +1,6 @@
 package com.tocantinstransporte.wifi;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
@@ -7,6 +8,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -18,13 +20,16 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
     
     private WebView webView;
     private ValueCallback<Uri[]> uploadMessage;
     private static final int REQUEST_SELECT_FILE = 100;
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 101;
     private static final String BASE_URL = "https://www.tocantinstransportewifi.com.br";
     private static final String CHANNEL_ID = "wifi_connection_channel";
     private NotificationManager notificationManager;
@@ -39,6 +44,9 @@ public class MainActivity extends Activity {
         
         // Inicializar notificações
         createNotificationChannel();
+        
+        // Solicitar permissão de notificação (Android 13+)
+        requestNotificationPermission();
         
         // Configurações do WebView
         WebSettings webSettings = webView.getSettings();
@@ -93,7 +101,7 @@ public class MainActivity extends Activity {
             }
         });
         
-        // WebChromeClient para upload de arquivos e câmera
+        // WebChromeClient para upload de arquivos, câmera e console
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
@@ -114,6 +122,13 @@ public class MainActivity extends Activity {
                                  Toast.LENGTH_LONG).show();
                     return false;
                 }
+                return true;
+            }
+            
+            @Override
+            public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
+                android.util.Log.d("WebView", consoleMessage.message() + " -- From line " +
+                        consoleMessage.lineNumber() + " of " + consoleMessage.sourceId());
                 return true;
             }
         });
@@ -173,22 +188,61 @@ public class MainActivity extends Activity {
         // Script para detectar pagamento/voucher bem-sucedido
         String script = "javascript:(function() {" +
                 "if (window.AndroidApp) {" +
-                "  window.notifyConnection = function() {" +
-                "    AndroidApp.showConnectionNotification();" +
+                "  console.log('AndroidApp interface detectada!');" +
+                "  " +
+                "  window.notifyConnection = function(time) {" +
+                "    console.log('notifyConnection chamada com tempo:', time);" +
+                "    AndroidApp.showConnectionNotification(time || '');" +
                 "  };" +
                 "  " +
                 "  var observer = new MutationObserver(function(mutations) {" +
                 "    mutations.forEach(function(mutation) {" +
                 "      var text = mutation.target.textContent || '';" +
-                "      if (text.includes('conectado') || text.includes('ativado com sucesso') || text.includes('pagamento confirmado')) {" +
-                "        AndroidApp.showConnectionNotification();" +
+                "      var lowerText = text.toLowerCase();" +
+                "      if (lowerText.includes('conectado') || " +
+                "          lowerText.includes('ativado com sucesso') || " +
+                "          lowerText.includes('pagamento confirmado') || " +
+                "          lowerText.includes('internet liberada') || " +
+                "          lowerText.includes('voucher ativado')) {" +
+                "        console.log('Texto detectado:', text);" +
+                "        var timeMatch = text.match(/(\\d+)\\s*(hora|horas|minuto|minutos|dia|dias)/i);" +
+                "        var timeText = '';" +
+                "        if (timeMatch) {" +
+                "          timeText = timeMatch[0];" +
+                "        }" +
+                "        AndroidApp.showConnectionNotification(timeText);" +
                 "      }" +
                 "    });" +
                 "  });" +
                 "  observer.observe(document.body, { childList: true, subtree: true, characterData: true });" +
+                "  " +
+                "  console.log('Observer de notificações ativado!');" +
                 "}" +
                 "})()";
         webView.loadUrl(script);
+    }
+    
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, 
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS}, 
+                    REQUEST_NOTIFICATION_PERMISSION);
+            }
+        }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "✅ Notificações ativadas!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "⚠️ Ative as notificações para receber alertas de conexão", Toast.LENGTH_LONG).show();
+            }
+        }
     }
     
     private void createNotificationChannel() {

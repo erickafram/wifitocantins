@@ -37,17 +37,27 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true" >
+
+        <!-- Splash Screen Activity - Tela Inicial -->
+        <activity
+            android:name="com.tocantinstransporte.wifi.SplashActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/SplashTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Main Activity -->
         <activity
             android:name="com.tocantinstransporte.wifi.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
 
             <!-- Deep links para abrir o app -->
             <intent-filter android:autoVerify="true" >
@@ -60,13 +70,6 @@
                     android:host="www.tocantinstransportewifi.com.br"
                     android:scheme="https" />
             </intent-filter>
-        </activity>
-
-        <!-- Splash Screen Activity -->
-        <activity
-            android:name="com.tocantinstransporte.wifi.SplashActivity"
-            android:exported="true"
-            android:theme="@style/SplashTheme" >
         </activity>
 
         <provider

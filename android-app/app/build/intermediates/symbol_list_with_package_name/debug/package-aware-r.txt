@@ -2997,6 +2997,7 @@ drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
 drawable ic_search_black_24
+drawable icon_circle
 drawable m3_avd_hide_password
 drawable m3_avd_show_password
 drawable m3_bottom_sheet_drag_handle
@@ -3286,6 +3287,7 @@ id honorRequest
 id horizontal_only
 id icon
 id icon_group
+id icon_text
 id ifRoom
 id ignore
 id ignoreRequest
@@ -3424,6 +3426,7 @@ id pin
 id position
 id postLayout
 id pressed
+id progress_bar
 id progress_circular
 id progress_horizontal
 id radio
@@ -3559,6 +3562,7 @@ id view_tree_view_model_store_owner
 id visible
 id visible_removing_fragment_view_tag
 id webview
+id welcome_text
 id west
 id withText
 id with_icon

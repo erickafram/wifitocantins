@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-54:12
-INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-54:12
-INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-54:12
-INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-54:12
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-56:12
+INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-56:12
+INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-56:12
+INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:2:1-56:12
 MERGED from [androidx.databinding:viewbinding:8.2.0] C:\Users\Erick\.gradle\caches\8.9\transforms\925291f17a2eea9e418e345b8d9909a8\transformed\viewbinding-8.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\Erick\.gradle\caches\8.9\transforms\abfa0d7bae730bb72326f8321dff44b2\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Erick\.gradle\caches\8.9\transforms\bd5d8e3f132045ba3da6f189e8de3e69\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -89,8 +89,8 @@ ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.
 	android:name
 		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:13:19-57
 application
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:15:5-52:19
-INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:15:5-52:19
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:15:5-54:19
+INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:15:5-54:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\Erick\.gradle\caches\8.9\transforms\abfa0d7bae730bb72326f8321dff44b2\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\Erick\.gradle\caches\8.9\transforms\abfa0d7bae730bb72326f8321dff44b2\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Erick\.gradle\caches\8.9\transforms\bd5d8e3f132045ba3da6f189e8de3e69\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -127,18 +127,16 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Erick\.gradle\cach
 		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:22:9-69
 	android:usesCleartextTraffic
 		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:21:9-44
-activity#com.tocantinstransporte.wifi.MainActivity
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:25:9-44:20
+activity#com.tocantinstransporte.wifi.SplashActivity
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:26:9-35:20
 	android:screenOrientation
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:29:13-49
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:30:13-49
 	android:exported
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:27:13-36
-	android:configChanges
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:28:13-74
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:28:13-36
 	android:theme
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:30:13-56
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:29:13-47
 	android:name
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:26:13-41
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:27:13-43
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:31:13-34:29
 action#android.intent.action.MAIN
@@ -149,36 +147,40 @@ category#android.intent.category.LAUNCHER
 ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:33:17-77
 	android:name
 		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:33:27-74
-intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:www.tocantinstransportewifi.com.br+data:scheme:https
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:37:13-43:29
-	android:autoVerify
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:37:28-53
-action#android.intent.action.VIEW
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:38:17-69
-	android:name
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:38:25-66
-category#android.intent.category.DEFAULT
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:39:17-76
-	android:name
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:39:27-73
-category#android.intent.category.BROWSABLE
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:40:17-78
-	android:name
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:40:27-75
-data
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:41:17-42:75
-	android:host
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:42:23-72
-	android:scheme
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:41:23-45
-activity#com.tocantinstransporte.wifi.SplashActivity
-ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:47:9-51:20
+activity#com.tocantinstransporte.wifi.MainActivity
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:38:9-53:20
+	android:screenOrientation
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:42:13-49
 	android:exported
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:49:13-36
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:40:13-36
+	android:configChanges
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:41:13-74
 	android:theme
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:50:13-47
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:43:13-56
 	android:name
-		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:48:13-43
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:39:13-41
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:www.tocantinstransportewifi.com.br+data:scheme:https
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:46:13-52:29
+	android:autoVerify
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:46:28-53
+action#android.intent.action.VIEW
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:47:17-69
+	android:name
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:47:25-66
+category#android.intent.category.DEFAULT
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:48:17-76
+	android:name
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:48:27-73
+category#android.intent.category.BROWSABLE
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:49:17-78
+	android:name
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:49:27-75
+data
+ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:50:17-51:75
+	android:host
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:51:23-72
+	android:scheme
+		ADDED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml:50:23-45
 uses-sdk
 INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\wamp64\www\wifitocantins\android-app\app\src\main\AndroidManifest.xml
