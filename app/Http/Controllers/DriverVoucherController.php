@@ -204,7 +204,13 @@ class DriverVoucherController extends Controller
             }
 
             // 7. Criar ou atualizar usuário motorista
+            // Primeiro buscar por driver_phone (motorista já cadastrado)
             $user = User::where('driver_phone', $driverPhone)->first();
+
+            // Se não encontrou por driver_phone, buscar por MAC (dispositivo já usado por outro usuário)
+            if (!$user) {
+                $user = User::where('mac_address', $macAddress)->first();
+            }
 
             if (!$user) {
                 // Criar novo usuário motorista
@@ -221,8 +227,11 @@ class DriverVoucherController extends Controller
                     'registered_at' => now(),
                 ]);
             } else {
-                // Atualizar usuário existente
+                // Atualizar usuário existente (pode ser motorista ou usuário comum que agora usa voucher)
                 $user->update([
+                    'name' => $voucher->driver_name ?? $user->name ?? 'Motorista',
+                    'phone' => $driverPhone,
+                    'driver_phone' => $driverPhone,
                     'mac_address' => $macAddress,
                     'ip_address' => $ipAddress,
                     'voucher_id' => $voucher->id,
