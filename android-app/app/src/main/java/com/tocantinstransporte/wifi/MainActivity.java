@@ -18,14 +18,29 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> uploadMessage;
     private static final int REQUEST_SELECT_FILE = 100;
     private static final String BASE_URL = "https://www.tocantinstransportewifi.com.br";
+    private boolean isFirstLoad = true; // Flag para evitar múltiplas execuções
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Verificar se veio da splash com WebView pré-carregado
+        boolean keepSplash = getIntent().getBooleanExtra("keep_splash", false);
+        boolean preloaded = getIntent().getBooleanExtra("preloaded", false);
+        
+        if (keepSplash) {
+            // Manter fundo da splash até WebView estar pronto
+            getWindow().setBackgroundDrawableResource(R.drawable.splash_background);
+        }
+        
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.webview);
+        
+        // WebView invisível até estar pronto
+        webView.setVisibility(android.view.View.GONE);
+        webView.setAlpha(0f);
 
         // Configurações do WebView
         WebSettings webSettings = webView.getSettings();
@@ -71,8 +86,54 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // Injetar CSS para melhorar experiência mobile
-                injectCustomCSS();
+                
+                android.util.Log.d("MainActivity", "Página carregada: " + url);
+                
+                // Se a URL é do dashboard (não é login.tocantinswifi.local) E é a primeira vez
+                if (isFirstLoad && 
+                    !url.contains("login.tocantinswifi.local") && 
+                    url.contains("tocantinstransportewifi.com.br")) {
+                    
+                    isFirstLoad = false; // Marcar como já executado
+                    android.util.Log.d("MainActivity", "✅ Dashboard carregado, fazendo transição rápida (primeira vez)");
+                    
+                    // Mostrar WebView primeiro (ainda com fundo verde)
+                    webView.setVisibility(android.view.View.VISIBLE);
+                    webView.setAlpha(0f);
+                    
+                    // Fade in RÁPIDO do WebView (200ms)
+                    webView.animate()
+                        .alpha(1f)
+                        .setDuration(200)
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Depois que WebView está visível, mudar fundo para branco
+                                getWindow().setBackgroundDrawableResource(android.R.color.white);
+                                
+                                // Avisar que está pronto
+                                WebViewManager.getInstance().setReady(true);
+                                android.util.Log.d("MainActivity", "✅ MainActivity completamente pronta");
+                                
+                                // Injetar CSS DEPOIS da transição (com delay para não causar reload visual)
+                                new android.os.Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        injectCustomCSS();
+                                    }
+                                }, 500);
+                            }
+                        })
+                        .start();
+                }
+            }
+            
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                android.util.Log.d("MainActivity", "Iniciando carregamento: " + url);
+                
+                // NÃO mostrar ainda - aguardar onPageFinished para garantir que está renderizado
             }
         });
 
@@ -101,13 +162,32 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Carregar URL inicial
+        // Carregar URL
         String initialUrl = BASE_URL;
         Intent intent = getIntent();
-        if (intent != null && intent.getData() != null) {
-            initialUrl = intent.getData().toString();
+        
+        if (preloaded) {
+            // Verificar se tem URL final pré-carregada
+            WebViewManager manager = WebViewManager.getInstance();
+            String finalUrl = manager.getFinalUrl();
+            
+            if (finalUrl != null && !finalUrl.isEmpty()) {
+                // Usar a URL final que já foi processada pelo MikroTik
+                initialUrl = finalUrl;
+                android.util.Log.d("MainActivity", "✅ Usando URL pré-carregada: " + initialUrl);
+            } else {
+                // Fallback: carregar com skip_login
+                initialUrl = BASE_URL + "?skip_login=1&from_app=1";
+                android.util.Log.d("MainActivity", "⚠️ URL final não encontrada, usando skip_login");
+            }
+        } else {
+            // Caso normal (não veio da splash)
+            if (intent != null && intent.getData() != null) {
+                initialUrl = intent.getData().toString();
+            }
+            android.util.Log.d("MainActivity", "Carregando URL normal: " + initialUrl);
         }
-
+        
         webView.loadUrl(initialUrl);
     }
 

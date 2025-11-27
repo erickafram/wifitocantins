@@ -13,8 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class SplashActivity extends AppCompatActivity {
 
-    private static final int SPLASH_MIN_LENGTH = 12000; // 12 segundos mínimo (tempo para MikroTik + Laravel)
-    private static final int SPLASH_MAX_LENGTH = 15000; // 15 segundos máximo
+    private static final int SPLASH_MIN_LENGTH = 15000; // 15 segundos mínimo (tempo para MikroTik + Laravel)
+    private static final int SPLASH_MAX_LENGTH = 18000; // 18 segundos máximo
     private WebView hiddenWebView;
     private boolean webViewReady = false;
     private long startTime;
@@ -30,6 +30,7 @@ public class SplashActivity extends AppCompatActivity {
         animateIcon();
         animateTexts();
         animateProgressBar();
+        animateBus();
 
         // Pré-carregar site em background
         preloadWebsite();
@@ -45,9 +46,9 @@ public class SplashActivity extends AppCompatActivity {
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
                 // Só avança se:
-                // 1. Passou o tempo mínimo (12s) E site está pronto
+                // 1. Passou o tempo mínimo (15s) E site está pronto
                 // OU
-                // 2. Passou o tempo máximo (15s) independente do site
+                // 2. Passou o tempo máximo (18s) independente do site
                 if ((elapsedTime >= SPLASH_MIN_LENGTH && webViewReady) ||
                     elapsedTime >= SPLASH_MAX_LENGTH) {
 
@@ -66,7 +67,16 @@ public class SplashActivity extends AppCompatActivity {
     private void fadeOutAndProceed() {
         android.util.Log.d("SplashActivity", "Iniciando transição para MainActivity");
 
-        // Passar para MainActivity que vai carregar em background
+        // Salvar WebView e estado no WebViewManager
+        WebViewManager manager = WebViewManager.getInstance();
+        if (hiddenWebView != null) {
+            String currentUrl = hiddenWebView.getUrl();
+            manager.setFinalUrl(currentUrl);
+            manager.setReady(webViewReady);
+            android.util.Log.d("SplashActivity", "✅ URL final salva: " + currentUrl);
+        }
+
+        // Passar para MainActivity que vai usar a URL pré-carregada
         Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
         mainIntent.putExtra("preloaded", webViewReady);
         mainIntent.putExtra("keep_splash", true);
@@ -75,13 +85,15 @@ public class SplashActivity extends AppCompatActivity {
         // Sem animação de transição
         overridePendingTransition(0, 0);
 
-        // Finalizar splash após 3 segundos (tempo para MainActivity carregar)
+        // Finalizar splash após 2 segundos (tempo para MainActivity carregar e mostrar)
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 finish();
+                // Sem animação ao fechar
+                overridePendingTransition(0, 0);
             }
-        }, 3000);
+        }, 2000);
     }
 
     private void preloadWebsite() {
@@ -286,5 +298,36 @@ public class SplashActivity extends AppCompatActivity {
             pulse.setRepeatMode(ObjectAnimator.RESTART);
             pulse.start();
         }
+    }
+
+    private void animateBus() {
+        View busIcon = findViewById(R.id.bus_icon);
+        if (busIcon == null) return;
+
+        // Fade in inicial
+        ObjectAnimator fadeIn = ObjectAnimator.ofFloat(busIcon, "alpha", 0f, 1f);
+        fadeIn.setDuration(1000);
+        fadeIn.setStartDelay(2000);
+        fadeIn.start();
+
+        // Obter largura da tela para calcular a distância
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        
+        // Animação de movimento da esquerda para direita (mais lento)
+        ObjectAnimator moveX = ObjectAnimator.ofFloat(busIcon, "translationX", 0f, screenWidth + 60f);
+        moveX.setDuration(12000); // 12 segundos para atravessar a tela (mais lento)
+        moveX.setStartDelay(2500);
+        moveX.setRepeatCount(ObjectAnimator.INFINITE);
+        moveX.setRepeatMode(ObjectAnimator.RESTART);
+        moveX.setInterpolator(new android.view.animation.LinearInterpolator());
+        moveX.start();
+
+        // Animação de "balanço" suave para simular movimento
+        ObjectAnimator bounce = ObjectAnimator.ofFloat(busIcon, "translationY", 0f, -4f, 0f, 4f, 0f);
+        bounce.setDuration(1000);
+        bounce.setStartDelay(2500);
+        bounce.setRepeatCount(ObjectAnimator.INFINITE);
+        bounce.setRepeatMode(ObjectAnimator.RESTART);
+        bounce.start();
     }
 }

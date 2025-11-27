@@ -16,6 +16,8 @@ class WiFiPortal {
         this.pixTimerInterval = null;
         this.pixCountdownSeconds = 0;
         this.pixPaymentConfirmed = false;
+        this.releaseCountdownInterval = null;
+        this.releaseCountdownSeconds = 0;
         this.init();
     }
 
@@ -99,18 +101,11 @@ class WiFiPortal {
             manageBtn.addEventListener('click', () => this.showConnectionManager());
         }
 
-        // Máscara de telefone e verificação de usuário
+        // Máscara de telefone (SIMPLIFICADO - sem verificação de usuário existente)
         const phoneInput = document.getElementById('user_phone');
         if (phoneInput) {
             phoneInput.addEventListener('input', (e) => this.applyPhoneMask(e));
             phoneInput.addEventListener('keydown', (e) => this.handlePhoneKeydown(e));
-            phoneInput.addEventListener('blur', (e) => this.checkExistingUser('phone', e.target.value));
-        }
-
-        // Verificação de usuário por email
-        const emailInput = document.getElementById('user_email');
-        if (emailInput) {
-            emailInput.addEventListener('blur', (e) => this.checkExistingUser('email', e.target.value));
         }
 
         // Fechar modais clicando fora
@@ -385,23 +380,19 @@ class WiFiPortal {
     }
 
     /**
-     * Reseta o formulário de registro
+     * Reseta o formulário de registro (SIMPLIFICADO)
      */
     resetRegistrationForm() {
         this.currentUserId = null;
         
-        const nameInput = document.getElementById('full_name');
-        const emailInput = document.getElementById('user_email');
         const phoneInput = document.getElementById('user_phone');
         const submitBtn = document.getElementById('registration-submit-btn');
         const errorDiv = document.getElementById('registration-errors');
 
-        if (nameInput) nameInput.value = '';
-        if (emailInput) emailInput.value = '';
         if (phoneInput) phoneInput.value = '';
         
         if (submitBtn) {
-            submitBtn.innerHTML = '✅ CONTINUAR PARA PAGAMENTO';
+            submitBtn.innerHTML = '📱 GERAR QR CODE PIX';
             submitBtn.disabled = false;
         }
 
@@ -442,32 +433,32 @@ class WiFiPortal {
     }
 
     /**
-     * Processa submissão do formulário de registro
+     * Processa submissão do formulário de registro (SIMPLIFICADO - apenas telefone)
      */
     async handleRegistrationSubmit(e) {
         e.preventDefault();
         
         const form = e.target;
         const formData = new FormData(form);
+        const phone = formData.get('phone').replace(/\D/g, ''); // Remove formatação para enviar apenas números
+        
         const data = {
-            name: formData.get('name'),
-            email: formData.get('email'),
-            phone: formData.get('phone').replace(/\D/g, ''), // Remove formatação para enviar apenas números
+            phone: phone,
             user_id: this.currentUserId, // Incluir ID se for usuário existente
-            mac_address: this.deviceMac, // 🎯 ADICIONAR MAC ADDRESS
-            ip_address: this.deviceIp
+            mac_address: this.deviceMac, // 🎯 MAC ADDRESS do MikroTik
+            ip_address: this.deviceIp    // 🎯 IP ADDRESS do MikroTik
         };
 
-        // Validação básica
-        if (!data.name || !data.email || !data.phone) {
-            this.showRegistrationError('Todos os campos são obrigatórios.');
+        // Validar telefone brasileiro (10 ou 11 dígitos)
+        if (phone.length < 10 || phone.length > 11) {
+            this.showRegistrationError('Por favor, insira um telefone válido com DDD (10 ou 11 dígitos).');
             return;
         }
 
         // 🚀 VALIDAR SE MAC FOI DETECTADO
         const identifiersOk = await this.ensureRealIdentifiers();
         if (!identifiersOk) {
-            this.showRegistrationError('Não foi possível detectar o dispositivo. Siga as instruções e tente novamente.');
+            this.showRegistrationError('Não foi possível detectar o dispositivo. Reconecte ao WiFi e tente novamente.');
             return;
         }
 
@@ -475,30 +466,16 @@ class WiFiPortal {
         data.ip_address = this.deviceIp;
 
         // 🐛 DEBUG: Log dos dados que serão enviados
-        console.log('📤 ENVIANDO PARA BACKEND:', {
+        console.log('📤 ENVIANDO PARA BACKEND (SIMPLIFICADO):', {
+            phone: phone,
             mac: this.deviceMac,
             ip: this.deviceIp,
-            name: data.name,
-            email: data.email,
         });
-
-        // Validar email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(data.email)) {
-            this.showRegistrationError('Por favor, insira um e-mail válido.');
-            return;
-        }
-
-        // Validar telefone brasileiro (10 ou 11 dígitos)
-        if (data.phone.length < 10 || data.phone.length > 11) {
-            this.showRegistrationError('Por favor, insira um telefone válido com DDD.');
-            return;
-        }
 
         // Mostrar loading no botão
         const submitBtn = document.getElementById('registration-submit-btn');
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = this.currentUserId ? 'ATUALIZANDO...' : 'CADASTRANDO...';
+        submitBtn.textContent = '⏳ GERANDO QR CODE...';
         submitBtn.disabled = true;
 
         try {
@@ -516,19 +493,14 @@ class WiFiPortal {
             if (result.success) {
                 this.currentUserId = result.user_id;
                 this.hideRegistrationModal();
-                this.showPaymentModal();
-                const message = result.existing_user ? 
-                    'Dados atualizados com sucesso!' : 
-                    'Cadastro realizado com sucesso!';
-                this.showSuccessMessage(message);
+                
+                // 🚀 IR DIRETO PARA GERAR QR CODE PIX (sem modal intermediário)
+                console.log('✅ Cadastro OK, gerando QR Code PIX...');
+                this.processPixPayment();
             } else {
                 if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
                     this.showRegistrationError(errorMessages.join('<br>'));
-                } else if (result.existing_user_data) {
-                    // Usuário já existe, preencher dados automaticamente
-                    this.fillUserData(result.existing_user_data);
-                    this.showRegistrationError('Usuário já cadastrado! Dados preenchidos automaticamente. Verifique e prossiga para o pagamento.');
                 } else {
                     this.showRegistrationError(result.message || 'Erro no cadastro.');
                 }
@@ -586,22 +558,12 @@ class WiFiPortal {
     }
 
     /**
-     * Preenche os dados do usuário no formulário
+     * Preenche os dados do usuário no formulário (SIMPLIFICADO)
      */
     fillUserData(userData) {
         this.currentUserId = userData.id;
 
-        const nameInput = document.getElementById('full_name');
-        const emailInput = document.getElementById('user_email');
         const phoneInput = document.getElementById('user_phone');
-
-        if (nameInput && userData.name) {
-            nameInput.value = userData.name;
-        }
-
-        if (emailInput && userData.email) {
-            emailInput.value = userData.email;
-        }
 
         if (phoneInput && userData.phone) {
             // Aplicar formatação ao telefone
@@ -618,12 +580,6 @@ class WiFiPortal {
         if (userData.ip_address && !this.deviceIp) {
             this.deviceIp = userData.ip_address;
             console.log('✅ IP recuperado do banco:', this.deviceIp);
-        }
-
-        // Atualizar botão para indicar atualização
-        const submitBtn = document.getElementById('registration-submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '✅ ATUALIZAR E PAGAR';
         }
 
         if (!this.hasRealIdentifiers()) {
@@ -705,13 +661,13 @@ class WiFiPortal {
             this.hideLoading();
 
             if (data.exists && data.user_id) {
-                // Usuário já existe - ir direto para pagamento
+                // Usuário já existe - ir direto para QR Code PIX
                 this.currentUserId = data.user_id;
-                console.log('✅ Usuário já cadastrado, indo direto para pagamento');
-                this.showPaymentModal();
+                console.log('✅ Usuário já cadastrado, gerando QR Code PIX direto...');
+                this.processPixPayment();
             } else {
-                // Usuário novo - mostrar cadastro
-                console.log('📝 Novo usuário, mostrando cadastro');
+                // Usuário novo - mostrar cadastro simplificado (apenas telefone)
+                console.log('📝 Novo usuário, mostrando cadastro simplificado');
                 this.showRegistrationModal();
             }
 
@@ -855,106 +811,191 @@ class WiFiPortal {
     }
 
     /**
-     * Exibe modal com QR Code PIX
+     * Exibe modal com QR Code PIX - Interface melhorada com status visual
      */
     showPixQRCode(data) {
         const modal = document.createElement('div');
         modal.id = 'pix-modal';
-        modal.className = 'fixed inset-0 bg-black bg-opacity-60 z-50 backdrop-blur-sm';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-70 z-50 backdrop-blur-sm';
         
         // Detectar se é dispositivo móvel
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         modal.innerHTML = `
             <div class="flex items-center justify-center min-h-screen p-3 overflow-y-auto">
-                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-lg sm:max-w-2xl animate-slide-up shadow-2xl border border-gray-200 my-2 max-h-[96vh] flex flex-col">
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-lg animate-slide-up shadow-2xl border border-gray-200 my-2 max-h-[96vh] flex flex-col">
                     
-                    <!-- Header Fixo -->
-                    <div class="flex justify-between items-center p-4 pb-3 border-b border-gray-200 bg-white rounded-t-2xl sticky top-0 z-10">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+                    <!-- Header com Status Principal -->
+                    <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl p-4 text-white">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-bold flex items-center gap-2">
+                                    <span class="text-2xl">📱</span> Pagamento PIX
+                                </h3>
+                                <p class="text-green-100 text-xs mt-1">WiFi Tocantins Express</p>
                             </div>
-                            <h3 class="text-lg font-bold text-green-700">Pagamento PIX</h3>
+                            <div class="text-right">
+                                <p class="text-green-100 text-xs">Valor</p>
+                                <p class="text-2xl font-bold">R$ ${data.qr_code.amount}</p>
+                            </div>
                         </div>
-                        <button id="close-pix-modal" class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
                     </div>
                     
-                    <!-- Conteúdo com Scroll -->
-                    <div class="overflow-y-auto flex-1 p-4">
-                        <!-- Aviso Compacto -->
-                        <div class="bg-amber-50 border-l-4 border-orange-500 p-2 mb-3 rounded-lg">
-                            <p class="text-xs text-orange-800"><span class="font-bold">⚠️</span> Mantenha esta tela aberta</p>
+                    <!-- Status Timeline Visual -->
+                    <div id="status-timeline" class="bg-gray-50 p-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between relative">
+                            <!-- Linha de conexão -->
+                            <div class="absolute top-4 left-8 right-8 h-1 bg-gray-200 rounded-full">
+                                <div id="progress-line" class="h-full bg-yellow-500 rounded-full transition-all duration-500" style="width: 33%"></div>
+                            </div>
+                            
+                            <!-- Etapa 1: QR Code -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="step-1" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                                    ✓
+                                </div>
+                                <span class="text-xs mt-1 font-medium text-green-600">QR Gerado</span>
+                            </div>
+                            
+                            <!-- Etapa 2: Aguardando Pagamento -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="step-2" class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white text-sm font-bold shadow-lg animate-pulse">
+                                    2
+                                </div>
+                                <span id="step-2-text" class="text-xs mt-1 font-medium text-yellow-600">Aguardando</span>
+                            </div>
+                            
+                            <!-- Etapa 3: Liberando -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="step-3" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
+                                    3
+                                </div>
+                                <span id="step-3-text" class="text-xs mt-1 font-medium text-gray-400">Liberando</span>
+                            </div>
+                            
+                            <!-- Etapa 4: Conectado -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="step-4" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
+                                    4
+                                </div>
+                                <span id="step-4-text" class="text-xs mt-1 font-medium text-gray-400">Conectado</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Área de Status Dinâmico -->
+                    <div id="dynamic-status-area" class="p-4">
+                        <!-- Status: Aguardando Pagamento (padrão) -->
+                        <div id="status-waiting" class="text-center">
+                            <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4">
+                                <div class="flex items-center justify-center gap-2 mb-2">
+                                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                                    <span class="text-amber-700 font-bold text-sm">AGUARDANDO SEU PAGAMENTO</span>
+                                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                                </div>
+                                <p class="text-amber-600 text-xs">Escaneie o QR Code ou copie o código PIX abaixo</p>
+                            </div>
+                            
+                            ${!isMobile ? `
+                            <!-- QR Code (apenas desktop) -->
+                            <div class="bg-white p-4 rounded-xl border-2 border-dashed border-green-300 mb-4 inline-block">
+                                <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-40 h-40 mx-auto">
+                            </div>
+                            ` : ''}
+                            
+                            <!-- Código PIX -->
+                            <div class="bg-blue-50 rounded-xl p-3 mb-4 border border-blue-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-xs font-bold text-blue-900">📋 Código Copia e Cola</p>
+                                    ${isMobile ? '<span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full animate-pulse">Use este!</span>' : ''}
+                                </div>
+                                <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2 max-h-16 overflow-y-auto">
+                                    <p class="text-xs text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
+                                </div>
+                                <button id="copy-pix-code" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                    📋 COPIAR CÓDIGO PIX
+                                </button>
+                            </div>
+                            
+                            <!-- Timer -->
+                            <div class="bg-gray-100 rounded-lg p-3 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <p id="pix-timer-text" class="text-sm font-bold text-gray-700">⏱️ Expira em: 03:00</p>
+                                </div>
+                                <button id="check-payment-status" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Verificar
+                                </button>
+                            </div>
                         </div>
                         
-                        <!-- Valor Compacto -->
-                        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-3 mb-3 shadow-lg">
-                            <p class="text-center text-xs text-green-100">Valor a pagar</p>
-                            <p class="text-center text-2xl font-bold text-white">R$ ${data.qr_code.amount}</p>
+                        <!-- Status: Pagamento Confirmado (oculto inicialmente) -->
+                        <div id="status-paid" class="hidden text-center">
+                            <div class="bg-green-50 border-2 border-green-400 rounded-xl p-6 mb-4">
+                                <div class="text-5xl mb-3">✅</div>
+                                <h4 class="text-green-700 font-bold text-lg mb-2">PAGAMENTO CONFIRMADO!</h4>
+                                <p class="text-green-600 text-sm">Seu pagamento foi recebido com sucesso</p>
+                            </div>
                         </div>
+                        
+                        <!-- Status: Liberando Acesso (oculto inicialmente) -->
+                        <div id="status-releasing" class="hidden text-center">
+                            <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-6 mb-4">
+                                <div class="relative w-20 h-20 mx-auto mb-4">
+                                    <div class="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                                    <div class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <span class="text-2xl">🛰️</span>
+                                    </div>
+                                </div>
+                                <h4 class="text-blue-700 font-bold text-lg mb-2">LIBERANDO SEU ACESSO...</h4>
+                                <p class="text-blue-600 text-sm mb-3">Configurando seu dispositivo no MikroTik</p>
+                                
+                                <!-- Contador de liberação -->
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <p class="text-xs text-gray-500 mb-1">Tempo estimado de liberação</p>
+                                    <p id="release-countdown" class="text-2xl font-bold text-blue-600">01:00</p>
+                                    <div class="w-full bg-blue-100 rounded-full h-2 mt-2">
+                                        <div id="release-progress" class="bg-blue-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-xs text-gray-500 mt-3">⚠️ Não feche esta tela!</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Status: Conectado (oculto inicialmente) -->
+                        <div id="status-connected" class="hidden text-center">
+                            <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl p-6 mb-4 text-white">
+                                <div class="text-6xl mb-3">🎉</div>
+                                <h4 class="font-bold text-xl mb-2">VOCÊ ESTÁ CONECTADO!</h4>
+                                <p class="text-green-100 text-sm mb-4">Aproveite a internet WiFi Tocantins</p>
+                                <div class="bg-white/20 rounded-lg p-3">
+                                    <p class="text-xs text-green-100">Redirecionando em alguns segundos...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
-                    ${!isMobile ? `
-                    <!-- QR Code (apenas desktop) -->
-                    <div class="bg-white p-3 rounded-xl border-2 border-dashed border-gray-300 mb-3">
-                        <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-48 h-48 mx-auto">
-                        <p class="text-center text-xs text-gray-600 mt-2">📱 Escaneie com seu celular</p>
-                    </div>
-                    ` : ''}
-                    
-                    <!-- Código PIX Compacto -->
-                    <div class="bg-blue-50 rounded-xl p-3 mb-3 border border-blue-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-xs font-bold text-blue-900">📋 Código Pix</p>
-                            ${isMobile ? '<span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>' : ''}
+                    <!-- Footer -->
+                    <div class="p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                        <div id="footer-waiting" class="flex gap-2">
+                            <button id="cancel-payment" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg text-sm transition-all">
+                                Cancelar
+                            </button>
                         </div>
-                        <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2 max-h-20 overflow-y-auto">
-                            <p class="text-xs text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
-                        </div>
-                        <button id="copy-pix-code" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-2 px-3 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                            </svg>
-                            Copiar Código
-                        </button>
-                    </div>
-                    
-                    <!-- Timer Compacto -->
-                    <div class="bg-yellow-50 rounded-lg p-2 mb-3 border border-yellow-200 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p id="pix-timer-text" class="text-xs font-bold text-yellow-800">Expira em: 05:00</p>
-                        </div>
-                        <div id="pix-status-indicator" class="flex items-center gap-1">
-                            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                            <span class="text-xs text-yellow-700">Aguardando</span>
+                        <div id="footer-processing" class="hidden">
+                            <p class="text-center text-xs text-gray-500">🔒 Processamento seguro • WiFi Tocantins</p>
                         </div>
                     </div>
-                    
-                    <!-- Botões Compactos -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="check-payment-status" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-2 px-3 rounded-lg shadow-lg flex items-center justify-center gap-1 text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Verificar
-                        </button>
-                        <button id="cancel-payment" class="bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-2 px-3 rounded-lg shadow-lg flex items-center justify-center gap-1 text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            Cancelar
-                        </button>
-                    </div>
-                    </div>
-                    <!-- Fim Conteúdo com Scroll -->
                     
                 </div>
             </div>
@@ -963,10 +1004,6 @@ class WiFiPortal {
         document.body.appendChild(modal);
         
         // Event listeners
-        document.getElementById('close-pix-modal').addEventListener('click', () => {
-            this.closePixModal();
-        });
-        
         document.getElementById('copy-pix-code').addEventListener('click', () => {
             this.copyPixCode(data.qr_code.emv_string);
         });
@@ -1006,7 +1043,7 @@ class WiFiPortal {
     }
 
     /**
-     * Verifica status do pagamento
+     * Verifica status do pagamento - Com transições visuais melhoradas
      */
     async checkPaymentStatus(paymentId) {
         console.log('🔄 Verificando status do pagamento:', paymentId);
@@ -1034,64 +1071,209 @@ class WiFiPortal {
                 this.pixPaymentConfirmed = true;
                 this.stopPixCountdown();
 
-                this.updatePixTimerDisplay('✅ Pagamento confirmado!');
-                this.updatePixStatusHint('🛰️ Aguarde até 2 minutos enquanto configuramos seu dispositivo na Starlink. Em instantes você terá acesso à melhor internet do Brasil!');
-
-                const checkButton = document.getElementById('check-payment-status');
-                if (checkButton) {
-                    checkButton.innerHTML = 'Pagamento confirmado';
-                    checkButton.disabled = true;
-                }
-
-                const cancelButton = document.getElementById('cancel-payment');
-                if (cancelButton) {
-                    cancelButton.innerHTML = 'Fechar';
-                    cancelButton.classList.remove('bg-gray-500');
-                    cancelButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                    cancelButton.addEventListener('click', () => {
-                        this.closePixModal();
-                    });
-                }
-
-                this.showSuccessMessage('Pagamento confirmado! Aguarde enquanto liberamos seu acesso.');
-
+                // 🎯 ETAPA 2: Mostrar pagamento confirmado
+                this.showPaymentConfirmedStatus();
+                
+                // Aguardar 2 segundos para mostrar a confirmação
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // 🎯 ETAPA 3: Mostrar liberando acesso com contador
+                this.showReleasingAccessStatus();
+                
+                // Iniciar contador de liberação (60 segundos)
+                this.startReleaseCountdown(60);
+                
+                // Liberar dispositivo no MikroTik
                 const allowed = await this.allowDevice(this.deviceMac);
+                
                 if (allowed) {
-                    // Mostrar mensagem de redirecionamento
-                    this.updatePixStatusHint('✅ Acesso liberado! Seu dispositivo está conectado à Starlink. Aproveite a melhor internet do Brasil!');
+                    // 🎯 ETAPA 4: Mostrar conectado
+                    this.showConnectedStatus();
                     
-                    // Fechar modal e redirecionar para o Google
+                    // Redirecionar após 3 segundos
                     setTimeout(() => {
-                        this.closePixModal();
-                        this.showSuccessMessage('🛰️ Conectado à Starlink! Navegue à vontade com a melhor internet do Brasil...');
-                        
-                        // Redirecionar para o Google após 2 segundos
-                        setTimeout(() => {
-                            window.location.href = 'https://www.google.com';
-                        }, 2000);
-                    }, 2000);
+                        window.location.href = 'https://www.google.com';
+                    }, 3000);
                 }
             } else {
                 console.log('⏱️ Pagamento ainda pendente');
-                this.updatePixStatusHint('Ainda aguardando confirmação do pagamento...');
 
                 // Restaurar botão
                 if (checkButton) {
                     setTimeout(() => {
-                        checkButton.innerHTML = '🔄 Verificar Status';
+                        checkButton.innerHTML = 'Verificar';
                         checkButton.disabled = false;
-                    }, 2000);
+                    }, 1500);
                 }
             }
         } catch (error) {
             console.error('❌ Erro ao verificar status do pagamento:', error);
-            this.showErrorMessage('Erro ao verificar status. Tente novamente.');
             
             // Restaurar botão
             if (checkButton) {
-                checkButton.innerHTML = '🔄 Verificar Status';
+                checkButton.innerHTML = 'Verificar';
                 checkButton.disabled = false;
             }
+        }
+    }
+    
+    /**
+     * Mostra status de pagamento confirmado
+     */
+    showPaymentConfirmedStatus() {
+        // Atualizar timeline - Etapa 2 concluída
+        const step2 = document.getElementById('step-2');
+        const step2Text = document.getElementById('step-2-text');
+        const progressLine = document.getElementById('progress-line');
+        
+        if (step2) {
+            step2.classList.remove('bg-yellow-500', 'animate-pulse');
+            step2.classList.add('bg-green-500');
+            step2.innerHTML = '✓';
+        }
+        if (step2Text) {
+            step2Text.classList.remove('text-yellow-600');
+            step2Text.classList.add('text-green-600');
+            step2Text.textContent = 'Pago!';
+        }
+        if (progressLine) {
+            progressLine.style.width = '50%';
+            progressLine.classList.remove('bg-yellow-500');
+            progressLine.classList.add('bg-green-500');
+        }
+        
+        // Mostrar status de pagamento confirmado
+        const statusWaiting = document.getElementById('status-waiting');
+        const statusPaid = document.getElementById('status-paid');
+        const footerWaiting = document.getElementById('footer-waiting');
+        const footerProcessing = document.getElementById('footer-processing');
+        
+        if (statusWaiting) statusWaiting.classList.add('hidden');
+        if (statusPaid) statusPaid.classList.remove('hidden');
+        if (footerWaiting) footerWaiting.classList.add('hidden');
+        if (footerProcessing) footerProcessing.classList.remove('hidden');
+    }
+    
+    /**
+     * Mostra status de liberando acesso
+     */
+    showReleasingAccessStatus() {
+        // Atualizar timeline - Etapa 3 ativa
+        const step3 = document.getElementById('step-3');
+        const step3Text = document.getElementById('step-3-text');
+        const progressLine = document.getElementById('progress-line');
+        
+        if (step3) {
+            step3.classList.remove('bg-gray-300', 'text-gray-500');
+            step3.classList.add('bg-blue-500', 'text-white', 'animate-pulse');
+            step3.innerHTML = '⏳';
+        }
+        if (step3Text) {
+            step3Text.classList.remove('text-gray-400');
+            step3Text.classList.add('text-blue-600');
+            step3Text.textContent = 'Liberando...';
+        }
+        if (progressLine) {
+            progressLine.style.width = '75%';
+            progressLine.classList.add('bg-blue-500');
+        }
+        
+        // Mostrar status de liberando
+        const statusPaid = document.getElementById('status-paid');
+        const statusReleasing = document.getElementById('status-releasing');
+        
+        if (statusPaid) statusPaid.classList.add('hidden');
+        if (statusReleasing) statusReleasing.classList.remove('hidden');
+    }
+    
+    /**
+     * Mostra status de conectado
+     */
+    showConnectedStatus() {
+        // Parar contador de liberação
+        this.stopReleaseCountdown();
+        
+        // Atualizar timeline - Etapa 3 concluída, Etapa 4 ativa
+        const step3 = document.getElementById('step-3');
+        const step3Text = document.getElementById('step-3-text');
+        const step4 = document.getElementById('step-4');
+        const step4Text = document.getElementById('step-4-text');
+        const progressLine = document.getElementById('progress-line');
+        
+        if (step3) {
+            step3.classList.remove('bg-blue-500', 'animate-pulse');
+            step3.classList.add('bg-green-500');
+            step3.innerHTML = '✓';
+        }
+        if (step3Text) {
+            step3Text.classList.remove('text-blue-600');
+            step3Text.classList.add('text-green-600');
+            step3Text.textContent = 'Liberado!';
+        }
+        if (step4) {
+            step4.classList.remove('bg-gray-300', 'text-gray-500');
+            step4.classList.add('bg-green-500', 'text-white');
+            step4.innerHTML = '✓';
+        }
+        if (step4Text) {
+            step4Text.classList.remove('text-gray-400');
+            step4Text.classList.add('text-green-600');
+            step4Text.textContent = 'Conectado!';
+        }
+        if (progressLine) {
+            progressLine.style.width = '100%';
+        }
+        
+        // Mostrar status de conectado
+        const statusReleasing = document.getElementById('status-releasing');
+        const statusConnected = document.getElementById('status-connected');
+        
+        if (statusReleasing) statusReleasing.classList.add('hidden');
+        if (statusConnected) statusConnected.classList.remove('hidden');
+    }
+    
+    /**
+     * Inicia contador de liberação
+     */
+    startReleaseCountdown(seconds) {
+        this.releaseCountdownSeconds = seconds;
+        this.releaseCountdownInterval = setInterval(() => {
+            this.releaseCountdownSeconds--;
+            
+            const countdownEl = document.getElementById('release-countdown');
+            const progressEl = document.getElementById('release-progress');
+            
+            if (countdownEl) {
+                const mins = Math.floor(this.releaseCountdownSeconds / 60).toString().padStart(2, '0');
+                const secs = (this.releaseCountdownSeconds % 60).toString().padStart(2, '0');
+                countdownEl.textContent = `${mins}:${secs}`;
+            }
+            
+            if (progressEl) {
+                const progress = ((seconds - this.releaseCountdownSeconds) / seconds) * 100;
+                progressEl.style.width = `${progress}%`;
+            }
+            
+            // 🎯 Quando o contador chegar a 0, mostrar como conectado automaticamente
+            if (this.releaseCountdownSeconds <= 0) {
+                this.stopReleaseCountdown();
+                // Mostrar status de conectado automaticamente
+                this.showConnectedStatus();
+                // Redirecionar após 3 segundos
+                setTimeout(() => {
+                    window.location.href = 'https://www.google.com';
+                }, 3000);
+            }
+        }, 1000);
+    }
+    
+    /**
+     * Para contador de liberação
+     */
+    stopReleaseCountdown() {
+        if (this.releaseCountdownInterval) {
+            clearInterval(this.releaseCountdownInterval);
+            this.releaseCountdownInterval = null;
         }
     }
 
@@ -1105,6 +1287,7 @@ class WiFiPortal {
                 clearInterval(this.paymentCheckInterval);
                 this.paymentCheckInterval = null;
             }
+            this.stopReleaseCountdown();
             this.stopPixCountdown();
             this.pixPaymentConfirmed = false;
             this.pixCountdownSeconds = 0;

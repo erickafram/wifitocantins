@@ -9,6 +9,8 @@ drawable ic_launcher_foreground
 drawable icon_circle
 drawable splash_background
 id app_name_text
+id bottom_container
+id bus_icon
 id decorative_line
 id icon_text
 id loading_text

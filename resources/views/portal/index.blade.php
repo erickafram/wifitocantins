@@ -597,66 +597,50 @@
         <div class="flex items-center justify-center h-full p-4">
             <div class="elegant-card rounded-3xl p-6 sm:p-8 md:p-10 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl relative overflow-hidden">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg sm:text-xl font-bold text-tocantins-gray-green">📋 Cadastro Rápido</h3>
+                    <h3 class="text-lg sm:text-xl font-bold text-tocantins-gray-green">📱 Acesso Rápido</h3>
                     <button id="close-registration-modal" class="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl transition-colors">×</button>
                 </div>
                 
                 <div class="text-center mb-6">
-                    <div class="text-3xl sm:text-4xl mb-2">🚌</div>
-                    <p class="text-sm text-gray-600">Preencha seus dados para continuar</p>
+                    <div class="text-4xl sm:text-5xl mb-3">🚀</div>
+                    <p class="text-base font-semibold text-gray-700">Digite seu telefone para conectar</p>
+                    <p class="text-xs text-gray-500 mt-1">Rápido e fácil - apenas 1 campo!</p>
                 </div>
                 
                 <form id="registration-form" class="space-y-4">
                     <div id="registration-errors" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
                     
                     <div>
-                        <label for="full_name" class="block text-sm font-medium text-tocantins-gray-green mb-2">Nome Completo *</label>
-                        <input 
-                            type="text" 
-                            id="full_name" 
-                            name="name" 
-                            required
-                            placeholder="Digite seu nome completo"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                        >
-                    </div>
-                    
-                        <div>
-                            <label for="user_email" class="block text-sm font-medium text-tocantins-gray-green mb-2">E-mail *</label>
-                            <input 
-                                type="email" 
-                                id="user_email" 
-                                name="email" 
-                                required
-                                placeholder="seu@email.com"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
-                            >
-                        </div>
-                        
-                    <div>
-                            <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">Telefone *</label>
+                            <label for="user_phone" class="block text-sm font-medium text-tocantins-gray-green mb-2">📞 Telefone com DDD</label>
                             <input 
                                 type="tel" 
                                 id="user_phone" 
                                 name="phone" 
                                 required
-                                placeholder="(XX) X XXXX-XXXX"
+                                placeholder="(63) 9 8101-3050"
                                 maxlength="16"
-                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80"
+                                autofocus
+                                class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-4 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-lg bg-white/80 text-center font-semibold"
                             >
                     </div>
                     
                     <button 
                         type="submit" 
                         id="registration-submit-btn"
-                        class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-sm relative z-10"
+                        class="connect-button w-full text-white font-bold py-4 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 text-base relative z-10"
                     >
-                        ✅ CONTINUAR PARA PAGAMENTO
+                        📱 GERAR QR CODE PIX
                     </button>
                 </form>
                 
-                <p class="text-center text-xs text-gray-500 mt-4">
-                    🔒 Seus dados estão seguros conosco
+                <div class="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                    <p class="text-center text-xs text-green-700">
+                        ✅ Pague via PIX e conecte instantaneamente!
+                    </p>
+                </div>
+                
+                <p class="text-center text-xs text-gray-400 mt-3">
+                    🔒 Conexão segura • Liberação automática
                 </p>
             </div>
         </div>
