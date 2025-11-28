@@ -163,12 +163,12 @@ class DriverVoucherController extends Controller
                 if ($currentMac && strtoupper($activeUser->mac_address) === strtoupper($currentMac)) {
                     $status['can_activate'] = false;
                     $status['type'] = 'info';
-                    $status['message'] = "Voucher já está ativo neste dispositivo.\nTempo restante: {$hoursRemaining}h {$minutesRemaining}min";
+                    $status['message'] = "Voucher já está ativo neste dispositivo.";
                 } else {
                     // Dispositivo diferente - bloquear
                     $status['can_activate'] = false;
                     $status['type'] = 'warning';
-                    $status['message'] = "Voucher em uso em outro dispositivo.\nTempo restante: {$hoursRemaining}h {$minutesRemaining}min\nAguarde o término da sessão atual.";
+                    $status['message'] = "Voucher em uso em outro dispositivo.\nAguarde o término da sessão atual.";
                 }
                 return $status;
             }
@@ -195,7 +195,7 @@ class DriverVoucherController extends Controller
                     $status['can_activate'] = false;
                     $status['type'] = 'warning';
                     $status['next_activation'] = $nextAvailableTime;
-                    $status['message'] = "Aguarde o intervalo entre ativações.\nPróxima ativação: " . $nextAvailableTime->format('d/m/Y H:i') . "\nTempo restante: {$hoursRemaining}h {$minutesRemaining}min";
+                    $status['message'] = "Aguarde o intervalo entre ativações.\nPróxima ativação: " . $nextAvailableTime->format('d/m/Y H:i');
                     return $status;
                 }
             }

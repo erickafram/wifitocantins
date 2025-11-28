@@ -201,18 +201,10 @@
 
                     <!-- Informações Adicionais -->
                     <div class="grid grid-cols-2 gap-3 mb-5">
-                        @if($voucherStatus['is_active_session'] && $voucherStatus['time_remaining'])
-                            <div class="bg-blue-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-blue-600 font-medium">Tempo Restante</p>
-                                <p class="text-lg font-bold text-blue-800">
-                                    {{ $voucherStatus['time_remaining']['hours'] }}h {{ $voucherStatus['time_remaining']['minutes'] }}min
-                                </p>
-                            </div>
-                            <div class="bg-blue-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-blue-600 font-medium">Expira em</p>
-                                <p class="text-sm font-bold text-blue-800">
-                                    {{ $voucherStatus['time_remaining']['expires_at']->format('H:i') }}
-                                </p>
+                        @if($voucherStatus['is_active_session'])
+                            <div class="col-span-2 bg-blue-50 rounded-xl p-3 text-center">
+                                <p class="text-xs text-blue-600 font-medium">Status</p>
+                                <p class="text-lg font-bold text-blue-800">Em uso</p>
                             </div>
                         @elseif($voucherStatus['next_activation'])
                             <div class="col-span-2 bg-yellow-50 rounded-xl p-3 text-center">
