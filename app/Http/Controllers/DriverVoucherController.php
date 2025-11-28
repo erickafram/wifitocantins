@@ -55,6 +55,177 @@ class DriverVoucherController extends Controller
     }
 
     /**
+     * Busca voucher por CPF/documento ou código
+     */
+    public function searchVoucher(Request $request)
+    {
+        $request->validate([
+            'search_term' => 'required|string|max:50',
+        ]);
+
+        // MAC e IP vêm da sessão (capturados do Mikrotik) ou do request
+        $macAddress = $request->input('mac_address') ?? session('mikrotik_mac');
+        $ipAddress = $request->input('ip_address') ?? session('mikrotik_ip');
+
+        $searchTerm = trim($request->search_term);
+        
+        // Limpar CPF/documento (remover pontos, traços, etc)
+        $cleanedTerm = preg_replace('/\D/', '', $searchTerm);
+        
+        // Buscar por código do voucher (formato WIFI-XXXX-XXXX)
+        $voucher = Voucher::where('code', strtoupper($searchTerm))->first();
+        
+        // Se não encontrou por código, buscar por documento (CPF)
+        if (!$voucher && strlen($cleanedTerm) >= 11) {
+            // Buscar por documento exato ou parcial
+            $voucher = Voucher::where('driver_document', 'LIKE', '%' . $cleanedTerm . '%')
+                ->orWhere('driver_document', 'LIKE', '%' . $searchTerm . '%')
+                ->first();
+        }
+        
+        // Se ainda não encontrou, tentar buscar pelo termo original no documento
+        if (!$voucher) {
+            $voucher = Voucher::where('driver_document', $searchTerm)->first();
+        }
+
+        if (!$voucher) {
+            return back()
+                ->with('error', 'Nenhum voucher encontrado para este CPF ou código. Verifique os dados e tente novamente.')
+                ->withInput();
+        }
+
+        // Verificar se o voucher está ativo
+        $voucherStatus = $this->getVoucherStatus($voucher, $macAddress);
+
+        return view('portal.voucher.activate', [
+            'ip_address' => $ipAddress,
+            'mac_address' => $macAddress,
+            'voucher' => $voucher,
+            'voucherStatus' => $voucherStatus,
+            'searched' => true,
+        ]);
+    }
+
+    /**
+     * Obtém o status detalhado do voucher
+     */
+    private function getVoucherStatus(Voucher $voucher, ?string $currentMac = null): array
+    {
+        $status = [
+            'can_activate' => true,
+            'message' => null,
+            'type' => 'success', // success, warning, error, info
+            'time_remaining' => null,
+            'next_activation' => null,
+            'hours_available_today' => null,
+            'is_active_session' => false,
+            'active_device' => null,
+        ];
+
+        // 1. Verificar se voucher está desativado
+        if (!$voucher->is_active) {
+            $status['can_activate'] = false;
+            $status['type'] = 'error';
+            $status['message'] = 'Este voucher está desativado. Entre em contato com o administrador.';
+            return $status;
+        }
+
+        // 2. Verificar se expirou
+        if ($voucher->expires_at && $voucher->expires_at->isPast()) {
+            $status['can_activate'] = false;
+            $status['type'] = 'error';
+            $status['message'] = 'Este voucher expirou em ' . $voucher->expires_at->format('d/m/Y') . '.';
+            return $status;
+        }
+
+        // 3. Verificar se já está em uso em outro dispositivo
+        $driverPhone = $voucher->driver_phone;
+        if ($driverPhone) {
+            $activeUser = User::where('driver_phone', $driverPhone)
+                ->where('voucher_id', $voucher->id)
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if ($activeUser) {
+                $timeRemaining = $activeUser->expires_at->diff(now());
+                $hoursRemaining = $timeRemaining->h + ($timeRemaining->days * 24);
+                $minutesRemaining = $timeRemaining->i;
+                
+                $status['time_remaining'] = [
+                    'hours' => $hoursRemaining,
+                    'minutes' => $minutesRemaining,
+                    'expires_at' => $activeUser->expires_at,
+                ];
+                $status['is_active_session'] = true;
+                $status['active_device'] = $activeUser->mac_address;
+
+                // Se é o mesmo dispositivo, apenas informar
+                if ($currentMac && strtoupper($activeUser->mac_address) === strtoupper($currentMac)) {
+                    $status['can_activate'] = false;
+                    $status['type'] = 'info';
+                    $status['message'] = "Voucher já está ativo neste dispositivo.\nTempo restante: {$hoursRemaining}h {$minutesRemaining}min";
+                } else {
+                    // Dispositivo diferente - bloquear
+                    $status['can_activate'] = false;
+                    $status['type'] = 'warning';
+                    $status['message'] = "Voucher em uso em outro dispositivo.\nTempo restante: {$hoursRemaining}h {$minutesRemaining}min\nAguarde o término da sessão atual.";
+                }
+                return $status;
+            }
+        }
+
+        // 4. Verificar intervalo entre ativações
+        if ($driverPhone) {
+            $lastUsedUser = User::where('driver_phone', $driverPhone)
+                ->where('voucher_id', $voucher->id)
+                ->whereNotNull('voucher_activated_at')
+                ->orderBy('voucher_activated_at', 'desc')
+                ->first();
+
+            if ($lastUsedUser && $lastUsedUser->voucher_activated_at) {
+                $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at, false);
+                $intervalRequired = (float) ($voucher->activation_interval_hours ?? 24);
+
+                if ($hoursSinceLastActivation < $intervalRequired) {
+                    $nextAvailableTime = $lastUsedUser->voucher_activated_at->copy()->addHours($intervalRequired);
+                    $timeUntilNext = $nextAvailableTime->diff(now());
+                    $hoursRemaining = $timeUntilNext->h + ($timeUntilNext->days * 24);
+                    $minutesRemaining = $timeUntilNext->i;
+
+                    $status['can_activate'] = false;
+                    $status['type'] = 'warning';
+                    $status['next_activation'] = $nextAvailableTime;
+                    $status['message'] = "Aguarde o intervalo entre ativações.\nPróxima ativação: " . $nextAvailableTime->format('d/m/Y H:i') . "\nTempo restante: {$hoursRemaining}h {$minutesRemaining}min";
+                    return $status;
+                }
+            }
+        }
+
+        // 5. Verificar horas disponíveis hoje
+        $hoursAvailable = $voucher->getRemainingHoursToday();
+        $status['hours_available_today'] = $hoursAvailable;
+
+        if ($voucher->voucher_type === 'limited' && $hoursAvailable <= 0) {
+            $nextDay = now()->addDay()->startOfDay();
+            $status['can_activate'] = false;
+            $status['type'] = 'warning';
+            $status['next_activation'] = $nextDay;
+            $status['message'] = "Limite diário atingido ({$voucher->daily_hours}h).\nDisponível novamente: " . $nextDay->format('d/m/Y H:i');
+            return $status;
+        }
+
+        // Tudo OK - pode ativar
+        if ($voucher->voucher_type === 'unlimited') {
+            $status['message'] = 'Voucher ilimitado disponível para ativação.';
+        } else {
+            $hoursFormatted = $voucher->formatHours($hoursAvailable);
+            $status['message'] = "Disponível: {$hoursFormatted} de acesso hoje.";
+        }
+
+        return $status;
+    }
+
+    /**
      * Ativa um voucher para o motorista
      */
     public function activate(Request $request)
@@ -86,11 +257,12 @@ class DriverVoucherController extends Controller
                 return back()->with('error', 'Voucher não encontrado. Verifique o código e tente novamente.');
             }
 
-            // 2. Usar telefone do voucher (cadastrado no admin)
+            // 2. Usar telefone ou documento do voucher como identificador
             $driverPhone = $voucher->driver_phone;
+            $driverIdentifier = $driverPhone ?? $voucher->driver_document ?? $voucher->code;
             
-            if (!$driverPhone) {
-                return back()->with('error', 'Este voucher não possui telefone cadastrado. Entre em contato com o administrador.');
+            if (!$driverIdentifier) {
+                return back()->with('error', 'Este voucher não possui identificador válido. Entre em contato com o administrador.');
             }
 
             // 3. Validar voucher
@@ -107,7 +279,13 @@ class DriverVoucherController extends Controller
             }
 
             // 4. VALIDAÇÃO DE SEGURANÇA: Verificar se o voucher já está ativo em OUTRO dispositivo
-            $activeUser = User::where('driver_phone', $driverPhone)
+            $activeUser = User::where(function($q) use ($driverPhone, $driverIdentifier) {
+                    if ($driverPhone) {
+                        $q->where('driver_phone', $driverPhone);
+                    } else {
+                        $q->where('driver_phone', $driverIdentifier);
+                    }
+                })
                 ->whereNotNull('voucher_id')
                 ->where('voucher_id', $voucher->id)
                 ->where('expires_at', '>', now())
@@ -147,7 +325,13 @@ class DriverVoucherController extends Controller
 
             // 5. VALIDAÇÃO DO INTERVALO ENTRE ATIVAÇÕES
             // Verificar se já usou o voucher e quanto tempo se passou desde a última ativação
-            $lastUsedUser = User::where('driver_phone', $driverPhone)
+            $lastUsedUser = User::where(function($q) use ($driverPhone, $driverIdentifier) {
+                    if ($driverPhone) {
+                        $q->where('driver_phone', $driverPhone);
+                    } else {
+                        $q->where('driver_phone', $driverIdentifier);
+                    }
+                })
                 ->where('voucher_id', $voucher->id)
                 ->whereNotNull('voucher_activated_at')
                 ->orderBy('voucher_activated_at', 'desc')
@@ -182,7 +366,13 @@ class DriverVoucherController extends Controller
             }
 
             // 6. Verificar se já usou o voucher hoje e atingiu o limite
-            $existingExpiredUser = User::where('driver_phone', $driverPhone)
+            $existingExpiredUser = User::where(function($q) use ($driverPhone, $driverIdentifier) {
+                    if ($driverPhone) {
+                        $q->where('driver_phone', $driverPhone);
+                    } else {
+                        $q->where('driver_phone', $driverIdentifier);
+                    }
+                })
                 ->where('voucher_id', $voucher->id)
                 ->whereNotNull('voucher_activated_at')
                 ->whereDate('voucher_last_connection', now()->toDateString())
@@ -204,8 +394,8 @@ class DriverVoucherController extends Controller
             }
 
             // 7. Criar ou atualizar usuário motorista
-            // Primeiro buscar por driver_phone (motorista já cadastrado)
-            $user = User::where('driver_phone', $driverPhone)->first();
+            // Primeiro buscar por driver_phone/identifier (motorista já cadastrado)
+            $user = User::where('driver_phone', $driverIdentifier)->first();
 
             // Se não encontrou por driver_phone, buscar por MAC (dispositivo já usado por outro usuário)
             if (!$user) {
@@ -216,8 +406,8 @@ class DriverVoucherController extends Controller
                 // Criar novo usuário motorista
                 $user = User::create([
                     'name' => $voucher->driver_name ?? 'Motorista',
-                    'phone' => $driverPhone,
-                    'driver_phone' => $driverPhone,
+                    'phone' => $driverPhone ?? $driverIdentifier,
+                    'driver_phone' => $driverIdentifier,
                     'mac_address' => $macAddress,
                     'ip_address' => $ipAddress,
                     'voucher_id' => $voucher->id,
@@ -230,8 +420,8 @@ class DriverVoucherController extends Controller
                 // Atualizar usuário existente (pode ser motorista ou usuário comum que agora usa voucher)
                 $user->update([
                     'name' => $voucher->driver_name ?? $user->name ?? 'Motorista',
-                    'phone' => $driverPhone,
-                    'driver_phone' => $driverPhone,
+                    'phone' => $driverPhone ?? $user->phone ?? $driverIdentifier,
+                    'driver_phone' => $driverIdentifier,
                     'mac_address' => $macAddress,
                     'ip_address' => $ipAddress,
                     'voucher_id' => $voucher->id,
@@ -301,7 +491,7 @@ class DriverVoucherController extends Controller
                 'time_granted' => $timeGranted,
             ]);
 
-            return redirect()->route('voucher.status', ['phone' => $driverPhone])
+            return redirect()->route('voucher.status', ['phone' => $driverIdentifier])
                 ->with('success', "Voucher ativado com sucesso! Você tem {$timeGranted} de acesso.");
 
         } catch (\Exception $e) {

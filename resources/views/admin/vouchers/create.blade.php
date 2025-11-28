@@ -12,266 +12,355 @@
 @section('page-title', 'Criar Novo Voucher')
 
 @section('content')
-    <div class="max-w-8xl mx-auto">
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green px-6 py-4">
-                <h2 class="text-xl font-bold text-white">📝 Dados do Voucher</h2>
+    <div class="max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Formulário Principal -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green px-6 py-4">
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span class="text-xl">📝</span> Dados do Voucher
+                        </h2>
+                    </div>
+
+                    <form action="{{ route('admin.vouchers.store') }}" method="POST" class="p-6">
+                        @csrf
+
+                        <!-- Seção: Dados do Motorista -->
+                        <div class="mb-6">
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span class="w-6 h-6 bg-tocantins-green text-white rounded-full flex items-center justify-center text-xs">1</span>
+                                Dados do Motorista
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Nome do Motorista -->
+                                <div class="md:col-span-2">
+                                    <label for="driver_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Nome do Motorista <span class="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="driver_name" 
+                                        id="driver_name" 
+                                        value="{{ old('driver_name') }}"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                        placeholder="Nome completo do motorista"
+                                        required
+                                    >
+                                    @error('driver_name')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Telefone do Motorista -->
+                                <div>
+                                    <label for="driver_phone" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Telefone <span class="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="tel" 
+                                        name="driver_phone" 
+                                        id="driver_phone" 
+                                        value="{{ old('driver_phone') }}"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                        placeholder="(00) 00000-0000"
+                                        required
+                                    >
+                                    @error('driver_phone')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Documento -->
+                                <div>
+                                    <label for="driver_document" class="block text-sm font-medium text-gray-700 mb-1">
+                                        CPF/CNH <span class="text-gray-400 text-xs">(opcional)</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="driver_document" 
+                                        id="driver_document" 
+                                        value="{{ old('driver_document') }}"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                        placeholder="000.000.000-00"
+                                    >
+                                    @error('driver_document')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-6 border-gray-200">
+
+                        <!-- Seção: Configuração do Voucher -->
+                        <div class="mb-6">
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span class="w-6 h-6 bg-tocantins-green text-white rounded-full flex items-center justify-center text-xs">2</span>
+                                Configuração do Voucher
+                            </h3>
+
+                            <!-- Tipo de Voucher -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Tipo de Voucher <span class="text-red-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label id="label_limited" class="relative flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all hover:border-tocantins-green {{ old('voucher_type', 'limited') === 'limited' ? 'border-tocantins-green bg-green-50 ring-2 ring-green-200' : 'border-gray-200' }}">
+                                        <input 
+                                            type="radio" 
+                                            name="voucher_type" 
+                                            value="limited" 
+                                            {{ old('voucher_type', 'limited') === 'limited' ? 'checked' : '' }}
+                                            class="sr-only"
+                                            onchange="toggleDailyHours()"
+                                        >
+                                        <div class="flex items-center gap-3 w-full">
+                                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-lg">⏱️</div>
+                                            <div>
+                                                <p class="font-semibold text-gray-800 text-sm">Limitado</p>
+                                                <p class="text-xs text-gray-500">Horas diárias</p>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <label id="label_unlimited" class="relative flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-500 {{ old('voucher_type') === 'unlimited' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200' }}">
+                                        <input 
+                                            type="radio" 
+                                            name="voucher_type" 
+                                            value="unlimited" 
+                                            {{ old('voucher_type') === 'unlimited' ? 'checked' : '' }}
+                                            class="sr-only"
+                                            onchange="toggleDailyHours()"
+                                        >
+                                        <div class="flex items-center gap-3 w-full">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-lg">♾️</div>
+                                            <div>
+                                                <p class="font-semibold text-gray-800 text-sm">Ilimitado</p>
+                                                <p class="text-xs text-gray-500">Sem limite</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                @error('voucher_type')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Tempo Diário e Intervalo -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Tempo Diário Permitido -->
+                                <div id="daily_hours_container" class="transition-all duration-300">
+                                    <label for="daily_hours" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Tempo Diário <span class="text-red-500" id="daily_hours_required">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input 
+                                            type="number" 
+                                            name="daily_hours" 
+                                            id="daily_hours" 
+                                            value="{{ old('daily_hours', 2) }}"
+                                            min="0.01"
+                                            max="24"
+                                            step="0.01"
+                                            class="w-full px-4 py-2.5 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                        >
+                                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">horas</span>
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Ex: 2.5 = 2h30min</p>
+                                    @error('daily_hours')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Intervalo entre Ativações -->
+                                <div>
+                                    <label for="activation_interval_hours" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Intervalo entre Ativações <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input 
+                                            type="number" 
+                                            name="activation_interval_hours" 
+                                            id="activation_interval_hours" 
+                                            value="{{ old('activation_interval_hours', 24) }}"
+                                            min="0.01"
+                                            max="168"
+                                            step="0.01"
+                                            class="w-full px-4 py-2.5 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                            required
+                                        >
+                                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">horas</span>
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Ex: 24 = 1x por dia</p>
+                                    @error('activation_interval_hours')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-6 border-gray-200">
+
+                        <!-- Seção: Opções Adicionais -->
+                        <div class="mb-6">
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span class="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs">3</span>
+                                Opções Adicionais
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Data de Expiração -->
+                                <div>
+                                    <label for="expires_at" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Data de Expiração <span class="text-gray-400 text-xs">(opcional)</span>
+                                    </label>
+                                    <input 
+                                        type="date" 
+                                        name="expires_at" 
+                                        id="expires_at" 
+                                        value="{{ old('expires_at') }}"
+                                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                    >
+                                    <p class="mt-1 text-xs text-gray-500">Deixe vazio para sem expiração</p>
+                                    @error('expires_at')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Descrição -->
+                                <div>
+                                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Observações <span class="text-gray-400 text-xs">(opcional)</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="description" 
+                                        id="description" 
+                                        value="{{ old('description') }}"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent transition-all"
+                                        placeholder="Ex: Rota Palmas-Araguaína"
+                                    >
+                                    @error('description')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="flex gap-3 pt-4 border-t border-gray-200">
+                            <button 
+                                type="submit" 
+                                class="flex-1 bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Criar Voucher
+                            </button>
+                            <a 
+                                href="{{ route('admin.vouchers.index') }}" 
+                                class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <form action="{{ route('admin.vouchers.store') }}" method="POST" class="p-6 space-y-6">
-                @csrf
-
-                <!-- Nome do Motorista -->
-                <div>
-                    <label for="driver_name" class="block text-sm font-bold text-gray-700 mb-2">
-                        👤 Nome do Motorista *
-                    </label>
-                    <input 
-                        type="text" 
-                        name="driver_name" 
-                        id="driver_name" 
-                        value="{{ old('driver_name') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                        required
-                    >
-                    @error('driver_name')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+            <!-- Sidebar de Informações -->
+            <div class="lg:col-span-1">
+                <!-- Card de Dicas -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-4">
+                    <h3 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <span class="text-lg">💡</span> Dicas Rápidas
+                    </h3>
+                    <ul class="text-sm text-blue-800 space-y-2">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-0.5">•</span>
+                            <span>O código será gerado automaticamente</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-0.5">•</span>
+                            <span>Telefone é usado para vincular o voucher</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-0.5">•</span>
+                            <span>Voucher pode ser desativado a qualquer momento</span>
+                        </li>
+                    </ul>
                 </div>
 
-                <!-- Documento -->
-                <div>
-                    <label for="driver_document" class="block text-sm font-bold text-gray-700 mb-2">
-                        📄 CPF/CNH (Opcional)
-                    </label>
-                    <input 
-                        type="text" 
-                        name="driver_document" 
-                        id="driver_document" 
-                        value="{{ old('driver_document') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                        placeholder="000.000.000-00"
-                    >
-                    @error('driver_document')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Telefone do Motorista -->
-                <div>
-                    <label for="driver_phone" class="block text-sm font-bold text-gray-700 mb-2">
-                        📱 Telefone do Motorista *
-                    </label>
-                    <input 
-                        type="tel" 
-                        name="driver_phone" 
-                        id="driver_phone" 
-                        value="{{ old('driver_phone') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                        placeholder="(00) 00000-0000"
-                        required
-                    >
-                    <p class="mt-2 text-sm text-gray-500">
-                        💡 O telefone será vinculado ao voucher para segurança e rastreamento
+                <!-- Card Tipo Limitado -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-lg">⏱️</span> Voucher Limitado
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-3">
+                        O motorista tem um limite de horas por dia. O contador reseta à meia-noite.
                     </p>
-                    @error('driver_phone')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Tipo de Voucher -->
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-3">
-                        🎫 Tipo de Voucher *
-                    </label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <label class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-tocantins-green {{ old('voucher_type', 'limited') === 'limited' ? 'border-tocantins-green bg-green-50' : 'border-gray-300' }}">
-                            <input 
-                                type="radio" 
-                                name="voucher_type" 
-                                value="limited" 
-                                {{ old('voucher_type', 'limited') === 'limited' ? 'checked' : '' }}
-                                class="mr-3"
-                                onchange="toggleDailyHours()"
-                            >
-                            <div>
-                                <p class="font-bold text-gray-800">⏱️ Limitado</p>
-                                <p class="text-xs text-gray-600">Controle de horas diárias</p>
-                            </div>
-                        </label>
-
-                        <label class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-500 {{ old('voucher_type') === 'unlimited' ? 'border-blue-500 bg-blue-50' : 'border-gray-300' }}">
-                            <input 
-                                type="radio" 
-                                name="voucher_type" 
-                                value="unlimited" 
-                                {{ old('voucher_type') === 'unlimited' ? 'checked' : '' }}
-                                class="mr-3"
-                                onchange="toggleDailyHours()"
-                            >
-                            <div>
-                                <p class="font-bold text-gray-800">♾️ Ilimitado</p>
-                                <p class="text-xs text-gray-600">Sem limite de horas</p>
-                            </div>
-                        </label>
+                    <div class="bg-green-50 rounded-lg p-3">
+                        <p class="text-xs text-green-700">
+                            <strong>Exemplo:</strong> 2h/dia = motorista pode usar até 2 horas de internet por dia.
+                        </p>
                     </div>
-                    @error('voucher_type')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                <!-- Tempo Diário Permitido -->
-                <div id="daily_hours_container">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        ⏰ Tempo Diário Permitido *
-                    </label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="daily_hours" class="block text-xs text-gray-600 mb-1">Horas</label>
-                            <input 
-                                type="number" 
-                                name="daily_hours" 
-                                id="daily_hours" 
-                                value="{{ old('daily_hours', 2) }}"
-                                min="0.01"
-                                max="24"
-                                step="0.01"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                                required
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Formato</label>
-                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
-                                <option>Horas (aceita decimais)</option>
-                            </select>
-                        </div>
+                <!-- Card Tipo Ilimitado -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-lg">♾️</span> Voucher Ilimitado
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-3">
+                        Sem limite de horas. O motorista pode usar a internet sem restrições de tempo.
+                    </p>
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <p class="text-xs text-blue-700">
+                            <strong>Ideal para:</strong> Motoristas VIP ou parceiros especiais.
+                        </p>
                     </div>
-                    <p class="mt-2 text-sm text-gray-500">
-                        💡 <strong>Exemplos:</strong> 2 = 2 horas | 2.5 = 2h30min | 0.5 = 30 minutos | 0.05 = 3 minutos
-                    </p>
-                    @error('daily_hours')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
-
-                <!-- Intervalo entre Ativações -->
-                <div>
-                    <label for="activation_interval_hours" class="block text-sm font-bold text-gray-700 mb-2">
-                        🕐 Intervalo entre Ativações *
-                    </label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <input 
-                                type="number" 
-                                name="activation_interval_hours" 
-                                id="activation_interval_hours" 
-                                value="{{ old('activation_interval_hours', 24) }}"
-                                min="0.01"
-                                max="168"
-                                step="0.01"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                                required
-                            >
-                        </div>
-                        <div>
-                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
-                                <option>Horas</option>
-                            </select>
-                        </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-500">
-                        🔒 <strong>Tempo mínimo</strong> que o motorista deve aguardar para ativar novamente após o uso.<br>
-                        💡 <strong>Exemplos:</strong> 24 = 1x por dia | 12 = a cada 12h | 0.1 = a cada 6 minutos (teste)
-                    </p>
-                    @error('activation_interval_hours')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Data de Expiração -->
-                <div>
-                    <label for="expires_at" class="block text-sm font-bold text-gray-700 mb-2">
-                        📅 Data de Expiração (Opcional)
-                    </label>
-                    <input 
-                        type="date" 
-                        name="expires_at" 
-                        id="expires_at" 
-                        value="{{ old('expires_at') }}"
-                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                    >
-                    <p class="mt-2 text-sm text-gray-500">
-                        💡 Deixe em branco para voucher sem data de expiração
-                    </p>
-                    @error('expires_at')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Descrição -->
-                <div>
-                    <label for="description" class="block text-sm font-bold text-gray-700 mb-2">
-                        📝 Descrição/Observações (Opcional)
-                    </label>
-                    <textarea 
-                        name="description" 
-                        id="description" 
-                        rows="3"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent"
-                        placeholder="Ex: Motorista da rota Palmas-Araguaína"
-                    >{{ old('description') }}</textarea>
-                    @error('description')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Botões -->
-                <div class="flex gap-4 pt-4 border-t border-gray-200">
-                    <button 
-                        type="submit" 
-                        class="flex-1 bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300"
-                    >
-                        ✅ Criar Voucher
-                    </button>
-                    <a 
-                        href="{{ route('admin.vouchers.index') }}" 
-                        class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-all duration-300 text-center"
-                    >
-                        ❌ Cancelar
-                    </a>
-                </div>
-            </form>
-        </div>
-
-        <!-- Informações -->
-        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 class="font-bold text-blue-900 mb-2">ℹ️ Informações Importantes</h3>
-            <ul class="text-sm text-blue-800 space-y-1">
-                <li>• O código do voucher será gerado automaticamente</li>
-                <li>• Vouchers <strong>Limitados</strong>: o contador de horas é resetado diariamente</li>
-                <li>• Vouchers <strong>Ilimitados</strong>: acesso sem restrição de horas</li>
-                <li>• O voucher pode ser ativado/desativado a qualquer momento</li>
-                <li>• Motoristas usarão o código no portal para acessar a internet</li>
-            </ul>
+            </div>
         </div>
     </div>
 
     <script>
         function toggleDailyHours() {
-            const voucherType = document.querySelector('input[name="voucher_type"]:checked').value;
+            const voucherType = document.querySelector('input[name="voucher_type"]:checked')?.value || 'limited';
             const container = document.getElementById('daily_hours_container');
             const input = document.getElementById('daily_hours');
+            const requiredMark = document.getElementById('daily_hours_required');
+            const labelLimited = document.getElementById('label_limited');
+            const labelUnlimited = document.getElementById('label_unlimited');
             
             if (voucherType === 'unlimited') {
-                container.style.opacity = '0.5';
-                input.disabled = true;
-                input.required = false;
+                container.classList.add('opacity-50', 'pointer-events-none');
+                input.removeAttribute('required');
+                input.value = '';
+                requiredMark.classList.add('hidden');
+                
+                // Atualizar estilos dos labels
+                labelLimited.classList.remove('border-tocantins-green', 'bg-green-50', 'ring-2', 'ring-green-200');
+                labelLimited.classList.add('border-gray-200');
+                labelUnlimited.classList.add('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
+                labelUnlimited.classList.remove('border-gray-200');
             } else {
-                container.style.opacity = '1';
-                input.disabled = false;
-                input.required = true;
+                container.classList.remove('opacity-50', 'pointer-events-none');
+                input.setAttribute('required', 'required');
+                if (!input.value) input.value = '2';
+                requiredMark.classList.remove('hidden');
+                
+                // Atualizar estilos dos labels
+                labelUnlimited.classList.remove('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
+                labelUnlimited.classList.add('border-gray-200');
+                labelLimited.classList.add('border-tocantins-green', 'bg-green-50', 'ring-2', 'ring-green-200');
+                labelLimited.classList.remove('border-gray-200');
             }
         }
 

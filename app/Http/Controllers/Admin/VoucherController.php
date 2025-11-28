@@ -38,12 +38,19 @@ class VoucherController extends Controller
             'driver_name' => 'required|string|max:191',
             'driver_document' => 'nullable|string|max:191',
             'driver_phone' => 'required|string|max:20',
-            'daily_hours' => 'required|numeric|min:0.01|max:24',
-            'activation_interval_hours' => 'required|numeric|min:0.5|max:168',
+            'daily_hours' => 'nullable|numeric|min:0.01|max:24',
+            'activation_interval_hours' => 'required|numeric|min:0.01|max:168',
             'expires_at' => 'nullable|date|after:today',
             'voucher_type' => 'required|in:limited,unlimited',
             'description' => 'nullable|string|max:191',
         ]);
+
+        // Para vouchers ilimitados, define um valor padrão para daily_hours
+        if ($validated['voucher_type'] === 'unlimited') {
+            $validated['daily_hours'] = 24; // Valor simbólico para ilimitado
+        } elseif (empty($validated['daily_hours'])) {
+            return back()->withErrors(['daily_hours' => 'O tempo diário é obrigatório para vouchers limitados.'])->withInput();
+        }
 
         // Limpar telefone (apenas números)
         $driverPhone = preg_replace('/\D/', '', $validated['driver_phone']);
@@ -89,13 +96,20 @@ class VoucherController extends Controller
             'driver_name' => 'required|string|max:191',
             'driver_document' => 'nullable|string|max:191',
             'driver_phone' => 'required|string|max:20',
-            'daily_hours' => 'required|numeric|min:0.01|max:24',
-            'activation_interval_hours' => 'required|numeric|min:0.5|max:168',
+            'daily_hours' => 'nullable|numeric|min:0.01|max:24',
+            'activation_interval_hours' => 'required|numeric|min:0.01|max:168',
             'expires_at' => 'nullable|date',
             'voucher_type' => 'required|in:limited,unlimited',
             'description' => 'nullable|string|max:191',
             'is_active' => 'boolean',
         ]);
+
+        // Para vouchers ilimitados, define um valor padrão para daily_hours
+        if ($validated['voucher_type'] === 'unlimited') {
+            $validated['daily_hours'] = 24; // Valor simbólico para ilimitado
+        } elseif (empty($validated['daily_hours'])) {
+            return back()->withErrors(['daily_hours' => 'O tempo diário é obrigatório para vouchers limitados.'])->withInput();
+        }
 
         // Limpar telefone (apenas números)
         if (isset($validated['driver_phone'])) {

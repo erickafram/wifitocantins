@@ -1,71 +1,29 @@
 @extends('portal.layout')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50/30 to-cyan-50/30 py-10">
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50/30 to-cyan-50/30 py-8">
     <div class="container mx-auto px-4 max-w-md">
         <!-- Logo/Header -->
-        <div class="text-center mb-8">
-            <div class="bg-white rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
-                <span class="text-4xl">🎫</span>
+        <div class="text-center mb-6">
+            <div class="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-lg">
+                <span class="text-3xl">🎫</span>
             </div>
-            <h1 class="text-3xl font-bold text-gray-800">Ativar Voucher</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Voucher de Motorista</h1>
+            <p class="text-gray-500 text-sm mt-1">Digite seu CPF ou código do voucher</p>
         </div>
 
         <!-- Mensagens -->
         @if (session('success'))
-            <div class="mb-6 bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-3 rounded-xl shadow-sm">
+            <div class="mb-4 bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-3 rounded-xl shadow-sm">
                 <div class="flex items-center">
                     <span class="text-xl mr-2">✅</span>
                     <span>{{ session('success') }}</span>
                 </div>
             </div>
-            <script>
-                // Notificar app Android quando voucher for ativado com sucesso
-                (function() {
-                    console.log('Verificando AndroidApp interface...');
-                    
-                    if (window.AndroidApp && typeof window.AndroidApp.showConnectionNotification === 'function') {
-                        console.log('AndroidApp detectado! Enviando notificação...');
-                        
-                        // Extrair tempo da mensagem de sucesso se disponível
-                        var successMessage = "{{ session('success') }}";
-                        console.log('Mensagem de sucesso:', successMessage);
-                        
-                        var timeMatch = successMessage.match(/(\d+)\s*(hora|horas|minuto|minutos|dia|dias)/i);
-                        var timeText = "";
-                        
-                        if (timeMatch) {
-                            var amount = timeMatch[1];
-                            var unit = timeMatch[2].toLowerCase();
-                            
-                            if (unit.includes('hora')) {
-                                timeText = amount + (amount == 1 ? " hora" : " horas");
-                            } else if (unit.includes('minuto')) {
-                                timeText = amount + (amount == 1 ? " minuto" : " minutos");
-                            } else if (unit.includes('dia')) {
-                                timeText = amount + (amount == 1 ? " dia" : " dias");
-                            }
-                        }
-                        
-                        console.log('Tempo extraído:', timeText || 'Nenhum');
-                        
-                        // Enviar notificação
-                        window.AndroidApp.showConnectionNotification(timeText || "");
-                        console.log('Notificação enviada!');
-                        
-                        // Também mostrar toast visual
-                        setTimeout(function() {
-                            alert('✅ Conectado! Sua internet está liberada' + (timeText ? '\n⏱️ Tempo: ' + timeText : ''));
-                        }, 500);
-                    } else {
-                        console.log('AndroidApp não detectado (navegador web)');
-                    }
-                })();
-            </script>
         @endif
 
         @if (session('error'))
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
+            <div class="mb-4 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
                 <div class="flex items-start">
                     <span class="text-xl mr-2">❌</span>
                     <span class="text-sm" style="white-space: pre-line;">{{ session('error') }}</span>
@@ -74,7 +32,7 @@
         @endif
 
         @if (session('warning'))
-            <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-xl shadow-sm">
+            <div class="mb-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-xl shadow-sm">
                 <div class="flex items-center">
                     <span class="text-xl mr-2">⚠️</span>
                     <span style="white-space: pre-line;">{{ session('warning') }}</span>
@@ -83,8 +41,8 @@
         @endif
 
         @if ($errors->any())
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
-                <ul class="list-disc list-inside">
+            <div class="mb-4 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
+                <ul class="list-disc list-inside text-sm">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -92,151 +50,356 @@
             </div>
         @endif
 
-        <!-- Card de Ativação -->
-        <div class="bg-white rounded-3xl p-8 shadow-2xl">
-            <form action="{{ route('voucher.activate.submit') }}" method="POST" id="voucherForm">
-                @csrf
+        @if (!isset($voucher))
+            <!-- ETAPA 1: Formulário de Busca -->
+            <div class="bg-white rounded-2xl p-6 shadow-xl">
+                <form action="{{ route('voucher.search') }}" method="POST" id="searchForm">
+                    @csrf
+                    
+                    <!-- Campo de Busca -->
+                    <div class="mb-5">
+                        <label for="search_term" class="block text-sm font-semibold text-gray-700 mb-2">
+                            🔍 CPF ou Código do Voucher
+                        </label>
+                        <input 
+                            type="text" 
+                            id="search_term" 
+                            name="search_term" 
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition text-center text-lg font-medium"
+                            placeholder="000.000.000-00 ou WIFI-XXXX-XXXX"
+                            value="{{ old('search_term') }}"
+                            required
+                            autofocus
+                        >
+                        <p class="text-xs text-gray-500 mt-2 text-center">
+                            Digite o CPF cadastrado ou o código do voucher
+                        </p>
+                    </div>
 
-                <!-- Código do Voucher -->
-                <div class="mb-6">
-                    <label for="voucher_code" class="block text-sm font-semibold text-gray-700 mb-2">
-                        🎫 Código do Voucher
-                    </label>
-                    <input 
-                        type="text" 
-                        id="voucher_code" 
-                        name="voucher_code" 
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition uppercase text-center text-xl font-bold"
-                        placeholder="Ex: WIFI-ABCD-1234"
-                        value="{{ old('voucher_code') }}"
-                        required
-                        maxlength="20"
-                        style="text-transform: uppercase;"
-                        autofocus
+                    <!-- Campos ocultos para MAC e IP -->
+                    <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
+                    <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
+
+                    <!-- Botão de Buscar -->
+                    <button 
+                        type="submit" 
+                        id="searchBtn"
+                        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02] flex items-center justify-center gap-2"
                     >
-                    <p class="text-xs text-gray-500 mt-1">Digite o código fornecido pela empresa</p>
+                        <span class="text-lg">🔍</span>
+                        <span>Buscar Voucher</span>
+                    </button>
+                </form>
+
+                <!-- Dica -->
+                <div class="mt-5 bg-blue-50 rounded-xl p-4 text-xs text-blue-700">
+                    <p class="font-semibold mb-1">💡 Dica:</p>
+                    <p>Você pode digitar seu CPF com ou sem pontos e traços. Exemplo: 12345678900 ou 123.456.789-00</p>
                 </div>
-
-                <!-- Campos ocultos para MAC e IP -->
-                <input type="hidden" id="mac_address" name="mac_address" value="{{ $mac_address ?? '' }}">
-                <input type="hidden" id="ip_address" name="ip_address" value="{{ $ip_address ?? '' }}">
-
-                <!-- Informações do Dispositivo -->
-                <div class="mb-6 bg-gray-50 rounded-xl p-4 text-xs text-gray-600">
-                    <p class="font-semibold mb-2">📡 Informações da Conexão:</p>
-                    <p><strong>IP:</strong> <span id="display_ip">{{ $ip_address ?? 'Detectando...' }}</span></p>
-                    <p><strong>MAC:</strong> <span id="display_mac">{{ $mac_address ?? 'Detectando...' }}</span></p>
-                </div>
-
-                <!-- Botão de Ativar -->
-                <button 
-                    type="submit" 
-                    id="submitBtn"
-                    class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2"
-                >
-                    <span class="text-xl" id="btnIcon">🚀</span>
-                    <span id="btnText">Ativar Voucher</span>
-                </button>
-                
-                <!-- Loading Spinner (oculto por padrão) -->
-                <div id="loadingSpinner" class="hidden mt-4 text-center">
-                    <div class="inline-flex items-center gap-3 bg-blue-50 px-6 py-3 rounded-xl">
-                        <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span class="text-blue-700 font-semibold">Ativando voucher...</span>
+            </div>
+        @else
+            <!-- ETAPA 2: Voucher Encontrado - Mostrar Informações -->
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <!-- Header do Voucher -->
+                <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-green-100 uppercase tracking-wider">Voucher</p>
+                            <p class="text-xl font-bold font-mono">{{ $voucher->code }}</p>
+                        </div>
+                        <div class="text-right">
+                            @if($voucher->voucher_type === 'unlimited')
+                                <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">
+                                    ♾️ Ilimitado
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">
+                                    ⏱️ {{ $voucher->daily_hours }}h/dia
+                                </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
-            </form>
 
-            <!-- Informação sobre Telefone -->
-            <div class="mt-6 bg-gray-50 rounded-xl p-4 text-xs text-gray-600">
-                <p class="flex items-center gap-2">
-                    <span>ℹ️</span>
-                    <span><strong>Importante:</strong> Este voucher está vinculado a um telefone específico cadastrado pela empresa.</span>
-                </p>
+                <!-- Informações do Motorista -->
+                <div class="p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span class="text-2xl">👤</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">{{ $voucher->driver_name }}</p>
+                            @if($voucher->driver_document)
+                                <p class="text-sm text-gray-500">CPF: {{ $voucher->driver_document }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Status do Voucher -->
+                    <div class="mb-5 p-4 rounded-xl 
+                        @if($voucherStatus['type'] === 'success') bg-green-50 border border-green-200
+                        @elseif($voucherStatus['type'] === 'info') bg-blue-50 border border-blue-200
+                        @elseif($voucherStatus['type'] === 'warning') bg-yellow-50 border border-yellow-200
+                        @else bg-red-50 border border-red-200
+                        @endif
+                    ">
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">
+                                @if($voucherStatus['type'] === 'success') ✅
+                                @elseif($voucherStatus['type'] === 'info') ℹ️
+                                @elseif($voucherStatus['type'] === 'warning') ⚠️
+                                @else ❌
+                                @endif
+                            </span>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium 
+                                    @if($voucherStatus['type'] === 'success') text-green-800
+                                    @elseif($voucherStatus['type'] === 'info') text-blue-800
+                                    @elseif($voucherStatus['type'] === 'warning') text-yellow-800
+                                    @else text-red-800
+                                    @endif
+                                " style="white-space: pre-line;">{{ $voucherStatus['message'] }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações Adicionais -->
+                    <div class="grid grid-cols-2 gap-3 mb-5">
+                        @if($voucherStatus['is_active_session'] && $voucherStatus['time_remaining'])
+                            <div class="bg-blue-50 rounded-xl p-3 text-center">
+                                <p class="text-xs text-blue-600 font-medium">Tempo Restante</p>
+                                <p class="text-lg font-bold text-blue-800">
+                                    {{ $voucherStatus['time_remaining']['hours'] }}h {{ $voucherStatus['time_remaining']['minutes'] }}min
+                                </p>
+                            </div>
+                            <div class="bg-blue-50 rounded-xl p-3 text-center">
+                                <p class="text-xs text-blue-600 font-medium">Expira em</p>
+                                <p class="text-sm font-bold text-blue-800">
+                                    {{ $voucherStatus['time_remaining']['expires_at']->format('H:i') }}
+                                </p>
+                            </div>
+                        @elseif($voucherStatus['next_activation'])
+                            <div class="col-span-2 bg-yellow-50 rounded-xl p-3 text-center">
+                                <p class="text-xs text-yellow-600 font-medium">Próxima Ativação Disponível</p>
+                                <p class="text-lg font-bold text-yellow-800">
+                                    {{ $voucherStatus['next_activation']->format('d/m/Y H:i') }}
+                                </p>
+                            </div>
+                        @elseif($voucherStatus['hours_available_today'] && $voucher->voucher_type === 'limited')
+                            <div class="col-span-2 bg-green-50 rounded-xl p-3 text-center">
+                                <p class="text-xs text-green-600 font-medium">Tempo Disponível Hoje</p>
+                                <p class="text-lg font-bold text-green-800">
+                                    {{ $voucher->formatHours($voucherStatus['hours_available_today']) }}
+                                </p>
+                            </div>
+                        @endif
+
+                        @if($voucher->expires_at)
+                            <div class="col-span-2 bg-gray-50 rounded-xl p-3 text-center">
+                                <p class="text-xs text-gray-600 font-medium">Validade do Voucher</p>
+                                <p class="text-sm font-bold text-gray-800">
+                                    {{ $voucher->expires_at->format('d/m/Y') }}
+                                    @if($voucher->expires_at->isPast())
+                                        <span class="text-red-600">(Expirado)</span>
+                                    @else
+                                        <span class="text-green-600">({{ $voucher->expires_at->diffForHumans() }})</span>
+                                    @endif
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Botão de Ativar ou Voltar -->
+                    @if($voucherStatus['can_activate'])
+                        <form action="{{ route('voucher.activate.submit') }}" method="POST" id="activateForm">
+                            @csrf
+                            <input type="hidden" name="voucher_code" value="{{ $voucher->code }}">
+                            <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
+                            <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
+                            
+                            <!-- Botão Normal -->
+                            <button 
+                                type="submit" 
+                                id="activateBtn"
+                                class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                            >
+                                <span class="text-xl" id="btnIcon">🚀</span>
+                                <span id="btnText">Ativar Voucher Agora</span>
+                            </button>
+                        </form>
+
+                        <!-- Card de Loading (oculto por padrão) -->
+                        <div id="loadingCard" class="hidden">
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                <!-- Spinner animado -->
+                                <div class="flex justify-center mb-4">
+                                    <div class="relative">
+                                        <div class="w-16 h-16 border-4 border-blue-200 rounded-full"></div>
+                                        <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full absolute top-0 left-0 animate-spin"></div>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-2xl" id="loadingEmoji">📡</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mensagem de status -->
+                                <p class="text-center text-blue-800 font-semibold text-lg mb-2" id="loadingMessage">
+                                    Conectando ao servidor...
+                                </p>
+                                
+                                <!-- Barra de progresso -->
+                                <div class="w-full bg-blue-200 rounded-full h-2 mb-3">
+                                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-1000" style="width: 5%"></div>
+                                </div>
+
+                                <!-- Temporizador -->
+                                <p class="text-center text-blue-600 text-sm">
+                                    <span id="timerText">Aguarde até 60 segundos...</span>
+                                </p>
+
+                                <!-- Dica -->
+                                <div class="mt-4 bg-white/50 rounded-lg p-3 text-xs text-blue-700">
+                                    <p class="flex items-center gap-2">
+                                        <span>💡</span>
+                                        <span id="tipText">Estamos configurando sua conexão com a internet.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('voucher.activate') }}" 
+                           class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <span class="text-xl">←</span>
+                            <span>Voltar e Buscar Outro</span>
+                        </a>
+                    @endif
+                </div>
             </div>
 
-            <!-- Link para Verificar Status -->
-            <div class="mt-6 text-center">
-                <a href="{{ route('voucher.status') }}" class="text-sm text-gray-600 hover:text-green-600 transition">
-                    Já ativou? Verificar status do voucher →
-                </a>
-            </div>
+            <!-- Botão para buscar outro voucher -->
+            @if($voucherStatus['can_activate'])
+                <div class="mt-4 text-center">
+                    <a href="{{ route('voucher.activate') }}" class="text-sm text-gray-600 hover:text-green-600 transition">
+                        ← Buscar outro voucher
+                    </a>
+                </div>
+            @endif
+        @endif
+
+        <!-- Link para Verificar Status -->
+        <div class="mt-6 text-center">
+            <a href="{{ route('voucher.status') }}" class="text-sm text-gray-600 hover:text-green-600 transition">
+                Já ativou? Verificar status do voucher →
+            </a>
+        </div>
+
+        <!-- Info do dispositivo (pequeno) -->
+        <div class="mt-4 text-center text-xs text-gray-400">
+            <p>IP: {{ $ip_address ?? 'N/A' }} | MAC: {{ $mac_address ?? 'N/A' }}</p>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-detectar MAC e IP do dispositivo
-    const detectDevice = async () => {
-        try {
-            const response = await fetch('/api/detect-device', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({})
-            });
-
-            const data = await response.json();
+    // Máscara para CPF
+    const searchInput = document.getElementById('search_term');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            let value = e.target.value;
             
-            if (data.mac_address) {
-                document.getElementById('mac_address').value = data.mac_address;
-                document.getElementById('display_mac').textContent = data.mac_address;
+            // Se parece com código de voucher (começa com WIFI ou tem hífen), converter para maiúsculas
+            if (value.toUpperCase().startsWith('WIFI') || value.includes('-')) {
+                e.target.value = value.toUpperCase();
             }
-            
-            if (data.ip_address) {
-                document.getElementById('ip_address').value = data.ip_address;
-                document.getElementById('display_ip').textContent = data.ip_address;
-            }
-        } catch (error) {
-            console.error('Erro ao detectar dispositivo:', error);
-        }
-    };
-
-    // Detectar na inicialização se não tiver MAC/IP
-    if (!document.getElementById('mac_address').value || !document.getElementById('ip_address').value) {
-        detectDevice();
+        });
     }
 
-    // Converter código do voucher para maiúsculas automaticamente
-    const voucherInput = document.getElementById('voucher_code');
-    voucherInput.addEventListener('input', function(e) {
-        e.target.value = e.target.value.toUpperCase();
-    });
+    // Loading no formulário de busca
+    const searchForm = document.getElementById('searchForm');
+    const searchBtn = document.getElementById('searchBtn');
+    if (searchForm && searchBtn) {
+        searchForm.addEventListener('submit', function() {
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span class="text-lg">⏳</span><span>Buscando...</span>';
+        });
+    }
 
-    // Adicionar loading ao submeter formulário
-    const form = document.getElementById('voucherForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const btnIcon = document.getElementById('btnIcon');
-    const btnText = document.getElementById('btnText');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-
-    form.addEventListener('submit', function(e) {
-        // Desabilitar botão
-        submitBtn.disabled = true;
-        submitBtn.classList.remove('hover:scale-105');
-        submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
-        
-        // Alterar texto e ícone do botão
-        btnIcon.textContent = '⏳';
-        btnText.textContent = 'Processando...';
-        
-        // Mostrar spinner
-        loadingSpinner.classList.remove('hidden');
-    });
+    // Loading no formulário de ativação com temporizador
+    const activateForm = document.getElementById('activateForm');
+    const activateBtn = document.getElementById('activateBtn');
+    const loadingCard = document.getElementById('loadingCard');
+    
+    if (activateForm && activateBtn && loadingCard) {
+        activateForm.addEventListener('submit', function() {
+            // Esconder botão e mostrar card de loading
+            activateBtn.classList.add('hidden');
+            loadingCard.classList.remove('hidden');
+            
+            // Elementos do loading
+            const loadingMessage = document.getElementById('loadingMessage');
+            const loadingEmoji = document.getElementById('loadingEmoji');
+            const progressBar = document.getElementById('progressBar');
+            const timerText = document.getElementById('timerText');
+            const tipText = document.getElementById('tipText');
+            
+            // Mensagens e emojis para cada etapa
+            const stages = [
+                { time: 0, msg: 'Conectando ao servidor...', emoji: '📡', tip: 'Estamos configurando sua conexão com a internet.', progress: 10 },
+                { time: 5, msg: 'Validando voucher...', emoji: '🔐', tip: 'Verificando se o voucher está disponível.', progress: 25 },
+                { time: 10, msg: 'Registrando dispositivo...', emoji: '📱', tip: 'Associando seu dispositivo ao voucher.', progress: 40 },
+                { time: 15, msg: 'Configurando acesso...', emoji: '⚙️', tip: 'Preparando sua conexão com a rede.', progress: 55 },
+                { time: 25, msg: 'Liberando internet...', emoji: '🌐', tip: 'Quase lá! Liberando acesso à internet.', progress: 70 },
+                { time: 35, msg: 'Finalizando...', emoji: '✨', tip: 'Últimos ajustes na sua conexão.', progress: 85 },
+                { time: 50, msg: 'Aguarde mais um pouco...', emoji: '⏳', tip: 'O servidor está processando sua solicitação.', progress: 95 },
+            ];
+            
+            let secondsElapsed = 0;
+            let currentStage = 0;
+            
+            // Atualizar temporizador a cada segundo
+            const timerInterval = setInterval(function() {
+                secondsElapsed++;
+                const remaining = 60 - secondsElapsed;
+                
+                if (remaining > 0) {
+                    timerText.textContent = `Tempo estimado: ${remaining} segundos...`;
+                } else {
+                    timerText.textContent = 'Processando... aguarde...';
+                }
+                
+                // Verificar se deve mudar de etapa
+                for (let i = stages.length - 1; i >= 0; i--) {
+                    if (secondsElapsed >= stages[i].time && currentStage < i) {
+                        currentStage = i;
+                        loadingMessage.textContent = stages[i].msg;
+                        loadingEmoji.textContent = stages[i].emoji;
+                        tipText.textContent = stages[i].tip;
+                        progressBar.style.width = stages[i].progress + '%';
+                        break;
+                    }
+                }
+                
+                // Se passou de 60 segundos, mostrar mensagem especial
+                if (secondsElapsed >= 60) {
+                    loadingMessage.textContent = 'Ainda processando...';
+                    loadingEmoji.textContent = '🔄';
+                    tipText.textContent = 'O servidor está demorando mais que o normal. Por favor, aguarde.';
+                    progressBar.style.width = '100%';
+                }
+            }, 1000);
+            
+            // Iniciar primeira etapa
+            loadingMessage.textContent = stages[0].msg;
+            loadingEmoji.textContent = stages[0].emoji;
+            tipText.textContent = stages[0].tip;
+            progressBar.style.width = stages[0].progress + '%';
+        });
+    }
 });
 </script>
 
 <style>
-.elegant-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -249,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .container > div {
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 0.4s ease-out;
 }
 </style>
 @endsection

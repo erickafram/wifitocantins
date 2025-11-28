@@ -29,6 +29,8 @@ Route::post('/sair', [PortalAuthController::class, 'logout'])->middleware('auth'
 // Rotas de Vouchers para Motoristas (Não requer autenticação)
 Route::prefix('voucher')->name('voucher.')->group(function () {
     Route::get('/ativar', [DriverVoucherController::class, 'showActivate'])->name('activate');
+    Route::post('/buscar', [DriverVoucherController::class, 'searchVoucher'])->name('search');
+    Route::get('/buscar', fn() => redirect()->route('voucher.activate')); // Redireciona GET para página de ativação
     Route::post('/ativar', [DriverVoucherController::class, 'activate'])->name('activate.submit');
     Route::get('/status', [DriverVoucherController::class, 'showStatus'])->name('status');
     Route::post('/status', [DriverVoucherController::class, 'checkStatus'])->name('status.check');
