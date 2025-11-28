@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('voucher_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('voucher_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('voucher_id');
+            $table->unsignedBigInteger('user_id');
             $table->string('mac_address', 17);
             $table->string('ip_address', 15);
             $table->timestamp('started_at');
