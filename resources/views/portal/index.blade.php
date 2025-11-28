@@ -323,137 +323,138 @@
 
     <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
 
-        <!-- Header -->
-        <div class="text-center mb-10 animate-fade-in">
+        <!-- Header - Compacto para Mobile -->
+        <div class="text-center mb-6 lg:mb-10 animate-fade-in">
             <!-- Logo -->
-            <div class="mb-6 flex justify-center">
+            <div class="mb-3 lg:mb-6 flex justify-center">
                 <div class="relative group">
-                    <div class="absolute -inset-4 bg-gradient-to-r from-modern-purple/20 via-modern-cyan/20 to-tocantins-green/20 rounded-full blur-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="relative mx-auto h-10 sm:h-12 md:h-14 w-auto drop-shadow-xl transform group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute -inset-2 lg:-inset-4 bg-gradient-to-r from-modern-purple/20 via-modern-cyan/20 to-tocantins-green/20 rounded-full blur-xl lg:blur-2xl opacity-70"></div>
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="relative mx-auto h-8 sm:h-10 md:h-12 lg:h-14 w-auto drop-shadow-xl">
                 </div>
             </div>
-            <div class="space-y-3">
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold font-space">
+            <div class="space-y-2 lg:space-y-3">
+                <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-space">
                     <span class="bg-gradient-to-r from-modern-purple via-modern-cyan to-tocantins-green bg-clip-text text-transparent">
                         CONECTE-SE À INTERNET
                     </span>
                 </h1>
-                <p class="text-gray-600 font-medium text-base sm:text-lg">WiFi Tocantins Express</p>
-                <div class="flex justify-center items-center gap-3 flex-wrap">
-                    <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <p class="text-gray-600 font-medium text-sm sm:text-base lg:text-lg">WiFi Tocantins Express</p>
+                <!-- Badges - Ocultos em telas muito pequenas -->
+                <div class="hidden sm:flex justify-center items-center gap-2 lg:gap-3 flex-wrap">
+                    <span class="inline-flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200 shadow-sm text-xs lg:text-sm">
                         <span class="text-yellow-500">⚡</span>
-                        <span class="text-sm font-medium text-gray-700">Alta Velocidade</span>
+                        <span class="font-medium text-gray-700">Rápido</span>
                     </span>
-                    <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <span class="inline-flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200 shadow-sm text-xs lg:text-sm">
                         <span class="text-green-500">🔒</span>
-                        <span class="text-sm font-medium text-gray-700">100% Seguro</span>
+                        <span class="font-medium text-gray-700">Seguro</span>
                     </span>
-                    <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <span class="inline-flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200 shadow-sm text-xs lg:text-sm">
                         <span class="text-blue-500">🚌</span>
-                        <span class="text-sm font-medium text-gray-700">WiFi a Bordo</span>
+                        <span class="font-medium text-gray-700">WiFi a Bordo</span>
                     </span>
                 </div>
             </div>
         </div>
 
-                 <!-- Mobile Layout -->
-         <div class="lg:hidden space-y-6 mb-8">
+         <!-- Mobile Layout - Otimizado -->
+         <div class="lg:hidden space-y-4 mb-6">
 
-             <!-- Payment Section - Mobile -->
-             <div class="space-y-4">
-                 <div class="elegant-card rounded-2xl shadow-xl p-4 animate-slide-up">
-                     <div class="text-center">
-                         <!-- Preço -->
-                         <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 rounded-xl p-4 mb-4 shadow-lg relative overflow-hidden">
-                            <!-- Badge de Desconto Dinâmico -->
+             <!-- Card Principal - Pagamento Mobile -->
+             <div class="elegant-card rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+                 <!-- Header com Preço - Mais Compacto -->
+                 <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 p-4 relative">
+                    @if($discount_percentage > 0)
+                    <div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow animate-pulse">
+                        -{{ $discount_percentage }}%
+                    </div>
+                    @endif
+                    
+                    <div class="text-center">
+                        <p class="text-white/90 text-xs font-medium mb-1">🚌 Internet na Viagem</p>
+                        <div class="flex items-center justify-center gap-2">
                             @if($discount_percentage > 0)
-                            <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                                -{{ $discount_percentage }}% OFF
-                            </div>
+                            <span class="text-white/60 text-sm line-through">R$ {{ number_format($original_price, 2, ',', '.') }}</span>
                             @endif
-                            
-                            <p class="text-white text-xs font-medium mb-1">🚌 Acesso Durante a Viagem</p>
-                            <div class="flex items-center justify-center gap-2">
-                                @if($discount_percentage > 0)
-                                <p class="text-white/70 text-sm line-through">R$ {{ number_format($original_price, 2, ',', '.') }}</p>
-                                @endif
-                                <p class="text-white text-2xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</p>
-                            </div>
+                            <span class="text-white text-3xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</span>
                         </div>
+                    </div>
+                </div>
 
-                         <!-- Benefícios Compactos -->
-                         <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
-                             <div class="flex items-center justify-center bg-green-50 rounded-lg py-2">
-                                 <span class="text-green-500 mr-1">✅</span>
-                                 <span class="text-gray-700">Ilimitado</span>
-                             </div>
-                             <div class="flex items-center justify-center bg-green-50 rounded-lg py-2">
-                                 <span class="text-green-500 mr-1">⚡</span>
-                                 <span class="text-gray-700">Alta Velocidade</span>
-                             </div>
-                         </div>
+                 <!-- Corpo do Card -->
+                 <div class="p-4">
+                     <!-- Benefícios em linha -->
+                     <div class="flex justify-center gap-4 mb-4 text-xs">
+                         <span class="flex items-center gap-1 text-gray-600">
+                             <span class="text-green-500">✅</span> Ilimitado
+                         </span>
+                         <span class="flex items-center gap-1 text-gray-600">
+                             <span class="text-yellow-500">⚡</span> Rápido
+                         </span>
+                         <span class="flex items-center gap-1 text-gray-600">
+                             <span class="text-blue-500">🔒</span> Seguro
+                         </span>
+                     </div>
 
-                         <!-- Botão -->
-                         <button 
-                             id="connect-btn" 
-                             class="connect-button w-full text-white font-bold py-3 px-4 rounded-xl shadow-xl mb-3"
-                         >
-                             🚀 CONECTAR AGORA
-                         </button>
+                     <!-- Botão Principal - Grande e Chamativo -->
+                     <button 
+                         id="connect-btn" 
+                         class="connect-button w-full text-white font-bold py-4 px-4 rounded-xl shadow-xl text-lg animate-pulse-scale"
+                     >
+                         🚀 CONECTAR AGORA
+                     </button>
 
-                         <!-- PIX -->
-                         <div class="flex items-center justify-center bg-gradient-to-r from-tocantins-light-cream to-white rounded-lg px-4 py-2 border border-tocantins-gold/40 mb-2">
-                            <span class="text-lg mr-2 text-tocantins-green">📱</span>
-                            <span class="text-sm font-bold text-tocantins-green">PIX</span>
-                            <span class="text-xs text-gray-500 ml-2">Instantâneo</span>
-                        </div>
-                        
-                        <!-- Acesso Imediato -->
-                        <div class="flex items-center justify-center bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg px-4 py-2 border border-green-300/40">
-                            <span class="text-lg mr-2">⚡</span>
-                            <span class="text-sm font-bold text-green-700">Acesso Imediato</span>
-                            <span class="text-xs text-gray-600 ml-2">Após Pagamento</span>
-                        </div>
+                     <!-- Info PIX - Compacto -->
+                     <div class="mt-3 flex items-center justify-center gap-3 text-xs text-gray-500">
+                         <span class="flex items-center gap-1">
+                             <span class="text-green-600">📱</span>
+                             <span class="font-semibold text-green-700">PIX</span>
+                         </span>
+                         <span>•</span>
+                         <span>⚡ Liberação Instantânea</span>
                      </div>
                  </div>
              </div>
 
-             <!-- Botão para Motoristas (Mobile) -->
-             <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl shadow-xl p-6 border-2 border-green-300">
-                 <div class="text-center">
-                     <div class="text-4xl mb-3">🎫</div>
-                     <p class="text-sm text-gray-600 mb-4">Ative seu voucher aqui</p>
-                     <a 
-                         href="{{ route('voucher.activate') }}{{ request()->has('mac') ? '?source=mikrotik&mac=' . request('mac') . '&ip=' . request('ip') : '' }}" 
-                         class="block bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-105"
-                     >
-                         Ativar Voucher →
-                     </a>
-                 </div>
+             <!-- Botão Voucher Motorista - Compacto -->
+             <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-3 border border-green-200 shadow-md">
+                 <a 
+                     href="{{ route('voucher.activate') }}{{ request()->has('mac') ? '?source=mikrotik&mac=' . request('mac') . '&ip=' . request('ip') : '' }}" 
+                     class="flex items-center justify-between"
+                 >
+                     <div class="flex items-center gap-3">
+                         <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow">
+                             <span class="text-xl">🎫</span>
+                         </div>
+                         <div>
+                             <p class="text-sm font-bold text-gray-800">Motorista?</p>
+                             <p class="text-xs text-gray-500">Ative seu voucher aqui</p>
+                         </div>
+                     </div>
+                     <div class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">
+                         Ativar →
+                     </div>
+                 </a>
              </div>
 
-             <!-- Cards de Serviços Mobile (PASSAGENS e TURISMO) -->
-             <div class="elegant-card rounded-2xl shadow-xl p-4">
-                 <div class="grid grid-cols-2 gap-3">
-                     <button 
-                        type="button"
-                        onclick="openPassagensModal()" 
-                        class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 text-center hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 transform relative overflow-hidden group"
-                    >
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                        <div class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">🎫</div>
-                        <p class="text-white text-xs font-bold">PASSAGENS</p>
-                    </button>
-                    <button 
-                        type="button"
-                        onclick="openTurismoModal()" 
-                        class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 text-center hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 transform relative overflow-hidden group"
-                    >
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                        <div class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">🏖️</div>
-                        <p class="text-white text-xs font-bold">TURISMO</p>
-                    </button>
-                 </div>
+             <!-- Serviços - Grid 2x1 Compacto -->
+             <div class="grid grid-cols-2 gap-3">
+                 <button 
+                    type="button"
+                    onclick="openPassagensModal()" 
+                    class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 text-center shadow-lg active:scale-95 transition-transform"
+                >
+                    <div class="text-2xl mb-1">🎫</div>
+                    <p class="text-white text-xs font-bold">PASSAGENS</p>
+                </button>
+                <button 
+                    type="button"
+                    onclick="openTurismoModal()" 
+                    class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 text-center shadow-lg active:scale-95 transition-transform"
+                >
+                    <div class="text-2xl mb-1">🏖️</div>
+                    <p class="text-white text-xs font-bold">TURISMO</p>
+                </button>
              </div>
          </div>
 
