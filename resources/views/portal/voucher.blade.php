@@ -427,32 +427,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div>
                             <p><strong>Status:</strong> ${voucher.is_active ? 'Ativo' : 'Inativo'}</p>
                             ${voucher.activated_at ? `<p><strong>Ativado em:</strong> ${new Date(voucher.activated_at).toLocaleString('pt-BR')}</p>` : '<p><strong>Status:</strong> Nunca ativado</p>'}
-                            ${voucher.expires_at ? `<p><strong>Expira em:</strong> ${new Date(voucher.expires_at).toLocaleString('pt-BR')}</p>` : '<p><strong>Validade:</strong> Sem expiração</p>'}
                         </div>
                     </div>
             `;
             
-            if (voucher.voucher_type === 'limited') {
-                html += `
-                    <div class="mt-3 p-3 bg-white bg-opacity-50 rounded-lg">
-                        <p><strong>Horas por dia:</strong> ${voucher.daily_hours}h</p>
-                        <p><strong>Horas restantes hoje:</strong> ${voucher.remaining_hours_today}h</p>
-                        ${voucher.last_used_date ? `<p><strong>Último uso:</strong> ${new Date(voucher.last_used_date).toLocaleDateString('pt-BR')}</p>` : ''}
-                    </div>
-                `;
-            }
             
             if (session && voucher.is_connected) {
-                const minutesUsed = session.minutes_used;
-                const hoursUsed = Math.floor(minutesUsed / 60);
-                const remainingMinutes = minutesUsed % 60;
-                
                 html += `
                     <div class="mt-3 p-3 bg-white bg-opacity-50 rounded-lg">
                         <p class="font-medium text-blue-700 mb-2">📡 Sessão Ativa</p>
                         <p><strong>Conectado desde:</strong> ${new Date(session.started_at).toLocaleString('pt-BR')}</p>
-                        <p><strong>Tempo usado:</strong> ${hoursUsed}h ${remainingMinutes}min</p>
-                        <p><strong>Tempo restante:</strong> ${Math.floor(voucher.time_remaining_minutes / 60)}h ${voucher.time_remaining_minutes % 60}min</p>
                     </div>
                 `;
             }
