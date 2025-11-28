@@ -109,9 +109,35 @@
         </div>
         
         <!-- Tagline -->
-        <p class="text-white/90 text-lg md:text-xl mb-8 animate-fade-in" style="animation-delay: 0.4s;">
+        <p class="text-white/90 text-lg md:text-xl mb-6 animate-fade-in" style="animation-delay: 0.4s;">
             Internet a bordo durante toda a viagem
         </p>
+        
+        <!-- Avisos Importantes -->
+        <div class="animate-fade-in mb-8" style="animation-delay: 0.5s;">
+            <div class="bg-yellow-500/20 backdrop-blur-sm border border-yellow-400/30 rounded-xl p-4 max-w-md mx-auto">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-6 h-6 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-left">
+                        <h3 class="text-yellow-300 font-bold text-sm mb-2">⚠️ Importante:</h3>
+                        <ul class="text-white/90 text-xs space-y-2">
+                            <li class="flex items-start">
+                                <span class="mr-2">📱</span>
+                                <span><strong>Desative os dados móveis</strong> do seu celular para uma melhor conexão</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="mr-2">🔄</span>
+                                <span>Se aparecer erro ou página não encontrada, <strong>toque em "Avançar"</strong> ou <strong>"Continuar"</strong></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Loading Indicator -->
         <div class="animate-fade-in" style="animation-delay: 0.6s;">
