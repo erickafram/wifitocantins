@@ -491,7 +491,7 @@ class DriverVoucherController extends Controller
                 'time_granted' => $timeGranted,
             ]);
 
-            return redirect()->route('voucher.status', ['phone' => $driverIdentifier])
+            return redirect()->route('voucher.status', ['document' => $voucher->driver_document ?? $driverIdentifier])
                 ->with('success', "Voucher ativado com sucesso! Você tem {$timeGranted} de acesso.");
 
         } catch (\Exception $e) {
@@ -513,30 +513,41 @@ class DriverVoucherController extends Controller
     public function showStatus(Request $request)
     {
         $phone = $request->query('phone');
+        $document = $request->query('document');
         
         return view('portal.voucher.status', [
             'phone' => $phone,
+            'document' => $document,
         ]);
     }
 
     /**
-     * Verifica o status do voucher via telefone
+     * Verifica o status do voucher via CPF/documento
      */
     public function checkStatus(Request $request)
     {
         $request->validate([
-            'driver_phone' => 'required|string|max:20',
+            'driver_document' => 'required|string|max:20',
         ]);
 
-        $driverPhone = preg_replace('/\D/', '', $request->driver_phone);
+        // Limpar CPF (remover pontos, traços, etc)
+        $driverDocument = preg_replace('/\D/', '', $request->driver_document);
 
-        $user = User::where('driver_phone', $driverPhone)
-            ->whereNotNull('voucher_id')
-            ->with('voucher')
+        // Primeiro buscar voucher pelo documento
+        $voucher = Voucher::where('driver_document', 'LIKE', '%' . $driverDocument . '%')->first();
+        
+        if (!$voucher) {
+            return back()->with('error', 'Nenhum voucher encontrado para este CPF.');
+        }
+
+        // Buscar usuário que usou este voucher
+        $user = User::where('voucher_id', $voucher->id)
+            ->whereNotNull('voucher_activated_at')
+            ->orderBy('voucher_activated_at', 'desc')
             ->first();
 
         if (!$user) {
-            return back()->with('error', 'Nenhum voucher ativo encontrado para este telefone.');
+            return back()->with('error', 'Este voucher ainda não foi ativado. Vá para a página de ativação.');
         }
 
         $voucher = $user->voucher;
@@ -564,7 +575,7 @@ class DriverVoucherController extends Controller
         }
 
         return view('portal.voucher.status', [
-            'phone' => $driverPhone,
+            'document' => $driverDocument,
             'user' => $user,
             'voucher' => $voucher,
             'isActive' => $isActive,

@@ -70,19 +70,20 @@
                     @csrf
 
                     <div class="mb-6">
-                        <label for="driver_phone" class="block text-sm font-semibold text-gray-700 mb-2">
-                            📱 Digite seu telefone
+                        <label for="driver_document" class="block text-sm font-semibold text-gray-700 mb-2">
+                            🪪 Digite seu CPF
                         </label>
                         <input 
-                            type="tel" 
-                            id="driver_phone" 
-                            name="driver_phone" 
-                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
-                            placeholder="(00) 00000-0000"
-                            value="{{ $phone ?? '' }}"
+                            type="text" 
+                            id="driver_document" 
+                            name="driver_document" 
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition text-center text-lg"
+                            placeholder="000.000.000-00"
+                            value="{{ $document ?? $phone ?? '' }}"
                             required
-                            maxlength="20"
+                            maxlength="14"
                         >
+                        <p class="text-xs text-gray-500 mt-1 text-center">Digite o CPF cadastrado no seu voucher</p>
                     </div>
 
                     <button 
@@ -123,8 +124,8 @@
                     <!-- Informações do Voucher -->
                     <div class="space-y-4">
                         <div class="flex justify-between items-center py-3 border-b">
-                            <span class="text-gray-600 font-medium">📱 Telefone</span>
-                            <span class="font-bold text-gray-800">{{ substr($user->driver_phone, 0, 2) . ' ' . substr($user->driver_phone, 2, 5) . '-' . substr($user->driver_phone, 7) }}</span>
+                            <span class="text-gray-600 font-medium">🪪 CPF</span>
+                            <span class="font-bold text-gray-800">{{ $voucher->driver_document ?? $user->driver_phone ?? 'N/A' }}</span>
                         </div>
 
                         <div class="flex justify-between items-center py-3 border-b">
@@ -235,19 +236,19 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Formatar telefone enquanto digita
-    const phoneInput = document.getElementById('driver_phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
+    // Formatar CPF enquanto digita
+    const cpfInput = document.getElementById('driver_document');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
             
-            if (value.length > 10) {
-                value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+            if (value.length > 9) {
+                value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, '$1.$2.$3-$4');
             } else if (value.length > 6) {
-                value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
-            } else if (value.length > 2) {
-                value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                value = value.replace(/^(\d{3})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+            } else if (value.length > 3) {
+                value = value.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
             }
             
             e.target.value = value;
