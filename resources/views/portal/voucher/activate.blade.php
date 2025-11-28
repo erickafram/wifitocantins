@@ -150,15 +150,9 @@
                             <p class="text-xl font-bold font-mono">{{ $voucher->code }}</p>
                         </div>
                         <div class="text-right">
-                            @if($voucher->voucher_type === 'unlimited')
-                                <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">
-                                    ♾️ Ilimitado
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">
-                                    ⏱️ {{ $voucher->daily_hours }}h/dia
-                                </span>
-                            @endif
+                            <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">
+                                ✅ Ativo
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -227,11 +221,11 @@
                                     {{ $voucherStatus['next_activation']->format('d/m/Y H:i') }}
                                 </p>
                             </div>
-                        @elseif($voucherStatus['hours_available_today'] && $voucher->voucher_type === 'limited')
+                        @elseif($voucherStatus['can_activate'])
                             <div class="col-span-2 bg-green-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-green-600 font-medium">Tempo Disponível Hoje</p>
+                                <p class="text-xs text-green-600 font-medium">Status</p>
                                 <p class="text-lg font-bold text-green-800">
-                                    {{ $voucher->formatHours($voucherStatus['hours_available_today']) }}
+                                    Pronto para ativar
                                 </p>
                             </div>
                         @endif

@@ -133,33 +133,14 @@
                             <span class="font-bold text-gray-800">{{ $voucher->code ?? 'N/A' }}</span>
                         </div>
 
-                        @if ($isActive && $timeRemaining)
+                        @if ($isActive)
                             <div class="flex justify-between items-center py-3 border-b">
-                                <span class="text-gray-600 font-medium">⏰ Tempo Restante</span>
-                                <span class="font-bold text-green-600 text-xl">
-                                    {{ $timeRemainingFormatted ?? $timeRemaining['hours'] . 'h ' . $timeRemaining['minutes'] . 'min' }}
-                                </span>
-                            </div>
-
-                            <div class="flex justify-between items-center py-3 border-b">
-                                <span class="text-gray-600 font-medium">⏳ Expira em</span>
-                                <span class="font-semibold text-gray-800">{{ $user->expires_at->format('d/m/Y H:i') }}</span>
+                                <span class="text-gray-600 font-medium">✅ Status</span>
+                                <span class="font-bold text-green-600">Conectado</span>
                             </div>
                         @endif
 
-                        <div class="flex justify-between items-center py-3 border-b">
-                            <span class="text-gray-600 font-medium">📅 Tempo Disponível Hoje</span>
-                            <span class="font-bold text-blue-600">{{ $hoursAvailableTodayFormatted ?? $hoursAvailableToday . 'h' }}</span>
-                        </div>
-
                         @if ($voucher)
-                            <div class="flex justify-between items-center py-3 border-b">
-                                <span class="text-gray-600 font-medium">🔄 Tipo de Voucher</span>
-                                <span class="font-semibold text-gray-800">
-                                    {{ $voucher->voucher_type === 'unlimited' ? 'Ilimitado' : 'Limitado' }}
-                                </span>
-                            </div>
-
                             @if ($voucher->expires_at)
                                 <div class="flex justify-between items-center py-3 border-b">
                                     <span class="text-gray-600 font-medium">📆 Voucher Válido Até</span>
@@ -205,8 +186,7 @@
                             <span class="text-lg">✅</span>
                             Conexão Ativa
                         </h3>
-                        <p>Seu voucher está ativo e você pode navegar livremente até {{ $user->expires_at->format('d/m/Y H:i') }}.</p>
-                        <p class="mt-2">Tempo restante: <strong>{{ $timeRemainingFormatted ?? $timeRemaining['total_minutes'] . ' minutos' }}</strong></p>
+                        <p>Seu voucher está ativo e você pode navegar livremente.</p>
                     </div>
                 @else
                     <div class="bg-yellow-50 rounded-2xl p-6 text-sm text-yellow-900">
@@ -215,11 +195,6 @@
                             Voucher Expirado
                         </h3>
                         <p>Seu voucher expirou. Para continuar navegando, você precisa ativar o voucher novamente.</p>
-                        @if ($hoursAvailableToday > 0)
-                            <p class="mt-2">Você ainda tem <strong>{{ $hoursAvailableTodayFormatted }}</strong> disponíveis hoje!</p>
-                        @else
-                            <p class="mt-2 text-red-700">Você atingiu o limite diário. Tente novamente amanhã.</p>
-                        @endif
                     </div>
                 @endif
 

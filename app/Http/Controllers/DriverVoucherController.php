@@ -210,17 +210,12 @@ class DriverVoucherController extends Controller
             $status['can_activate'] = false;
             $status['type'] = 'warning';
             $status['next_activation'] = $nextDay;
-            $status['message'] = "Limite diário atingido ({$voucher->daily_hours}h).\nDisponível novamente: " . $nextDay->format('d/m/Y H:i');
+            $status['message'] = "Limite diário atingido.\nDisponível novamente: " . $nextDay->format('d/m/Y H:i');
             return $status;
         }
 
         // Tudo OK - pode ativar
-        if ($voucher->voucher_type === 'unlimited') {
-            $status['message'] = 'Voucher ilimitado disponível para ativação.';
-        } else {
-            $hoursFormatted = $voucher->formatHours($hoursAvailable);
-            $status['message'] = "Disponível: {$hoursFormatted} de acesso hoje.";
-        }
+        $status['message'] = 'Voucher disponível para ativação.';
 
         return $status;
     }
