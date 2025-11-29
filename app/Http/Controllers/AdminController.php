@@ -43,6 +43,9 @@ class AdminController extends Controller
             'daily_revenue' => Payment::where('status', 'completed')
                 ->whereDate('created_at', today())
                 ->sum('amount'),
+            'yesterday_revenue' => Payment::where('status', 'completed')
+                ->whereDate('created_at', today()->subDay())
+                ->sum('amount'),
             'pending_payments' => Payment::where('status', 'pending')
                 ->whereDate('created_at', today())
                 ->sum('amount'),
@@ -52,6 +55,13 @@ class AdminController extends Controller
                     $query->whereNull('expires_at')
                           ->orWhere('expires_at', '>', now());
                 })
+                ->count(),
+            'total_users' => User::count(),
+            'today_payments_count' => Payment::where('status', 'completed')
+                ->whereDate('created_at', today())
+                ->count(),
+            'yesterday_payments_count' => Payment::where('status', 'completed')
+                ->whereDate('created_at', today()->subDay())
                 ->count()
         ];
     }
