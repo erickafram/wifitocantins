@@ -487,7 +487,7 @@ class DriverVoucherController extends Controller
             ]);
 
             return redirect()->route('voucher.status', ['document' => $voucher->driver_document ?? $driverIdentifier])
-                ->with('success', "Voucher ativado com sucesso! Você tem {$timeGranted} de acesso.");
+                ->with('success', "Voucher ativado com sucesso!");
 
         } catch (\Exception $e) {
             DB::rollback();
