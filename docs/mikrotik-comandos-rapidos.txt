@@ -1,0 +1,219 @@
+# ============================================================================
+# COMANDOS RÁPIDOS MIKROTIK - RouterOS 7.20.5
+# Copie e cole diretamente no terminal do MikroTik
+# ============================================================================
+
+# ============================================================================
+# PASSO 1: CRIAR BRIDGE PARA HOTSPOT
+# ============================================================================
+
+/interface bridge add name=wifi-hotspot comment="Bridge para Hotspot WiFi"
+
+# ============================================================================
+# PASSO 2: CONFIGURAR IP E POOL
+# ============================================================================
+
+/ip address add address=10.5.50.1/24 interface=wifi-hotspot comment="Gateway Hotspot"
+/ip pool add name=hs-pool ranges=10.5.50.2-10.5.50.254
+
+# ============================================================================
+# PASSO 3: SERVIDOR DHCP
+# ============================================================================
+
+/ip dhcp-server network add address=10.5.50.0/24 gateway=10.5.50.1 dns-server=8.8.8.8,1.1.1.1 comment="Hotspot Network"
+/ip dhcp-server add name=hotspot-dhcp interface=wifi-hotspot address-pool=hs-pool lease-time=1h disabled=no
+
+# ============================================================================
+# PASSO 4: DNS
+# ============================================================================
+
+/ip dns set allow-remote-requests=yes servers=8.8.8.8,1.1.1.1
+/ip dns static add name=tocantinstransportewifi.com.br address=138.68.255.122 comment="Portal Principal"
+/ip dns static add name=www.tocantinstransportewifi.com.br address=138.68.255.122 comment="Portal WWW"
+/ip dns static add name=login.tocantinswifi.local address=10.5.50.1 comment="Login Local"
+
+# ============================================================================
+# PASSO 5: PERFIL E SERVIDOR HOTSPOT
+# ============================================================================
+
+/ip hotspot profile add name=hsprof-tocantins hotspot-address=10.5.50.1 dns-name=login.tocantinswifi.local html-directory=flash/hotspot login-by=http-chap,http-pap,cookie,mac-cookie http-cookie-lifetime=1d
+
+/ip hotspot add name=tocantins-hotspot interface=wifi-hotspot address-pool=hs-pool profile=hsprof-tocantins disabled=no
+
+# ============================================================================
+# PASSO 6: WALLED GARDEN - PORTAL E CDNs
+# ============================================================================
+
+/ip hotspot walled-garden add dst-host=tocantinstransportewifi.com.br comment="Portal Principal"
+/ip hotspot walled-garden add dst-host=*.tocantinstransportewifi.com.br comment="Portal Wildcard"
+/ip hotspot walled-garden add dst-host=www.tocantinstransportewifi.com.br comment="Portal WWW"
+/ip hotspot walled-garden add dst-host=cdn.tailwindcss.com comment="Tailwind CSS"
+/ip hotspot walled-garden add dst-host=fonts.googleapis.com comment="Google Fonts API"
+/ip hotspot walled-garden add dst-host=fonts.gstatic.com comment="Google Fonts Static"
+/ip hotspot walled-garden add dst-host=cdnjs.cloudflare.com comment="Cloudflare CDN"
+
+# ============================================================================
+# PASSO 7: WALLED GARDEN - PAGAMENTOS PIX
+# ============================================================================
+
+/ip hotspot walled-garden add dst-host=api.woovi.com comment="Woovi API"
+/ip hotspot walled-garden add dst-host=*.woovi.com comment="Woovi"
+/ip hotspot walled-garden add dst-host=api.openpix.com.br comment="OpenPix API"
+/ip hotspot walled-garden add dst-host=*.openpix.com.br comment="OpenPix"
+/ip hotspot walled-garden add dst-host=api.qrserver.com comment="QR Code"
+/ip hotspot walled-garden add dst-host=pix.bcb.gov.br comment="PIX BACEN"
+/ip hotspot walled-garden add dst-host=*.bcb.gov.br comment="Banco Central"
+
+# ============================================================================
+# PASSO 8: WALLED GARDEN - BANCOS
+# ============================================================================
+
+# Banco do Brasil
+/ip hotspot walled-garden add dst-host=bb.com.br comment="Banco do Brasil"
+/ip hotspot walled-garden add dst-host=*.bb.com.br comment="BB Mobile"
+
+# Caixa
+/ip hotspot walled-garden add dst-host=caixa.gov.br comment="Caixa"
+/ip hotspot walled-garden add dst-host=*.caixa.gov.br comment="Caixa Mobile"
+
+# Itaú
+/ip hotspot walled-garden add dst-host=itau.com.br comment="Itau"
+/ip hotspot walled-garden add dst-host=*.itau.com.br comment="Itau Mobile"
+
+# Nubank
+/ip hotspot walled-garden add dst-host=nubank.com.br comment="Nubank"
+/ip hotspot walled-garden add dst-host=*.nubank.com.br comment="Nubank API"
+
+# Inter
+/ip hotspot walled-garden add dst-host=bancointer.com.br comment="Banco Inter"
+/ip hotspot walled-garden add dst-host=*.bancointer.com.br comment="Inter Mobile"
+
+# Santander
+/ip hotspot walled-garden add dst-host=santander.com.br comment="Santander"
+/ip hotspot walled-garden add dst-host=*.santander.com.br comment="Santander Mobile"
+
+# Bradesco
+/ip hotspot walled-garden add dst-host=bradesco.com.br comment="Bradesco"
+/ip hotspot walled-garden add dst-host=*.bradesco.com.br comment="Bradesco Mobile"
+
+# PicPay
+/ip hotspot walled-garden add dst-host=picpay.com comment="PicPay"
+/ip hotspot walled-garden add dst-host=*.picpay.com comment="PicPay API"
+
+# Mercado Pago
+/ip hotspot walled-garden add dst-host=mercadopago.com.br comment="Mercado Pago"
+/ip hotspot walled-garden add dst-host=*.mercadopago.com.br comment="MP API"
+
+# C6 Bank
+/ip hotspot walled-garden add dst-host=c6bank.com.br comment="C6 Bank"
+/ip hotspot walled-garden add dst-host=*.c6bank.com.br comment="C6 Mobile"
+
+# PagBank
+/ip hotspot walled-garden add dst-host=pagseguro.uol.com.br comment="PagSeguro"
+/ip hotspot walled-garden add dst-host=*.pagseguro.uol.com.br comment="PagSeguro API"
+/ip hotspot walled-garden add dst-host=pagbank.com.br comment="PagBank"
+/ip hotspot walled-garden add dst-host=*.pagbank.com.br comment="PagBank API"
+
+# Gov.br
+/ip hotspot walled-garden add dst-host=gov.br comment="Gov.br"
+/ip hotspot walled-garden add dst-host=*.gov.br comment="Serviços Gov"
+/ip hotspot walled-garden add dst-host=sso.acesso.gov.br comment="Login Gov.br"
+
+# DNS
+/ip hotspot walled-garden add dst-host=8.8.8.8 comment="DNS Google"
+/ip hotspot walled-garden add dst-host=1.1.1.1 comment="DNS Cloudflare"
+
+# IP Direto do Portal
+/ip hotspot walled-garden ip add dst-address=138.68.255.122 action=accept comment="Portal IP"
+
+# ============================================================================
+# PASSO 9: NAT
+# ============================================================================
+
+/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade comment="NAT-MIKROTIK"
+
+# ============================================================================
+# PASSO 10: SCRIPT DE SINCRONIZAÇÃO
+# ============================================================================
+
+/system script add name="liberarPagos" policy=read,write,policy,test source={
+:local url "https://www.tocantinstransportewifi.com.br/api/mikrotik/check-paid-users?token=mikrotik-sync-2024"
+:local bypassComment "PAGO-AUTO"
+:log info "=== SYNC INICIADA ==="
+:do {
+:local result [/tool fetch url=$url mode=https http-method=get output=user check-certificate=no as-value]
+:if (($result->"status") = "finished") do={
+:local payload ($result->"data")
+:local pos 0
+:local loopCount 0
+:while ($loopCount < 50) do={
+:set loopCount ($loopCount + 1)
+:local macKey "\"mac_address\":\""
+:local macPos [:find $payload $macKey $pos]
+:if ([:typeof $macPos] = "nil") do={ :set loopCount 50 } else={
+:local macStart ($macPos + 15)
+:local macEnd [:find $payload "\"" $macStart]
+:if ([:typeof $macEnd] != "nil") do={
+:local mac [:pick $payload $macStart $macEnd]
+:set pos ($macEnd + 1)
+:if ([:len $mac] = 17) do={
+:if ([:len [/ip hotspot ip-binding find mac-address=$mac]] = 0) do={
+:log info ("[+] Liberando: " . $mac)
+:do {/ip hotspot user remove [find mac-address=$mac]} on-error={}
+:do {/ip hotspot active remove [find mac-address=$mac]} on-error={}
+:do {/ip hotspot ip-binding add mac-address=$mac type=bypassed comment=$bypassComment disabled=no} on-error={}
+}}}}}}}
+} on-error={ :log error "Erro API" }
+:log info "=== SYNC FINALIZADA ==="
+}
+
+# ============================================================================
+# PASSO 11: AGENDADOR (a cada 10 segundos)
+# ============================================================================
+
+/system scheduler add name="liberarPagosScheduler" interval=10s on-event="/system script run liberarPagos" policy=read,write,policy,test start-time=startup comment="Sync API"
+
+# ============================================================================
+# PASSO 12: CONFIGURAR WiFi (RouterOS 7.x)
+# ============================================================================
+
+# Criar datapath
+/interface wifi datapath add name=hotspot-datapath bridge=wifi-hotspot
+
+# Configuração 2.4GHz
+/interface wifi configuration add name=tocantins-2g mode=ap ssid="TocantinsTransporteWiFi" country=Brazil channel.band=2ghz-ax manager=local
+
+# Configuração 5GHz  
+/interface wifi configuration add name=tocantins-5g mode=ap ssid="TocantinsTransporteWiFi-5G" country=Brazil channel.band=5ghz-ax manager=local
+
+# Aplicar nas interfaces
+/interface wifi set wifi1 configuration=tocantins-2g datapath=hotspot-datapath disabled=no
+/interface wifi set wifi2 configuration=tocantins-5g datapath=hotspot-datapath disabled=no
+
+# ============================================================================
+# PASSO 13: ADICIONAR PORTAS À BRIDGE
+# ============================================================================
+
+/interface bridge port add bridge=wifi-hotspot interface=ether2
+/interface bridge port add bridge=wifi-hotspot interface=ether3
+/interface bridge port add bridge=wifi-hotspot interface=ether4
+/interface bridge port add bridge=wifi-hotspot interface=ether5
+
+# ============================================================================
+# VERIFICAR CONFIGURAÇÃO
+# ============================================================================
+
+/ip hotspot print
+/ip hotspot walled-garden print
+/interface wifi print
+/system script print
+/system scheduler print
+
+# ============================================================================
+# TESTAR SCRIPT MANUALMENTE
+# ============================================================================
+
+/system script run liberarPagos
+
+# Ver logs
+/log print where topics~"script"

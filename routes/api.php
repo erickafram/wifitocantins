@@ -42,6 +42,7 @@ Route::prefix('payment')->group(function () {
     Route::post('/pix', [PaymentController::class, 'processPix']);
     Route::post('/pix/generate-qr', [PaymentController::class, 'generatePixQRCode']);
     Route::get('/pix/status', [PaymentController::class, 'checkPixStatus']);
+    Route::match(['GET', 'POST'], '/check-active', [PaymentController::class, 'checkActivePaymentByMac']);
     Route::post('/card', [PaymentController::class, 'processCard']);
     Route::post('/process', [PaymentController::class, 'process']);
     Route::post('/webhook', [PaymentController::class, 'webhook']);

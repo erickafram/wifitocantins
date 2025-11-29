@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+    <title>WiFi Tocantins Transport</title>
+    <!-- Detectar captive portal -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script>
+        // Redirecionar automaticamente para o portal
+        function redirectToPortal() {
+            var mac = "$(mac)";
+            var ip = "$(ip)";
+            var link_login = "$(link-login)";
+            var link_login_only = "$(link-login-only)";
+            
+            // URL do portal com parâmetros
+            var portalUrl = "https://www.tocantinstransportewifi.com.br/portal";
+            portalUrl += "?mac=" + encodeURIComponent(mac);
+            portalUrl += "&ip=" + encodeURIComponent(ip);
+            portalUrl += "&link_login=" + encodeURIComponent(link_login_only);
+            
+            // Redirecionar
+            window.location.href = portalUrl;
+        }
+        
+        // Executar ao carregar
+        window.onload = function() {
+            // Pequeno delay para garantir que variáveis foram substituídas
+            setTimeout(redirectToPortal, 100);
+        };
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+        }
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #fbbf24;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .manual-link {
+            margin-top: 30px;
+        }
+        .manual-link a {
+            color: #fbbf24;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚌</div>
+        <h1>Tocantins Transport WiFi</h1>
+        <p>Conectando você...</p>
+        <div class="spinner"></div>
+        <div class="manual-link">
+            <p>Se não redirecionar automaticamente:</p>
+            <a href="https://www.tocantinstransportewifi.com.br/portal?mac=$(mac)&ip=$(ip)" onclick="redirectToPortal(); return false;">
+                Clique aqui para acessar
+            </a>
+        </div>
+    </div>
+    
+    <!-- Fallback form para login tradicional (oculto) -->
+    <form name="login" action="$(link-login-only)" method="post" style="display:none;">
+        <input type="hidden" name="dst" value="$(link-orig)">
+        <input type="hidden" name="popup" value="true">
+        <input type="text" name="username" value="auto">
+        <input type="password" name="password" value="">
+    </form>
+</body>
+</html>
