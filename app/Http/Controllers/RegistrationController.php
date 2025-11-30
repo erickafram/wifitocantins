@@ -216,7 +216,34 @@ class RegistrationController extends Controller
             // Limpar telefone (apenas números)
             $cleanPhone = preg_replace('/[^\d]/', '', $request->phone);
             
-            // Se tem user_id, é um usuário existente
+            // 🔧 FIX: Primeiro verificar se já existe usuário com este MAC (prioridade máxima)
+            $existingUserByMac = $macAddress ? User::where('mac_address', $macAddress)->first() : null;
+            
+            if ($existingUserByMac) {
+                // Dispositivo já foi usado antes - atualizar telefone e IP
+                $existingUserByMac->update([
+                    'phone' => $cleanPhone,
+                    'ip_address' => $ipAddress,
+                    'registered_at' => now(),
+                    'status' => 'pending',
+                ]);
+
+                \Log::info('🔄 Reutilizando usuário existente pelo MAC', [
+                    'user_id' => $existingUserByMac->id,
+                    'mac_address' => $macAddress,
+                    'phone' => $cleanPhone,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dispositivo reconhecido!',
+                    'user_id' => $existingUserByMac->id,
+                    'existing_user' => true,
+                    'redirect_to_payment' => true,
+                ]);
+            }
+            
+            // Se tem user_id e MAC não existe em outro usuário, usar usuário existente
             if ($request->user_id) {
                 $user = User::find($request->user_id);
 
@@ -227,12 +254,11 @@ class RegistrationController extends Controller
                     ], 404);
                 }
 
-                // Atualizar dados se necessário
+                // Atualizar dados (seguro pois já verificamos que MAC não existe em outro usuário)
                 $updateData = [
                     'phone' => $cleanPhone,
                 ];
 
-                // 🎯 ATUALIZAR MAC E IP SE FORNECIDOS
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
                     $updateData['mac_address'] = $macAddress;
                 }
@@ -251,11 +277,11 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // 1. Verificar se já existe usuário com este telefone
+            // Verificar se já existe usuário com este telefone
             $existingUserByPhone = User::where('phone', $cleanPhone)->first();
 
             if ($existingUserByPhone) {
-                // Usuário já existe com este telefone - atualizar MAC/IP e continuar
+                // Usuário já existe com este telefone - atualizar MAC/IP (seguro pois já verificamos MAC)
                 $updateData = ['phone' => $cleanPhone];
                 
                 if (HotspotIdentity::shouldReplaceMac($existingUserByPhone->mac_address, $macAddress)) {
@@ -276,28 +302,7 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // 2. Verificar se já existe usuário com este MAC address (dispositivo já usado)
-            $existingUserByMac = $macAddress ? User::where('mac_address', $macAddress)->first() : null;
-
-            if ($existingUserByMac) {
-                // Dispositivo já foi usado antes - atualizar telefone
-                $existingUserByMac->update([
-                    'phone' => $cleanPhone,
-                    'ip_address' => $ipAddress,
-                    'registered_at' => now(),
-                    'status' => 'pending',
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Dispositivo reconhecido!',
-                    'user_id' => $existingUserByMac->id,
-                    'existing_user' => true,
-                    'redirect_to_payment' => true,
-                ]);
-            }
-
-            // 3. Criar novo usuário (apenas com telefone, MAC e IP)
+            // Criar novo usuário (apenas com telefone, MAC e IP)
             $userData = [
                 'phone' => $cleanPhone,
                 'registered_at' => now(),

@@ -61,8 +61,24 @@ class PaymentController extends Controller
                 ], 422);
             }
 
-            // Se tem user_id, usar usuário existente
-            if ($request->user_id) {
+            // 🔧 FIX: Primeiro verificar se já existe usuário com este MAC
+            $existingUserByMac = User::where('mac_address', $macAddress)->first();
+            
+            if ($existingUserByMac) {
+                // Usuário com este MAC já existe - usar ele
+                $user = $existingUserByMac;
+                
+                // Atualizar IP se necessário
+                if ($clientIp && $user->ip_address !== $clientIp) {
+                    $user->update(['ip_address' => $clientIp]);
+                }
+                
+                Log::info('🔄 Reutilizando usuário existente pelo MAC', [
+                    'user_id' => $user->id,
+                    'mac_address' => $macAddress,
+                ]);
+            } elseif ($request->user_id) {
+                // Se tem user_id e MAC não existe em outro usuário, usar usuário existente
                 $user = User::find($request->user_id);
                 if (! $user) {
                     return response()->json([
@@ -71,7 +87,7 @@ class PaymentController extends Controller
                     ], 404);
                 }
 
-                // Atualizar MAC e IP do usuário se ainda não tem
+                // Atualizar MAC e IP do usuário (seguro pois já verificamos que MAC não existe)
                 $userUpdates = [];
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
                     $userUpdates['mac_address'] = $macAddress;
