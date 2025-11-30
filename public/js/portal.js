@@ -13,6 +13,7 @@ class WiFiPortal {
         this.paymentModal = null;
         this.registrationModal = null;
         this.currentUserId = null;
+        this.currentPaymentId = null;
         this.pixTimerInterval = null;
         this.pixCountdownSeconds = 0;
         this.pixPaymentConfirmed = false;
@@ -811,7 +812,7 @@ class WiFiPortal {
     }
 
     /**
-     * Exibe modal com QR Code PIX - Interface melhorada com status visual
+     * Exibe modal com QR Code PIX - Interface com 5 passos
      */
     showPixQRCode(data) {
         const modal = document.createElement('div');
@@ -822,237 +823,310 @@ class WiFiPortal {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         modal.innerHTML = `
-            <div class="flex items-center justify-center min-h-screen p-3 overflow-y-auto">
-                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-lg animate-slide-up shadow-2xl border border-gray-200 my-2 max-h-[96vh] flex flex-col">
+            <div class="flex items-center justify-center min-h-screen p-2 overflow-y-auto">
+                <div class="bg-white rounded-xl w-full max-w-sm shadow-2xl my-2 max-h-[98vh] flex flex-col">
                     
-                    <!-- Header com Status Principal -->
-                    <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl p-4 text-white">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-lg font-bold flex items-center gap-2">
-                                    <span class="text-2xl">📱</span> Pagamento PIX
-                                </h3>
-                                <p class="text-green-100 text-xs mt-1">WiFi Tocantins Express</p>
+                    <!-- Header Compacto -->
+                    <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-t-xl px-3 py-2 text-white">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">📱</span>
+                                <span class="text-sm font-bold">Pagamento PIX</span>
                             </div>
-                            <div class="text-right">
-                                <p class="text-green-100 text-xs">Valor</p>
-                                <p class="text-2xl font-bold">R$ ${data.qr_code.amount}</p>
+                            <span class="text-lg font-bold">R$ ${data.qr_code.amount}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline 5 Passos - Compacta -->
+                    <div class="bg-gray-50 px-2 py-2 border-b">
+                        <div class="flex items-center justify-between text-center">
+                            <div class="flex flex-col items-center flex-1">
+                                <div id="step-1" class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
+                                <span class="text-[10px] mt-0.5 text-green-600 font-medium">Aviso</span>
+                            </div>
+                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-1-2" class="h-full bg-green-500 transition-all" style="width:100%"></div></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div id="step-2" class="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center text-white text-xs font-bold animate-pulse">2</div>
+                                <span id="step-2-text" class="text-[10px] mt-0.5 text-yellow-600 font-medium">QR Code</span>
+                            </div>
+                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-2-3" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div id="step-3" class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">3</div>
+                                <span id="step-3-text" class="text-[10px] mt-0.5 text-gray-400 font-medium">Pagar</span>
+                            </div>
+                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-3-4" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div id="step-4" class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">4</div>
+                                <span id="step-4-text" class="text-[10px] mt-0.5 text-gray-400 font-medium">Liberar</span>
+                            </div>
+                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-4-5" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div id="step-5" class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">5</div>
+                                <span id="step-5-text" class="text-[10px] mt-0.5 text-gray-400 font-medium">Pronto</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Aviso Importante - Fixo no topo -->
-                    <div class="bg-red-50 border-b-2 border-red-100 p-4">
-                        <div class="flex items-start gap-3">
-                            <div class="flex-shrink-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-                                <span class="text-white text-lg font-bold">!</span>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-bold text-red-800 uppercase">NÃO FECHE ESTA TELA!</h4>
-                                <p class="text-xs text-red-700 font-medium mt-1">
-                                    Aguarde os 5 passos abaixo para liberar sua internet automaticamente.
+                    
+                    <!-- Área de Conteúdo Dinâmico -->
+                    <div id="dynamic-content" class="p-3 flex-1 overflow-y-auto">
+                        
+                        <!-- PASSO 1: Aviso Importante (visível inicialmente) -->
+                        <div id="step-1-content" class="hidden">
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xl">⚠️</span>
+                                    <span class="text-red-700 font-bold text-sm">IMPORTANTE!</span>
+                                </div>
+                                <p class="text-red-600 text-xs leading-relaxed">
+                                    <strong>Não feche esta tela!</strong> Complete os 5 passos para liberar seu acesso à internet.
                                 </p>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Status Timeline Visual (5 Passos) -->
-                    <div id="status-timeline" class="bg-gray-50 p-4 border-b border-gray-200 overflow-x-auto">
-                        <div class="flex items-center justify-between relative min-w-[320px]">
-                            <!-- Linha de conexão -->
-                            <div class="absolute top-4 left-6 right-6 h-1 bg-gray-200 rounded-full z-0">
-                                <div id="progress-line" class="h-full bg-yellow-500 rounded-full transition-all duration-500" style="width: 20%"></div>
-                            </div>
-                            
-                            <!-- Etapa 1: Aviso -->
-                            <div class="flex flex-col items-center z-10 w-16">
-                                <div id="step-1" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                                    ✓
-                                </div>
-                                <span class="text-[10px] mt-1 font-medium text-green-600 text-center">Aviso</span>
-                            </div>
-                            
-                            <!-- Etapa 2: QR Code -->
-                            <div class="flex flex-col items-center z-10 w-16">
-                                <div id="step-2" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                                    ✓
-                                </div>
-                                <span class="text-[10px] mt-1 font-medium text-green-600 text-center">QR Code</span>
-                            </div>
-                            
-                            <!-- Etapa 3: Pagamento -->
-                            <div class="flex flex-col items-center z-10 w-16">
-                                <div id="step-3" class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white text-sm font-bold shadow-lg animate-pulse">
-                                    3
-                                </div>
-                                <span id="step-3-text" class="text-[10px] mt-1 font-medium text-yellow-600 text-center">Pagamento</span>
-                            </div>
-                            
-                            <!-- Etapa 4: Configurando -->
-                            <div class="flex flex-col items-center z-10 w-16">
-                                <div id="step-4" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
-                                    4
-                                </div>
-                                <span id="step-4-text" class="text-[10px] mt-1 font-medium text-gray-400 text-center">Config</span>
-                            </div>
-                            
-                            <!-- Etapa 5: Starlink -->
-                            <div class="flex flex-col items-center z-10 w-16">
-                                <div id="step-5" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
-                                    5
-                                </div>
-                                <span id="step-5-text" class="text-[10px] mt-1 font-medium text-gray-400 text-center">Starlink</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Área de Status Dinâmico -->
-                    <div id="dynamic-status-area" class="p-4 flex-1 overflow-y-auto">
-                        <!-- Status: Aguardando Pagamento (Passo 3) -->
-                        <div id="status-waiting" class="text-center">
-                            <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-3 mb-4">
-                                <div class="flex items-center justify-center gap-2 mb-1">
-                                    <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                                    <span class="text-amber-700 font-bold text-xs">PASSO 3: AGUARDANDO PAGAMENTO</span>
-                                    <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                                </div>
-                                <p class="text-amber-600 text-[10px] font-bold uppercase mb-1">
-                                    ABRA SEU BANCO E EFETUE O PAGAMENTO DEPOIS VOLTE AQUI
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                <p class="text-blue-700 text-xs leading-relaxed">
+                                    <strong>📋 O que vai acontecer:</strong><br>
+                                    1. Você verá o QR Code PIX<br>
+                                    2. Pague pelo app do banco<br>
+                                    3. O status atualiza automaticamente<br>
+                                    4. Aguarde a liberação (1 min)<br>
+                                    5. Pronto! Navegue à vontade
                                 </p>
-                                <p class="text-amber-600 text-[10px]">Escaneie o QR Code ou copie o código PIX abaixo</p>
                             </div>
-                            
-                            ${!isMobile ? `
-                            <!-- QR Code (apenas desktop) -->
-                            <div class="bg-white p-4 rounded-xl border-2 border-dashed border-green-300 mb-4 inline-block">
-                                <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-40 h-40 mx-auto">
-                            </div>
-                            ` : ''}
-                            
-                            <!-- Código PIX -->
-                            <div class="bg-blue-50 rounded-xl p-3 mb-4 border border-blue-200">
-                                <div class="flex items-center justify-between mb-2">
-                                    <p class="text-[10px] font-bold text-blue-900">📋 Código Copia e Cola</p>
-                                    ${isMobile ? '<span class="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full animate-pulse">Use este!</span>' : ''}
-                                </div>
-                                <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2 max-h-16 overflow-y-auto">
-                                    <p class="text-[10px] text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
-                                </div>
-                                <button id="copy-pix-code" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 text-xs">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                    </svg>
-                                    📋 COPIAR CÓDIGO PIX
-                                </button>
-                            </div>
-                            
-                            <!-- Timer -->
-                            <div class="bg-gray-100 rounded-lg p-2 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <p id="pix-timer-text" class="text-xs font-bold text-gray-700">⏱️ Expira: 03:00</p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] text-gray-500 italic">Verificando auto...</span>
-                                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Status: Configurando Internet (Passo 4) -->
-                        <div id="status-config" class="hidden text-center">
-                            <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 mb-4">
-                                <div class="text-3xl mb-2">⚙️</div>
-                                <h4 class="text-blue-700 font-bold text-sm mb-1">PASSO 4: CONFIGURANDO...</h4>
-                                <p class="text-blue-600 text-xs">Validando seu dispositivo na rede</p>
-                                <div class="mt-3 w-full bg-blue-200 rounded-full h-1.5">
-                                    <div class="bg-blue-500 h-1.5 rounded-full animate-progress"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Status: Ativando Starlink (Passo 5) -->
-                        <div id="status-starlink" class="hidden text-center">
-                            <div class="bg-purple-50 border-2 border-purple-400 rounded-xl p-4 mb-4">
-                                <div class="relative w-12 h-12 mx-auto mb-3">
-                                    <div class="absolute inset-0 border-2 border-purple-200 rounded-full"></div>
-                                    <div class="absolute inset-0 border-2 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <span class="text-lg">🛰️</span>
-                                    </div>
-                                </div>
-                                <h4 class="text-purple-700 font-bold text-sm mb-1">PASSO 5: ATIVANDO STARLINK</h4>
-                                <p class="text-purple-600 text-xs mb-3">Conectando ao satélite de alta velocidade</p>
-                                
-                                <!-- Contador de liberação -->
-                                <div class="bg-white rounded-lg p-2 border border-purple-200 max-w-[180px] mx-auto">
-                                    <p class="text-[10px] text-gray-500 mb-0.5 uppercase font-bold">Tempo restante</p>
-                                    <p id="release-countdown" class="text-xl font-bold text-purple-600">01:00</p>
-                                    <div class="w-full bg-purple-100 rounded-full h-1 mt-1">
-                                        <div id="release-progress" class="bg-purple-500 h-1 rounded-full transition-all duration-1000" style="width: 100%"></div>
-                                    </div>
-                                </div>
-                                <p class="text-[10px] text-purple-500 mt-2 animate-pulse font-bold">⚠️ NÃO FECHE, AGUARDE O FIM DO TEMPO!</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Status: Conectado (Final) -->
-                        <div id="status-connected" class="hidden text-center">
-                            <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl p-6 mb-4 text-white">
-                                <div class="text-6xl mb-3">🎉</div>
-                                <h4 class="font-bold text-xl mb-2">INTERNET LIBERADA!</h4>
-                                <p class="text-green-100 text-sm mb-4">Você completou todos os passos.</p>
-                                <div class="bg-white/20 rounded-lg p-3">
-                                    <p class="text-xs text-green-100">Redirecionando...</p>
-                                </div>
-                            </div>
-                            <button onclick="window.location.href='https://www.google.com'" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-green-700 transition">
-                                COMEÇAR A NAVEGAR 🚀
+                            <button id="btn-start-payment" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg text-sm transition-all">
+                                ✅ ENTENDI, CONTINUAR
                             </button>
                         </div>
+                        
+                        <!-- PASSO 2: QR Code -->
+                        <div id="step-2-content" class="hidden">
+                            <div class="text-center">
+                                ${!isMobile ? `
+                                <div class="bg-white p-2 rounded-lg border-2 border-dashed border-green-300 mb-2 inline-block">
+                                    <img src="${data.qr_code.image_url}" alt="QR Code" class="w-32 h-32 mx-auto">
+                                </div>
+                                ` : ''}
+                                <div class="bg-blue-50 rounded-lg p-2 mb-2 border border-blue-200">
+                                    <p class="text-[10px] font-bold text-blue-900 mb-1">📋 Código Copia e Cola ${isMobile ? '(USE ESTE!)' : ''}</p>
+                                    <div class="bg-white border rounded p-1.5 mb-2 max-h-12 overflow-y-auto">
+                                        <p class="text-[10px] text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
+                                    </div>
+                                    <button id="copy-pix-code" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded text-xs">
+                                        📋 COPIAR CÓDIGO
+                                    </button>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2">
+                                    <p class="text-amber-700 text-[10px]"><strong>⏱️ Expira em:</strong> <span id="pix-timer-text">03:00</span></p>
+                                </div>
+                                <button id="btn-paid" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-lg text-sm">
+                                    ✅ JÁ PAGUEI
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- PASSO 3: Verificando Pagamento -->
+                        <div id="step-3-content" class="hidden text-center">
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-3">
+                                <div class="animate-spin w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                                <p class="text-yellow-700 font-bold text-sm mb-1">Verificando pagamento...</p>
+                                <p class="text-yellow-600 text-xs">Aguarde, estamos confirmando</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-2">
+                                <p class="text-gray-600 text-[10px]">🔄 Verificação automática a cada 5s</p>
+                            </div>
+                        </div>
+                        
+                        <!-- PASSO 4: Pagamento Confirmado + Liberando -->
+                        <div id="step-4-content" class="hidden text-center">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                                <span class="text-3xl">✅</span>
+                                <p class="text-green-700 font-bold text-sm mt-1">Pagamento Confirmado!</p>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div class="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                                <p class="text-blue-700 font-bold text-xs mb-1">Liberando acesso...</p>
+                                <p class="text-blue-600 text-[10px] mb-2">Configurando no MikroTik</p>
+                                <div class="bg-white rounded p-2 border">
+                                    <p class="text-lg font-bold text-blue-600" id="release-countdown">01:00</p>
+                                    <div class="w-full bg-blue-100 rounded-full h-1.5 mt-1">
+                                        <div id="release-progress" class="bg-blue-500 h-1.5 rounded-full transition-all" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-red-500 text-[10px] mt-2 font-bold">⚠️ Não feche esta tela!</p>
+                            </div>
+                        </div>
+                        
+                        <!-- PASSO 5: Conectado -->
+                        <div id="step-5-content" class="hidden text-center">
+                            <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-4 text-white">
+                                <span class="text-4xl">🎉</span>
+                                <p class="font-bold text-lg mt-2">CONECTADO!</p>
+                                <p class="text-green-100 text-xs mt-1">Aproveite a internet</p>
+                                <div class="bg-white/20 rounded p-2 mt-3">
+                                    <p class="text-[10px]">Redirecionando para Google...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
                     
                     <!-- Footer -->
-                    <div class="p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
-                        <div id="footer-waiting" class="flex gap-2">
-                            <button id="check-payment-status" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-sm transition-all">
-                                Verificar Agora
-                            </button>
-                            <button id="cancel-payment" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg text-sm transition-all">
-                                Cancelar
-                            </button>
-                        </div>
-                        <div id="footer-processing" class="hidden">
-                            <p class="text-center text-xs text-gray-500">🔒 Não feche esta tela até finalizar</p>
-                        </div>
+                    <div class="px-3 py-2 border-t bg-gray-50 rounded-b-xl">
+                        <button id="cancel-payment" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-600 font-medium py-2 rounded text-xs">
+                            Cancelar
+                        </button>
                     </div>
+                    
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Event listeners
-        document.getElementById('copy-pix-code').addEventListener('click', () => {
+        // Mostrar passo 1 (aviso) primeiro
+        document.getElementById('step-1-content').classList.remove('hidden');
+        
+        // Event: Botão "Entendi, Continuar" - vai para passo 2
+        document.getElementById('btn-start-payment').addEventListener('click', () => {
+            this.goToStep2();
+        });
+        
+        // Event: Copiar código PIX
+        document.getElementById('copy-pix-code')?.addEventListener('click', () => {
             this.copyPixCode(data.qr_code.emv_string);
         });
         
-        document.getElementById('check-payment-status').addEventListener('click', () => {
-            this.checkPaymentStatus(data.payment_id);
+        // Event: Botão "Já Paguei" - vai para passo 3
+        document.getElementById('btn-paid')?.addEventListener('click', () => {
+            this.goToStep3(data.payment_id);
         });
         
+        // Event: Cancelar
         document.getElementById('cancel-payment').addEventListener('click', () => {
-            if(confirm('⚠️ Tem certeza? Se você já pagou, não cancele! Aguarde a confirmação.')) {
-                this.closePixModal();
-            }
+            this.closePixModal();
         });
         
-        // Auto-verificar status a cada 3 segundos (mais rápido)
+        // Salvar payment_id para uso posterior
+        this.currentPaymentId = data.payment_id;
+    }
+    
+    /**
+     * Vai para o Passo 2 - QR Code
+     */
+    goToStep2() {
+        // Atualizar timeline
+        document.getElementById('step-1').classList.remove('bg-green-500');
+        document.getElementById('step-1').classList.add('bg-green-500');
+        document.getElementById('step-1').innerHTML = '✓';
+        
+        document.getElementById('step-2').classList.remove('bg-yellow-500', 'animate-pulse');
+        document.getElementById('step-2').classList.add('bg-yellow-500', 'animate-pulse');
+        document.getElementById('line-1-2').style.width = '100%';
+        document.getElementById('line-1-2').classList.remove('bg-gray-300');
+        document.getElementById('line-1-2').classList.add('bg-green-500');
+        
+        // Trocar conteúdo
+        document.getElementById('step-1-content').classList.add('hidden');
+        document.getElementById('step-2-content').classList.remove('hidden');
+        
+        // Iniciar timer
         this.startPixCountdown();
+        
+        // Iniciar verificação automática
         this.paymentCheckInterval = setInterval(() => {
-            this.checkPaymentStatus(data.payment_id);
+            this.checkPaymentStatus(this.currentPaymentId);
+        }, 5000);
+    }
+    
+    /**
+     * Vai para o Passo 3 - Verificando
+     */
+    goToStep3(paymentId) {
+        // Atualizar timeline
+        document.getElementById('step-2').classList.remove('bg-yellow-500', 'animate-pulse');
+        document.getElementById('step-2').classList.add('bg-green-500');
+        document.getElementById('step-2').innerHTML = '✓';
+        document.getElementById('step-2-text').classList.remove('text-yellow-600');
+        document.getElementById('step-2-text').classList.add('text-green-600');
+        
+        document.getElementById('step-3').classList.remove('bg-gray-300', 'text-gray-500');
+        document.getElementById('step-3').classList.add('bg-yellow-500', 'text-white', 'animate-pulse');
+        document.getElementById('step-3-text').classList.remove('text-gray-400');
+        document.getElementById('step-3-text').classList.add('text-yellow-600');
+        document.getElementById('line-2-3').style.width = '100%';
+        document.getElementById('line-2-3').classList.remove('bg-gray-300');
+        document.getElementById('line-2-3').classList.add('bg-green-500');
+        
+        // Trocar conteúdo
+        document.getElementById('step-2-content').classList.add('hidden');
+        document.getElementById('step-3-content').classList.remove('hidden');
+        
+        // Verificar pagamento imediatamente
+        this.checkPaymentStatus(paymentId);
+    }
+    
+    /**
+     * Vai para o Passo 4 - Liberando
+     */
+    goToStep4() {
+        this.pixPaymentConfirmed = true;
+        this.stopPixCountdown();
+        
+        // Atualizar timeline
+        document.getElementById('step-3').classList.remove('bg-yellow-500', 'animate-pulse');
+        document.getElementById('step-3').classList.add('bg-green-500');
+        document.getElementById('step-3').innerHTML = '✓';
+        document.getElementById('step-3-text').classList.remove('text-yellow-600');
+        document.getElementById('step-3-text').classList.add('text-green-600');
+        document.getElementById('step-3-text').textContent = 'Pago!';
+        
+        document.getElementById('step-4').classList.remove('bg-gray-300', 'text-gray-500');
+        document.getElementById('step-4').classList.add('bg-blue-500', 'text-white', 'animate-pulse');
+        document.getElementById('step-4-text').classList.remove('text-gray-400');
+        document.getElementById('step-4-text').classList.add('text-blue-600');
+        document.getElementById('line-3-4').style.width = '100%';
+        document.getElementById('line-3-4').classList.remove('bg-gray-300');
+        document.getElementById('line-3-4').classList.add('bg-green-500');
+        
+        // Trocar conteúdo
+        document.getElementById('step-3-content').classList.add('hidden');
+        document.getElementById('step-4-content').classList.remove('hidden');
+        
+        // Esconder botão cancelar
+        document.getElementById('cancel-payment').classList.add('hidden');
+        
+        // Iniciar contador de 60 segundos
+        this.startReleaseCountdown(60);
+    }
+    
+    /**
+     * Vai para o Passo 5 - Conectado
+     */
+    goToStep5() {
+        this.stopReleaseCountdown();
+        
+        // Atualizar timeline
+        document.getElementById('step-4').classList.remove('bg-blue-500', 'animate-pulse');
+        document.getElementById('step-4').classList.add('bg-green-500');
+        document.getElementById('step-4').innerHTML = '✓';
+        document.getElementById('step-4-text').classList.remove('text-blue-600');
+        document.getElementById('step-4-text').classList.add('text-green-600');
+        document.getElementById('step-4-text').textContent = 'OK!';
+        
+        document.getElementById('step-5').classList.remove('bg-gray-300', 'text-gray-500');
+        document.getElementById('step-5').classList.add('bg-green-500', 'text-white');
+        document.getElementById('step-5').innerHTML = '✓';
+        document.getElementById('step-5-text').classList.remove('text-gray-400');
+        document.getElementById('step-5-text').classList.add('text-green-600');
+        document.getElementById('line-4-5').style.width = '100%';
+        document.getElementById('line-4-5').classList.remove('bg-gray-300');
+        document.getElementById('line-4-5').classList.add('bg-green-500');
+        
+        // Trocar conteúdo
+        document.getElementById('step-4-content').classList.add('hidden');
+        document.getElementById('step-5-content').classList.remove('hidden');
+        
+        // Redirecionar após 3 segundos
+        setTimeout(() => {
+            window.location.href = 'https://www.google.com';
         }, 3000);
     }
 
@@ -1076,17 +1150,10 @@ class WiFiPortal {
     }
 
     /**
-     * Verifica status do pagamento - Com transições visuais melhoradas
+     * Verifica status do pagamento - Usa o novo fluxo de 5 passos
      */
     async checkPaymentStatus(paymentId) {
         console.log('🔄 Verificando status do pagamento:', paymentId);
-        
-        // Feedback visual
-        const checkButton = document.getElementById('check-payment-status');
-        if (checkButton) {
-            checkButton.innerHTML = '⏳ Verificando...';
-            checkButton.disabled = true;
-        }
         
         try {
             const response = await fetch(`/api/payment/pix/status?payment_id=${paymentId}`);
@@ -1096,249 +1163,33 @@ class WiFiPortal {
             
             if (result.success && result.payment.status === 'completed') {
                 console.log('✅ Pagamento confirmado!');
+                
+                // Parar verificação automática
                 if (this.paymentCheckInterval) {
                     clearInterval(this.paymentCheckInterval);
                     this.paymentCheckInterval = null;
                 }
 
-                this.pixPaymentConfirmed = true;
-                this.stopPixCountdown();
-
-                // 🎯 ETAPA 3: Mostrar pagamento confirmado
-                try {
-                    this.showPaymentConfirmedStatus();
-                } catch (e) { console.error('Erro ao mostrar confirmado:', e); }
+                // Ir para passo 4 (Liberando)
+                this.goToStep4();
                 
-                // Aguardar 2 segundos
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // 🎯 ETAPA 4: Mostrar configurando acesso
-                try {
-                    this.showConfiguringStatus();
-                } catch (e) { console.error('Erro ao mostrar configurando:', e); }
-                
-                // Aguardar 3 segundos simulando configuração
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                // 🎯 ETAPA 5: Mostrar ativando Starlink
-                try {
-                    this.showStarlinkStatus();
-                } catch (e) { console.error('Erro ao mostrar Starlink:', e); }
-                
-                // Iniciar contador de 60 segundos (1 minuto)
-                // O redirecionamento acontecerá automaticamente quando o contador zerar
-                try {
-                    this.startReleaseCountdown(60);
-                } catch (e) {
-                    console.error('Erro ao iniciar countdown:', e);
-                    // Fallback extremo: redirecionar em 60s se o countdown falhar
-                    setTimeout(() => {
-                        window.location.href = 'https://www.google.com';
-                    }, 60000);
-                }
-                
-                // Liberar dispositivo no MikroTik em segundo plano
-                this.allowDevice(this.deviceMac).catch(err => console.error('Erro ao liberar device:', err));
-                
+                // Liberar dispositivo no MikroTik em background
+                this.allowDevice(this.deviceMac);
             } else {
                 console.log('⏱️ Pagamento ainda pendente');
-
-                // Restaurar botão
-                if (checkButton) {
-                    setTimeout(() => {
-                        checkButton.innerHTML = 'Verificar Agora';
-                        checkButton.disabled = false;
-                    }, 1500);
-                }
             }
         } catch (error) {
             console.error('❌ Erro ao verificar status do pagamento:', error);
-            
-            // Restaurar botão
-            if (checkButton) {
-                checkButton.innerHTML = 'Verificar Agora';
-                checkButton.disabled = false;
-            }
         }
     }
     
     /**
-     * Mostra status de pagamento confirmado (Passo 3)
-     */
-    showPaymentConfirmedStatus() {
-        // Atualizar timeline - Etapa 3 concluída
-        const step3 = document.getElementById('step-3');
-        const step3Text = document.getElementById('step-3-text');
-        const progressLine = document.getElementById('progress-line');
-        
-        if (step3) {
-            step3.classList.remove('bg-yellow-500', 'animate-pulse');
-            step3.classList.add('bg-green-500');
-            step3.innerHTML = '✓';
-        }
-        if (step3Text) {
-            step3Text.classList.remove('text-yellow-600');
-            step3Text.classList.add('text-green-600');
-            step3Text.textContent = 'Pago!';
-        }
-        if (progressLine) {
-            progressLine.style.width = '60%';
-            progressLine.classList.remove('bg-yellow-500');
-            progressLine.classList.add('bg-green-500');
-        }
-        
-        // Esconder status de aguardando
-        const statusWaiting = document.getElementById('status-waiting');
-        if (statusWaiting) statusWaiting.classList.add('hidden');
-        
-        // Esconder footer de botões
-        const footerWaiting = document.getElementById('footer-waiting');
-        if (footerWaiting) footerWaiting.classList.add('hidden');
-        
-        // Mostrar footer de processamento
-        const footerProcessing = document.getElementById('footer-processing');
-        if (footerProcessing) footerProcessing.classList.remove('hidden');
-    }
-    
-    /**
-     * Mostra status de configurando (Passo 4)
-     */
-    showConfiguringStatus() {
-        // Atualizar timeline - Etapa 4 ativa
-        const step4 = document.getElementById('step-4');
-        const step4Text = document.getElementById('step-4-text');
-        const progressLine = document.getElementById('progress-line');
-        
-        if (step4) {
-            step4.classList.remove('bg-gray-300', 'text-gray-500');
-            step4.classList.add('bg-blue-500', 'text-white', 'animate-pulse');
-            step4.innerHTML = '⚙️';
-        }
-        if (step4Text) {
-            step4Text.classList.remove('text-gray-400');
-            step4Text.classList.add('text-blue-600');
-            step4Text.textContent = 'Config...';
-        }
-        if (progressLine) {
-            progressLine.style.width = '80%';
-            progressLine.classList.add('bg-blue-500');
-        }
-        
-        // Mostrar status de configurando
-        const statusConfig = document.getElementById('status-config');
-        if (statusConfig) statusConfig.classList.remove('hidden');
-    }
-    
-    /**
-     * Mostra status de Starlink (Passo 5)
-     */
-    showStarlinkStatus() {
-        // Atualizar timeline - Etapa 4 concluída, Etapa 5 ativa
-        const step4 = document.getElementById('step-4');
-        const step4Text = document.getElementById('step-4-text');
-        const step5 = document.getElementById('step-5');
-        const step5Text = document.getElementById('step-5-text');
-        const progressLine = document.getElementById('progress-line');
-        
-        // Concluir passo 4
-        if (step4) {
-            step4.classList.remove('bg-blue-500', 'animate-pulse');
-            step4.classList.add('bg-green-500');
-            step4.innerHTML = '✓';
-        }
-        if (step4Text) {
-            step4Text.classList.remove('text-blue-600');
-            step4Text.classList.add('text-green-600');
-            step4Text.textContent = 'Configurado';
-        }
-        
-        // Ativar passo 5
-        if (step5) {
-            step5.classList.remove('bg-gray-300', 'text-gray-500');
-            step5.classList.add('bg-purple-500', 'text-white', 'animate-pulse');
-            step5.innerHTML = '🛰️';
-        }
-        if (step5Text) {
-            step5Text.classList.remove('text-gray-400');
-            step5Text.classList.add('text-purple-600');
-            step5Text.textContent = 'Ativando...';
-        }
-        
-        if (progressLine) {
-            progressLine.style.width = '90%';
-            progressLine.classList.remove('bg-blue-500');
-            progressLine.classList.add('bg-purple-500');
-        }
-        
-        // Esconder status config e mostrar Starlink
-        const statusConfig = document.getElementById('status-config');
-        const statusStarlink = document.getElementById('status-starlink');
-        
-        if (statusConfig) statusConfig.classList.add('hidden');
-        if (statusStarlink) statusStarlink.classList.remove('hidden');
-    }
-    
-    /**
-     * Mostra status de conectado (Final)
-     */
-    showConnectedStatus() {
-        // Parar contador de liberação se houver
-        this.stopReleaseCountdown();
-        
-        // Atualizar timeline - Etapa 5 concluída
-        const step5 = document.getElementById('step-5');
-        const step5Text = document.getElementById('step-5-text');
-        const progressLine = document.getElementById('progress-line');
-        
-        if (step5) {
-            step5.classList.remove('bg-purple-500', 'animate-pulse');
-            step5.classList.add('bg-green-500');
-            step5.innerHTML = '✓';
-        }
-        if (step5Text) {
-            step5Text.classList.remove('text-purple-600');
-            step5Text.classList.add('text-green-600');
-            step5Text.textContent = 'Conectado!';
-        }
-        if (progressLine) {
-            progressLine.style.width = '100%';
-            progressLine.classList.remove('bg-purple-500');
-            progressLine.classList.add('bg-green-500');
-        }
-        
-        // Mostrar status de conectado
-        const statusStarlink = document.getElementById('status-starlink');
-        const statusConnected = document.getElementById('status-connected');
-        
-        if (statusStarlink) statusStarlink.classList.add('hidden');
-        if (statusConnected) statusConnected.classList.remove('hidden');
-    }
-    
-    /**
-     * Inicia contador de liberação com fallback de segurança
+     * Inicia contador de liberação - Vai para passo 5 quando terminar
      */
     startReleaseCountdown(seconds) {
-        console.log('🕒 Iniciando contador de liberação:', seconds, 'segundos');
         this.releaseCountdownSeconds = seconds;
-        
-        // Limpar intervalo anterior se existir
-        if (this.releaseCountdownInterval) {
-            clearInterval(this.releaseCountdownInterval);
-        }
-
-        // Backup de segurança: Forçar redirecionamento após o tempo total + 3 segundos
-        // Isso garante que o usuário não fique preso se o contador visual falhar
-        setTimeout(() => {
-            console.log('⚠️ Timer de segurança acionado: redirecionando...');
-            this.showConnectedStatus();
-            setTimeout(() => {
-                window.location.href = 'https://www.google.com';
-            }, 1000);
-        }, (seconds + 3) * 1000);
-
         this.releaseCountdownInterval = setInterval(() => {
             this.releaseCountdownSeconds--;
-            console.log('⏱️ Contador:', this.releaseCountdownSeconds);
             
             const countdownEl = document.getElementById('release-countdown');
             const progressEl = document.getElementById('release-progress');
@@ -1347,8 +1198,6 @@ class WiFiPortal {
                 const mins = Math.floor(this.releaseCountdownSeconds / 60).toString().padStart(2, '0');
                 const secs = (this.releaseCountdownSeconds % 60).toString().padStart(2, '0');
                 countdownEl.textContent = `${mins}:${secs}`;
-            } else {
-                console.warn('⚠️ Elemento countdown não encontrado no DOM');
             }
             
             if (progressEl) {
@@ -1356,19 +1205,9 @@ class WiFiPortal {
                 progressEl.style.width = `${progress}%`;
             }
             
-            // 🎯 Quando o contador chegar a 0, mostrar como conectado automaticamente
+            // Quando o contador chegar a 0, ir para passo 5
             if (this.releaseCountdownSeconds <= 0) {
-                this.stopReleaseCountdown();
-                console.log('✅ Tempo esgotado! Conectando...');
-                
-                // Mostrar status de conectado automaticamente
-                this.showConnectedStatus();
-                
-                // Redirecionar após 2 segundos
-                setTimeout(() => {
-                    console.log('🚀 Redirecionando para Google...');
-                    window.location.href = 'https://www.google.com';
-                }, 2000);
+                this.goToStep5();
             }
         }, 1000);
     }

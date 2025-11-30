@@ -516,68 +516,6 @@ class PaymentController extends Controller
     }
 
     /**
-     * Verificar status do último pagamento do usuário (para verificação automática)
-     */
-    public function checkPaymentStatus(Request $request)
-    {
-        try {
-            // Buscar usuário pela sessão ou pelo IP/MAC
-            $user = auth()->user();
-            
-            if (!$user) {
-                // Tentar buscar pelo IP se não estiver autenticado
-                $clientIp = HotspotIdentity::resolveClientIp($request);
-                $user = User::where('ip_address', $clientIp)
-                    ->orderBy('updated_at', 'desc')
-                    ->first();
-            }
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado',
-                ], 404);
-            }
-
-            // Buscar o último pagamento do usuário
-            $payment = Payment::where('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if (!$payment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Nenhum pagamento encontrado',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'payment' => [
-                    'id' => $payment->id,
-                    'status' => $payment->status,
-                    'amount' => $payment->amount,
-                    'payment_type' => $payment->payment_type,
-                    'created_at' => $payment->created_at,
-                    'paid_at' => $payment->paid_at,
-                    'pix_emv_string' => $payment->pix_emv_string,
-                    'qr_image_url' => $payment->qr_image_url,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Erro ao verificar status do pagamento', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao verificar pagamento',
-            ], 500);
-        }
-    }
-
-    /**
      * Webhook específico do Santander PIX
      * Documentação: Portal do Desenvolvedor > Gerenciamento de notificações via Webhook
      */

@@ -52,48 +52,10 @@ class PortalDashboard {
 
         modal.innerHTML = `
             <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
-                <!-- Aviso Importante - Passo 1 -->
-                <div class="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl p-6 mb-6">
-                    <div class="flex items-start gap-3 mb-4">
-                        <div class="flex-shrink-0 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                            <span class="text-2xl">⚠️</span>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-bold text-red-800 mb-2">ATENÇÃO - IMPORTANTE!</h4>
-                            <p class="text-sm text-red-700 font-semibold">
-                                NÃO FECHE ESTA TELA até concluir os 5 passos para liberar seu acesso à internet!
-                            </p>
-                        </div>
-                    </div>
-                    <div class="bg-white/80 rounded-xl p-3">
-                        <p class="text-xs text-gray-700 font-medium">
-                            ✓ Mantenha esta janela aberta<br>
-                            ✓ Complete todos os passos<br>
-                            ✓ Aguarde a confirmação final
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Indicador de Passos -->
-                <div class="mb-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-gray-500">PROGRESSO</span>
-                        <span class="text-xs font-bold text-blue-600">PASSO 1 DE 5</span>
-                    </div>
-                    <div class="flex gap-1">
-                        <div class="flex-1 h-2 bg-blue-500 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-                    </div>
-                </div>
-
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Passo 2: QR Code PIX</h3>
+                    <h3 class="text-lg font-semibold text-gray-800">QR Code PIX</h3>
                     <button class="text-gray-400 hover:text-gray-600 text-2xl" data-close>×</button>
                 </div>
-                
                 <div class="bg-gray-50 rounded-2xl p-6 text-center mb-4">
                     <p class="text-sm text-gray-500 mb-2">Valor</p>
                     <p class="text-3xl font-bold text-gray-900 mb-4">R$ ${Number(data.amount).toFixed(2)}</p>
@@ -104,20 +66,16 @@ class PortalDashboard {
                         📋 Copiar código PIX
                     </button>
                 </div>
-                
                 <p class="text-xs text-gray-500 text-center mb-3">Use o código copia-e-cola se preferir pagar pelo app.</p>
-                
                 <button class="w-full px-4 py-3 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition" data-check-payment>
-                    ✅ Já Paguei - Verificar Pagamento (Passo 3)
+                    ✅ Já Paguei - Verificar Pagamento
                 </button>
             </div>
         `;
 
         modal.addEventListener('click', (event) => {
             if (event.target === modal || event.target.hasAttribute('data-close')) {
-                if (confirm('⚠️ Tem certeza? Você ainda não concluiu todos os passos. Fechar agora pode impedir a liberação do acesso.')) {
-                    modal.remove();
-                }
+                modal.remove();
             }
         });
 
@@ -146,21 +104,6 @@ class PortalDashboard {
 
         modal.innerHTML = `
             <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
-                <!-- Indicador de Passos -->
-                <div class="mb-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-gray-500">PROGRESSO</span>
-                        <span class="text-xs font-bold text-blue-600" id="step-indicator">PASSO 3 DE 5</span>
-                    </div>
-                    <div class="flex gap-1" id="progress-bars">
-                        <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-                        <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-                    </div>
-                </div>
-
                 <div class="mb-6">
                     <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
                         <svg class="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -178,31 +121,28 @@ class PortalDashboard {
                         <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
                         <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
                     </div>
-                    <p class="text-sm font-semibold text-blue-800" id="processing-status">Passo 3: Verificando pagamento...</p>
-                    <p class="text-xs text-blue-600 mt-2" id="processing-timer">Verificando automaticamente...</p>
+                    <p class="text-sm font-semibold text-blue-800" id="processing-status">Verificando pagamento...</p>
+                    <p class="text-xs text-blue-600 mt-2" id="processing-timer">Tempo estimado: <span class="font-bold" id="timer-seconds">60</span>s</p>
                 </div>
                 
-                <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-4">
-                    <p class="text-sm text-red-800 font-bold">
-                        ⚠️ NÃO FECHE ESTA TELA!
-                    </p>
-                    <p class="text-xs text-red-700 mt-1">
-                        O processo está em andamento. Fechar agora pode impedir a liberação do acesso.
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                    <p class="text-sm text-yellow-800">
+                        <span class="font-bold">⚠️ Importante:</span> Mantenha esta tela aberta durante o processo.
                     </p>
                 </div>
                 
-                <div class="space-y-2 text-left text-sm text-gray-600" id="steps-list">
-                    <div class="flex items-start gap-2" id="step-3">
-                        <span class="text-blue-500 animate-pulse">⏳</span>
-                        <span>Passo 3: Verificando confirmação do pagamento</span>
+                <div class="space-y-2 text-left text-sm text-gray-600">
+                    <div class="flex items-start gap-2">
+                        <span class="text-green-500">✓</span>
+                        <span>Verificando confirmação do pagamento</span>
                     </div>
-                    <div class="flex items-start gap-2" id="step-4">
-                        <span class="text-gray-400">○</span>
-                        <span>Passo 4: Configurando liberação de internet</span>
+                    <div class="flex items-start gap-2">
+                        <span class="text-blue-500">⏳</span>
+                        <span>Configurando liberação de internet</span>
                     </div>
-                    <div class="flex items-start gap-2" id="step-5">
+                    <div class="flex items-start gap-2">
                         <span class="text-gray-400">○</span>
-                        <span>Passo 5: Ativando conexão Starlink</span>
+                        <span>Ativando conexão Starlink</span>
                     </div>
                 </div>
             </div>
@@ -211,152 +151,33 @@ class PortalDashboard {
         document.body.appendChild(modal);
         this.processingModal = modal;
         
-        // Iniciar verificação automática do pagamento
-        this.startPaymentVerification();
+        // Iniciar timer de 60 segundos
+        this.startProcessingTimer();
     }
 
-    async startPaymentVerification() {
+    startProcessingTimer() {
+        let seconds = 60;
+        const timerElement = document.getElementById('timer-seconds');
         const statusElement = document.getElementById('processing-status');
-        const timerElement = document.getElementById('processing-timer');
-        const stepIndicator = document.getElementById('step-indicator');
-        const progressBars = document.getElementById('progress-bars');
         
-        let attempts = 0;
-        const maxAttempts = 60; // 60 tentativas = ~2 minutos
-        
-        const checkPayment = async () => {
-            attempts++;
-            
+        const interval = setInterval(() => {
+            seconds--;
             if (timerElement) {
-                timerElement.textContent = `Tentativa ${attempts}/${maxAttempts} - Verificando...`;
+                timerElement.textContent = seconds;
             }
             
-            try {
-                // Buscar o último pagamento do usuário
-                const response = await fetch('/api/payment/check-status');
-                const result = await response.json();
-                
-                if (result.success && result.payment && result.payment.status === 'completed') {
-                    // Pagamento confirmado! Avançar para passo 4
-                    this.updateStep4();
-                    
-                    setTimeout(() => {
-                        // Avançar para passo 5
-                        this.updateStep5();
-                        
-                        setTimeout(() => {
-                            // Concluir processo
-                            this.showSuccessModal();
-                        }, 3000);
-                    }, 3000);
-                    
-                    return; // Parar verificação
-                }
-                
-                // Se não confirmou e ainda tem tentativas, tentar novamente
-                if (attempts < maxAttempts) {
-                    setTimeout(checkPayment, 2000); // Verificar a cada 2 segundos
-                } else {
-                    // Timeout - mostrar mensagem de erro
-                    if (statusElement) {
-                        statusElement.textContent = 'Pagamento não confirmado ainda. Tente novamente em alguns minutos.';
-                    }
-                    if (timerElement) {
-                        timerElement.textContent = 'Você pode fechar esta tela e verificar depois.';
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao verificar pagamento:', error);
-                
-                // Tentar novamente se ainda houver tentativas
-                if (attempts < maxAttempts) {
-                    setTimeout(checkPayment, 2000);
-                }
+            // Atualizar mensagens conforme o tempo
+            if (seconds === 45 && statusElement) {
+                statusElement.textContent = 'Pagamento confirmado! Configurando acesso...';
+            } else if (seconds === 30 && statusElement) {
+                statusElement.textContent = 'Liberando internet na rede Starlink...';
+            } else if (seconds === 15 && statusElement) {
+                statusElement.textContent = 'Finalizando configuração...';
+            } else if (seconds <= 0) {
+                clearInterval(interval);
+                this.showSuccessModal();
             }
-        };
-        
-        // Iniciar verificação
-        checkPayment();
-    }
-    
-    updateStep4() {
-        const statusElement = document.getElementById('processing-status');
-        const stepIndicator = document.getElementById('step-indicator');
-        const progressBars = document.getElementById('progress-bars');
-        const step3 = document.getElementById('step-3');
-        const step4 = document.getElementById('step-4');
-        
-        if (statusElement) {
-            statusElement.textContent = 'Passo 4: Configurando liberação de internet...';
-        }
-        
-        if (stepIndicator) {
-            stepIndicator.textContent = 'PASSO 4 DE 5';
-        }
-        
-        if (progressBars) {
-            progressBars.innerHTML = `
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <div class="flex-1 h-2 bg-gray-200 rounded-full"></div>
-            `;
-        }
-        
-        if (step3) {
-            step3.innerHTML = `
-                <span class="text-green-500">✓</span>
-                <span>Passo 3: Pagamento confirmado!</span>
-            `;
-        }
-        
-        if (step4) {
-            step4.innerHTML = `
-                <span class="text-blue-500 animate-pulse">⏳</span>
-                <span>Passo 4: Configurando liberação de internet</span>
-            `;
-        }
-    }
-    
-    updateStep5() {
-        const statusElement = document.getElementById('processing-status');
-        const stepIndicator = document.getElementById('step-indicator');
-        const progressBars = document.getElementById('progress-bars');
-        const step4 = document.getElementById('step-4');
-        const step5 = document.getElementById('step-5');
-        
-        if (statusElement) {
-            statusElement.textContent = 'Passo 5: Ativando conexão Starlink...';
-        }
-        
-        if (stepIndicator) {
-            stepIndicator.textContent = 'PASSO 5 DE 5';
-        }
-        
-        if (progressBars) {
-            progressBars.innerHTML = `
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            `;
-        }
-        
-        if (step4) {
-            step4.innerHTML = `
-                <span class="text-green-500">✓</span>
-                <span>Passo 4: Internet configurada!</span>
-            `;
-        }
-        
-        if (step5) {
-            step5.innerHTML = `
-                <span class="text-blue-500 animate-pulse">⏳</span>
-                <span>Passo 5: Ativando conexão Starlink</span>
-            `;
-        }
+        }, 1000);
     }
 
     showSuccessModal() {
