@@ -1016,7 +1016,7 @@
         window.WIFI_PRICE = {{ $price }};
     </script>
     
-    <script src="{{ asset('js/mac-detector.js') }}"></script>
-    <script src="{{ asset('js/portal.js') }}"></script>
+    <script src="{{ asset('js/mac-detector.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('js/portal.js') }}?v={{ time() }}"></script>
 </body>
 </html>
