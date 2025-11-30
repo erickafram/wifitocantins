@@ -910,13 +910,16 @@ class WiFiPortal {
                     <div id="dynamic-status-area" class="p-4 flex-1 overflow-y-auto">
                         <!-- Status: Aguardando Pagamento (Passo 3) -->
                         <div id="status-waiting" class="text-center">
-                            <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4">
-                                <div class="flex items-center justify-center gap-2 mb-2">
-                                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
-                                    <span class="text-amber-700 font-bold text-sm">PASSO 3: AGUARDANDO PAGAMENTO</span>
-                                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                            <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-3 mb-4">
+                                <div class="flex items-center justify-center gap-2 mb-1">
+                                    <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                                    <span class="text-amber-700 font-bold text-xs">PASSO 3: AGUARDANDO PAGAMENTO</span>
+                                    <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
                                 </div>
-                                <p class="text-amber-600 text-xs">Escaneie o QR Code ou copie o código PIX abaixo</p>
+                                <p class="text-amber-600 text-[10px] font-bold uppercase mb-1">
+                                    ABRA SEU BANCO E EFETUE O PAGAMENTO DEPOIS VOLTE AQUI
+                                </p>
+                                <p class="text-amber-600 text-[10px]">Escaneie o QR Code ou copie o código PIX abaixo</p>
                             </div>
                             
                             ${!isMobile ? `
@@ -929,14 +932,14 @@ class WiFiPortal {
                             <!-- Código PIX -->
                             <div class="bg-blue-50 rounded-xl p-3 mb-4 border border-blue-200">
                                 <div class="flex items-center justify-between mb-2">
-                                    <p class="text-xs font-bold text-blue-900">📋 Código Copia e Cola</p>
-                                    ${isMobile ? '<span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full animate-pulse">Use este!</span>' : ''}
+                                    <p class="text-[10px] font-bold text-blue-900">📋 Código Copia e Cola</p>
+                                    ${isMobile ? '<span class="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full animate-pulse">Use este!</span>' : ''}
                                 </div>
                                 <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2 max-h-16 overflow-y-auto">
-                                    <p class="text-xs text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
+                                    <p class="text-[10px] text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
                                 </div>
-                                <button id="copy-pix-code" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button id="copy-pix-code" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 text-xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                     </svg>
                                     📋 COPIAR CÓDIGO PIX
@@ -944,16 +947,16 @@ class WiFiPortal {
                             </div>
                             
                             <!-- Timer -->
-                            <div class="bg-gray-100 rounded-lg p-3 flex items-center justify-between">
+                            <div class="bg-gray-100 rounded-lg p-2 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <p id="pix-timer-text" class="text-sm font-bold text-gray-700">⏱️ Expira: 03:00</p>
+                                    <p id="pix-timer-text" class="text-xs font-bold text-gray-700">⏱️ Expira: 03:00</p>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-500 italic">Verificando auto...</span>
-                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span class="text-[10px] text-gray-500 italic">Verificando auto...</span>
+                                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                                 </div>
                             </div>
                         </div>
@@ -981,7 +984,17 @@ class WiFiPortal {
                                     </div>
                                 </div>
                                 <h4 class="text-purple-700 font-bold text-lg mb-2">PASSO 5: ATIVANDO STARLINK</h4>
-                                <p class="text-purple-600 text-sm">Conectando ao satélite de alta velocidade</p>
+                                <p class="text-purple-600 text-sm mb-4">Conectando ao satélite de alta velocidade</p>
+                                
+                                <!-- Contador de liberação -->
+                                <div class="bg-white rounded-lg p-3 border border-purple-200 max-w-[200px] mx-auto">
+                                    <p class="text-[10px] text-gray-500 mb-1 uppercase font-bold">Tempo restante</p>
+                                    <p id="release-countdown" class="text-2xl font-bold text-purple-600">01:00</p>
+                                    <div class="w-full bg-purple-100 rounded-full h-1.5 mt-2">
+                                        <div id="release-progress" class="bg-purple-500 h-1.5 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-purple-500 mt-3 animate-pulse">⚠️ NÃO FECHE, AGUARDE O FIM DO TEMPO!</p>
                             </div>
                         </div>
                         
@@ -1106,21 +1119,15 @@ class WiFiPortal {
                 // 🎯 ETAPA 5: Mostrar ativando Starlink
                 this.showStarlinkStatus();
                 
-                // Liberar dispositivo no MikroTik
-                const allowed = await this.allowDevice(this.deviceMac);
+                // Iniciar contador de 60 segundos (1 minuto)
+                // O redirecionamento acontecerá automaticamente quando o contador zerar
+                this.startReleaseCountdown(60);
                 
-                if (allowed) {
-                    // Aguardar mais 2 segundos para efeito visual
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    
-                    // 🎯 FINAL: Mostrar conectado
-                    this.showConnectedStatus();
-                    
-                    // Redirecionar após 3 segundos
-                    setTimeout(() => {
-                        window.location.href = 'https://www.google.com';
-                    }, 3000);
-                }
+                // Liberar dispositivo no MikroTik em segundo plano
+                // Não aguardamos o resultado para manter o fluxo visual fluido
+                // Se houver erro, o usuário será redirecionado mesmo assim após o tempo
+                this.allowDevice(this.deviceMac).catch(err => console.error('Erro ao liberar device:', err));
+                
             } else {
                 console.log('⏱️ Pagamento ainda pendente');
 
