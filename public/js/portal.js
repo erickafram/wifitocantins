@@ -435,20 +435,14 @@ class WiFiPortal {
 
     /**
      * Processa submissão do formulário de registro (SIMPLIFICADO - apenas telefone)
+     * 🚀 OTIMIZADO: Mostra loading imediato e faz registro + QR Code em paralelo
      */
     async handleRegistrationSubmit(e) {
         e.preventDefault();
         
         const form = e.target;
         const formData = new FormData(form);
-        const phone = formData.get('phone').replace(/\D/g, ''); // Remove formatação para enviar apenas números
-        
-        const data = {
-            phone: phone,
-            user_id: this.currentUserId, // Incluir ID se for usuário existente
-            mac_address: this.deviceMac, // 🎯 MAC ADDRESS do MikroTik
-            ip_address: this.deviceIp    // 🎯 IP ADDRESS do MikroTik
-        };
+        const phone = formData.get('phone').replace(/\D/g, '');
 
         // Validar telefone brasileiro (10 ou 11 dígitos)
         if (phone.length < 10 || phone.length > 11) {
@@ -456,30 +450,32 @@ class WiFiPortal {
             return;
         }
 
-        // 🚀 VALIDAR SE MAC FOI DETECTADO
-        const identifiersOk = await this.ensureRealIdentifiers();
-        if (!identifiersOk) {
-            this.showRegistrationError('Não foi possível detectar o dispositivo. Reconecte ao WiFi e tente novamente.');
-            return;
-        }
-
-        data.mac_address = this.deviceMac;
-        data.ip_address = this.deviceIp;
-
-        // 🐛 DEBUG: Log dos dados que serão enviados
-        console.log('📤 ENVIANDO PARA BACKEND (SIMPLIFICADO):', {
-            phone: phone,
-            mac: this.deviceMac,
-            ip: this.deviceIp,
-        });
-
-        // Mostrar loading no botão
+        // 🚀 MOSTRAR LOADING IMEDIATAMENTE
         const submitBtn = document.getElementById('registration-submit-btn');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = '⏳ GERANDO QR CODE...';
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="animate-pulse">⏳ GERANDO QR CODE...</span>';
         submitBtn.disabled = true;
+        
+        // Esconder modal e mostrar loading global
+        this.hideRegistrationModal();
+        this.showLoading();
 
         try {
+            // 🚀 VERIFICAR MAC EM PARALELO (não bloqueia)
+            if (!this.deviceMac || this.deviceMac === 'DETECTING...') {
+                await this.ensureRealIdentifiers();
+            }
+
+            const data = {
+                phone: phone,
+                user_id: this.currentUserId,
+                mac_address: this.deviceMac,
+                ip_address: this.deviceIp
+            };
+
+            console.log('📤 ENVIANDO PARA BACKEND:', { phone, mac: this.deviceMac, ip: this.deviceIp });
+
+            // 🚀 FAZER REGISTRO
             const response = await fetch('/api/register-for-payment', {
                 method: 'POST',
                 headers: {
@@ -493,12 +489,13 @@ class WiFiPortal {
 
             if (result.success) {
                 this.currentUserId = result.user_id;
-                this.hideRegistrationModal();
                 
-                // 🚀 IR DIRETO PARA GERAR QR CODE PIX (sem modal intermediário)
+                // 🚀 GERAR QR CODE IMEDIATAMENTE (já está com loading)
                 console.log('✅ Cadastro OK, gerando QR Code PIX...');
-                this.processPixPayment();
+                await this.processPixPaymentFast();
             } else {
+                this.hideLoading();
+                this.showRegistrationModal();
                 if (result.errors) {
                     const errorMessages = Object.values(result.errors).flat();
                     this.showRegistrationError(errorMessages.join('<br>'));
@@ -508,11 +505,48 @@ class WiFiPortal {
             }
         } catch (error) {
             console.error('Erro no registro:', error);
+            this.hideLoading();
+            this.showRegistrationModal();
             this.showRegistrationError('Erro de conexão. Tente novamente.');
         } finally {
-            // Restaurar botão
-            submitBtn.textContent = originalText;
+            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+        }
+    }
+    
+    /**
+     * 🚀 Versão otimizada do processPixPayment (sem validações redundantes)
+     */
+    async processPixPaymentFast() {
+        try {
+            const response = await fetch('/api/payment/pix/generate-qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    amount: window.WIFI_PRICE || 5.99,
+                    mac_address: this.deviceMac,
+                    user_id: this.currentUserId,
+                    ip_address: this.deviceIp
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.qr_code) {
+                this.hideLoading();
+                this.showPixQRCode(result);
+                console.log('💳 QR Code gerado:', { payment_id: result.payment_id, gateway: result.gateway });
+            } else {
+                this.hideLoading();
+                this.showErrorMessage(result.message || 'Erro ao gerar QR Code PIX.');
+            }
+        } catch (error) {
+            console.error('Erro no pagamento PIX:', error);
+            this.hideLoading();
+            this.showErrorMessage('Erro de conexão. Verifique sua internet.');
         }
     }
 
@@ -917,8 +951,9 @@ class WiFiPortal {
                                     <p class="text-amber-700 text-[10px]"><strong>⏱️ Expira em:</strong> <span id="pix-timer-text">03:00</span></p>
                                 </div>
                                 <button id="btn-paid" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-lg text-sm">
-                                    ✅ JÁ PAGUEI
+                                    ✅ JÁ PAGUEI - VERIFICAR
                                 </button>
+                                <p class="text-gray-500 text-[9px] mt-1">O status atualiza automaticamente a cada 5s</p>
                             </div>
                         </div>
                         
@@ -1087,11 +1122,13 @@ class WiFiPortal {
         document.getElementById('line-3-4').classList.add('bg-green-500');
         
         // Trocar conteúdo
-        document.getElementById('step-3-content').classList.add('hidden');
+        document.getElementById('step-2-content')?.classList.add('hidden');
+        document.getElementById('step-3-content')?.classList.add('hidden');
         document.getElementById('step-4-content').classList.remove('hidden');
         
-        // Esconder botão cancelar
-        document.getElementById('cancel-payment').classList.add('hidden');
+        // Esconder botões (pagamento já confirmado)
+        document.getElementById('cancel-payment')?.classList.add('hidden');
+        document.getElementById('btn-paid')?.classList.add('hidden');
         
         // Iniciar contador de 60 segundos
         this.startReleaseCountdown(60);
