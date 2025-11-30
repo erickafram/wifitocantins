@@ -963,38 +963,38 @@ class WiFiPortal {
                         
                         <!-- Status: Configurando Internet (Passo 4) -->
                         <div id="status-config" class="hidden text-center">
-                            <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-6 mb-4">
-                                <div class="text-5xl mb-3">⚙️</div>
-                                <h4 class="text-blue-700 font-bold text-lg mb-2">PASSO 4: CONFIGURANDO...</h4>
-                                <p class="text-blue-600 text-sm">Validando seu dispositivo na rede</p>
-                                <div class="mt-4 w-full bg-blue-200 rounded-full h-2">
-                                    <div class="bg-blue-500 h-2 rounded-full animate-progress"></div>
+                            <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 mb-4">
+                                <div class="text-3xl mb-2">⚙️</div>
+                                <h4 class="text-blue-700 font-bold text-sm mb-1">PASSO 4: CONFIGURANDO...</h4>
+                                <p class="text-blue-600 text-xs">Validando seu dispositivo na rede</p>
+                                <div class="mt-3 w-full bg-blue-200 rounded-full h-1.5">
+                                    <div class="bg-blue-500 h-1.5 rounded-full animate-progress"></div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Status: Ativando Starlink (Passo 5) -->
                         <div id="status-starlink" class="hidden text-center">
-                            <div class="bg-purple-50 border-2 border-purple-400 rounded-xl p-6 mb-4">
-                                <div class="relative w-20 h-20 mx-auto mb-4">
-                                    <div class="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
-                                    <div class="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
+                            <div class="bg-purple-50 border-2 border-purple-400 rounded-xl p-4 mb-4">
+                                <div class="relative w-12 h-12 mx-auto mb-3">
+                                    <div class="absolute inset-0 border-2 border-purple-200 rounded-full"></div>
+                                    <div class="absolute inset-0 border-2 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
                                     <div class="absolute inset-0 flex items-center justify-center">
-                                        <span class="text-2xl">🛰️</span>
+                                        <span class="text-lg">🛰️</span>
                                     </div>
                                 </div>
-                                <h4 class="text-purple-700 font-bold text-lg mb-2">PASSO 5: ATIVANDO STARLINK</h4>
-                                <p class="text-purple-600 text-sm mb-4">Conectando ao satélite de alta velocidade</p>
+                                <h4 class="text-purple-700 font-bold text-sm mb-1">PASSO 5: ATIVANDO STARLINK</h4>
+                                <p class="text-purple-600 text-xs mb-3">Conectando ao satélite de alta velocidade</p>
                                 
                                 <!-- Contador de liberação -->
-                                <div class="bg-white rounded-lg p-3 border border-purple-200 max-w-[200px] mx-auto">
-                                    <p class="text-[10px] text-gray-500 mb-1 uppercase font-bold">Tempo restante</p>
-                                    <p id="release-countdown" class="text-2xl font-bold text-purple-600">01:00</p>
-                                    <div class="w-full bg-purple-100 rounded-full h-1.5 mt-2">
-                                        <div id="release-progress" class="bg-purple-500 h-1.5 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                                <div class="bg-white rounded-lg p-2 border border-purple-200 max-w-[180px] mx-auto">
+                                    <p class="text-[10px] text-gray-500 mb-0.5 uppercase font-bold">Tempo restante</p>
+                                    <p id="release-countdown" class="text-xl font-bold text-purple-600">01:00</p>
+                                    <div class="w-full bg-purple-100 rounded-full h-1 mt-1">
+                                        <div id="release-progress" class="bg-purple-500 h-1 rounded-full transition-all duration-1000" style="width: 100%"></div>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-purple-500 mt-3 animate-pulse">⚠️ NÃO FECHE, AGUARDE O FIM DO TEMPO!</p>
+                                <p class="text-[10px] text-purple-500 mt-2 animate-pulse font-bold">⚠️ NÃO FECHE, AGUARDE O FIM DO TEMPO!</p>
                             </div>
                         </div>
                         
@@ -1105,27 +1105,39 @@ class WiFiPortal {
                 this.stopPixCountdown();
 
                 // 🎯 ETAPA 3: Mostrar pagamento confirmado
-                this.showPaymentConfirmedStatus();
+                try {
+                    this.showPaymentConfirmedStatus();
+                } catch (e) { console.error('Erro ao mostrar confirmado:', e); }
                 
                 // Aguardar 2 segundos
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 
                 // 🎯 ETAPA 4: Mostrar configurando acesso
-                this.showConfiguringStatus();
+                try {
+                    this.showConfiguringStatus();
+                } catch (e) { console.error('Erro ao mostrar configurando:', e); }
                 
                 // Aguardar 3 segundos simulando configuração
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 // 🎯 ETAPA 5: Mostrar ativando Starlink
-                this.showStarlinkStatus();
+                try {
+                    this.showStarlinkStatus();
+                } catch (e) { console.error('Erro ao mostrar Starlink:', e); }
                 
                 // Iniciar contador de 60 segundos (1 minuto)
                 // O redirecionamento acontecerá automaticamente quando o contador zerar
-                this.startReleaseCountdown(60);
+                try {
+                    this.startReleaseCountdown(60);
+                } catch (e) {
+                    console.error('Erro ao iniciar countdown:', e);
+                    // Fallback extremo: redirecionar em 60s se o countdown falhar
+                    setTimeout(() => {
+                        window.location.href = 'https://www.google.com';
+                    }, 60000);
+                }
                 
                 // Liberar dispositivo no MikroTik em segundo plano
-                // Não aguardamos o resultado para manter o fluxo visual fluido
-                // Se houver erro, o usuário será redirecionado mesmo assim após o tempo
                 this.allowDevice(this.deviceMac).catch(err => console.error('Erro ao liberar device:', err));
                 
             } else {
@@ -1303,12 +1315,30 @@ class WiFiPortal {
     }
     
     /**
-     * Inicia contador de liberação
+     * Inicia contador de liberação com fallback de segurança
      */
     startReleaseCountdown(seconds) {
+        console.log('🕒 Iniciando contador de liberação:', seconds, 'segundos');
         this.releaseCountdownSeconds = seconds;
+        
+        // Limpar intervalo anterior se existir
+        if (this.releaseCountdownInterval) {
+            clearInterval(this.releaseCountdownInterval);
+        }
+
+        // Backup de segurança: Forçar redirecionamento após o tempo total + 3 segundos
+        // Isso garante que o usuário não fique preso se o contador visual falhar
+        setTimeout(() => {
+            console.log('⚠️ Timer de segurança acionado: redirecionando...');
+            this.showConnectedStatus();
+            setTimeout(() => {
+                window.location.href = 'https://www.google.com';
+            }, 1000);
+        }, (seconds + 3) * 1000);
+
         this.releaseCountdownInterval = setInterval(() => {
             this.releaseCountdownSeconds--;
+            console.log('⏱️ Contador:', this.releaseCountdownSeconds);
             
             const countdownEl = document.getElementById('release-countdown');
             const progressEl = document.getElementById('release-progress');
@@ -1317,6 +1347,8 @@ class WiFiPortal {
                 const mins = Math.floor(this.releaseCountdownSeconds / 60).toString().padStart(2, '0');
                 const secs = (this.releaseCountdownSeconds % 60).toString().padStart(2, '0');
                 countdownEl.textContent = `${mins}:${secs}`;
+            } else {
+                console.warn('⚠️ Elemento countdown não encontrado no DOM');
             }
             
             if (progressEl) {
@@ -1327,12 +1359,16 @@ class WiFiPortal {
             // 🎯 Quando o contador chegar a 0, mostrar como conectado automaticamente
             if (this.releaseCountdownSeconds <= 0) {
                 this.stopReleaseCountdown();
+                console.log('✅ Tempo esgotado! Conectando...');
+                
                 // Mostrar status de conectado automaticamente
                 this.showConnectedStatus();
-                // Redirecionar após 3 segundos
+                
+                // Redirecionar após 2 segundos
                 setTimeout(() => {
+                    console.log('🚀 Redirecionando para Google...');
                     window.location.href = 'https://www.google.com';
-                }, 3000);
+                }, 2000);
             }
         }, 1000);
     }
