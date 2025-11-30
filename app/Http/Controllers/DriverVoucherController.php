@@ -183,12 +183,12 @@ class DriverVoucherController extends Controller
                 ->first();
 
             if ($lastUsedUser && $lastUsedUser->voucher_activated_at) {
-                $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at, false);
                 $intervalRequired = (float) ($voucher->activation_interval_hours ?? 24);
-
-                if ($hoursSinceLastActivation < $intervalRequired) {
-                    $nextAvailableTime = $lastUsedUser->voucher_activated_at->copy()->addHours($intervalRequired);
-                    $timeUntilNext = $nextAvailableTime->diff(now());
+                $nextAvailableTime = $lastUsedUser->voucher_activated_at->copy()->addHours($intervalRequired);
+                
+                // 🔧 FIX: Verificar se a próxima ativação ainda está no futuro
+                if ($nextAvailableTime->isFuture()) {
+                    $timeUntilNext = now()->diff($nextAvailableTime);
                     $hoursRemaining = $timeUntilNext->h + ($timeUntilNext->days * 24);
                     $minutesRemaining = $timeUntilNext->i;
 
@@ -198,6 +198,7 @@ class DriverVoucherController extends Controller
                     $status['message'] = "Aguarde o intervalo entre ativações.\nPróxima ativação: " . $nextAvailableTime->format('d/m/Y H:i');
                     return $status;
                 }
+                // Se nextAvailableTime já passou, o voucher pode ser ativado normalmente
             }
         }
 
@@ -333,15 +334,15 @@ class DriverVoucherController extends Controller
                 ->first();
 
             if ($lastUsedUser && $lastUsedUser->voucher_activated_at) {
-                $hoursSinceLastActivation = now()->diffInHours($lastUsedUser->voucher_activated_at, false);
                 $intervalRequired = (float) ($voucher->activation_interval_hours ?? 24);
+                $nextAvailableTime = $lastUsedUser->voucher_activated_at->copy()->addHours($intervalRequired);
 
-                if ($hoursSinceLastActivation < $intervalRequired) {
+                // 🔧 FIX: Verificar se a próxima ativação ainda está no futuro
+                if ($nextAvailableTime->isFuture()) {
                     DB::rollback();
 
                     // Calcular tempo restante até poder ativar novamente
-                    $nextAvailableTime = $lastUsedUser->voucher_activated_at->copy()->addHours($intervalRequired);
-                    $timeUntilNext = $nextAvailableTime->diff(now());
+                    $timeUntilNext = now()->diff($nextAvailableTime);
                     $hoursRemaining = $timeUntilNext->h + ($timeUntilNext->days * 24);
                     $minutesRemaining = $timeUntilNext->i;
                     
@@ -358,6 +359,7 @@ class DriverVoucherController extends Controller
                         "⏳ Aguarde mais: {$hoursRemaining}h {$minutesRemaining}min"
                     );
                 }
+                // Se nextAvailableTime já passou, o voucher pode ser ativado normalmente
             }
 
             // 6. Verificar se já usou o voucher hoje e atingiu o limite
