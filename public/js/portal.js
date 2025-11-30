@@ -816,7 +816,7 @@ class WiFiPortal {
     showPixQRCode(data) {
         const modal = document.createElement('div');
         modal.id = 'pix-modal';
-        modal.className = 'fixed inset-0 bg-black bg-opacity-70 z-50 backdrop-blur-sm';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-80 z-50 backdrop-blur-sm';
         
         // Detectar se é dispositivo móvel
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -840,57 +840,80 @@ class WiFiPortal {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Aviso Importante - Fixo no topo -->
+                    <div class="bg-red-50 border-b-2 border-red-100 p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                                <span class="text-white text-lg font-bold">!</span>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-red-800 uppercase">NÃO FECHE ESTA TELA!</h4>
+                                <p class="text-xs text-red-700 font-medium mt-1">
+                                    Aguarde os 5 passos abaixo para liberar sua internet automaticamente.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <!-- Status Timeline Visual -->
-                    <div id="status-timeline" class="bg-gray-50 p-4 border-b border-gray-200">
-                        <div class="flex items-center justify-between relative">
+                    <!-- Status Timeline Visual (5 Passos) -->
+                    <div id="status-timeline" class="bg-gray-50 p-4 border-b border-gray-200 overflow-x-auto">
+                        <div class="flex items-center justify-between relative min-w-[320px]">
                             <!-- Linha de conexão -->
-                            <div class="absolute top-4 left-8 right-8 h-1 bg-gray-200 rounded-full">
-                                <div id="progress-line" class="h-full bg-yellow-500 rounded-full transition-all duration-500" style="width: 33%"></div>
+                            <div class="absolute top-4 left-6 right-6 h-1 bg-gray-200 rounded-full z-0">
+                                <div id="progress-line" class="h-full bg-yellow-500 rounded-full transition-all duration-500" style="width: 20%"></div>
                             </div>
                             
-                            <!-- Etapa 1: QR Code -->
-                            <div class="flex flex-col items-center z-10">
+                            <!-- Etapa 1: Aviso -->
+                            <div class="flex flex-col items-center z-10 w-16">
                                 <div id="step-1" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                                     ✓
                                 </div>
-                                <span class="text-xs mt-1 font-medium text-green-600">QR Gerado</span>
+                                <span class="text-[10px] mt-1 font-medium text-green-600 text-center">Aviso</span>
                             </div>
                             
-                            <!-- Etapa 2: Aguardando Pagamento -->
-                            <div class="flex flex-col items-center z-10">
-                                <div id="step-2" class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white text-sm font-bold shadow-lg animate-pulse">
-                                    2
+                            <!-- Etapa 2: QR Code -->
+                            <div class="flex flex-col items-center z-10 w-16">
+                                <div id="step-2" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                                    ✓
                                 </div>
-                                <span id="step-2-text" class="text-xs mt-1 font-medium text-yellow-600">Aguardando</span>
+                                <span class="text-[10px] mt-1 font-medium text-green-600 text-center">QR Code</span>
                             </div>
                             
-                            <!-- Etapa 3: Liberando -->
-                            <div class="flex flex-col items-center z-10">
-                                <div id="step-3" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
+                            <!-- Etapa 3: Pagamento -->
+                            <div class="flex flex-col items-center z-10 w-16">
+                                <div id="step-3" class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white text-sm font-bold shadow-lg animate-pulse">
                                     3
                                 </div>
-                                <span id="step-3-text" class="text-xs mt-1 font-medium text-gray-400">Liberando</span>
+                                <span id="step-3-text" class="text-[10px] mt-1 font-medium text-yellow-600 text-center">Pagamento</span>
                             </div>
                             
-                            <!-- Etapa 4: Conectado -->
-                            <div class="flex flex-col items-center z-10">
+                            <!-- Etapa 4: Configurando -->
+                            <div class="flex flex-col items-center z-10 w-16">
                                 <div id="step-4" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
                                     4
                                 </div>
-                                <span id="step-4-text" class="text-xs mt-1 font-medium text-gray-400">Conectado</span>
+                                <span id="step-4-text" class="text-[10px] mt-1 font-medium text-gray-400 text-center">Config</span>
+                            </div>
+                            
+                            <!-- Etapa 5: Starlink -->
+                            <div class="flex flex-col items-center z-10 w-16">
+                                <div id="step-5" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
+                                    5
+                                </div>
+                                <span id="step-5-text" class="text-[10px] mt-1 font-medium text-gray-400 text-center">Starlink</span>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Área de Status Dinâmico -->
-                    <div id="dynamic-status-area" class="p-4">
-                        <!-- Status: Aguardando Pagamento (padrão) -->
+                    <div id="dynamic-status-area" class="p-4 flex-1 overflow-y-auto">
+                        <!-- Status: Aguardando Pagamento (Passo 3) -->
                         <div id="status-waiting" class="text-center">
                             <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4">
                                 <div class="flex items-center justify-center gap-2 mb-2">
                                     <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
-                                    <span class="text-amber-700 font-bold text-sm">AGUARDANDO SEU PAGAMENTO</span>
+                                    <span class="text-amber-700 font-bold text-sm">PASSO 3: AGUARDANDO PAGAMENTO</span>
                                     <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
                                 </div>
                                 <p class="text-amber-600 text-xs">Escaneie o QR Code ou copie o código PIX abaixo</p>
@@ -926,77 +949,72 @@ class WiFiPortal {
                                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <p id="pix-timer-text" class="text-sm font-bold text-gray-700">⏱️ Expira em: 03:00</p>
+                                    <p id="pix-timer-text" class="text-sm font-bold text-gray-700">⏱️ Expira: 03:00</p>
                                 </div>
-                                <button id="check-payment-status" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1 transition-all">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                    </svg>
-                                    Verificar
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-500 italic">Verificando auto...</span>
+                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Status: Pagamento Confirmado (oculto inicialmente) -->
-                        <div id="status-paid" class="hidden text-center">
-                            <div class="bg-green-50 border-2 border-green-400 rounded-xl p-6 mb-4">
-                                <div class="text-5xl mb-3">✅</div>
-                                <h4 class="text-green-700 font-bold text-lg mb-2">PAGAMENTO CONFIRMADO!</h4>
-                                <p class="text-green-600 text-sm">Seu pagamento foi recebido com sucesso</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Status: Liberando Acesso (oculto inicialmente) -->
-                        <div id="status-releasing" class="hidden text-center">
+                        <!-- Status: Configurando Internet (Passo 4) -->
+                        <div id="status-config" class="hidden text-center">
                             <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-6 mb-4">
+                                <div class="text-5xl mb-3">⚙️</div>
+                                <h4 class="text-blue-700 font-bold text-lg mb-2">PASSO 4: CONFIGURANDO...</h4>
+                                <p class="text-blue-600 text-sm">Validando seu dispositivo na rede</p>
+                                <div class="mt-4 w-full bg-blue-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full animate-progress"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Status: Ativando Starlink (Passo 5) -->
+                        <div id="status-starlink" class="hidden text-center">
+                            <div class="bg-purple-50 border-2 border-purple-400 rounded-xl p-6 mb-4">
                                 <div class="relative w-20 h-20 mx-auto mb-4">
-                                    <div class="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
-                                    <div class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                                    <div class="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
+                                    <div class="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
                                     <div class="absolute inset-0 flex items-center justify-center">
                                         <span class="text-2xl">🛰️</span>
                                     </div>
                                 </div>
-                                <h4 class="text-blue-700 font-bold text-lg mb-2">LIBERANDO SEU ACESSO...</h4>
-                                <p class="text-blue-600 text-sm mb-3">Configurando seu dispositivo no MikroTik</p>
-                                
-                                <!-- Contador de liberação -->
-                                <div class="bg-white rounded-lg p-3 border border-blue-200">
-                                    <p class="text-xs text-gray-500 mb-1">Tempo estimado de liberação</p>
-                                    <p id="release-countdown" class="text-2xl font-bold text-blue-600">01:00</p>
-                                    <div class="w-full bg-blue-100 rounded-full h-2 mt-2">
-                                        <div id="release-progress" class="bg-blue-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                
-                                <p class="text-xs text-gray-500 mt-3">⚠️ Não feche esta tela!</p>
+                                <h4 class="text-purple-700 font-bold text-lg mb-2">PASSO 5: ATIVANDO STARLINK</h4>
+                                <p class="text-purple-600 text-sm">Conectando ao satélite de alta velocidade</p>
                             </div>
                         </div>
                         
-                        <!-- Status: Conectado (oculto inicialmente) -->
+                        <!-- Status: Conectado (Final) -->
                         <div id="status-connected" class="hidden text-center">
                             <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl p-6 mb-4 text-white">
                                 <div class="text-6xl mb-3">🎉</div>
-                                <h4 class="font-bold text-xl mb-2">VOCÊ ESTÁ CONECTADO!</h4>
-                                <p class="text-green-100 text-sm mb-4">Aproveite a internet WiFi Tocantins</p>
+                                <h4 class="font-bold text-xl mb-2">INTERNET LIBERADA!</h4>
+                                <p class="text-green-100 text-sm mb-4">Você completou todos os passos.</p>
                                 <div class="bg-white/20 rounded-lg p-3">
-                                    <p class="text-xs text-green-100">Redirecionando em alguns segundos...</p>
+                                    <p class="text-xs text-green-100">Redirecionando...</p>
                                 </div>
                             </div>
+                            <button onclick="window.location.href='https://www.google.com'" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-green-700 transition">
+                                COMEÇAR A NAVEGAR 🚀
+                            </button>
                         </div>
                     </div>
                     
                     <!-- Footer -->
                     <div class="p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
                         <div id="footer-waiting" class="flex gap-2">
-                            <button id="cancel-payment" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg text-sm transition-all">
+                            <button id="check-payment-status" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-sm transition-all">
+                                Verificar Agora
+                            </button>
+                            <button id="cancel-payment" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg text-sm transition-all">
                                 Cancelar
                             </button>
                         </div>
                         <div id="footer-processing" class="hidden">
-                            <p class="text-center text-xs text-gray-500">🔒 Processamento seguro • WiFi Tocantins</p>
+                            <p class="text-center text-xs text-gray-500">🔒 Não feche esta tela até finalizar</p>
                         </div>
                     </div>
-                    
                 </div>
             </div>
         `;
@@ -1013,14 +1031,16 @@ class WiFiPortal {
         });
         
         document.getElementById('cancel-payment').addEventListener('click', () => {
-            this.closePixModal();
+            if(confirm('⚠️ Tem certeza? Se você já pagou, não cancele! Aguarde a confirmação.')) {
+                this.closePixModal();
+            }
         });
         
-        // Auto-verificar status a cada 5 segundos
+        // Auto-verificar status a cada 3 segundos (mais rápido)
         this.startPixCountdown();
         this.paymentCheckInterval = setInterval(() => {
             this.checkPaymentStatus(data.payment_id);
-        }, 5000);
+        }, 3000);
     }
 
     /**
@@ -1071,23 +1091,29 @@ class WiFiPortal {
                 this.pixPaymentConfirmed = true;
                 this.stopPixCountdown();
 
-                // 🎯 ETAPA 2: Mostrar pagamento confirmado
+                // 🎯 ETAPA 3: Mostrar pagamento confirmado
                 this.showPaymentConfirmedStatus();
                 
-                // Aguardar 2 segundos para mostrar a confirmação
+                // Aguardar 2 segundos
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                // 🎯 ETAPA 3: Mostrar liberando acesso com contador
-                this.showReleasingAccessStatus();
+                // 🎯 ETAPA 4: Mostrar configurando acesso
+                this.showConfiguringStatus();
                 
-                // Iniciar contador de liberação (60 segundos)
-                this.startReleaseCountdown(60);
+                // Aguardar 3 segundos simulando configuração
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // 🎯 ETAPA 5: Mostrar ativando Starlink
+                this.showStarlinkStatus();
                 
                 // Liberar dispositivo no MikroTik
                 const allowed = await this.allowDevice(this.deviceMac);
                 
                 if (allowed) {
-                    // 🎯 ETAPA 4: Mostrar conectado
+                    // Aguardar mais 2 segundos para efeito visual
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // 🎯 FINAL: Mostrar conectado
                     this.showConnectedStatus();
                     
                     // Redirecionar após 3 segundos
@@ -1101,7 +1127,7 @@ class WiFiPortal {
                 // Restaurar botão
                 if (checkButton) {
                     setTimeout(() => {
-                        checkButton.innerHTML = 'Verificar';
+                        checkButton.innerHTML = 'Verificar Agora';
                         checkButton.disabled = false;
                     }, 1500);
                 }
@@ -1111,124 +1137,161 @@ class WiFiPortal {
             
             // Restaurar botão
             if (checkButton) {
-                checkButton.innerHTML = 'Verificar';
+                checkButton.innerHTML = 'Verificar Agora';
                 checkButton.disabled = false;
             }
         }
     }
     
     /**
-     * Mostra status de pagamento confirmado
+     * Mostra status de pagamento confirmado (Passo 3)
      */
     showPaymentConfirmedStatus() {
-        // Atualizar timeline - Etapa 2 concluída
-        const step2 = document.getElementById('step-2');
-        const step2Text = document.getElementById('step-2-text');
-        const progressLine = document.getElementById('progress-line');
-        
-        if (step2) {
-            step2.classList.remove('bg-yellow-500', 'animate-pulse');
-            step2.classList.add('bg-green-500');
-            step2.innerHTML = '✓';
-        }
-        if (step2Text) {
-            step2Text.classList.remove('text-yellow-600');
-            step2Text.classList.add('text-green-600');
-            step2Text.textContent = 'Pago!';
-        }
-        if (progressLine) {
-            progressLine.style.width = '50%';
-            progressLine.classList.remove('bg-yellow-500');
-            progressLine.classList.add('bg-green-500');
-        }
-        
-        // Mostrar status de pagamento confirmado
-        const statusWaiting = document.getElementById('status-waiting');
-        const statusPaid = document.getElementById('status-paid');
-        const footerWaiting = document.getElementById('footer-waiting');
-        const footerProcessing = document.getElementById('footer-processing');
-        
-        if (statusWaiting) statusWaiting.classList.add('hidden');
-        if (statusPaid) statusPaid.classList.remove('hidden');
-        if (footerWaiting) footerWaiting.classList.add('hidden');
-        if (footerProcessing) footerProcessing.classList.remove('hidden');
-    }
-    
-    /**
-     * Mostra status de liberando acesso
-     */
-    showReleasingAccessStatus() {
-        // Atualizar timeline - Etapa 3 ativa
+        // Atualizar timeline - Etapa 3 concluída
         const step3 = document.getElementById('step-3');
         const step3Text = document.getElementById('step-3-text');
         const progressLine = document.getElementById('progress-line');
         
         if (step3) {
-            step3.classList.remove('bg-gray-300', 'text-gray-500');
-            step3.classList.add('bg-blue-500', 'text-white', 'animate-pulse');
-            step3.innerHTML = '⏳';
-        }
-        if (step3Text) {
-            step3Text.classList.remove('text-gray-400');
-            step3Text.classList.add('text-blue-600');
-            step3Text.textContent = 'Liberando...';
-        }
-        if (progressLine) {
-            progressLine.style.width = '75%';
-            progressLine.classList.add('bg-blue-500');
-        }
-        
-        // Mostrar status de liberando
-        const statusPaid = document.getElementById('status-paid');
-        const statusReleasing = document.getElementById('status-releasing');
-        
-        if (statusPaid) statusPaid.classList.add('hidden');
-        if (statusReleasing) statusReleasing.classList.remove('hidden');
-    }
-    
-    /**
-     * Mostra status de conectado
-     */
-    showConnectedStatus() {
-        // Parar contador de liberação
-        this.stopReleaseCountdown();
-        
-        // Atualizar timeline - Etapa 3 concluída, Etapa 4 ativa
-        const step3 = document.getElementById('step-3');
-        const step3Text = document.getElementById('step-3-text');
-        const step4 = document.getElementById('step-4');
-        const step4Text = document.getElementById('step-4-text');
-        const progressLine = document.getElementById('progress-line');
-        
-        if (step3) {
-            step3.classList.remove('bg-blue-500', 'animate-pulse');
+            step3.classList.remove('bg-yellow-500', 'animate-pulse');
             step3.classList.add('bg-green-500');
             step3.innerHTML = '✓';
         }
         if (step3Text) {
-            step3Text.classList.remove('text-blue-600');
+            step3Text.classList.remove('text-yellow-600');
             step3Text.classList.add('text-green-600');
-            step3Text.textContent = 'Liberado!';
+            step3Text.textContent = 'Pago!';
         }
+        if (progressLine) {
+            progressLine.style.width = '60%';
+            progressLine.classList.remove('bg-yellow-500');
+            progressLine.classList.add('bg-green-500');
+        }
+        
+        // Esconder status de aguardando
+        const statusWaiting = document.getElementById('status-waiting');
+        if (statusWaiting) statusWaiting.classList.add('hidden');
+        
+        // Esconder footer de botões
+        const footerWaiting = document.getElementById('footer-waiting');
+        if (footerWaiting) footerWaiting.classList.add('hidden');
+        
+        // Mostrar footer de processamento
+        const footerProcessing = document.getElementById('footer-processing');
+        if (footerProcessing) footerProcessing.classList.remove('hidden');
+    }
+    
+    /**
+     * Mostra status de configurando (Passo 4)
+     */
+    showConfiguringStatus() {
+        // Atualizar timeline - Etapa 4 ativa
+        const step4 = document.getElementById('step-4');
+        const step4Text = document.getElementById('step-4-text');
+        const progressLine = document.getElementById('progress-line');
+        
         if (step4) {
             step4.classList.remove('bg-gray-300', 'text-gray-500');
-            step4.classList.add('bg-green-500', 'text-white');
-            step4.innerHTML = '✓';
+            step4.classList.add('bg-blue-500', 'text-white', 'animate-pulse');
+            step4.innerHTML = '⚙️';
         }
         if (step4Text) {
             step4Text.classList.remove('text-gray-400');
+            step4Text.classList.add('text-blue-600');
+            step4Text.textContent = 'Config...';
+        }
+        if (progressLine) {
+            progressLine.style.width = '80%';
+            progressLine.classList.add('bg-blue-500');
+        }
+        
+        // Mostrar status de configurando
+        const statusConfig = document.getElementById('status-config');
+        if (statusConfig) statusConfig.classList.remove('hidden');
+    }
+    
+    /**
+     * Mostra status de Starlink (Passo 5)
+     */
+    showStarlinkStatus() {
+        // Atualizar timeline - Etapa 4 concluída, Etapa 5 ativa
+        const step4 = document.getElementById('step-4');
+        const step4Text = document.getElementById('step-4-text');
+        const step5 = document.getElementById('step-5');
+        const step5Text = document.getElementById('step-5-text');
+        const progressLine = document.getElementById('progress-line');
+        
+        // Concluir passo 4
+        if (step4) {
+            step4.classList.remove('bg-blue-500', 'animate-pulse');
+            step4.classList.add('bg-green-500');
+            step4.innerHTML = '✓';
+        }
+        if (step4Text) {
+            step4Text.classList.remove('text-blue-600');
             step4Text.classList.add('text-green-600');
-            step4Text.textContent = 'Conectado!';
+            step4Text.textContent = 'Configurado';
+        }
+        
+        // Ativar passo 5
+        if (step5) {
+            step5.classList.remove('bg-gray-300', 'text-gray-500');
+            step5.classList.add('bg-purple-500', 'text-white', 'animate-pulse');
+            step5.innerHTML = '🛰️';
+        }
+        if (step5Text) {
+            step5Text.classList.remove('text-gray-400');
+            step5Text.classList.add('text-purple-600');
+            step5Text.textContent = 'Ativando...';
+        }
+        
+        if (progressLine) {
+            progressLine.style.width = '90%';
+            progressLine.classList.remove('bg-blue-500');
+            progressLine.classList.add('bg-purple-500');
+        }
+        
+        // Esconder status config e mostrar Starlink
+        const statusConfig = document.getElementById('status-config');
+        const statusStarlink = document.getElementById('status-starlink');
+        
+        if (statusConfig) statusConfig.classList.add('hidden');
+        if (statusStarlink) statusStarlink.classList.remove('hidden');
+    }
+    
+    /**
+     * Mostra status de conectado (Final)
+     */
+    showConnectedStatus() {
+        // Parar contador de liberação se houver
+        this.stopReleaseCountdown();
+        
+        // Atualizar timeline - Etapa 5 concluída
+        const step5 = document.getElementById('step-5');
+        const step5Text = document.getElementById('step-5-text');
+        const progressLine = document.getElementById('progress-line');
+        
+        if (step5) {
+            step5.classList.remove('bg-purple-500', 'animate-pulse');
+            step5.classList.add('bg-green-500');
+            step5.innerHTML = '✓';
+        }
+        if (step5Text) {
+            step5Text.classList.remove('text-purple-600');
+            step5Text.classList.add('text-green-600');
+            step5Text.textContent = 'Conectado!';
         }
         if (progressLine) {
             progressLine.style.width = '100%';
+            progressLine.classList.remove('bg-purple-500');
+            progressLine.classList.add('bg-green-500');
         }
         
         // Mostrar status de conectado
-        const statusReleasing = document.getElementById('status-releasing');
+        const statusStarlink = document.getElementById('status-starlink');
         const statusConnected = document.getElementById('status-connected');
         
-        if (statusReleasing) statusReleasing.classList.add('hidden');
+        if (statusStarlink) statusStarlink.classList.add('hidden');
         if (statusConnected) statusConnected.classList.remove('hidden');
     }
     
