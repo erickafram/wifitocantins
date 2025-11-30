@@ -1011,9 +1011,10 @@
         });
     </script>
     
-    <!-- Configuração Global do Preço -->
+    <!-- Configuração Global do Preço e Duração da Sessão -->
     <script>
         window.WIFI_PRICE = {{ $price }};
+        window.SESSION_DURATION = {{ $session_duration ?? 12 }};
     </script>
     
     <script src="{{ asset('js/mac-detector.js') }}?v={{ time() }}"></script>

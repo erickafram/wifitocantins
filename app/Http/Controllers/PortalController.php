@@ -39,6 +39,7 @@ class PortalController extends Controller
             'discount_percentage' => $priceInfo['discount_percentage'],
             'savings' => $priceInfo['savings'],
             'speed' => '100+ Mbps',
+            'session_duration' => \App\Models\SystemSetting::getValue('session_duration', 12),
         ]);
     }
     

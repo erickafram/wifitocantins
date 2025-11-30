@@ -19,7 +19,29 @@ class WiFiPortal {
         this.pixPaymentConfirmed = false;
         this.releaseCountdownInterval = null;
         this.releaseCountdownSeconds = 0;
+        this.sessionDurationHours = window.SESSION_DURATION || 12; // Duração da sessão em horas
         this.init();
+    }
+    
+    /**
+     * Calcula o horário de expiração do acesso
+     */
+    calculateExpirationTime() {
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + (this.sessionDurationHours * 60 * 60 * 1000));
+        
+        const hours = expiresAt.getHours().toString().padStart(2, '0');
+        const minutes = expiresAt.getMinutes().toString().padStart(2, '0');
+        
+        // Formatar data se for outro dia
+        const today = new Date();
+        if (expiresAt.getDate() !== today.getDate()) {
+            const day = expiresAt.getDate().toString().padStart(2, '0');
+            const month = (expiresAt.getMonth() + 1).toString().padStart(2, '0');
+            return `${day}/${month} às ${hours}:${minutes}`;
+        }
+        
+        return `${hours}:${minutes} horas`;
     }
 
     init() {
@@ -881,7 +903,7 @@ class WiFiPortal {
                             <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-1-2" class="h-full bg-green-500 transition-all" style="width:100%"></div></div>
                             <div class="flex flex-col items-center flex-1">
                                 <div id="step-2" class="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center text-white text-xs font-bold animate-pulse">2</div>
-                                <span id="step-2-text" class="text-[10px] mt-0.5 text-yellow-600 font-medium">QR Code</span>
+                                <span id="step-2-text" class="text-[10px] mt-0.5 text-yellow-600 font-medium">Code</span>
                             </div>
                             <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-2-3" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
                             <div class="flex flex-col items-center flex-1">
@@ -933,6 +955,9 @@ class WiFiPortal {
                         <!-- PASSO 2: QR Code -->
                         <div id="step-2-content" class="hidden">
                             <div class="text-center">
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
+                                    <p class="text-amber-700 text-xs font-semibold">📱 Abra seu banco e efetue o pagamento</p>
+                                </div>
                                 ${!isMobile ? `
                                 <div class="bg-white p-2 rounded-lg border-2 border-dashed border-green-300 mb-2 inline-block">
                                     <img src="${data.qr_code.image_url}" alt="QR Code" class="w-32 h-32 mx-auto">
@@ -973,11 +998,11 @@ class WiFiPortal {
                         <div id="step-4-content" class="hidden text-center">
                             <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
                                 <span class="text-3xl">✅</span>
-                                <p class="text-green-700 font-bold text-sm mt-1">Pagamento Confirmado!</p>
+                                <p class="text-green-700 font-bold text-sm mt-1">Seu Pagamento foi Confirmado!</p>
                             </div>
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                 <div class="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-                                <p class="text-blue-700 font-bold text-xs mb-1">Liberando acesso...</p>
+                                <p class="text-blue-700 font-bold text-xs mb-1">Aguarde - Liberando acesso...</p>
                                 <p class="text-blue-600 text-[10px] mb-2">Configurando no MikroTik</p>
                                 <div class="bg-white rounded p-2 border">
                                     <p class="text-lg font-bold text-blue-600" id="release-countdown">01:00</p>
@@ -995,7 +1020,11 @@ class WiFiPortal {
                                 <span class="text-4xl">🎉</span>
                                 <p class="font-bold text-lg mt-2">CONECTADO!</p>
                                 <p class="text-green-100 text-xs mt-1">Aproveite a internet</p>
-                                <div class="bg-white/20 rounded p-2 mt-3">
+                                <div class="bg-white/20 rounded p-2 mt-2">
+                                    <p class="text-[10px]">⏰ Você tem acesso até:</p>
+                                    <p class="text-sm font-bold" id="access-expires-at">${this.calculateExpirationTime()}</p>
+                                </div>
+                                <div class="bg-white/10 rounded p-2 mt-2">
                                     <p class="text-[10px]">Redirecionando para Google...</p>
                                 </div>
                             </div>
@@ -1105,21 +1134,32 @@ class WiFiPortal {
         this.pixPaymentConfirmed = true;
         this.stopPixCountdown();
         
-        // Atualizar timeline
-        document.getElementById('step-3').classList.remove('bg-yellow-500', 'animate-pulse');
-        document.getElementById('step-3').classList.add('bg-green-500');
+        // Atualizar timeline - Passo 2 concluído (verde)
+        document.getElementById('step-2').classList.remove('bg-yellow-500', 'animate-pulse');
+        document.getElementById('step-2').classList.add('bg-green-500');
+        document.getElementById('step-2').innerHTML = '✓';
+        document.getElementById('step-2-text').classList.remove('text-yellow-600');
+        document.getElementById('step-2-text').classList.add('text-green-600');
+        document.getElementById('line-2-3').style.width = '100%';
+        document.getElementById('line-2-3').classList.remove('bg-gray-300');
+        document.getElementById('line-2-3').classList.add('bg-green-500');
+        
+        // Atualizar timeline - Passo 3 concluído (verde)
+        document.getElementById('step-3').classList.remove('bg-yellow-500', 'bg-gray-300', 'animate-pulse', 'text-gray-500');
+        document.getElementById('step-3').classList.add('bg-green-500', 'text-white');
         document.getElementById('step-3').innerHTML = '✓';
-        document.getElementById('step-3-text').classList.remove('text-yellow-600');
+        document.getElementById('step-3-text').classList.remove('text-yellow-600', 'text-gray-400');
         document.getElementById('step-3-text').classList.add('text-green-600');
         document.getElementById('step-3-text').textContent = 'Pago!';
+        document.getElementById('line-3-4').style.width = '100%';
+        document.getElementById('line-3-4').classList.remove('bg-gray-300');
+        document.getElementById('line-3-4').classList.add('bg-green-500');
         
+        // Atualizar timeline - Passo 4 ativo (azul pulsando)
         document.getElementById('step-4').classList.remove('bg-gray-300', 'text-gray-500');
         document.getElementById('step-4').classList.add('bg-blue-500', 'text-white', 'animate-pulse');
         document.getElementById('step-4-text').classList.remove('text-gray-400');
         document.getElementById('step-4-text').classList.add('text-blue-600');
-        document.getElementById('line-3-4').style.width = '100%';
-        document.getElementById('line-3-4').classList.remove('bg-gray-300');
-        document.getElementById('line-3-4').classList.add('bg-green-500');
         
         // Trocar conteúdo
         document.getElementById('step-2-content')?.classList.add('hidden');
