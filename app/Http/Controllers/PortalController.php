@@ -17,6 +17,50 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
+        // PRIORIDADE 0: Verificar se usuário já está conectado/liberado pelo MAC ou IP
+        // Se já está conectado, NÃO redirecionar para MikroTik (evita erro login.tocantinswifi.local)
+        $clientIp = $request->ip();
+        $existingUser = $this->findConnectedUserByIp($clientIp);
+        
+        if ($existingUser && $existingUser->status === 'connected' && $existingUser->expires_at && $existingUser->expires_at->isFuture()) {
+            Log::info('✅ Usuário já conectado - pulando redirecionamento MikroTik', [
+                'user_id' => $existingUser->id,
+                'ip' => $clientIp,
+                'mac' => $existingUser->mac_address,
+                'expires_at' => $existingUser->expires_at,
+            ]);
+            
+            // Marcar sessão como verificada para não tentar redirecionar
+            $request->session()->put('mikrotik_context_verified', true);
+            
+            // Ir direto para o portal/dashboard
+            if (auth()->check() && ! in_array(auth()->user()->role, ['admin', 'manager'], true)) {
+                return redirect()->route('portal.dashboard');
+            }
+            
+            // Mostrar portal com informações do usuário conectado
+            $clientInfo = [
+                'ip_address' => $clientIp,
+                'mac_address' => $existingUser->mac_address,
+                'user_agent' => $request->userAgent(),
+                'device_type' => $this->detectDeviceType($request->userAgent()),
+            ];
+            
+            $priceInfo = \App\Helpers\SettingsHelper::getPriceInfo();
+            
+            return view('portal.index', [
+                'client_info' => $clientInfo,
+                'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
+                'price' => $priceInfo['current_price'],
+                'original_price' => $priceInfo['original_price'],
+                'discount_percentage' => $priceInfo['discount_percentage'],
+                'savings' => $priceInfo['savings'],
+                'speed' => '100+ Mbps',
+                'session_duration' => \App\Models\SystemSetting::getValue('session_duration', 12),
+                'connected_user' => $existingUser,
+            ]);
+        }
+        
         // PRIORIDADE 1: Se deve forçar redirecionamento MikroTik, mostrar splash screen
         // (isso deve acontecer ANTES de verificar autenticação)
         if ($this->shouldForceMikrotikRedirect($request)) {
@@ -496,6 +540,19 @@ class PortalController extends Controller
     private function isLikelyMockMac(string $mac): bool
     {
         return (bool) preg_match('/^(02:|00:00:00|FF:FF:FF)/i', $mac);
+    }
+
+    /**
+     * Busca usuário conectado pelo IP
+     */
+    private function findConnectedUserByIp(string $ip): ?User
+    {
+        // Buscar usuário com este IP que está conectado e não expirou
+        return User::where('ip_address', $ip)
+            ->where('status', 'connected')
+            ->where('expires_at', '>', now())
+            ->orderBy('connected_at', 'desc')
+            ->first();
     }
 
     /**
