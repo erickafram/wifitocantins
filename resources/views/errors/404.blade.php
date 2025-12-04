@@ -2,10 +2,11 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0;url=http://login.tocantinswifi.local/login?dst=http%3A%2F%2Fwww.msftconnecttest.com%2Fredirect">
+    <meta http-equiv="refresh" content="0;url=https://www.tocantinstransportewifi.com.br/?source=mikrotik&captive=true">
     <title>Redirecionando...</title>
 </head>
 <body>
-<p>Redirecionando para a tela de login...</p>
+<p>Redirecionando para o portal...</p>
+<script>window.location.href='https://www.tocantinstransportewifi.com.br/?source=mikrotik&captive=true';</script>
 </body>
 </html>

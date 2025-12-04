@@ -18,6 +18,12 @@ public class SplashActivity extends AppCompatActivity {
     private WebView hiddenWebView;
     private boolean webViewReady = false;
     private long startTime;
+    
+    // WiFi Network Helper para capturar MAC/IP via WiFi
+    private WifiNetworkHelper wifiHelper;
+    private String capturedMac = null;
+    private String capturedIp = null;
+    private boolean wifiInfoCaptured = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,11 +38,49 @@ public class SplashActivity extends AppCompatActivity {
         animateProgressBar();
         animateBus();
 
+        // Inicializar WiFi Helper e capturar MAC/IP via WiFi
+        initWifiHelper();
+
         // Pré-carregar site em background
         preloadWebsite();
 
         // Verificar periodicamente se pode avançar
         checkAndProceed();
+    }
+    
+    /**
+     * Inicializa o helper de WiFi para capturar MAC/IP forçando uso da rede WiFi
+     * mesmo quando dados móveis estão ativos
+     */
+    private void initWifiHelper() {
+        wifiHelper = new WifiNetworkHelper(this);
+        
+        wifiHelper.checkWifiAndGetInfo(new WifiNetworkHelper.WifiConnectionCallback() {
+            @Override
+            public void onWifiConnected(String macAddress, String ipAddress) {
+                android.util.Log.d("SplashActivity", "✅ WiFi Info capturado - MAC: " + macAddress + ", IP: " + ipAddress);
+                capturedMac = macAddress;
+                capturedIp = ipAddress;
+                wifiInfoCaptured = true;
+                
+                // Salvar no WebViewManager para uso posterior
+                WebViewManager manager = WebViewManager.getInstance();
+                manager.setWifiMac(macAddress);
+                manager.setWifiIp(ipAddress);
+            }
+
+            @Override
+            public void onWifiNotConnected(String reason) {
+                android.util.Log.w("SplashActivity", "⚠️ WiFi não conectado: " + reason);
+                wifiInfoCaptured = false;
+            }
+
+            @Override
+            public void onError(String error) {
+                android.util.Log.e("SplashActivity", "❌ Erro WiFi: " + error);
+                wifiInfoCaptured = false;
+            }
+        });
     }
 
     private void checkAndProceed() {
@@ -161,7 +205,34 @@ public class SplashActivity extends AppCompatActivity {
 
         // Carregar site em background
         android.util.Log.d("SplashActivity", "Iniciando pré-carregamento do site...");
-        hiddenWebView.loadUrl("https://www.tocantinstransportewifi.com.br");
+        
+        // Aguardar um pouco para capturar WiFi info antes de carregar
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                String baseUrl = "https://www.tocantinstransportewifi.com.br";
+                
+                // Se capturou MAC/IP via WiFi, incluir na URL
+                if (wifiInfoCaptured && capturedIp != null) {
+                    StringBuilder urlBuilder = new StringBuilder(baseUrl);
+                    urlBuilder.append("?from_app=1");
+                    
+                    if (capturedMac != null && !capturedMac.equals("PENDING")) {
+                        urlBuilder.append("&app_mac=").append(capturedMac);
+                    }
+                    if (capturedIp != null) {
+                        urlBuilder.append("&app_ip=").append(capturedIp);
+                    }
+                    
+                    String finalUrl = urlBuilder.toString();
+                    android.util.Log.d("SplashActivity", "Carregando com WiFi info: " + finalUrl);
+                    hiddenWebView.loadUrl(finalUrl);
+                } else {
+                    android.util.Log.d("SplashActivity", "Carregando URL padrão (sem WiFi info)");
+                    hiddenWebView.loadUrl(baseUrl);
+                }
+            }
+        }, 2000); // Aguardar 2s para WiFi helper capturar info
     }
 
     @Override

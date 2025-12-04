@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -19,6 +20,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_SELECT_FILE = 100;
     private static final String BASE_URL = "https://www.tocantinstransportewifi.com.br";
     private boolean isFirstLoad = true; // Flag para evitar múltiplas execuções
+    
+    // WiFi Helper para forçar requisições via WiFi
+    private WifiNetworkHelper wifiHelper;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -35,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
         }
         
         setContentView(R.layout.activity_main);
+
+        // Inicializar WiFi Helper
+        wifiHelper = new WifiNetworkHelper(this);
 
         webView = findViewById(R.id.webview);
         
@@ -57,6 +64,9 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setDefaultTextEncodingName("utf-8");
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        // Adicionar interface JavaScript para comunicação com o site
+        webView.addJavascriptInterface(new WebAppInterface(), "AndroidApp");
 
         // WebViewClient para controlar navegação
         webView.setWebViewClient(new WebViewClient() {
@@ -249,6 +259,89 @@ public class MainActivity extends AppCompatActivity {
         if (webView != null) {
             webView.destroy();
         }
+        if (wifiHelper != null) {
+            wifiHelper.unbindWifiNetwork();
+        }
         super.onDestroy();
+    }
+    
+    /**
+     * Interface JavaScript para comunicação entre o site e o app Android.
+     * Permite que o site Laravel obtenha MAC/IP capturados via WiFi.
+     */
+    public class WebAppInterface {
+        
+        @JavascriptInterface
+        public String getWifiMac() {
+            WebViewManager manager = WebViewManager.getInstance();
+            String mac = manager.getWifiMac();
+            android.util.Log.d("WebAppInterface", "getWifiMac() chamado, retornando: " + mac);
+            return mac != null ? mac : "";
+        }
+        
+        @JavascriptInterface
+        public String getWifiIp() {
+            WebViewManager manager = WebViewManager.getInstance();
+            String ip = manager.getWifiIp();
+            android.util.Log.d("WebAppInterface", "getWifiIp() chamado, retornando: " + ip);
+            return ip != null ? ip : "";
+        }
+        
+        @JavascriptInterface
+        public boolean hasWifiInfo() {
+            WebViewManager manager = WebViewManager.getInstance();
+            boolean hasInfo = manager.hasWifiInfo();
+            android.util.Log.d("WebAppInterface", "hasWifiInfo() chamado, retornando: " + hasInfo);
+            return hasInfo;
+        }
+        
+        @JavascriptInterface
+        public boolean isFromApp() {
+            return true;
+        }
+        
+        @JavascriptInterface
+        public void refreshWifiInfo() {
+            android.util.Log.d("WebAppInterface", "refreshWifiInfo() chamado");
+            
+            // Recapturar informações de WiFi
+            if (wifiHelper != null) {
+                wifiHelper.checkWifiAndGetInfo(new WifiNetworkHelper.WifiConnectionCallback() {
+                    @Override
+                    public void onWifiConnected(String macAddress, String ipAddress) {
+                        WebViewManager manager = WebViewManager.getInstance();
+                        manager.setWifiMac(macAddress);
+                        manager.setWifiIp(ipAddress);
+                        
+                        android.util.Log.d("WebAppInterface", "WiFi info atualizado - MAC: " + macAddress + ", IP: " + ipAddress);
+                        
+                        // Notificar o JavaScript que os dados foram atualizados
+                        runOnUiThread(() -> {
+                            webView.evaluateJavascript(
+                                "if(typeof onWifiInfoUpdated === 'function') { onWifiInfoUpdated('" + macAddress + "', '" + ipAddress + "'); }",
+                                null
+                            );
+                        });
+                    }
+
+                    @Override
+                    public void onWifiNotConnected(String reason) {
+                        android.util.Log.w("WebAppInterface", "WiFi não conectado: " + reason);
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        android.util.Log.e("WebAppInterface", "Erro: " + error);
+                    }
+                });
+            }
+        }
+        
+        @JavascriptInterface
+        public void showToast(String message) {
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            });
+        }
     }
 }

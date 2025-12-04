@@ -1602,7 +1602,7 @@ class WiFiPortal {
     }
 
     redirectToCaptivePortal() {
-        const captiveUrl = 'http://login.tocantinswifi.local';
+        const captiveUrl = 'http://10.5.50.1';
         const returnParam = encodeURIComponent(window.location.href);
         window.location.replace(`${captiveUrl}?return_url=${returnParam}`);
     }

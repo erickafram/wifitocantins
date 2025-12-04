@@ -12,7 +12,7 @@
             || request()->boolean('from_login')
             || request()->boolean('captive')
             || request()->boolean('from_router');
-        $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
+        $loginUrl = config('wifi.mikrotik.login_url', 'http://10.5.50.1/login');
     @endphp
     @if ($forceLogin && !$skipLogin && !$hasContext)
         <meta http-equiv="refresh" content="0;url={{ $loginUrl }}?dst={{ urlencode(request()->fullUrl()) }}">

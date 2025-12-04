@@ -48,14 +48,36 @@ class PortalController extends Controller
      */
     private function showSplashScreen(Request $request)
     {
-        $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
+        // Verificar se o usuário está na rede do hotspot
+        $clientIp = $request->ip();
+        $isOnHotspot = $this->ipMatchesHotspotSubnets($clientIp);
+        
+        // Se NÃO está na rede do hotspot, NÃO redirecionar para MikroTik
+        // Apenas mostrar o portal normalmente (sem MAC, será registrado depois)
+        if (!$isOnHotspot) {
+            Log::info('📱 Usuário acessando de fora do hotspot - mostrando portal direto', [
+                'ip' => $clientIp,
+                'user_agent' => $request->userAgent(),
+            ]);
+            
+            // Marcar sessão para não tentar redirecionar novamente
+            $request->session()->put('mikrotik_context_verified', true);
+            
+            // Redirecionar para o portal principal sem passar pelo MikroTik
+            return redirect()->route('portal.index', [
+                'skip_login' => 1,
+                'from_external' => 1
+            ]);
+        }
+        
+        // Usuário está no hotspot - redirecionar para MikroTik capturar MAC
+        // IMPORTANTE: Usar IP interno (10.5.50.1), funciona em TODOS os MikroTiks
+        $loginUrl = 'http://10.5.50.1/login';
         
         // URL de destino: onde o MikroTik deve redirecionar após capturar MAC/IP
-        // Importante: não usar fullUrl() pois pode criar loop
         $portalUrl = config('wifi.server_url', config('app.url'));
         
         // Construir URL de retorno com parâmetros que serão preenchidos pelo MikroTik
-        // O MikroTik vai substituir $(mac) e $(ip) pelos valores reais
         $returnUrl = $portalUrl . '?source=mikrotik&captive=true&from_mikrotik=1';
         
         $query = [
@@ -73,7 +95,8 @@ class PortalController extends Controller
         Log::info('🎬 Exibindo splash screen com MikroTik em background', [
             'mikrotik_url' => $mikrotikUrl,
             'return_url' => $returnUrl,
-            'ip' => $request->ip(),
+            'ip' => $clientIp,
+            'is_on_hotspot' => $isOnHotspot,
             'user_agent' => $request->userAgent(),
         ]);
         
@@ -130,7 +153,7 @@ class PortalController extends Controller
 
     private function redirectToMikrotikLogin(Request $request)
     {
-        $loginUrl = config('wifi.mikrotik.login_url', 'http://login.tocantinswifi.local/login');
+        $loginUrl = config('wifi.mikrotik.login_url', 'http://10.5.50.1/login');
 
         $portalUrl = config('wifi.server_url', config('app.url'));
         $desiredUrl = $request->fullUrl();

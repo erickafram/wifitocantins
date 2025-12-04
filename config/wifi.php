@@ -24,7 +24,9 @@ return [
         'timeout' => env('MIKROTIK_TIMEOUT', 10),
         'enabled' => env('MIKROTIK_ENABLED', true),
         'sync_token' => env('MIKROTIK_SYNC_TOKEN', 'mikrotik-sync-2024'),
-        'login_url' => env('MIKROTIK_LOGIN_URL', 'http://login.tocantinswifi.local/login'),
+        // IMPORTANTE: Usar IP interno do hotspot, NÃO domínio .local
+        // O domínio .local não resolve quando o tráfego sai pela internet
+        'login_url' => env('MIKROTIK_LOGIN_URL', 'http://10.5.50.1/login'),
         'force_login_redirect' => filter_var(env('MIKROTIK_FORCE_LOGIN_REDIRECT', true), FILTER_VALIDATE_BOOL),
         'force_login_redirect_local' => filter_var(env('MIKROTIK_FORCE_LOGIN_REDIRECT_LOCAL', false), FILTER_VALIDATE_BOOL),
         'force_login_redirect_outside_hotspot' => filter_var(env('MIKROTIK_FORCE_LOGIN_REDIRECT_OUTSIDE_HOTSPOT', true), FILTER_VALIDATE_BOOL),
