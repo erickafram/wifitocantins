@@ -22,11 +22,18 @@ class PortalController extends Controller
         $clientIp = $request->ip();
         $existingUser = $this->findConnectedUserByIp($clientIp);
         
-        if ($existingUser && $existingUser->status === 'connected' && $existingUser->expires_at && $existingUser->expires_at->isFuture()) {
-            Log::info('✅ Usuário já conectado - pulando redirecionamento MikroTik', [
+        // Se encontrou usuário (ativo OU expirado), NÃO redirecionar para MikroTik
+        // Já temos o MAC cadastrado, não precisa capturar novamente
+        if ($existingUser) {
+            $isActive = $existingUser->status === 'connected' && 
+                        $existingUser->expires_at && 
+                        $existingUser->expires_at->isFuture();
+            
+            Log::info($isActive ? '✅ Usuário ATIVO' : '⏰ Usuário com cadastro (pode renovar)', [
                 'user_id' => $existingUser->id,
                 'ip' => $clientIp,
                 'mac' => $existingUser->mac_address,
+                'status' => $existingUser->status,
                 'expires_at' => $existingUser->expires_at,
             ]);
             
@@ -38,7 +45,7 @@ class PortalController extends Controller
                 return redirect()->route('portal.dashboard');
             }
             
-            // Mostrar portal com informações do usuário conectado
+            // Mostrar portal com informações do usuário (ativo ou expirado pode renovar)
             $clientInfo = [
                 'ip_address' => $clientIp,
                 'mac_address' => $existingUser->mac_address,
@@ -543,16 +550,50 @@ class PortalController extends Controller
     }
 
     /**
-     * Busca usuário conectado pelo IP
+     * Busca usuário conectado pelo IP ou qualquer usuário recente na rede
+     * Isso evita redirecionar para login.tocantinswifi.local quando usuário já tem cadastro
      */
     private function findConnectedUserByIp(string $ip): ?User
     {
-        // Buscar usuário com este IP que está conectado e não expirou
-        return User::where('ip_address', $ip)
+        // 1. Buscar usuário ATIVO com este IP
+        $activeUser = User::where('ip_address', $ip)
             ->where('status', 'connected')
             ->where('expires_at', '>', now())
             ->orderBy('connected_at', 'desc')
             ->first();
+        
+        if ($activeUser) {
+            return $activeUser;
+        }
+        
+        // 2. Buscar usuário com este IP nas últimas 24h (expirado mas cadastrado)
+        $recentUser = User::where('ip_address', $ip)
+            ->where('connected_at', '>', now()->subHours(24))
+            ->orderBy('connected_at', 'desc')
+            ->first();
+        
+        if ($recentUser) {
+            return $recentUser;
+        }
+        
+        // 3. Se IP é da rede do hotspot (10.5.50.x), buscar por MAC reportado
+        if ($this->ipMatchesHotspotSubnets($ip)) {
+            $macReport = MikrotikMacReport::where('ip_address', $ip)
+                ->orderBy('reported_at', 'desc')
+                ->first();
+            
+            if ($macReport) {
+                $userByMac = User::where('mac_address', $macReport->mac_address)
+                    ->orderBy('connected_at', 'desc')
+                    ->first();
+                
+                if ($userByMac) {
+                    return $userByMac;
+                }
+            }
+        }
+        
+        return null;
     }
 
     /**

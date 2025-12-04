@@ -14,7 +14,8 @@ cd /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br
 cp .env .env.backup
 
 # 3. Baixar atualizações
-git pull origin main
+git pull origin main --no-rebase
+
 
 # 4. Restaurar .env (caso tenha sido sobrescrito)
 cp .env.backup .env
