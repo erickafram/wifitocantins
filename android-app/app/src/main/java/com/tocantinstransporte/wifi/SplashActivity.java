@@ -212,25 +212,25 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 String baseUrl = "https://www.tocantinstransportewifi.com.br";
                 
-                // Se capturou MAC/IP via WiFi, incluir na URL
-                if (wifiInfoCaptured && capturedIp != null) {
-                    StringBuilder urlBuilder = new StringBuilder(baseUrl);
-                    urlBuilder.append("?from_app=1");
-                    
-                    if (capturedMac != null && !capturedMac.equals("PENDING")) {
-                        urlBuilder.append("&app_mac=").append(capturedMac);
-                    }
-                    if (capturedIp != null) {
-                        urlBuilder.append("&app_ip=").append(capturedIp);
-                    }
-                    
-                    String finalUrl = urlBuilder.toString();
-                    android.util.Log.d("SplashActivity", "Carregando com WiFi info: " + finalUrl);
-                    hiddenWebView.loadUrl(finalUrl);
-                } else {
-                    android.util.Log.d("SplashActivity", "Carregando URL padrão (sem WiFi info)");
-                    hiddenWebView.loadUrl(baseUrl);
+                // SEMPRE enviar from_app=1 para o Laravel saber que é do app
+                StringBuilder urlBuilder = new StringBuilder(baseUrl);
+                urlBuilder.append("?from_app=1");
+                
+                // Se capturou MAC válido, incluir
+                if (capturedMac != null && !capturedMac.equals("PENDING") && !capturedMac.isEmpty()) {
+                    urlBuilder.append("&app_mac=").append(capturedMac);
+                    android.util.Log.d("SplashActivity", "MAC capturado: " + capturedMac);
                 }
+                
+                // Se capturou IP (interno 10.5.50.x), incluir - IMPORTANTE para identificação
+                if (capturedIp != null && !capturedIp.isEmpty()) {
+                    urlBuilder.append("&app_ip=").append(capturedIp);
+                    android.util.Log.d("SplashActivity", "IP capturado: " + capturedIp);
+                }
+                
+                String finalUrl = urlBuilder.toString();
+                android.util.Log.d("SplashActivity", "Carregando URL: " + finalUrl);
+                hiddenWebView.loadUrl(finalUrl);
             }
         }, 2000); // Aguardar 2s para WiFi helper capturar info
     }

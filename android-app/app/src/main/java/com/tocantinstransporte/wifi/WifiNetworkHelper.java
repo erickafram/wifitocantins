@@ -170,24 +170,60 @@ public class WifiNetworkHelper {
 
     /**
      * Obtém o endereço MAC do dispositivo
+     * Android 6+ não permite obter MAC real, então tentamos alternativas
      */
     private String getMacAddress() {
         try {
+            // Método 1: WifiInfo (funciona em Android < 6)
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
             if (wifiInfo != null) {
                 String mac = wifiInfo.getMacAddress();
                 
                 // Android 6+ retorna "02:00:00:00:00:00" por privacidade
-                // Precisamos obter de outra forma ou do MikroTik
                 if (mac != null && !mac.equals("02:00:00:00:00:00")) {
+                    Log.d(TAG, "MAC obtido via WifiInfo: " + mac);
                     return mac.toUpperCase();
                 }
             }
+            
+            // Método 2: Tentar via NetworkInterface (pode funcionar em alguns dispositivos)
+            try {
+                java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+                while (interfaces.hasMoreElements()) {
+                    java.net.NetworkInterface networkInterface = interfaces.nextElement();
+                    
+                    // Procurar interface WiFi (wlan0, wlan1, etc)
+                    String name = networkInterface.getName().toLowerCase();
+                    if (name.contains("wlan") || name.contains("wifi")) {
+                        byte[] macBytes = networkInterface.getHardwareAddress();
+                        if (macBytes != null && macBytes.length == 6) {
+                            StringBuilder macBuilder = new StringBuilder();
+                            for (int i = 0; i < macBytes.length; i++) {
+                                macBuilder.append(String.format("%02X", macBytes[i]));
+                                if (i < macBytes.length - 1) {
+                                    macBuilder.append(":");
+                                }
+                            }
+                            String mac2 = macBuilder.toString();
+                            
+                            // Verificar se não é MAC fake
+                            if (!mac2.equals("02:00:00:00:00:00") && !mac2.startsWith("02:")) {
+                                Log.d(TAG, "MAC obtido via NetworkInterface: " + mac2);
+                                return mac2;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Erro ao obter MAC via NetworkInterface: " + e.getMessage());
+            }
+            
         } catch (Exception e) {
             Log.e(TAG, "Erro ao obter MAC: " + e.getMessage());
         }
         
-        // MAC randomizado - será obtido do MikroTik
+        // MAC não disponível - será obtido do MikroTik pelo IP
+        Log.w(TAG, "MAC não disponível (Android 6+ privacidade) - usando IP para identificação");
         return null;
     }
 
