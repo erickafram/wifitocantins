@@ -1056,8 +1056,8 @@ class WiFiPortal {
             this.goToStep3(data.payment_id);
         });
         
-        // Event: Cancelar
-        document.getElementById('cancel-payment').addEventListener('click', () => {
+        // Event: Cancelar (se existir o botão)
+        document.getElementById('cancel-payment')?.addEventListener('click', () => {
             this.closePixModal();
         });
         
