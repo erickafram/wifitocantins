@@ -121,6 +121,117 @@
         </div>
     </div>
 
+    <!-- Seção: Usuários que Pagaram (MAC Address) -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
+        <div class="px-6 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <span class="mr-2">💳</span>
+                    Usuários que Pagaram ({{ count($paidUsers) }})
+                </h3>
+                <span class="text-emerald-100 text-sm">MAC Address • Pagamento • Expiração</span>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full" id="paidUsersTable">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAC Address</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagamento</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expira em</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse ($paidUsers as $user)
+                    <tr class="hover:bg-emerald-50 transition-colors duration-200">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold">
+                                        {{ strtoupper(substr($user['name'], 0, 1)) }}
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ $user['name'] }}</div>
+                                    <div class="text-xs text-gray-500">ID: {{ $user['id'] }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $user['phone'] ?? 'N/A' }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <code class="px-2 py-1 bg-gray-100 text-gray-800 rounded font-mono text-sm">{{ $user['mac_address'] }}</code>
+                                <button onclick="copyToClipboard('{{ $user['mac_address'] }}')" class="ml-2 text-gray-400 hover:text-emerald-600" title="Copiar MAC">
+                                    📋
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($user['paid_at'])
+                                <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($user['paid_at'])->format('d/m/Y H:i') }}</div>
+                                <div class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($user['paid_at'])->diffForHumans() }}</div>
+                            @else
+                                <span class="text-xs text-gray-400">N/A</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
+                                R$ {{ number_format($user['amount'], 2, ',', '.') }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($user['expires_at'])
+                                @php
+                                    $expiresAt = \Carbon\Carbon::parse($user['expires_at']);
+                                    $isExpired = $expiresAt->isPast();
+                                @endphp
+                                <div class="text-sm {{ $isExpired ? 'text-red-600' : 'text-gray-900' }}">
+                                    {{ $expiresAt->format('d/m/Y H:i') }}
+                                </div>
+                                <div class="text-xs {{ $isExpired ? 'text-red-500' : 'text-gray-500' }}">
+                                    {{ $isExpired ? 'Expirado ' . $expiresAt->diffForHumans() : 'Expira ' . $expiresAt->diffForHumans() }}
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400">Sem expiração</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @php
+                                $statusConfig = match($user['status']) {
+                                    'connected' => ['bg-green-100', 'text-green-800', '🟢', 'Conectado'],
+                                    'active' => ['bg-blue-100', 'text-blue-800', '🔵', 'Ativo'],
+                                    'expired' => ['bg-red-100', 'text-red-800', '🔴', 'Expirado'],
+                                    default => ['bg-gray-100', 'text-gray-800', '⚫', 'Offline'],
+                                };
+                            @endphp
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusConfig[0] }} {{ $statusConfig[1] }}">
+                                {{ $statusConfig[2] }} {{ $statusConfig[3] }}
+                            </span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <span class="text-6xl mb-4">💳</span>
+                                <h3 class="text-lg font-semibold mb-2">Nenhum usuário pagou ainda</h3>
+                                <p class="text-sm">Aguarde pagamentos serem confirmados.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Tabela de Dispositivos -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
         <div class="px-6 py-4 bg-gradient-to-r from-tocantins-green to-tocantins-dark-green">
@@ -391,10 +502,41 @@
             }
         });
 
-        // Auto-refresh a cada 30 segundos
+        // Copiar MAC para clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Mostrar feedback visual
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse';
+                toast.innerHTML = '✅ MAC copiado: ' + text;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 2000);
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+                alert('Erro ao copiar MAC: ' + text);
+            });
+        }
+
+        // Filtro para tabela de usuários pagos
+        document.getElementById('searchDevices').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            // Filtrar tabela de usuários pagos
+            const paidRows = document.querySelectorAll('#paidUsersTable tbody tr');
+            paidRows.forEach(row => {
+                if (row.children.length === 1) return; // Skip empty row
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Auto-refresh a cada 60 segundos (aumentado para não atrapalhar)
         setInterval(() => {
             location.reload();
-        }, 30000);
+        }, 60000);
     </script>
 @endsection
 

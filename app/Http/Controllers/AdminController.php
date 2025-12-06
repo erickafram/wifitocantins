@@ -248,7 +248,32 @@ class AdminController extends Controller
         ->orderBy('last_seen', 'desc')
         ->paginate(30);
 
-        return view('admin.devices', compact('devices'));
+        // Usuários que pagaram com MAC address
+        $paidUsers = User::whereHas('payments', function($query) {
+            $query->where('status', 'completed');
+        })
+        ->whereNotNull('mac_address')
+        ->with(['payments' => function($query) {
+            $query->where('status', 'completed')
+                  ->orderBy('paid_at', 'desc');
+        }])
+        ->orderBy('updated_at', 'desc')
+        ->get()
+        ->map(function($user) {
+            $lastPayment = $user->payments->first();
+            return [
+                'id' => $user->id,
+                'name' => $user->name ?? 'Sem nome',
+                'phone' => $user->phone,
+                'mac_address' => $user->mac_address,
+                'paid_at' => $lastPayment ? $lastPayment->paid_at : null,
+                'amount' => $lastPayment ? $lastPayment->amount : 0,
+                'expires_at' => $user->expires_at,
+                'status' => $user->status,
+            ];
+        });
+
+        return view('admin.devices', compact('devices', 'paidUsers'));
     }
 
     /**
