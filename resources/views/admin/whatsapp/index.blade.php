@@ -102,7 +102,7 @@
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                     <span class="text-2xl">⏰</span>
-                    Pagamentos Pendentes de Hoje ({{ count($pendingPayments) }})
+                    Pagamentos Pendentes ({{ count($pendingPayments) }})
                     <span class="text-sm font-normal text-gray-500">há mais de {{ $settings['pending_minutes'] }} minutos</span>
                 </h2>
                 <button id="btn-send-all" onclick="sendToAllPending()" class="bg-gradient-to-r from-tocantins-green to-green-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-300 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed" {{ !$settings['is_connected'] ? 'disabled' : '' }}>
