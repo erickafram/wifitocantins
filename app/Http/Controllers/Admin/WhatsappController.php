@@ -65,6 +65,7 @@ class WhatsappController extends Controller
         
         $pendingPayments = Payment::where('status', 'pending')
             ->where('created_at', '<=', Carbon::now()->subMinutes($pendingMinutes))
+            ->whereDate('created_at', Carbon::today()) // Apenas pagamentos do dia
             ->whereNotIn('user_id', $paidUserIds) // Excluir quem já pagou
             ->whereHas('user', function($q) {
                 $q->whereNotNull('phone')
@@ -283,9 +284,10 @@ class WhatsappController extends Controller
             ->unique()
             ->toArray();
 
-        // Buscar pagamentos pendentes (excluindo quem já pagou)
+        // Buscar pagamentos pendentes do dia (excluindo quem já pagou)
         $pendingPayments = Payment::where('status', 'pending')
             ->where('created_at', '<=', Carbon::now()->subMinutes($pendingMinutes))
+            ->whereDate('created_at', Carbon::today()) // Apenas pagamentos do dia
             ->whereNotIn('user_id', $paidUserIds) // Excluir quem já pagou
             ->whereHas('user', function($q) {
                 $q->whereNotNull('phone')
