@@ -13,6 +13,7 @@ use App\Http\Controllers\PortalDashboardController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
+use App\Http\Controllers\Admin\WhatsappController;
 use App\Http\Controllers\DriverVoucherController;
 
 // Página principal do portal cativo
@@ -56,7 +57,7 @@ Route::get('/admin-access', function () {
 // Painel Administrativo (Protegido por autenticação)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
     // Rotas acessíveis para Admin e Manager
-    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', [AdminController::class, 'dashboard']);
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report');
     Route::get('/devices', [AdminController::class, 'devices'])->name('devices');
@@ -77,6 +78,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::post('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'toggleStatus'])->name('vouchers.toggle');
     Route::post('/vouchers/{voucher}/reset', [AdminVoucherController::class, 'resetDaily'])->name('vouchers.reset');
     Route::delete('/vouchers/{voucher}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
+    
+    // Rotas do WhatsApp (Admin e Manager)
+    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+        Route::get('/', [WhatsappController::class, 'index'])->name('index');
+        Route::get('/messages', [WhatsappController::class, 'messages'])->name('messages');
+        Route::get('/settings', [WhatsappController::class, 'settings'])->name('settings');
+        Route::put('/settings', [WhatsappController::class, 'updateSettings'])->name('settings.update');
+        Route::get('/qrcode', [WhatsappController::class, 'getQrCode'])->name('qrcode');
+        Route::get('/status', [WhatsappController::class, 'checkStatus'])->name('status');
+        Route::post('/disconnect', [WhatsappController::class, 'disconnect'])->name('disconnect');
+        Route::post('/send', [WhatsappController::class, 'sendMessage'])->name('send');
+        Route::post('/send-pending', [WhatsappController::class, 'sendToPendingPayments'])->name('send-pending');
+        Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
+    });
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {

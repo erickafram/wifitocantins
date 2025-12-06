@@ -9,6 +9,7 @@ use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\MikrotikSyncController;
 use App\Http\Controllers\MikrotikApiController;
 use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\Admin\WhatsappController;
 
 /*
 |--------------------------------------------------------------------------
@@ -98,3 +99,6 @@ Route::prefix('mikrotik-sync')->group(function () {
     Route::post('/report-real-mac', [MikrotikSyncController::class, 'reportRealMac']);
     Route::get('/stats', [MikrotikSyncController::class, 'getStats']);
 });
+
+// WhatsApp Webhook (recebe notificações do servidor Baileys)
+Route::post('/whatsapp/webhook', [WhatsappController::class, 'webhook']);

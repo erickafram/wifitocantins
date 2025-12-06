@@ -83,15 +83,22 @@
             
             <!-- Header -->
             <div class="text-center">
-                <div class="mb-6">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="mx-auto h-24 w-auto drop-shadow-lg">
+                <div class="mb-8">
+                    <div class="relative inline-block">
+                        <div class="absolute -inset-2 bg-gradient-to-r from-tocantins-green to-tocantins-gold rounded-full blur-lg opacity-30 animate-pulse"></div>
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo Tocantins" class="relative mx-auto h-20 w-auto drop-shadow-2xl">
+                    </div>
                 </div>
-                <h2 class="text-3xl font-bold text-tocantins-gray-green mb-2">
+                <h2 class="text-2xl font-bold text-tocantins-gray-green mb-3">
                     🔐 Área Administrativa
                 </h2>
-                <p class="text-sm text-gray-600">
-                    WiFi Tocantins Express - Painel de Controle
+                <p class="text-sm text-gray-500 mb-2">
+                    WiFi Tocantins Express
                 </p>
+                <div class="inline-flex items-center gap-2 bg-tocantins-green/10 px-4 py-2 rounded-full">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs text-tocantins-gray-green font-medium">Sistema Online</span>
+                </div>
             </div>
 
             <!-- Alertas -->
@@ -118,75 +125,73 @@
             @endif
 
             <!-- Formulário de Login -->
-            <div class="glass-effect rounded-3xl shadow-2xl p-8 animate-slide-up">
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+            <div class="glass-effect rounded-2xl shadow-2xl p-6 animate-slide-up">
+                <form method="POST" action="{{ route('login') }}" class="space-y-5">
                     @csrf
                     
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-tocantins-gray-green mb-2">
-                            📧 E-mail
-                        </label>
-                        <input 
-                            id="email" 
-                            name="email" 
-                            type="email" 
-                            autocomplete="email" 
-                            required 
-                            value="{{ old('email') }}"
-                            placeholder="seu@email.com"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80 @error('email') border-red-500 @enderror"
-                        >
-                    </div>
-
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-tocantins-gray-green mb-2">
-                            🔒 Senha
-                        </label>
-                        <input 
-                            id="password" 
-                            name="password" 
-                            type="password" 
-                            autocomplete="current-password" 
-                            required 
-                            placeholder="Sua senha"
-                            class="w-full border-2 border-tocantins-green/50 rounded-lg px-4 py-3 focus:outline-none focus:border-tocantins-gold focus:ring-2 focus:ring-tocantins-gold/20 transition-all text-sm bg-white/80 @error('password') border-red-500 @enderror"
-                        >
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                                </svg>
+                            </div>
                             <input 
-                                id="remember" 
-                                name="remember" 
-                                type="checkbox" 
-                                class="h-4 w-4 text-tocantins-green focus:ring-tocantins-gold border-tocantins-green/50 rounded"
+                                id="email" 
+                                name="email" 
+                                type="email" 
+                                autocomplete="email" 
+                                required 
+                                value="{{ old('email') }}"
+                                placeholder="E-mail de acesso"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-tocantins-gold/50 focus:border-tocantins-gold transition-all text-sm bg-white/90 @error('email') border-red-400 @enderror"
                             >
-                            <label for="remember" class="ml-2 block text-sm text-tocantins-gray-green">
-                                Lembrar-me
-                            </label>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <input 
+                                id="password" 
+                                name="password" 
+                                type="password" 
+                                autocomplete="current-password" 
+                                required 
+                                placeholder="Senha"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-tocantins-gold/50 focus:border-tocantins-gold transition-all text-sm bg-white/90 @error('password') border-red-400 @enderror"
+                            >
                         </div>
                     </div>
 
-                    <div>
-                        <button 
-                            type="submit" 
-                            class="w-full bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-bold py-4 px-6 rounded-xl shadow-xl transform transition hover:scale-105 active:scale-95 hover:shadow-2xl text-sm relative overflow-hidden"
-                        >
-                            <span class="relative z-10">🚀 ENTRAR NO PAINEL</span>
-                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 -translate-x-full hover:translate-x-full transition-transform duration-700"></div>
-                        </button>
+                    <div class="flex items-center justify-between pt-2">
+                        <label class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                name="remember"
+                                class="h-4 w-4 text-tocantins-green focus:ring-tocantins-gold border-gray-300 rounded"
+                            >
+                            <span class="ml-2 text-sm text-gray-600">Lembrar-me</span>
+                        </label>
                     </div>
+
+                    <button 
+                        type="submit" 
+                        class="w-full bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white font-semibold py-3 px-6 rounded-xl shadow-lg transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl relative overflow-hidden group"
+                    >
+                        <span class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                        <span class="relative flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                            </svg>
+                            ENTRAR
+                        </span>
+                    </button>
                 </form>
             </div>
 
-            <!-- Informações de Acesso -->
-            <div class="glass-effect rounded-2xl p-6 text-center animate-fade-in">
-                <h3 class="text-sm font-semibold text-tocantins-gray-green mb-3">ℹ️ Informações de Acesso</h3>
-                <div class="space-y-2 text-xs text-gray-600">
-                    <p><strong>👑 Administrador:</strong> Acesso completo ao sistema</p>
-                    <p><strong>👤 Gestor:</strong> Relatórios e monitoramento</p>
-                </div>
-            </div>
 
             <!-- Footer -->
             <div class="text-center">

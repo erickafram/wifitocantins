@@ -118,7 +118,10 @@
                                     <span class="mr-2">📈</span>
                                     Relatórios
                                 </a>
-                        
+                                <a href="{{ route('admin.whatsapp.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center {{ request()->routeIs('admin.whatsapp*') ? 'bg-green-100 text-green-700 font-medium' : '' }}">
+                                    <span class="mr-2">💬</span>
+                                    WhatsApp
+                                </a>
                                 <a href="{{ route('admin.devices') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center {{ request()->routeIs('admin.devices*') ? 'bg-tocantins-green/10 text-tocantins-green font-medium' : '' }}">
                                     <span class="mr-2">📱</span>
                                     Dispositivos
