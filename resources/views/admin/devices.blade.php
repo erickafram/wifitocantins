@@ -127,9 +127,9 @@
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <span class="mr-2">💳</span>
-                    Usuários que Pagaram ({{ count($paidUsers) }})
+                    Usuários que Pagaram ({{ $paidUsers->total() }})
                 </h3>
-                <span class="text-emerald-100 text-sm">MAC Address • Pagamento • Expiração</span>
+                <span class="text-emerald-100 text-sm">MAC Address • Pagamento • Expiração | Página {{ $paidUsers->currentPage() }} de {{ $paidUsers->lastPage() }}</span>
             </div>
         </div>
         
@@ -147,49 +147,51 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse ($paidUsers as $user)
+                    @forelse ($paidUsers as $payment)
+                    @php $user = $payment->user; @endphp
+                    @if($user)
                     <tr class="hover:bg-emerald-50 transition-colors duration-200">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
                                     <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold">
-                                        {{ strtoupper(substr($user['name'], 0, 1)) }}
+                                        {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $user['name'] }}</div>
-                                    <div class="text-xs text-gray-500">ID: {{ $user['id'] }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $user->name ?? 'Sem nome' }}</div>
+                                    <div class="text-xs text-gray-500">ID: {{ $user->id }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $user['phone'] ?? 'N/A' }}</div>
+                            <div class="text-sm text-gray-900">{{ $user->phone ?? 'N/A' }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <code class="px-2 py-1 bg-gray-100 text-gray-800 rounded font-mono text-sm">{{ $user['mac_address'] }}</code>
-                                <button onclick="copyToClipboard('{{ $user['mac_address'] }}')" class="ml-2 text-gray-400 hover:text-emerald-600" title="Copiar MAC">
+                                <code class="px-2 py-1 bg-gray-100 text-gray-800 rounded font-mono text-sm">{{ $user->mac_address }}</code>
+                                <button onclick="copyToClipboard('{{ $user->mac_address }}')" class="ml-2 text-gray-400 hover:text-emerald-600" title="Copiar MAC">
                                     📋
                                 </button>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            @if($user['paid_at'])
-                                <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($user['paid_at'])->format('d/m/Y H:i') }}</div>
-                                <div class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($user['paid_at'])->diffForHumans() }}</div>
+                            @if($payment->paid_at)
+                                <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($payment->paid_at)->format('d/m/Y H:i') }}</div>
+                                <div class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($payment->paid_at)->diffForHumans() }}</div>
                             @else
                                 <span class="text-xs text-gray-400">N/A</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
-                                R$ {{ number_format($user['amount'], 2, ',', '.') }}
+                                R$ {{ number_format($payment->amount, 2, ',', '.') }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            @if($user['expires_at'])
+                            @if($user->expires_at)
                                 @php
-                                    $expiresAt = \Carbon\Carbon::parse($user['expires_at']);
+                                    $expiresAt = \Carbon\Carbon::parse($user->expires_at);
                                     $isExpired = $expiresAt->isPast();
                                 @endphp
                                 <div class="text-sm {{ $isExpired ? 'text-red-600' : 'text-gray-900' }}">
@@ -204,7 +206,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
-                                $statusConfig = match($user['status']) {
+                                $statusConfig = match($user->status) {
                                     'connected' => ['bg-green-100', 'text-green-800', '🟢', 'Conectado'],
                                     'active' => ['bg-blue-100', 'text-blue-800', '🔵', 'Ativo'],
                                     'expired' => ['bg-red-100', 'text-red-800', '🔴', 'Expirado'],
@@ -216,6 +218,7 @@
                             </span>
                         </td>
                     </tr>
+                    @endif
                     @empty
                     <tr>
                         <td colspan="7" class="px-6 py-12 text-center text-gray-500">
@@ -230,6 +233,13 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginação dos Usuários Pagos -->
+        @if($paidUsers->hasPages())
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            {{ $paidUsers->links() }}
+        </div>
+        @endif
     </div>
 
     <!-- Tabela de Dispositivos -->
