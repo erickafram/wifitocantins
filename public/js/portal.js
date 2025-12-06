@@ -1032,14 +1032,6 @@ class WiFiPortal {
                         
                     </div>
                     
-                    <!-- Footer 
-                    <div class="px-3 py-2 border-t bg-gray-50 rounded-b-xl">
-                        <button id="cancel-payment" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-600 font-medium py-2 rounded text-xs">
-                            Cancelar
-                        </button>
-                    </div>
-                    -->
-                    
                 </div>
             </div>
         `;
