@@ -258,7 +258,34 @@ class AdminController extends Controller
             ->orderBy('paid_at', 'desc')
             ->paginate(20, ['*'], 'paid_page');
 
-        return view('admin.devices', compact('devices', 'paidUsers'));
+        // Estatísticas dos usuários que pagaram
+        $paidStats = [
+            'total' => Payment::where('status', 'completed')
+                ->whereHas('user', function($q) { $q->whereNotNull('mac_address'); })
+                ->count(),
+            'online' => User::where('status', 'connected')
+                ->whereNotNull('mac_address')
+                ->whereHas('payments', function($q) { $q->where('status', 'completed'); })
+                ->count(),
+            'active' => User::whereNotNull('mac_address')
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '>', now())
+                ->whereHas('payments', function($q) { $q->where('status', 'completed'); })
+                ->count(),
+            'expired' => User::whereNotNull('mac_address')
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '<=', now())
+                ->whereHas('payments', function($q) { $q->where('status', 'completed'); })
+                ->count(),
+            'today_revenue' => Payment::where('status', 'completed')
+                ->whereDate('paid_at', today())
+                ->sum('amount'),
+            'today_payments' => Payment::where('status', 'completed')
+                ->whereDate('paid_at', today())
+                ->count(),
+        ];
+
+        return view('admin.devices', compact('devices', 'paidUsers', 'paidStats'));
     }
 
     /**

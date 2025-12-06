@@ -30,61 +30,6 @@
         </div>
     </div>
 
-    <!-- Estatísticas de Dispositivos -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <!-- Total de Dispositivos -->
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-blue-100 text-sm font-medium">Total de Dispositivos</p>
-                    <p class="text-3xl font-bold">{{ $devices->total() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl">📱</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dispositivos Online -->
-        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-green-100 text-sm font-medium">Online Agora</p>
-                    <p class="text-3xl font-bold">{{ $devices->where('user.status', 'connected')->count() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-green-400 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl">🟢</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dispositivos Ativos Hoje -->
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium">Ativos Hoje</p>
-                    <p class="text-3xl font-bold">{{ $devices->where('last_seen', '>=', now()->startOfDay())->count() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-purple-400 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl">📊</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Novos Dispositivos (7 dias) -->
-        <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl p-6 shadow-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-amber-100 text-sm font-medium">Novos (7 dias)</p>
-                    <p class="text-3xl font-bold">{{ $devices->where('created_at', '>=', now()->subDays(7))->count() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-amber-400 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl">🆕</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Filtros -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -121,15 +66,91 @@
         </div>
     </div>
 
+    <!-- Estatísticas dos Usuários que Pagaram -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <!-- Total de Pagamentos -->
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-emerald-100 text-xs font-medium">Total Pagamentos</p>
+                    <p class="text-2xl font-bold">{{ $paidStats['total'] }}</p>
+                </div>
+                <span class="text-3xl">💳</span>
+            </div>
+        </div>
+
+        <!-- Online Agora -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-xs font-medium">Online Agora</p>
+                    <p class="text-2xl font-bold">{{ $paidStats['online'] }}</p>
+                </div>
+                <span class="text-3xl">🟢</span>
+            </div>
+        </div>
+
+        <!-- Ativos (não expirados) -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-xs font-medium">Ativos</p>
+                    <p class="text-2xl font-bold">{{ $paidStats['active'] }}</p>
+                </div>
+                <span class="text-3xl">✅</span>
+            </div>
+        </div>
+
+        <!-- Expirados -->
+        <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-100 text-xs font-medium">Expirados</p>
+                    <p class="text-2xl font-bold">{{ $paidStats['expired'] }}</p>
+                </div>
+                <span class="text-3xl">⏰</span>
+            </div>
+        </div>
+
+        <!-- Pagamentos Hoje -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-xs font-medium">Pagamentos Hoje</p>
+                    <p class="text-2xl font-bold">{{ $paidStats['today_payments'] }}</p>
+                </div>
+                <span class="text-3xl">📊</span>
+            </div>
+        </div>
+
+        <!-- Receita Hoje -->
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-amber-100 text-xs font-medium">Receita Hoje</p>
+                    <p class="text-2xl font-bold">R$ {{ number_format($paidStats['today_revenue'], 2, ',', '.') }}</p>
+                </div>
+                <span class="text-3xl">💰</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Seção: Usuários que Pagaram (MAC Address) -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
         <div class="px-6 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <span class="mr-2">💳</span>
-                    Usuários que Pagaram ({{ $paidUsers->total() }})
+                    Usuários que Pagaram
                 </h3>
-                <span class="text-emerald-100 text-sm">MAC Address • Pagamento • Expiração | Página {{ $paidUsers->currentPage() }} de {{ $paidUsers->lastPage() }}</span>
+                <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+                    <span class="bg-emerald-400 bg-opacity-30 px-3 py-1 rounded-full text-white text-sm">
+                        {{ $paidUsers->total() }} registros
+                    </span>
+                    <span class="text-emerald-100 text-sm">
+                        Página {{ $paidUsers->currentPage() }}/{{ $paidUsers->lastPage() }}
+                    </span>
+                </div>
             </div>
         </div>
         
