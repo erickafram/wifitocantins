@@ -85,6 +85,19 @@
                 box-shadow: 0 12px 35px rgba(34, 139, 34, 0.8), 0 0 50px rgba(255, 215, 0, 0.7);
             }
         }
+        @keyframes cta-pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            }
+            50% { 
+                transform: scale(1.05); 
+                box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6), 0 0 40px rgba(20, 184, 166, 0.4);
+            }
+        }
+        .animate-cta-pulse {
+            animation: cta-pulse 1.5s ease-in-out infinite;
+        }
         @keyframes gradient-x {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -361,73 +374,143 @@
          <div class="lg:hidden space-y-4 mb-6">
 
              <!-- Card Principal - Pagamento Mobile -->
-             <div class="elegant-card rounded-2xl shadow-xl overflow-hidden animate-slide-up">
-                 <!-- Header com Preço - Mais Compacto -->
-                 <div class="bg-gradient-to-br from-tocantins-dark-green to-green-600 p-4 relative">
-                    @if($discount_percentage > 0)
-                    <div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow animate-pulse">
-                        -{{ $discount_percentage }}%
-                    </div>
-                    @endif
-                    
-                    <div class="text-center">
-                        <p class="text-white/90 text-xs font-medium mb-1">🚌 Internet na Viagem</p>
-                        <div class="flex items-center justify-center gap-2">
-                            @if($discount_percentage > 0)
-                            <span class="text-white/60 text-sm line-through">R$ {{ number_format($original_price, 2, ',', '.') }}</span>
-                            @endif
-                            <span class="text-white text-3xl font-bold">R$ {{ number_format($price, 2, ',', '.') }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                 <!-- Corpo do Card -->
-                 <div class="p-4">
-                     <!-- Ícones de Apps com brilho -->
-                     <div class="flex justify-center items-center gap-3 mb-3">
-                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex items-center justify-center shadow-lg shadow-pink-500/30 transform hover:scale-110 transition-transform">
-                             <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+             <div class="relative rounded-2xl overflow-hidden animate-slide-up group">
+                 <!-- Borda gradiente animada -->
+                 <div class="absolute -inset-[1px] bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500 rounded-2xl opacity-75 group-hover:opacity-100 blur-[2px] transition-opacity duration-500" style="background-size: 200% 200%; animation: gradient-x 3s ease infinite;"></div>
+                 
+                 <div class="relative bg-white rounded-2xl overflow-hidden">
+                     <!-- Header com Preço - Design Glassmorphism -->
+                     <div class="relative p-4 overflow-hidden">
+                         <!-- Background com mesh gradient -->
+                         <div class="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-700"></div>
+                         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15)_0%,transparent_60%)]"></div>
+                         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(0,0,0,0.1)_0%,transparent_60%)]"></div>
+                         
+                         @if($discount_percentage > 0)
+                         <!-- Badge de desconto moderno -->
+                         <div class="absolute top-2 right-2 flex items-center gap-1">
+                             <div class="relative">
+                                 <div class="absolute inset-0 bg-red-500 rounded-full blur-md opacity-60 animate-pulse"></div>
+                                 <div class="relative bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/></svg>
+                                     -{{ $discount_percentage }}%
+                                 </div>
+                             </div>
                          </div>
-                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/30 transform hover:scale-110 transition-transform">
-                             <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                         </div>
-                         <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-red-600/40 transform hover:scale-110 transition-transform">
-                             <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none"><path d="M5.398 0C4.082 0 3 1.082 3 2.398v19.204C3 22.918 4.082 24 5.398 24h13.204C19.918 24 21 22.918 21 21.602V2.398C21 1.082 19.918 0 18.602 0H5.398z" fill="#000"/><path d="M14.5 4L14.5 20L12.5 14L10.5 20L10.5 4L12.5 4L12.5 12L14.5 4Z" fill="#E50914"/><path d="M10.5 4L10.5 20L8 20L8 4L10.5 4Z" fill="#E50914"/><path d="M16 4L16 20L13.5 20L13.5 4L16 4Z" fill="#E50914"/></svg>
-                         </div>
-                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30 transform hover:scale-110 transition-transform">
-                             <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                         @endif
+                         
+                         <div class="relative text-center">
+                             <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-2">
+                                 <span class="text-sm">🚌</span>
+                                 <span class="text-white/95 text-xs font-medium">Internet na Viagem</span>
+                             </div>
+                             <div class="flex items-center justify-center gap-2">
+                                 @if($discount_percentage > 0)
+                                 <span class="text-white/50 text-sm line-through decoration-red-400">R$ {{ number_format($original_price, 2, ',', '.') }}</span>
+                                 @endif
+                                 <span class="text-white text-3xl font-bold tracking-tight drop-shadow-lg">R$ {{ number_format($price, 2, ',', '.') }}</span>
+                             </div>
                          </div>
                      </div>
-                     
-                     <!-- Benefícios em linha -->
-                     <div class="flex justify-center gap-4 mb-4 text-xs">
-                         <span class="flex items-center gap-1 text-gray-600">
-                             <span class="text-green-500">✅</span> Ilimitado
-                         </span>
-                         <span class="flex items-center gap-1 text-gray-600">
-                             <span class="text-yellow-500">⚡</span> Alta Velocidade
-                         </span>
-                         <span class="flex items-center gap-1 text-gray-600">
-                             <span class="text-blue-500">🔒</span> Seguro
-                         </span>
-                     </div>
 
-                     <!-- Botão Principal - Grande e Chamativo -->
-                     <button 
-                         id="connect-btn" 
-                         class="connect-button w-full text-white font-bold py-4 px-4 rounded-xl shadow-xl text-lg animate-pulse-scale"
-                     >
-                         🚀 CONECTAR AGORA
-                     </button>
+                     <!-- Corpo do Card -->
+                     <div class="p-4 bg-gradient-to-b from-gray-50/50 to-white">
+                         <!-- Ícones de Apps - Design 3D moderno -->
+                         <div class="flex justify-center items-center gap-3 mb-3">
+                             <!-- Instagram -->
+                             <div class="group/icon relative cursor-pointer">
+                                 <div class="absolute -inset-1 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 rounded-2xl blur-lg opacity-50 group-hover/icon:opacity-90 transition-all duration-300 group-hover/icon:scale-110"></div>
+                                 <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-[2px] shadow-lg transform group-hover/icon:scale-110 group-hover/icon:-rotate-6 transition-all duration-300">
+                                     <div class="w-full h-full rounded-[14px] bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center">
+                                         <svg class="w-6 h-6 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                                     </div>
+                                 </div>
+                             </div>
+                             <!-- YouTube -->
+                             <div class="group/icon relative cursor-pointer">
+                                 <div class="absolute -inset-1 bg-red-600 rounded-2xl blur-lg opacity-50 group-hover/icon:opacity-90 transition-all duration-300 group-hover/icon:scale-110"></div>
+                                 <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 p-[2px] shadow-lg transform group-hover/icon:scale-110 group-hover/icon:rotate-6 transition-all duration-300">
+                                     <div class="w-full h-full rounded-[14px] bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
+                                         <svg class="w-6 h-6 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                                     </div>
+                                 </div>
+                             </div>
+                             <!-- Netflix -->
+                             <div class="group/icon relative cursor-pointer">
+                                 <div class="absolute -inset-1 bg-black rounded-2xl blur-lg opacity-40 group-hover/icon:opacity-70 transition-all duration-300 group-hover/icon:scale-110"></div>
+                                 <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-gray-900 to-black p-[2px] shadow-lg transform group-hover/icon:scale-110 group-hover/icon:-rotate-6 transition-all duration-300 ring-1 ring-red-600/30">
+                                     <div class="w-full h-full rounded-[14px] bg-black flex items-center justify-center">
+                                         <span class="text-red-600 font-black text-lg tracking-tighter drop-shadow-md">N</span>
+                                     </div>
+                                 </div>
+                             </div>
+                             <!-- WhatsApp -->
+                             <div class="group/icon relative cursor-pointer">
+                                 <div class="absolute -inset-1 bg-green-500 rounded-2xl blur-lg opacity-50 group-hover/icon:opacity-90 transition-all duration-300 group-hover/icon:scale-110"></div>
+                                 <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 p-[2px] shadow-lg transform group-hover/icon:scale-110 group-hover/icon:rotate-6 transition-all duration-300">
+                                     <div class="w-full h-full rounded-[14px] bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                                         <svg class="w-6 h-6 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         <!-- Benefícios em linha - Pills modernas -->
+                         <div class="flex justify-center gap-2 mb-4">
+                             <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[11px] font-medium border border-emerald-200">
+                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                 Ilimitado
+                             </span>
+                             <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-medium border border-amber-200">
+                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                 Rápido
+                             </span>
+                             <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[11px] font-medium border border-blue-200">
+                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                                 Seguro
+                             </span>
+                         </div>
 
-                     <!-- Info PIX - Compacto -->
-                     <div class="mt-3 flex items-center justify-center gap-3 text-xs text-gray-500">
-                         <span class="flex items-center gap-1">
-                             <span class="text-green-600">📱</span>
-                             <span class="font-semibold text-green-700">PIX</span>
-                         </span>
-                         <span>•</span>
-                         <span>⚡ Liberação Instantânea</span>
+                         <!-- Urgency Badge -->
+                         <div class="flex justify-center mb-3">
+                             <div class="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 px-3 py-1 rounded-full">
+                                 <span class="relative flex h-2 w-2">
+                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                 </span>
+                                 <span class="text-red-700 text-[11px] font-semibold">PROMOÇÃO LIMITADA</span>
+                             </div>
+                         </div>
+
+                         <!-- Botão Principal - Pulsando -->
+                         <div class="relative">
+                             <div class="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-xl blur-lg opacity-60 animate-pulse"></div>
+                             <button 
+                                 id="connect-btn" 
+                                 class="animate-cta-pulse relative w-full bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 text-white font-bold py-4 px-4 rounded-xl shadow-xl text-lg flex items-center justify-center gap-2"
+                             >
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                 CONECTAR AGORA
+                             </button>
+                         </div>
+
+                         <!-- Trust indicators -->
+                         <div class="mt-3 flex items-center justify-center gap-3 text-[10px] text-gray-500">
+                             <span class="flex items-center gap-1">
+                                 <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                                 Seguro
+                             </span>
+                             <span class="flex items-center gap-1">
+                                 <svg class="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                 Instantâneo
+                             </span>
+                             <span class="flex items-center gap-1">
+                                 <div class="w-3 h-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-sm flex items-center justify-center">
+                                     <span class="text-white text-[6px] font-bold">P</span>
+                                 </div>
+                                 PIX
+                             </span>
+                         </div>
                      </div>
                  </div>
              </div>
@@ -454,22 +537,22 @@
              </div>
 
              <!-- Serviços - Grid 2x1 Compacto -->
-             <div class="grid grid-cols-2 gap-3">
+             <div class="grid grid-cols-2 gap-2">
                  <button 
                     type="button"
                     onclick="openPassagensModal()" 
-                    class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 text-center shadow-lg active:scale-95 transition-transform"
+                    class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 text-center shadow-md active:scale-95 transition-transform"
                 >
-                    <div class="text-2xl mb-1">🎫</div>
-                    <p class="text-white text-xs font-bold">PASSAGENS</p>
+                    <div class="text-lg mb-0.5">🎫</div>
+                    <p class="text-white text-[10px] font-bold">PASSAGENS</p>
                 </button>
                 <button 
                     type="button"
                     onclick="openTurismoModal()" 
-                    class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 text-center shadow-lg active:scale-95 transition-transform"
+                    class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 text-center shadow-md active:scale-95 transition-transform"
                 >
-                    <div class="text-2xl mb-1">🏖️</div>
-                    <p class="text-white text-xs font-bold">TURISMO</p>
+                    <div class="text-lg mb-0.5">🏖️</div>
+                    <p class="text-white text-[10px] font-bold">TURISMO</p>
                 </button>
              </div>
          </div>
@@ -696,48 +779,41 @@
 
     <!-- Modal de Passagens -->
     <div id="passagensModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden backdrop-blur-sm">
-        <div class="flex items-center justify-center h-full p-4">
-            <div class="elegant-card rounded-3xl p-6 sm:p-8 w-full max-w-lg animate-slide-up shadow-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl sm:text-2xl font-bold gradient-text flex items-center">
-                        <span class="text-3xl mr-3">🎫</span>
+        <div class="flex items-center justify-center h-full p-3">
+            <div class="elegant-card rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-base sm:text-lg font-bold gradient-text flex items-center">
+                        <span class="text-xl mr-2">🎫</span>
                         Passagens Rodoviárias
                     </h3>
-                    <button onclick="closePassagensModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition-colors">×</button>
+                    <button onclick="closePassagensModal()" class="text-gray-400 hover:text-gray-600 text-xl transition-colors">×</button>
                 </div>
                 
-                <div class="text-center mb-6">
-                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 mb-6 text-white shadow-xl relative overflow-hidden">
+                <div class="text-center mb-4">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-3 mb-3 text-white shadow-lg relative overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse"></div>
-                        <h4 class="text-lg sm:text-xl font-bold mb-3 relative z-10">
-                            🚌 Compre sua Passagem SEM FILA!
+                        <h4 class="text-sm sm:text-base font-bold mb-1 relative z-10">
+                            🚌 Compre SEM FILA!
                         </h4>
-                        <p class="text-blue-100 text-sm sm:text-base relative z-10">
-                            ⚡ Atendimento rápido e direto pelo WhatsApp
+                        <p class="text-blue-100 text-xs relative z-10">
+                            ⚡ Direto pelo WhatsApp
                         </p>
                     </div>
                     
-                    <div class="space-y-4 text-left">
-                        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-                            <h5 class="font-bold text-green-800 mb-2">✅ Vantagens Exclusivas:</h5>
-                            <ul class="text-sm text-green-700 space-y-1">
-                                <li>• ⏰ <strong>Sem enfrentar filas</strong> - Compre direto pelo WhatsApp</li>
-                                <li>• 💺 <strong>Escolha seu assento</strong> preferido</li>
-                                <li>• 📱 <strong>Pagamento instantâneo</strong> via PIX</li>
-                                <li>• 📧 <strong>Bilhete digital</strong> enviado na hora</li>
-                                <li>• 🎯 <strong>Atendimento personalizado</strong></li>
+                    <div class="space-y-2 text-left">
+                        <div class="bg-green-50 border-l-3 border-green-500 p-2.5 rounded-lg">
+                            <h5 class="font-bold text-green-800 text-xs mb-1">✅ Vantagens:</h5>
+                            <ul class="text-[11px] text-green-700 space-y-0.5">
+                                <li>• ⏰ <strong>Sem filas</strong></li>
+                                <li>• 💺 <strong>Escolha seu assento</strong></li>
+                                <li>• 📱 <strong>PIX instantâneo</strong></li>
+                                <li>• 📧 <strong>Bilhete digital</strong></li>
                             </ul>
                         </div>
                         
-                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                            <p class="text-blue-800 text-sm font-semibold text-center">
-                                🛡️ <strong>Segurança Garantida:</strong> Empresa licenciada pela ANTT
-                            </p>
-                        </div>
-                        
-                        <div class="bg-yellow-50 border border-yellow-300 rounded-xl p-4">
-                            <p class="text-yellow-800 text-sm font-bold text-center">
-                                ⚠️ <strong>Últimas Vagas!</strong> Garante já sua passagem
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                            <p class="text-blue-800 text-[11px] font-semibold text-center">
+                                🛡️ Empresa licenciada ANTT
                             </p>
                         </div>
                     </div>
@@ -746,16 +822,16 @@
                 <div class="text-center">
                     <a href="https://wa.me/556384962118?text=Olá!%20Quero%20comprar%20uma%20passagem%20rodoviária.%20Pode%20me%20ajudar?" 
                        target="_blank"
-                       class="w-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white font-bold py-4 px-6 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 text-base modern-glow relative overflow-hidden group inline-block">
+                       class="w-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white font-bold py-3 px-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 text-sm modern-glow relative overflow-hidden group inline-block">
                         <span class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
-                        <span class="relative z-10 flex items-center justify-center space-x-2">
-                            <span class="text-2xl">📱</span>
-                            <span>COMPRAR AGORA VIA WHATSAPP</span>
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                            <span class="text-lg">📱</span>
+                            <span>COMPRAR VIA WHATSAPP</span>
                         </span>
                     </a>
                     
-                    <p class="text-xs text-gray-500 mt-3">
-                        🔒 Atendimento seguro e rápido • Disponível 24h
+                    <p class="text-[10px] text-gray-500 mt-2">
+                        🔒 Seguro • Disponível 24h
                     </p>
                 </div>
             </div>
@@ -764,52 +840,50 @@
 
     <!-- Modal de Turismo -->
     <div id="turismoModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden backdrop-blur-sm">
-        <div class="flex items-center justify-center h-full p-4">
-            <div class="elegant-card rounded-3xl p-6 sm:p-8 w-full max-w-lg animate-slide-up shadow-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl sm:text-2xl font-bold gradient-text flex items-center">
-                        <span class="text-3xl mr-3">🏖️</span>
+        <div class="flex items-center justify-center h-full p-3">
+            <div class="elegant-card rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md animate-slide-up shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-base sm:text-lg font-bold gradient-text flex items-center">
+                        <span class="text-xl mr-2">🏖️</span>
                         Turismo & Fretamento
                     </h3>
-                    <button onclick="closeTurismoModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition-colors">×</button>
+                    <button onclick="closeTurismoModal()" class="text-gray-400 hover:text-gray-600 text-xl transition-colors">×</button>
                 </div>
                 
-                <div class="text-center mb-6">
-                    <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl p-6 mb-6 text-white shadow-xl relative overflow-hidden">
+                <div class="text-center mb-4">
+                    <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl p-3 mb-3 text-white shadow-lg relative overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse"></div>
-                        <h4 class="text-lg sm:text-xl font-bold mb-3 relative z-10">
-                            🚌 Alugue Ônibus para suas Viagens!
+                        <h4 class="text-sm sm:text-base font-bold mb-1 relative z-10">
+                            🚌 Alugue Ônibus!
                         </h4>
-                        <p class="text-orange-100 text-sm sm:text-base relative z-10">
-                            ✨ Transforme sua viagem em uma experiência inesquecível
+                        <p class="text-orange-100 text-xs relative z-10">
+                            ✨ Viagem inesquecível
                         </p>
                     </div>
                     
-                    <div class="space-y-4 text-left">
-                        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-                            <h5 class="font-bold text-amber-800 mb-2">🌟 Serviços Disponíveis:</h5>
-                            <ul class="text-sm text-amber-700 space-y-1">
-                                <li>• 🎉 <strong>Excursões turísticas</strong> para destinos incríveis</li>
-                                <li>• 👰 <strong>Casamentos e eventos</strong> especiais</li>
-                                <li>• 🏢 <strong>Viagens corporativas</strong> e empresariais</li>
-                                <li>• 🎓 <strong>Formatura e confraternizações</strong></li>
-                                <li>• 🏖️ <strong>Feriados e fins de semana</strong> únicos</li>
+                    <div class="space-y-2 text-left">
+                        <div class="bg-amber-50 border-l-3 border-amber-500 p-2.5 rounded-lg">
+                            <h5 class="font-bold text-amber-800 text-xs mb-1">🌟 Serviços:</h5>
+                            <ul class="text-[11px] text-amber-700 space-y-0.5">
+                                <li>• 🎉 <strong>Excursões</strong></li>
+                                <li>• 👰 <strong>Casamentos</strong></li>
+                                <li>• 🏢 <strong>Corporativo</strong></li>
+                                <li>• 🎓 <strong>Formaturas</strong></li>
                             </ul>
                         </div>
                         
-                        <div class="bg-green-50 border border-green-300 rounded-xl p-4">
-                            <h5 class="font-bold text-green-800 mb-2">💎 Diferenciais Premium:</h5>
-                            <ul class="text-sm text-green-700 space-y-1">
-                                <li>• ❄️ <strong>Ar condicionado</strong> e WiFi gratuito</li>
-                                <li>• 🛋️ <strong>Poltronas reclináveis</strong> ultra confortáveis</li>
-                                <li>• 🎬 <strong>Entretenimento a bordo</strong></li>
-                                <li>• 👨‍✈️ <strong>Motoristas experientes</strong> e certificados</li>
+                        <div class="bg-green-50 border border-green-300 rounded-lg p-2">
+                            <h5 class="font-bold text-green-800 text-xs mb-1">💎 Diferenciais:</h5>
+                            <ul class="text-[11px] text-green-700 space-y-0.5">
+                                <li>• ❄️ <strong>Ar + WiFi</strong></li>
+                                <li>• 🛋️ <strong>Poltronas reclináveis</strong></li>
+                                <li>• 👨‍✈️ <strong>Motoristas certificados</strong></li>
                             </ul>
                         </div>
                         
-                        <div class="bg-red-50 border border-red-300 rounded-xl p-4">
-                            <p class="text-red-800 text-sm font-bold text-center">
-                                🔥 <strong>Oferta Especial!</strong> Consulte condições e descontos especiais
+                        <div class="bg-red-50 border border-red-300 rounded-lg p-2">
+                            <p class="text-red-800 text-[11px] font-bold text-center">
+                                🔥 Descontos especiais!
                             </p>
                         </div>
                     </div>
@@ -818,16 +892,16 @@
                 <div class="text-center">
                     <a href="https://wa.me/5563984666184?text=Olá!%20Gostaria%20de%20alugar%20um%20ônibus%20para%20turismo.%20Pode%20me%20passar%20mais%20informações?" 
                        target="_blank"
-                       class="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white font-bold py-4 px-6 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 text-base modern-glow relative overflow-hidden group inline-block">
+                       class="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white font-bold py-3 px-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 text-sm modern-glow relative overflow-hidden group inline-block">
                         <span class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
-                        <span class="relative z-10 flex items-center justify-center space-x-2">
-                            <span class="text-2xl">🚌</span>
-                            <span>SOLICITAR ORÇAMENTO AGORA</span>
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                            <span class="text-lg">🚌</span>
+                            <span>SOLICITAR ORÇAMENTO</span>
                         </span>
                     </a>
                     
-                    <p class="text-xs text-gray-500 mt-3">
-                        🎯 Orçamento personalizado • Sem compromisso
+                    <p class="text-[10px] text-gray-500 mt-2">
+                        🎯 Sem compromisso
                     </p>
                 </div>
             </div>
@@ -838,10 +912,13 @@
     <script>
         // Funções para controlar os modais de Passagens e Turismo
         function openPassagensModal() {
+            console.log('openPassagensModal chamado');
             const modal = document.getElementById('passagensModal');
             if (modal) {
                 modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+            } else {
+                console.error('Modal passagensModal não encontrado');
             }
         }
 
@@ -849,15 +926,18 @@
             const modal = document.getElementById('passagensModal');
             if (modal) {
                 modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
+                document.body.style.overflow = 'auto';
             }
         }
 
         function openTurismoModal() {
+            console.log('openTurismoModal chamado');
             const modal = document.getElementById('turismoModal');
             if (modal) {
                 modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+            } else {
+                console.error('Modal turismoModal não encontrado');
             }
         }
 
@@ -865,75 +945,40 @@
             const modal = document.getElementById('turismoModal');
             if (modal) {
                 modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
+                document.body.style.overflow = 'auto';
+            }
         }
 
         // Aguardar DOM carregar para adicionar event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Adicionar event listeners aos botões (fallback para onclick)
-            const passagensButtons = document.querySelectorAll('[onclick*="openPassagensModal"]');
-            passagensButtons.forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openPassagensModal();
-                }, { passive: false });
-                
-                // Para dispositivos móveis - adicionar touchstart também
-                btn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openPassagensModal();
-                }, { passive: false });
-            });
-
-            const turismoButtons = document.querySelectorAll('[onclick*="openTurismoModal"]');
-            turismoButtons.forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openTurismoModal();
-                }, { passive: false });
-                
-                // Para dispositivos móveis - adicionar touchstart também
-                btn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openTurismoModal();
-                }, { passive: false });
-            });
-
-        // Fechar modais clicando fora deles
+            // Fechar modais clicando fora deles
             const passagensModal = document.getElementById('passagensModal');
             if (passagensModal) {
                 passagensModal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closePassagensModal();
-            }
-        });
+                    if (e.target === this) {
+                        closePassagensModal();
+                    }
+                });
             }
 
             const turismoModal = document.getElementById('turismoModal');
             if (turismoModal) {
                 turismoModal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeTurismoModal();
-            }
-        });
+                    if (e.target === this) {
+                        closeTurismoModal();
+                    }
+                });
             }
 
-        // Fechar modais com a tecla ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePassagensModal();
-                closeTurismoModal();
-            }
+            // Fechar modais com a tecla ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePassagensModal();
+                    closeTurismoModal();
+                }
             });
 
-        // ===== VOUCHER SYSTEM =====
-        // Aguardar DOM carregar completamente
-        document.addEventListener('DOMContentLoaded', function() {
+            // ===== VOUCHER SYSTEM =====
             function applyVoucher(inputId, buttonId) {
                 const input = document.getElementById(inputId);
                 const button = document.getElementById(buttonId);
