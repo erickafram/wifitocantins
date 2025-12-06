@@ -14,8 +14,8 @@ return new class extends Migration
         // Tabela de mensagens do WhatsApp
         Schema::create('whatsapp_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('payment_id')->nullable()->constrained()->onDelete('set null');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('payment_id')->nullable();
             $table->string('phone', 20);
             $table->text('message');
             $table->enum('status', ['pending', 'sent', 'failed', 'delivered', 'read'])->default('pending');
@@ -29,6 +29,7 @@ return new class extends Migration
             $table->index(['status', 'created_at']);
             $table->index('phone');
             $table->index('user_id');
+            $table->index('payment_id');
         });
 
         // Tabela de configurações do WhatsApp
