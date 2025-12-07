@@ -24,6 +24,7 @@ cp .env.backup .env
 composer install --optimize-autoloader --no-dev
 
 # 6. Executar migrações (se houver novas)
+
 php artisan migrate --force
 
 # 7. Rodar seeder das configurações
