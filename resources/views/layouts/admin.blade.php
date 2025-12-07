@@ -50,7 +50,7 @@
         <x-sidebar-menu />
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-0">
+        <div class="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-20">
             
             <!-- Top Header -->
             <header class="bg-gradient-to-r from-white via-gray-50 to-white shadow-lg border-b border-gray-200/50 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm">
