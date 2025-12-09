@@ -99,24 +99,36 @@ class MikrotikApiController extends Controller
                            }])
                            ->get(['id', 'mac_address', 'ip_address', 'expires_at', 'connected_at']);
 
+            // Coletar MACs que serão liberados para excluir da lista de remoção
+            $liberateMacs = $paidUsers->pluck('mac_address')->toArray();
+
             // Buscar usuários expirados que devem ser removidos
-            // Incluir status 'expired' também para garantir remoção
-            $expiredUsers = User::whereIn('status', ['connected', 'active', 'expired'])
-                              ->where('expires_at', '<=', now())
+            // EXCLUIR MACs que estão na lista de liberação (evita conflito)
+            $expiredUsers = User::where('status', 'expired')
                               ->whereNotNull('mac_address')
+                              ->whereNotIn('mac_address', $liberateMacs)
                               ->get(['id', 'mac_address', 'ip_address', 'expires_at']);
 
-            // Atualizar status dos usuários expirados para 'expired'
-            if ($expiredUsers->count() > 0) {
-                $expiredUserIds = $expiredUsers->pluck('id')->toArray();
-                User::whereIn('id', $expiredUserIds)->update([
+            // Atualizar status dos usuários que expiraram AGORA para 'expired'
+            $justExpired = User::whereIn('status', ['connected', 'active'])
+                              ->where('expires_at', '<=', now())
+                              ->whereNotNull('mac_address')
+                              ->whereNotIn('mac_address', $liberateMacs)
+                              ->get(['id', 'mac_address', 'ip_address', 'expires_at']);
+            
+            if ($justExpired->count() > 0) {
+                $justExpiredIds = $justExpired->pluck('id')->toArray();
+                User::whereIn('id', $justExpiredIds)->update([
                     'status' => 'expired',
                     'connected_at' => null
                 ]);
                 
+                // Adicionar à lista de remoção
+                $expiredUsers = $expiredUsers->merge($justExpired);
+                
                 Log::info('👥 Usuários expirados atualizados', [
-                    'count' => count($expiredUserIds),
-                    'user_ids' => $expiredUserIds
+                    'count' => count($justExpiredIds),
+                    'user_ids' => $justExpiredIds
                 ]);
             }
 
