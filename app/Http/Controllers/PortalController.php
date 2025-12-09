@@ -19,14 +19,23 @@ class PortalController extends Controller
     {
         $clientIp = $request->ip();
         
-        // Se veio do MikroTik (já passou pelo login), mostrar portal
-        if ($request->has('from_mikrotik') || $request->has('from_splash') || $request->has('skip_login')) {
+        // Se veio do MikroTik ou tem parâmetros de captive portal, mostrar portal
+        if ($request->has('from_mikrotik') || $request->has('from_splash') || $request->has('skip_login') ||
+            $request->has('dst') || $request->has('mac') || $request->has('ip') ||
+            $request->has('source') || $request->has('captive')) {
             $request->session()->put('mikrotik_context_verified', true);
             return $this->showPortal($request);
         }
         
         // Se sessão já verificada, mostrar portal
         if ($request->session()->get('mikrotik_context_verified')) {
+            return $this->showPortal($request);
+        }
+        
+        // Se IP é da rede do hotspot (10.5.50.x), já passou pelo MikroTik
+        if ($this->ipMatchesHotspotSubnets($clientIp)) {
+            Log::info('📱 IP do hotspot detectado, mostrando portal', ['ip' => $clientIp]);
+            $request->session()->put('mikrotik_context_verified', true);
             return $this->showPortal($request);
         }
         
@@ -37,9 +46,10 @@ class PortalController extends Controller
             return $this->showPortal($request, $existingUser);
         }
         
-        // Usuário novo: redirecionar direto para MikroTik capturar MAC
-        Log::info('🔄 Redirecionando para MikroTik capturar MAC', ['ip' => $clientIp]);
-        return redirect()->away('http://10.5.50.1/login?dst=' . urlencode(config('app.url') . '?from_mikrotik=1'));
+        // Usuário de fora da rede: mostrar portal direto (não tem como redirecionar para MikroTik)
+        Log::info('🌐 Acesso externo, mostrando portal', ['ip' => $clientIp]);
+        $request->session()->put('mikrotik_context_verified', true);
+        return $this->showPortal($request);
     }
     
     /**
