@@ -17,71 +17,52 @@ class PortalController extends Controller
      */
     public function index(Request $request)
     {
-        // PRIORIDADE 0: Verificar se usuário já está conectado/liberado pelo MAC ou IP
-        // Se já está conectado, NÃO redirecionar para MikroTik (evita erro login.tocantinswifi.local)
         $clientIp = $request->ip();
-        $existingUser = $this->findConnectedUserByIp($clientIp);
         
-        // Se encontrou usuário (ativo OU expirado), NÃO redirecionar para MikroTik
-        // Já temos o MAC cadastrado, não precisa capturar novamente
-        if ($existingUser) {
-            $isActive = $existingUser->status === 'connected' && 
-                        $existingUser->expires_at && 
-                        $existingUser->expires_at->isFuture();
-            
-            Log::info($isActive ? '✅ Usuário ATIVO' : '⏰ Usuário com cadastro (pode renovar)', [
-                'user_id' => $existingUser->id,
-                'ip' => $clientIp,
-                'mac' => $existingUser->mac_address,
-                'status' => $existingUser->status,
-                'expires_at' => $existingUser->expires_at,
-            ]);
-            
-            // Marcar sessão como verificada para não tentar redirecionar
+        // Se veio do MikroTik (já passou pelo login), mostrar portal
+        if ($request->has('from_mikrotik') || $request->has('from_splash') || $request->has('skip_login')) {
             $request->session()->put('mikrotik_context_verified', true);
-            
-            // Ir direto para o portal/dashboard
-            if (auth()->check() && ! in_array(auth()->user()->role, ['admin', 'manager'], true)) {
-                return redirect()->route('portal.dashboard');
-            }
-            
-            // Mostrar portal com informações do usuário (ativo ou expirado pode renovar)
-            $clientInfo = [
-                'ip_address' => $clientIp,
-                'mac_address' => $existingUser->mac_address,
-                'user_agent' => $request->userAgent(),
-                'device_type' => $this->detectDeviceType($request->userAgent()),
-            ];
-            
-            $priceInfo = \App\Helpers\SettingsHelper::getPriceInfo();
-            
-            return view('portal.index', [
-                'client_info' => $clientInfo,
-                'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
-                'price' => $priceInfo['current_price'],
-                'original_price' => $priceInfo['original_price'],
-                'discount_percentage' => $priceInfo['discount_percentage'],
-                'savings' => $priceInfo['savings'],
-                'speed' => '100+ Mbps',
-                'session_duration' => \App\Models\SystemSetting::getValue('session_duration', 12),
-                'connected_user' => $existingUser,
-            ]);
+            return $this->showPortal($request);
         }
         
-        // PRIORIDADE 1: Se deve forçar redirecionamento MikroTik, mostrar splash screen
-        // (isso deve acontecer ANTES de verificar autenticação)
-        if ($this->shouldForceMikrotikRedirect($request)) {
-            return $this->showSplashScreen($request);
+        // Se sessão já verificada, mostrar portal
+        if ($request->session()->get('mikrotik_context_verified')) {
+            return $this->showPortal($request);
         }
-
-        // PRIORIDADE 2: Redirecionar usuários autenticados para dashboard
+        
+        // Verificar se usuário já tem cadastro (ativo ou expirado)
+        $existingUser = $this->findConnectedUserByIp($clientIp);
+        if ($existingUser) {
+            $request->session()->put('mikrotik_context_verified', true);
+            return $this->showPortal($request, $existingUser);
+        }
+        
+        // Usuário novo: redirecionar direto para MikroTik capturar MAC
+        Log::info('🔄 Redirecionando para MikroTik capturar MAC', ['ip' => $clientIp]);
+        return redirect()->away('http://10.5.50.1/login?dst=' . urlencode(config('app.url') . '?from_mikrotik=1'));
+    }
+    
+    /**
+     * Exibe o portal com informações do usuário
+     */
+    private function showPortal(Request $request, ?User $existingUser = null)
+    {
+        $clientIp = $request->ip();
+        
+        // Redirecionar usuários autenticados para dashboard
         if (auth()->check() && ! in_array(auth()->user()->role, ['admin', 'manager'], true)) {
             return redirect()->route('portal.dashboard');
         }
-
-        $clientInfo = $this->getClientInfo($request);
+        
+        $clientInfo = $existingUser ? [
+            'ip_address' => $clientIp,
+            'mac_address' => $existingUser->mac_address,
+            'user_agent' => $request->userAgent(),
+            'device_type' => $this->detectDeviceType($request->userAgent()),
+        ] : $this->getClientInfo($request);
+        
         $priceInfo = \App\Helpers\SettingsHelper::getPriceInfo();
-
+        
         return view('portal.index', [
             'client_info' => $clientInfo,
             'company_name' => config('app.company_name', 'WiFi Tocantins Express'),
@@ -91,6 +72,7 @@ class PortalController extends Controller
             'savings' => $priceInfo['savings'],
             'speed' => '100+ Mbps',
             'session_duration' => \App\Models\SystemSetting::getValue('session_duration', 12),
+            'connected_user' => $existingUser,
         ]);
     }
     
