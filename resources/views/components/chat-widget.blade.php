@@ -548,9 +548,46 @@
                 }
             })
             .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro de conexão. Verifique sua internet e tente novamente.');
-                resetStartButton();
+                console.error('Erro ao iniciar chat:', error);
+                // Tentar novamente uma vez
+                setTimeout(() => {
+                    fetch('/api/chat/start', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            phone: phone,
+                            email: email,
+                            message: message,
+                            mac: window.CLIENT_MAC || null
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            chatSessionId = data.session_id;
+                            chatUserName = name;
+                            localStorage.setItem('chat_session_id', chatSessionId);
+                            localStorage.setItem('chat_user_name', chatUserName);
+                            showMessagesContainer();
+                            addMessage(message, false);
+                            setTimeout(() => {
+                                addMessage('Obrigado! Nossa equipe responderá em breve. 😊', true, 'Sistema');
+                            }, 500);
+                            startPolling();
+                        } else {
+                            alert('Não foi possível conectar ao chat. Tente novamente em alguns segundos.');
+                            resetStartButton();
+                        }
+                    })
+                    .catch(() => {
+                        alert('Conexão indisponível. Aguarde alguns segundos e tente novamente.');
+                        resetStartButton();
+                    });
+                }, 1500);
             });
         });
     }
