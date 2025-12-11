@@ -679,6 +679,12 @@
             fetch(`/api/chat/check?session_id=${chatSessionId}&last_id=${lastMessageId}`)
                 .then(response => response.json())
                 .then(data => {
+                    // Verificar se conversa foi encerrada
+                    if (data.closed) {
+                        showConversationClosed();
+                        return;
+                    }
+                    
                     if (data.success && data.has_new && data.messages) {
                         data.messages.forEach(msg => {
                             const adminName = msg.admin ? msg.admin.name : 'Atendente';
@@ -701,6 +707,61 @@
             pollingInterval = null;
         }
     }
+
+    // Mostrar mensagem de conversa encerrada
+    function showConversationClosed() {
+        stopPolling();
+        
+        const messagesDiv = document.getElementById('chat-messages');
+        const closedMsg = document.createElement('div');
+        closedMsg.className = 'flex justify-center my-4';
+        closedMsg.innerHTML = `
+            <div class="bg-gray-100 rounded-xl px-4 py-3 text-center max-w-[90%]">
+                <div class="text-2xl mb-2">✅</div>
+                <p class="text-sm font-medium text-gray-700">Conversa encerrada</p>
+                <p class="text-xs text-gray-500 mt-1">Obrigado pelo contato!</p>
+                <button onclick="startNewConversation()" class="mt-3 bg-emerald-500 text-white text-xs px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors">
+                    Iniciar nova conversa
+                </button>
+            </div>
+        `;
+        messagesDiv.appendChild(closedMsg);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        // Desabilitar input
+        const input = document.getElementById('chat-message-input');
+        if (input) {
+            input.disabled = true;
+            input.placeholder = 'Conversa encerrada';
+        }
+    }
+
+    // Iniciar nova conversa
+    window.startNewConversation = function() {
+        // Limpar sessão
+        localStorage.removeItem('chat_session_id');
+        localStorage.removeItem('chat_user_name');
+        chatSessionId = null;
+        chatUserName = null;
+        lastMessageId = 0;
+        
+        // Mostrar formulário
+        document.getElementById('chat-form-container').classList.remove('hidden');
+        document.getElementById('chat-messages-container').classList.add('hidden');
+        
+        // Limpar formulário
+        document.getElementById('chat-name').value = '';
+        document.getElementById('chat-phone').value = '';
+        document.getElementById('chat-email').value = '';
+        document.getElementById('chat-first-message').value = '';
+        
+        // Reabilitar input
+        const input = document.getElementById('chat-message-input');
+        if (input) {
+            input.disabled = false;
+            input.placeholder = 'Digite sua mensagem...';
+        }
+    };
 
     // Se já tem sessão, iniciar polling em background
     if (chatSessionId) {

@@ -67,15 +67,22 @@ class ChatApiController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        $conversation = ChatConversation::where('session_id', $request->session_id)
-            ->whereIn('status', ['active', 'pending'])
-            ->first();
+        $conversation = ChatConversation::where('session_id', $request->session_id)->first();
 
         if (!$conversation) {
             return response()->json([
                 'success' => false,
                 'error' => 'Conversa não encontrada. Inicie uma nova conversa.',
             ], 404);
+        }
+
+        // Verificar se conversa foi encerrada
+        if ($conversation->status === 'closed') {
+            return response()->json([
+                'success' => false,
+                'closed' => true,
+                'error' => 'Esta conversa foi encerrada.',
+            ]);
         }
 
         $message = ChatMessage::create([
@@ -145,6 +152,16 @@ class ChatApiController extends Controller
             ]);
         }
 
+        // Verificar se conversa foi encerrada
+        if ($conversation->status === 'closed') {
+            return response()->json([
+                'success' => true,
+                'closed' => true,
+                'has_new' => false,
+                'messages' => [],
+            ]);
+        }
+
         $query = $conversation->messages()
             ->where('sender_type', 'admin')
             ->with('admin:id,name');
@@ -157,6 +174,7 @@ class ChatApiController extends Controller
 
         return response()->json([
             'success' => true,
+            'closed' => false,
             'has_new' => $newMessages->count() > 0,
             'messages' => $newMessages,
             'status' => $conversation->status,
