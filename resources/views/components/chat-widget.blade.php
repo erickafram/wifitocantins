@@ -440,12 +440,6 @@
     function showMessagesContainer() {
         document.getElementById('chat-form-container').classList.add('hidden');
         document.getElementById('chat-messages-container').classList.remove('hidden');
-        
-        // Atualizar info do usuário
-        if (chatUserName) {
-            document.getElementById('chat-user-name-display').textContent = chatUserName;
-            document.getElementById('chat-user-avatar').textContent = chatUserName.charAt(0).toUpperCase();
-        }
     }
 
     // Adicionar mensagem na tela
