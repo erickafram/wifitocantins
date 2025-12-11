@@ -18,12 +18,15 @@ class ChatApiController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        $sessionId = $request->session_id ?? Str::uuid()->toString();
-
-        // Verificar se já existe conversa ativa com esse session_id
-        $conversation = ChatConversation::where('session_id', $sessionId)
+        // Verificar se já existe conversa ativa com esse email/telefone (evita duplicatas)
+        $conversation = ChatConversation::where(function($q) use ($request) {
+                $q->where('visitor_email', $request->email)
+                  ->orWhere('visitor_phone', $request->phone);
+            })
             ->whereIn('status', ['active', 'pending'])
             ->first();
+
+        $sessionId = $conversation ? $conversation->session_id : Str::uuid()->toString();
 
         if (!$conversation) {
             $conversation = ChatConversation::create([
@@ -35,22 +38,32 @@ class ChatApiController extends Controller
                 'session_id' => $sessionId,
                 'status' => 'pending',
                 'last_message_at' => now(),
-                'unread_count' => 1,
+                'unread_count' => 0,
             ]);
         }
 
-        // Criar mensagem
-        $message = ChatMessage::create([
-            'conversation_id' => $conversation->id,
-            'sender_type' => 'visitor',
-            'message' => $request->message,
-            'is_read' => false,
-        ]);
+        // Verificar se já existe essa mensagem (evita duplicatas no retry)
+        $existingMessage = ChatMessage::where('conversation_id', $conversation->id)
+            ->where('message', $request->message)
+            ->where('sender_type', 'visitor')
+            ->where('created_at', '>=', now()->subMinutes(2))
+            ->first();
 
-        $conversation->update([
-            'last_message_at' => now(),
-            'unread_count' => $conversation->unread_count + 1,
-        ]);
+        if (!$existingMessage) {
+            $message = ChatMessage::create([
+                'conversation_id' => $conversation->id,
+                'sender_type' => 'visitor',
+                'message' => $request->message,
+                'is_read' => false,
+            ]);
+
+            $conversation->update([
+                'last_message_at' => now(),
+                'unread_count' => $conversation->unread_count + 1,
+            ]);
+        } else {
+            $message = $existingMessage;
+        }
 
         return response()->json([
             'success' => true,
