@@ -64,11 +64,22 @@
 
             <!-- WhatsApp -->
             <a href="{{ route('admin.whatsapp.index') }}" onclick="closeSidebarOnMobile()" class="flex items-center lg:justify-center space-x-3 lg:space-x-0 px-3 py-3 lg:p-0 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl {{ request()->routeIs('admin.whatsapp*') ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-green-500 hover:to-green-600 hover:text-white' }} shadow-md hover:shadow-lg transition-all duration-300 group relative" title="WhatsApp">
-                <span class="text-lg lg:text-sm">💬</span>
+                <span class="text-lg lg:text-sm">📱</span>
                 <span class="lg:hidden font-medium">WhatsApp</span>
                 <div class="hidden lg:block absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
                     WhatsApp
                 </div>
+            </a>
+
+            <!-- Chat Atendimento -->
+            <a href="{{ route('admin.chat.index') }}" onclick="closeSidebarOnMobile()" class="flex items-center lg:justify-center space-x-3 lg:space-x-0 px-3 py-3 lg:p-0 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl {{ request()->routeIs('admin.chat*') ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-blue-500 hover:to-blue-600 hover:text-white' }} shadow-md hover:shadow-lg transition-all duration-300 group relative" title="Chat">
+                <span class="text-lg lg:text-sm">💬</span>
+                <span class="lg:hidden font-medium">Chat</span>
+                <div class="hidden lg:block absolute left-20 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 shadow-xl">
+                    Chat Atendimento
+                </div>
+                <!-- Badge de mensagens não lidas -->
+                <span id="chat-unread-badge" class="hidden absolute -top-1 -right-1 lg:top-0 lg:right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse"></span>
             </a>
 
             <!-- Dispositivos -->

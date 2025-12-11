@@ -102,3 +102,11 @@ Route::prefix('mikrotik-sync')->group(function () {
 
 // WhatsApp Webhook (recebe notificações do servidor Baileys)
 Route::post('/whatsapp/webhook', [WhatsappController::class, 'webhook']);
+
+// Chat API (Atendimento Online)
+Route::prefix('chat')->group(function () {
+    Route::post('/start', [App\Http\Controllers\ChatApiController::class, 'startConversation']);
+    Route::post('/send', [App\Http\Controllers\ChatApiController::class, 'sendMessage']);
+    Route::get('/messages', [App\Http\Controllers\ChatApiController::class, 'getMessages']);
+    Route::get('/check', [App\Http\Controllers\ChatApiController::class, 'checkNewMessages']);
+});
