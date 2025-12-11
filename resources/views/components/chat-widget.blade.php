@@ -32,147 +32,106 @@
     </div>
 
     <!-- Chat Box -->
-    <div id="chat-box" class="hidden absolute bottom-20 right-0 w-[360px] sm:w-[400px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-        <!-- Header com gradiente -->
-        <div class="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 p-5 text-white relative overflow-hidden">
-            <!-- Padrão decorativo -->
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-            <div class="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-            
-            <div class="relative flex items-center space-x-4">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-                    <span class="text-3xl">🚌</span>
+    <div id="chat-box" class="hidden absolute bottom-16 right-0 w-[320px] sm:w-[340px] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
+        <!-- Header compacto -->
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 text-white">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <span class="text-xl">🚌</span>
                 </div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-lg">WiFi Tocantins</h4>
-                    <div class="flex items-center space-x-2">
-                        <span class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
-                        <p class="text-sm text-emerald-100">Atendimento Online</p>
+                    <h4 class="font-semibold text-sm">WiFi Tocantins</h4>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></span>
+                        <p class="text-xs text-emerald-100">Online</p>
                     </div>
                 </div>
-                <button onclick="toggleChatWidget()" class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button onclick="toggleChatWidget()" class="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
         </div>
 
-        <!-- Formulário Inicial -->
-        <div id="chat-form-container" class="p-6">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span class="text-3xl">👋</span>
-                </div>
-                <h5 class="font-semibold text-gray-800 text-lg">Olá! Como podemos ajudar?</h5>
-                <p class="text-sm text-gray-500 mt-1">Preencha seus dados para iniciar o atendimento</p>
+        <!-- Formulário Inicial Compacto -->
+        <div id="chat-form-container" class="p-4">
+            <div class="text-center mb-3">
+                <h5 class="font-semibold text-gray-800 text-sm">👋 Como podemos ajudar?</h5>
             </div>
             
-            <form id="chat-start-form" class="space-y-4">
+            <form id="chat-start-form" class="space-y-2.5">
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </div>
-                    <input type="text" id="chat-name" placeholder="Seu nome completo" required
-                           class="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                    <input type="text" id="chat-name" placeholder="Seu nome" required
+                           class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                         </svg>
                     </div>
                     <input type="tel" id="chat-phone" placeholder="(00) 00000-0000" required maxlength="16"
-                           class="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                           class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </div>
                     <input type="email" id="chat-email" placeholder="seu@email.com" required
-                           class="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                           class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div class="relative">
-                    <div class="absolute top-3 left-0 pl-4 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="absolute top-2.5 left-0 pl-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                         </svg>
                     </div>
-                    <textarea id="chat-first-message" placeholder="Descreva como podemos ajudar..." required rows="3"
-                              class="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all resize-none"></textarea>
+                    <textarea id="chat-first-message" placeholder="Como podemos ajudar?" required rows="2"
+                              class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all resize-none"></textarea>
                 </div>
                 <button type="submit" id="chat-start-btn"
-                        class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transform hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2">
+                        class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2.5 rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center space-x-2">
                     <span>Iniciar Conversa</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                     </svg>
                 </button>
             </form>
             
-            <p class="text-xs text-gray-400 text-center mt-4 flex items-center justify-center space-x-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <p class="text-[10px] text-gray-400 text-center mt-3 flex items-center justify-center space-x-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
-                <span>Seus dados estão protegidos</span>
+                <span>Dados protegidos</span>
             </p>
         </div>
 
-        <!-- Área de Mensagens -->
-        <div id="chat-messages-container" class="hidden flex flex-col" style="height: 420px;">
-            <!-- Info do atendimento -->
-            <div id="chat-user-info" class="px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-bold" id="chat-user-avatar">U</div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-800" id="chat-user-name-display">Usuário</p>
-                            <p class="text-xs text-emerald-600">Conversa ativa</p>
-                        </div>
-                    </div>
-                    <span class="text-xs text-gray-400" id="chat-status">Online</span>
-                </div>
-            </div>
-
+        <!-- Área de Mensagens Compacta -->
+        <div id="chat-messages-container" class="hidden flex flex-col" style="height: 300px;">
             <!-- Mensagens -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50">
                 <!-- Mensagem de boas-vindas -->
                 <div class="flex justify-center">
-                    <span class="text-xs text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm">Início da conversa</span>
-                </div>
-            </div>
-
-            <!-- Indicador de digitação -->
-            <div id="typing-indicator" class="hidden px-4 py-2">
-                <div class="flex items-center space-x-2 text-gray-500 text-sm">
-                    <div class="flex space-x-1">
-                        <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                        <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                        <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
-                    </div>
-                    <span>Atendente digitando...</span>
+                    <span class="text-[10px] text-gray-400 bg-white px-2 py-0.5 rounded-full shadow-sm">Início da conversa</span>
                 </div>
             </div>
 
             <!-- Input de Mensagem -->
-            <div class="p-4 border-t bg-white">
-                <form id="chat-send-form" class="flex items-center space-x-3">
-                    <div class="flex-1 relative">
-                        <input type="text" id="chat-message-input" placeholder="Digite sua mensagem..." autocomplete="off"
-                               class="w-full bg-gray-100 border-2 border-transparent rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all pr-12">
-                        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </button>
-                    </div>
+            <div class="p-3 border-t bg-white">
+                <form id="chat-send-form" class="flex items-center space-x-2">
+                    <input type="text" id="chat-message-input" placeholder="Digite sua mensagem..." autocomplete="off"
+                           class="flex-1 bg-gray-100 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                     <button type="submit" 
-                            class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transform hover:scale-105 transition-all flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="w-9 h-9 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-md transition-all flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                         </svg>
                     </button>
