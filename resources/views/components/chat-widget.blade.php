@@ -586,8 +586,21 @@
                     message: message
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    clearSession();
+                    return null;
+                }
+                return response.json();
+            })
             .then(data => {
+                if (!data) return;
+                
+                if (data.closed) {
+                    showConversationClosed();
+                    return;
+                }
+                
                 if (data.success && data.message && data.message.id) {
                     lastMessageId = Math.max(lastMessageId, data.message.id);
                 }
@@ -603,14 +616,28 @@
         if (!chatSessionId) return;
 
         fetch(`/api/chat/messages?session_id=${chatSessionId}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    // Sessão não existe mais, limpar e mostrar formulário
+                    clearSession();
+                    return null;
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success && data.messages) {
+                if (!data) return;
+                
+                if (!data.success) {
+                    // Sessão inválida, limpar
+                    clearSession();
+                    return;
+                }
+                
+                if (data.messages) {
                     const messagesDiv = document.getElementById('chat-messages');
-                    // Manter apenas o indicador de início
                     messagesDiv.innerHTML = `
                         <div class="flex justify-center">
-                            <span class="text-xs text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm">Início da conversa</span>
+                            <span class="text-[10px] text-gray-400 bg-white px-2 py-0.5 rounded-full shadow-sm">Início da conversa</span>
                         </div>
                     `;
                     
@@ -623,7 +650,25 @@
                         lastMessageId = Math.max(lastMessageId, msg.id);
                     });
                 }
+            })
+            .catch(() => {
+                // Erro de conexão, não limpar sessão
+                console.log('Erro ao carregar mensagens');
             });
+    }
+    
+    // Limpar sessão inválida
+    function clearSession() {
+        localStorage.removeItem('chat_session_id');
+        localStorage.removeItem('chat_user_name');
+        chatSessionId = null;
+        chatUserName = null;
+        lastMessageId = 0;
+        stopPolling();
+        
+        // Mostrar formulário
+        document.getElementById('chat-form-container').classList.remove('hidden');
+        document.getElementById('chat-messages-container').classList.add('hidden');
     }
 
     // Polling para novas mensagens
