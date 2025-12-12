@@ -93,6 +93,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
     });
     
+    // Rotas do Chat (Atendimento Online)
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('index');
+        Route::get('/unread-count', [App\Http\Controllers\Admin\ChatController::class, 'getUnreadCount'])->name('unread');
+        Route::get('/{id}', [App\Http\Controllers\Admin\ChatController::class, 'show'])->name('show')->where('id', '[0-9]+');
+        Route::post('/{id}/reply', [App\Http\Controllers\Admin\ChatController::class, 'reply'])->name('reply')->where('id', '[0-9]+');
+        Route::post('/{id}/close', [App\Http\Controllers\Admin\ChatController::class, 'close'])->name('close')->where('id', '[0-9]+');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('destroy')->where('id', '[0-9]+');
+        Route::get('/{id}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getMessages'])->name('messages')->where('id', '[0-9]+');
+    });
+    
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
         // Gerenciamento de Usuários

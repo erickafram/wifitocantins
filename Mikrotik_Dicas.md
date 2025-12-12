@@ -6,7 +6,13 @@ ARQVUIDO RSC
 
 RESTAURAR BACKUP COMPLETO (.backup)
 /system backup load name=config_backup.backup
+/system backup load name=backup-completo.backup
 
 
 RESTAURAR EXPORTAÇÃO (.rsc)
 /import file-name=config_export.rsc
+
+
+
+LOGS LIBERAÇÃO
+/log print where topics~"script"

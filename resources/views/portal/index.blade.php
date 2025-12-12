@@ -1080,5 +1080,8 @@
     
     <script src="{{ asset('js/mac-detector.js') }}?v={{ time() }}"></script>
     <script src="{{ asset('js/portal.js') }}?v={{ time() }}"></script>
+    
+    <!-- Chat Widget - Atendimento Online -->
+    @include('components.chat-widget')
 </body>
 </html>
