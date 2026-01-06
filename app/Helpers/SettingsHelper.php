@@ -38,6 +38,36 @@ class SettingsHelper
     }
 
     /**
+     * Obter email do PagBank
+     */
+    public static function getPagBankEmail(): string
+    {
+        return Cache::remember('pagbank_email', 3600, function () {
+            return SystemSetting::getValue('pagbank_email', 'juniormoreiragloboplay@gmail.com');
+        });
+    }
+
+    /**
+     * Obter token do PagBank
+     */
+    public static function getPagBankToken(): string
+    {
+        return Cache::remember('pagbank_token', 3600, function () {
+            return SystemSetting::getValue('pagbank_token', 'c75a2308-ec9d-4825-94fd-bacba8a7248344f58a634d1b857348dba39f6a5b6c957b2a-2890-4da4-9866-af24b6eee984');
+        });
+    }
+
+    /**
+     * Obter conta PagBank selecionada (junior ou erick)
+     */
+    public static function getPagBankAccount(): string
+    {
+        return Cache::remember('pagbank_account', 3600, function () {
+            return SystemSetting::getValue('pagbank_account', 'junior');
+        });
+    }
+
+    /**
      * Calcular preço original (preço promocional * multiplicador)
      * Exemplo: Se preço atual é R$ 5,99, o original seria R$ 20,99
      */
@@ -95,5 +125,8 @@ class SettingsHelper
         Cache::forget('wifi_price');
         Cache::forget('pix_gateway');
         Cache::forget('session_duration');
+        Cache::forget('pagbank_account');
+        Cache::forget('pagbank_email');
+        Cache::forget('pagbank_token');
     }
 }

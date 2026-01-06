@@ -128,6 +128,77 @@
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    <!-- Campos PagBank (aparecem quando PagBank está selecionado) -->
+                    <div id="pagbank-fields" class="mt-6 p-4 bg-blue-50 rounded-xl border-2 border-blue-200" style="display: {{ $settings['pix_gateway'] == 'pagbank' ? 'block' : 'none' }};">
+                        <h3 class="text-lg font-bold text-blue-800 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                            Credenciais PagBank
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Seleção de Conta Pré-configurada -->
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-3">
+                                    👤 Selecionar Conta PagBank
+                                </label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-500 {{ ($settings['pagbank_account'] ?? 'junior') == 'junior' ? 'border-blue-500 bg-white' : 'border-gray-300 bg-white' }}">
+                                        <input 
+                                            type="radio" 
+                                            name="pagbank_account" 
+                                            value="junior" 
+                                            id="pagbank_account_junior"
+                                            {{ ($settings['pagbank_account'] ?? 'junior') == 'junior' ? 'checked' : '' }}
+                                            class="mr-3"
+                                        >
+                                        <div>
+                                            <p class="font-bold text-gray-800">Conta Junior</p>
+                                            <p class="text-xs text-gray-600">juniormoreiragloboplay@gmail.com</p>
+                                            <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Padrão</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-500 {{ ($settings['pagbank_account'] ?? 'junior') == 'erick' ? 'border-blue-500 bg-white' : 'border-gray-300 bg-white' }}">
+                                        <input 
+                                            type="radio" 
+                                            name="pagbank_account" 
+                                            value="erick" 
+                                            id="pagbank_account_erick"
+                                            {{ ($settings['pagbank_account'] ?? 'junior') == 'erick' ? 'checked' : '' }}
+                                            class="mr-3"
+                                        >
+                                        <div>
+                                            <p class="font-bold text-gray-800">Conta Erick</p>
+                                            <p class="text-xs text-gray-600">erickafram10@gmail.com</p>
+                                            <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">Secundária</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                @error('pagbank_account')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Campos ocultos com os valores das credenciais (preenchidos via JS) -->
+                            <input type="hidden" name="pagbank_email" id="pagbank_email" value="{{ old('pagbank_email', $settings['pagbank_email'] ?? '') }}">
+                            <input type="hidden" name="pagbank_token" id="pagbank_token" value="{{ old('pagbank_token', $settings['pagbank_token'] ?? '') }}">
+
+                            <!-- Info da conta selecionada -->
+                            <div class="mt-4 p-3 bg-white rounded-lg border border-blue-200">
+                                <p class="text-sm text-gray-600">
+                                    <span class="font-bold">Email ativo:</span> 
+                                    <span id="active-email" class="font-mono text-blue-600">{{ $settings['pagbank_email'] ?? 'juniormoreiragloboplay@gmail.com' }}</span>
+                                </p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="font-bold">Token:</span> 
+                                    <span class="font-mono text-gray-500">••••{{ substr($settings['pagbank_token'] ?? '', -8) }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -179,4 +250,71 @@
 
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const gatewayRadios = document.querySelectorAll('input[name="pix_gateway"]');
+        const pagbankFields = document.getElementById('pagbank-fields');
+        const accountRadios = document.querySelectorAll('input[name="pagbank_account"]');
+        const emailInput = document.getElementById('pagbank_email');
+        const tokenInput = document.getElementById('pagbank_token');
+        const activeEmailSpan = document.getElementById('active-email');
+        
+        // Credenciais das contas pré-configuradas
+        const accounts = {
+            junior: {
+                email: 'juniormoreiragloboplay@gmail.com',
+                token: 'c75a2308-ec9d-4825-94fd-bacba8a7248344f58a634d1b857348dba39f6a5b6c957b2a-2890-4da4-9866-af24b6eee984'
+            },
+            erick: {
+                email: 'erickafram10@gmail.com',
+                token: 'e41abc67-2aee-45d7-82e1-69b3b4c35c52caece8f4410eb9e73f94523285451060679e-608e-4cf9-9d02-6894277eaa88'
+            }
+        };
+        
+        function togglePagbankFields() {
+            const selectedGateway = document.querySelector('input[name="pix_gateway"]:checked');
+            if (selectedGateway && selectedGateway.value === 'pagbank') {
+                pagbankFields.style.display = 'block';
+            } else {
+                pagbankFields.style.display = 'none';
+            }
+        }
+        
+        function updatePagbankCredentials() {
+            const selectedAccount = document.querySelector('input[name="pagbank_account"]:checked');
+            if (selectedAccount && accounts[selectedAccount.value]) {
+                const account = accounts[selectedAccount.value];
+                emailInput.value = account.email;
+                tokenInput.value = account.token;
+                activeEmailSpan.textContent = account.email;
+                
+                // Atualizar visual dos cards
+                document.querySelectorAll('input[name="pagbank_account"]').forEach(radio => {
+                    const label = radio.closest('label');
+                    if (radio.checked) {
+                        label.classList.remove('border-gray-300');
+                        label.classList.add('border-blue-500');
+                    } else {
+                        label.classList.remove('border-blue-500');
+                        label.classList.add('border-gray-300');
+                    }
+                });
+            }
+        }
+        
+        gatewayRadios.forEach(radio => {
+            radio.addEventListener('change', togglePagbankFields);
+        });
+        
+        accountRadios.forEach(radio => {
+            radio.addEventListener('change', updatePagbankCredentials);
+        });
+        
+        // Inicializar credenciais com a conta selecionada
+        updatePagbankCredentials();
+    });
+</script>
+@endpush
 @endsection

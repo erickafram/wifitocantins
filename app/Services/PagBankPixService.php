@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\SettingsHelper;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +23,9 @@ class PagBankPixService
 
     public function __construct()
     {
-        $this->token = config('wifi.payment_gateways.pix.pagbank_token');
+        // Prioriza o token do banco de dados (configurado no painel admin)
+        // Se não existir, usa o do .env como fallback
+        $this->token = SettingsHelper::getPagBankToken() ?: config('wifi.payment_gateways.pix.pagbank_token');
         $this->environment = config('wifi.payment_gateways.pix.environment', 'sandbox');
         
         // URLs do PagBank

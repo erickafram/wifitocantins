@@ -188,7 +188,9 @@ class PixPaymentManager
      */
     private function handlePagBankGateway(Payment $payment, float $amount): array
     {
-        if (! config('wifi.payment_gateways.pix.pagbank_token')) {
+        // Verifica token do banco de dados (painel admin) ou do .env
+        $pagbankToken = \App\Helpers\SettingsHelper::getPagBankToken() ?: config('wifi.payment_gateways.pix.pagbank_token');
+        if (! $pagbankToken) {
             return $this->handleDefaultGateway($payment, $amount);
         }
 
