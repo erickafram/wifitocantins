@@ -129,8 +129,15 @@
                         <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['total_payments'] }}</p>
                     </div>
                 </div>
-                <div class="text-xs text-gray-500">
-                    No período selecionado
+                <div class="flex items-center justify-between text-xs">
+                    <span class="flex items-center text-green-600">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                        {{ $stats['completed_payments_count'] }} pagos
+                    </span>
+                    <span class="flex items-center text-yellow-600">
+                        <span class="w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
+                        {{ $stats['pending_payments_count'] }} pendentes
+                    </span>
                 </div>
             </div>
         </div>

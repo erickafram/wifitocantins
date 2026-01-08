@@ -44,66 +44,78 @@
 <body class="font-inter bg-gray-100 text-sm">
 
     <!-- Layout Principal -->
-    <div class="flex h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200">
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
         
         <!-- Sidebar Menu Component -->
         <x-sidebar-menu />
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-20">
+        <div class="lg:ml-64 min-h-screen flex flex-col">
             
             <!-- Top Header -->
-            <header class="bg-gradient-to-r from-white via-gray-50 to-white shadow-lg border-b border-gray-200/50 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm">
+            <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 px-4 sm:px-6 py-3">
                 <div class="flex justify-between items-center">
                     <!-- Título e Breadcrumb -->
                     <div class="ml-12 lg:ml-0">
                         <!-- Breadcrumb -->
-                        <nav class="flex items-center space-x-2 text-xs text-gray-500 mb-1">
-                            <a href="{{ route('admin.dashboard') }}" class="hover:text-tocantins-green transition-colors">Dashboard</a>
+                        <nav class="flex items-center space-x-2 text-xs text-gray-500 mb-0.5">
+                            <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors flex items-center">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                </svg>
+                                Início
+                            </a>
                             @yield('breadcrumb')
                         </nav>
                         
-                        <h1 class="text-sm sm:text-lg font-bold bg-gradient-to-r from-tocantins-green to-tocantins-dark-green bg-clip-text text-transparent">
+                        <h1 class="text-lg sm:text-xl font-bold text-slate-800">
                             @yield('page-title', 'WiFi Tocantins Admin')
                         </h1>
-                        <p class="text-xs text-gray-500 font-medium hidden sm:block">{{ now()->format('d/m/Y H:i') }}</p>
                     </div>
                     
-                    <!-- Ações Rápidas (Desktop) -->
-                    <div class="hidden lg:flex items-center space-x-2">
-                        @if(!request()->routeIs('admin.dashboard'))
-                        <a href="{{ route('admin.dashboard') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center">
-                            <span class="mr-1">🏠</span>
-                            Dashboard
-                        </a>
-                        @endif
+                    <!-- Ações Rápidas e Info -->
+                    <div class="flex items-center space-x-3">
+                        <!-- Data/Hora -->
+                        <div class="hidden sm:flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ now()->format('d/m/Y H:i') }}
+                        </div>
                         
-                        @if(!request()->routeIs('admin.users*'))
-                        <a href="{{ route('admin.users') }}" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center">
-                            <span class="mr-1">👥</span>
-                            Usuários
-                        </a>
-                        @endif
-                        
-                        @if(!request()->routeIs('admin.reports*'))
-                        <a href="{{ route('admin.reports') }}" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center">
-                            <span class="mr-1">📈</span>
-                            Relatórios
-                        </a>
-                        @endif
-                    </div>
-                    
-                    <!-- Data/Hora (Mobile) -->
-                    <div class="lg:hidden text-right">
-                        <p class="text-xs text-gray-500 font-medium">{{ now()->format('d/m H:i') }}</p>
+                        <!-- Botões de Ação Rápida (Desktop) -->
+                        <div class="hidden lg:flex items-center space-x-2">
+                            @if(!request()->routeIs('admin.reports*'))
+                            <a href="{{ route('admin.reports') }}" class="flex items-center px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">
+                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                Relatórios
+                            </a>
+                            @endif
+                            
+                            @if(!request()->routeIs('admin.vouchers*'))
+                            <a href="{{ route('admin.vouchers.create') }}" class="flex items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors">
+                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Novo Voucher
+                            </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </header>
 
             <!-- Content Area -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 pb-16">
+            <main class="flex-1 p-4 sm:p-6 pb-20">
                 @yield('content')
             </main>
+            
+            <!-- Footer -->
+            <footer class="py-3 px-6 text-center text-xs text-gray-400 border-t border-gray-200/50 bg-white/50">
+                © {{ date('Y') }} WiFi Tocantins Transporte. Todos os direitos reservados.
+            </footer>
         </div>
     </div>
 

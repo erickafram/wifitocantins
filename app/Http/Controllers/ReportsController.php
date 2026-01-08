@@ -87,15 +87,31 @@ class ReportsController extends Controller
             ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->sum('amount');
         
+        // Contagem de pagamentos por status
+        $completedPayments = Payment::where('status', 'completed')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->count();
+        
+        $pendingPaymentsCount = Payment::where('status', 'pending')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->count();
+        
+        $failedPaymentsCount = Payment::where('status', 'failed')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->count();
+        
         return [
             'total_revenue' => $totalRevenue,
             'pending_payments' => $pendingPayments,
+            'pending_payments_count' => $pendingPaymentsCount,
+            'completed_payments_count' => $completedPayments,
+            'failed_payments_count' => $failedPaymentsCount,
             'total_payments' => $totalPayments,
             'total_users' => $totalUsers,
             'connected_users' => $connectedUsers,
             'active_sessions' => $activeSessions,
             'payments_by_status' => $paymentsByStatus,
-            'avg_payment' => $totalPayments > 0 ? $totalRevenue / $totalPayments : 0,
+            'avg_payment' => $completedPayments > 0 ? $totalRevenue / $completedPayments : 0,
         ];
     }
     
