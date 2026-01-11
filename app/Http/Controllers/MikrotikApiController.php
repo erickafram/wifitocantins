@@ -64,7 +64,6 @@ class MikrotikApiController extends Controller
 
             // 🗑️ Buscar MACs expirados para remover
             // Apenas usuários que expiraram recentemente (últimas 24h)
-            // IGNORAR MACs randomizados (não faz sentido remover)
             $expiredMacs = User::where('status', 'expired')
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
@@ -75,7 +74,6 @@ class MikrotikApiController extends Controller
                 ->limit(20)
                 ->pluck('mac_address')
                 ->map(fn($mac) => strtoupper(trim($mac)))
-                ->filter(fn($mac) => !$this->isRandomizedMac($mac)) // Filtrar randomizados
                 ->unique()
                 ->values()
                 ->toArray();
