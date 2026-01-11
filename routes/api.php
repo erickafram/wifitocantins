@@ -95,6 +95,12 @@ Route::prefix('mikrotik')->group(function () {
     Route::get('/check-mac', [MikrotikApiController::class, 'checkMacStatus']); // Verificar status de um MAC
     Route::match(['GET', 'POST'], '/force-liberate', [MikrotikApiController::class, 'forceLiberate']); // Forçar liberação
     Route::get('/diagnostics', [MikrotikApiController::class, 'diagnostics']); // Diagnóstico geral
+    
+    // 🏦 WALLED GARDEN - BANCOS BRASILEIROS
+    Route::get('/walled-garden/domains', [\App\Http\Controllers\WalledGardenController::class, 'getDomains']);
+    Route::get('/walled-garden/ip-ranges', [\App\Http\Controllers\WalledGardenController::class, 'getIpRanges']);
+    Route::get('/walled-garden/all', [\App\Http\Controllers\WalledGardenController::class, 'getAll']);
+    Route::get('/walled-garden/script', [\App\Http\Controllers\WalledGardenController::class, 'getRouterOSScript']);
 });
 
 // MikroTik Sync (New - HTTP Polling)
