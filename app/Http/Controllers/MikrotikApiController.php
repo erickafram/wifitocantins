@@ -13,6 +13,21 @@ use Carbon\Carbon;
 class MikrotikApiController extends Controller
 {
     /**
+     * Verifica se um MAC address é randomizado (privado)
+     * MACs randomizados têm o segundo bit do primeiro byte = 1
+     * Exemplos: 02:xx, 06:xx, 0A:xx, 0E:xx, 12:xx, etc.
+     */
+    private function isRandomizedMac(string $mac): bool
+    {
+        $mac = strtoupper(trim($mac));
+        if (strlen($mac) < 2) return true;
+        
+        $firstByte = hexdec(substr($mac, 0, 2));
+        // Bit 1 (segundo bit) indica MAC localmente administrado (randomizado)
+        return ($firstByte & 0x02) !== 0;
+    }
+
+    /**
      * Endpoint ULTRA-LEVE para MikroTik com pouca memória (hAP ac²)
      * Retorna apenas MACs em texto simples, sem JSON
      * 
@@ -49,6 +64,7 @@ class MikrotikApiController extends Controller
 
             // 🗑️ Buscar MACs expirados para remover
             // Apenas usuários que expiraram recentemente (últimas 24h)
+            // IGNORAR MACs randomizados (não faz sentido remover)
             $expiredMacs = User::where('status', 'expired')
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
@@ -56,9 +72,10 @@ class MikrotikApiController extends Controller
                 ->where('expires_at', '>', now()->subHours(24)) // Apenas últimas 24h
                 ->where('expires_at', '<', now()) // Já expirou
                 ->orderBy('expires_at', 'desc')
-                ->limit(10)
+                ->limit(20)
                 ->pluck('mac_address')
                 ->map(fn($mac) => strtoupper(trim($mac)))
+                ->filter(fn($mac) => !$this->isRandomizedMac($mac)) // Filtrar randomizados
                 ->unique()
                 ->values()
                 ->toArray();
