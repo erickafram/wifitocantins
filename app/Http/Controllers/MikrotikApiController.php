@@ -13,6 +13,133 @@ use Carbon\Carbon;
 class MikrotikApiController extends Controller
 {
     /**
+     * Endpoint ULTRA-LEVE para MikroTik com pouca memória (hAP ac²)
+     * Retorna apenas MACs em texto simples, sem JSON
+     * 
+     * IMPORTANTE: O MAC é do DISPOSITIVO, não da rede WiFi!
+     * Então se o usuário paga na rede 2.4GHz e muda para 5GHz,
+     * o MAC continua o mesmo e deve funcionar.
+     */
+    public function checkPaidUsersLite(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                Log::warning('🔒 MikroTik Lite: Token inválido', ['ip' => $request->ip()]);
+                return response('ERROR:AUTH', 401)->header('Content-Type', 'text/plain');
+            }
+
+            // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
+            // Status 'connected' = pagou e está ativo
+            // Status 'active' = alternativo para ativo
+            $activeMacs = User::whereIn('status', ['connected', 'active'])
+                ->where('expires_at', '>', now())
+                ->whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
+                ->where('mac_address', 'NOT LIKE', '02:%') // Ignorar MACs randomizados
+                ->orderBy('expires_at', 'desc') // Priorizar quem expira depois
+                ->limit(50) // Aumentado para 50
+                ->pluck('mac_address')
+                ->map(fn($mac) => strtoupper(trim($mac))) // Normalizar
+                ->unique()
+                ->values()
+                ->toArray();
+
+            // 🗑️ Buscar MACs expirados para remover
+            // Apenas usuários que expiraram recentemente (últimas 24h)
+            $expiredMacs = User::where('status', 'expired')
+                ->whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
+                ->whereNotIn('mac_address', $activeMacs) // Não remover quem está ativo
+                ->where('expires_at', '>', now()->subHours(24)) // Apenas últimas 24h
+                ->where('expires_at', '<', now()) // Já expirou
+                ->orderBy('expires_at', 'desc')
+                ->limit(10)
+                ->pluck('mac_address')
+                ->map(fn($mac) => strtoupper(trim($mac)))
+                ->unique()
+                ->values()
+                ->toArray();
+
+            // 🔄 Atualizar status de usuários que acabaram de expirar
+            $justExpired = User::whereIn('status', ['connected', 'active'])
+                ->where('expires_at', '<=', now())
+                ->whereNotNull('mac_address')
+                ->update([
+                    'status' => 'expired',
+                    'connected_at' => null
+                ]);
+
+            if ($justExpired > 0) {
+                Log::info("⏰ MikroTik Lite: $justExpired usuários expiraram agora");
+            }
+
+            // 📝 Formato ultra-compacto: L:MAC = liberar, R:MAC = remover
+            $output = "OK\n";
+            foreach ($activeMacs as $mac) {
+                $output .= "L:$mac\n";
+            }
+            foreach ($expiredMacs as $mac) {
+                $output .= "R:$mac\n";
+            }
+            $output .= "END";
+
+            // 📊 Log para debug (apenas se houver ações)
+            if (count($activeMacs) > 0 || count($expiredMacs) > 0) {
+                Log::info('📡 MikroTik Lite sync', [
+                    'mikrotik_ip' => $request->ip(),
+                    'liberar' => count($activeMacs),
+                    'remover' => count($expiredMacs),
+                    'macs_liberar' => $activeMacs,
+                    'macs_remover' => $expiredMacs,
+                ]);
+            }
+
+            return response($output, 200)
+                ->header('Content-Type', 'text/plain')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+        } catch (\Exception $e) {
+            Log::error('❌ MikroTik Lite erro: ' . $e->getMessage());
+            return response('ERROR:INTERNAL', 500)->header('Content-Type', 'text/plain');
+        }
+    }
+
+    /**
+     * Limpar usuários expirados antigos (mais de 7 dias)
+     * Muda status para 'cleaned' para não aparecer mais nas consultas
+     */
+    public function cleanExpiredUsers(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            // Limpar usuários expirados há mais de 7 dias
+            $cleaned = User::where('status', 'expired')
+                ->where('expires_at', '<', now()->subDays(7))
+                ->update(['status' => 'cleaned']);
+
+            Log::info('🧹 Usuários expirados limpos', ['count' => $cleaned]);
+
+            return response()->json([
+                'success' => true,
+                'cleaned' => $cleaned,
+                'message' => "$cleaned usuários marcados como limpos"
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Endpoint para MikroTik registrar MACs automaticamente
      */
     public function registerMac(Request $request)
@@ -104,9 +231,13 @@ class MikrotikApiController extends Controller
 
             // Buscar usuários expirados que devem ser removidos
             // EXCLUIR MACs que estão na lista de liberação (evita conflito)
+            // LIMITAR a 10 por vez para não sobrecarregar o MikroTik (16MB storage)
             $expiredUsers = User::where('status', 'expired')
                               ->whereNotNull('mac_address')
                               ->whereNotIn('mac_address', $liberateMacs)
+                              ->where('expires_at', '>', now()->subDays(7)) // Apenas últimos 7 dias
+                              ->orderBy('expires_at', 'desc')
+                              ->limit(10) // Máximo 10 por consulta
                               ->get(['id', 'mac_address', 'ip_address', 'expires_at']);
 
             // Atualizar status dos usuários que expiraram AGORA para 'expired'
@@ -336,6 +467,252 @@ class MikrotikApiController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to confirm action'
+            ], 500);
+        }
+    }
+
+    /**
+     * Endpoint de diagnóstico - verifica status de um MAC específico
+     * Útil para debug quando usuário reclama que pagou mas não tem acesso
+     */
+    public function checkMacStatus(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $mac = strtoupper(trim($request->get('mac', '')));
+            
+            if (empty($mac) || strlen($mac) !== 17) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'MAC address inválido. Formato: XX:XX:XX:XX:XX:XX'
+                ], 400);
+            }
+
+            // Buscar usuário pelo MAC
+            $user = User::where('mac_address', $mac)->first();
+            
+            if (!$user) {
+                // Tentar buscar por MAC similar (case insensitive)
+                $user = User::whereRaw('UPPER(mac_address) = ?', [$mac])->first();
+            }
+
+            // Buscar pagamentos relacionados
+            $payments = [];
+            if ($user) {
+                $payments = Payment::where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(['id', 'amount', 'status', 'payment_type', 'created_at', 'paid_at']);
+            }
+
+            // Buscar no mikrotik_mac_reports
+            $macReport = MikrotikMacReport::where('mac_address', $mac)->first();
+
+            // Determinar se deveria estar liberado
+            $shouldBeLiberated = false;
+            $reason = 'MAC não encontrado no sistema';
+            
+            if ($user) {
+                if (in_array($user->status, ['connected', 'active'])) {
+                    if ($user->expires_at && $user->expires_at > now()) {
+                        $shouldBeLiberated = true;
+                        $reason = 'Usuário ativo com tempo válido';
+                    } else {
+                        $reason = 'Usuário ativo mas tempo expirado';
+                    }
+                } else {
+                    $reason = 'Status do usuário: ' . $user->status;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'mac_address' => $mac,
+                'should_be_liberated' => $shouldBeLiberated,
+                'reason' => $reason,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'status' => $user->status,
+                    'ip_address' => $user->ip_address,
+                    'connected_at' => $user->connected_at?->format('Y-m-d H:i:s'),
+                    'expires_at' => $user->expires_at?->format('Y-m-d H:i:s'),
+                    'time_remaining' => $user->expires_at && $user->expires_at > now() 
+                        ? $user->expires_at->diffForHumans() 
+                        : 'Expirado',
+                ] : null,
+                'payments' => $payments,
+                'mac_report' => $macReport ? [
+                    'ip_address' => $macReport->ip_address,
+                    'mikrotik_ip' => $macReport->mikrotik_ip,
+                    'reported_at' => $macReport->reported_at?->format('Y-m-d H:i:s'),
+                ] : null,
+                'debug' => [
+                    'server_time' => now()->format('Y-m-d H:i:s'),
+                    'timezone' => config('app.timezone'),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro no checkMacStatus', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Endpoint para forçar liberação imediata de um MAC
+     * Útil quando o usuário pagou mas a sincronização ainda não rodou
+     */
+    public function forceLiberate(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $mac = strtoupper(trim($request->get('mac', '')));
+            
+            if (empty($mac) || strlen($mac) !== 17) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'MAC address inválido'
+                ], 400);
+            }
+
+            // Buscar usuário
+            $user = User::where('mac_address', $mac)->first();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Usuário não encontrado para este MAC'
+                ], 404);
+            }
+
+            // Verificar se tem pagamento válido
+            $hasValidPayment = Payment::where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->where('created_at', '>', now()->subHours(24))
+                ->exists();
+
+            if (!$hasValidPayment && !in_array($user->status, ['connected', 'active'])) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Usuário não tem pagamento válido nas últimas 24h'
+                ], 400);
+            }
+
+            // Forçar status connected e expires_at
+            $sessionDuration = config('wifi.pricing.session_duration_hours', 12);
+            $expiresAt = now()->addHours($sessionDuration);
+
+            $user->update([
+                'status' => 'connected',
+                'connected_at' => now(),
+                'expires_at' => $expiresAt,
+            ]);
+
+            Log::info('🔓 Liberação forçada de MAC', [
+                'mac' => $mac,
+                'user_id' => $user->id,
+                'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+                'requested_by' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'MAC liberado com sucesso',
+                'mac_address' => $mac,
+                'user_id' => $user->id,
+                'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+                'note' => 'O MikroTik irá sincronizar na próxima consulta (máx 30 segundos)'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro no forceLiberate', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Endpoint de diagnóstico geral do sistema
+     */
+    public function diagnostics(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            // Estatísticas gerais
+            $stats = [
+                'users' => [
+                    'total' => User::count(),
+                    'connected' => User::where('status', 'connected')->count(),
+                    'active' => User::where('status', 'active')->count(),
+                    'expired' => User::where('status', 'expired')->count(),
+                    'with_valid_time' => User::whereIn('status', ['connected', 'active'])
+                        ->where('expires_at', '>', now())
+                        ->count(),
+                ],
+                'payments' => [
+                    'total_today' => Payment::whereDate('created_at', today())->count(),
+                    'completed_today' => Payment::whereDate('created_at', today())
+                        ->where('status', 'completed')
+                        ->count(),
+                    'pending' => Payment::where('status', 'pending')
+                        ->where('created_at', '>', now()->subHours(1))
+                        ->count(),
+                ],
+                'mac_reports' => [
+                    'total' => MikrotikMacReport::count(),
+                    'last_hour' => MikrotikMacReport::where('reported_at', '>', now()->subHour())->count(),
+                ],
+            ];
+
+            // Últimos usuários liberados
+            $recentLiberated = User::whereIn('status', ['connected', 'active'])
+                ->where('expires_at', '>', now())
+                ->orderBy('connected_at', 'desc')
+                ->limit(10)
+                ->get(['id', 'mac_address', 'status', 'connected_at', 'expires_at']);
+
+            return response()->json([
+                'success' => true,
+                'server_time' => now()->format('Y-m-d H:i:s'),
+                'timezone' => config('app.timezone'),
+                'stats' => $stats,
+                'recent_liberated' => $recentLiberated,
+                'config' => [
+                    'session_duration_hours' => config('wifi.pricing.session_duration_hours', 12),
+                    'sync_interval' => '30 segundos',
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
             ], 500);
         }
     }

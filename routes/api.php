@@ -85,9 +85,16 @@ Route::prefix('mikrotik')->group(function () {
     
     // 🚀 NOVOS ENDPOINTS PARA AUTOMAÇÃO MIKROTIK
     Route::match(['GET', 'POST'], '/check-paid-users', [MikrotikApiController::class, 'checkPaidUsers']);
+    Route::get('/check-paid-users-lite', [MikrotikApiController::class, 'checkPaidUsersLite']); // Ultra-leve para hAP ac²
+    Route::get('/clean-expired', [MikrotikApiController::class, 'cleanExpiredUsers']); // Limpar expirados antigos
     Route::post('/report-mac', [MikrotikApiController::class, 'reportMacAddress']);
     Route::post('/confirm-liberation', [MikrotikApiController::class, 'confirmMacLiberation']);
     Route::get('/register-mac', [MikrotikApiController::class, 'registerMac']);
+    
+    // 🔧 ENDPOINTS DE DIAGNÓSTICO E DEBUG
+    Route::get('/check-mac', [MikrotikApiController::class, 'checkMacStatus']); // Verificar status de um MAC
+    Route::match(['GET', 'POST'], '/force-liberate', [MikrotikApiController::class, 'forceLiberate']); // Forçar liberação
+    Route::get('/diagnostics', [MikrotikApiController::class, 'diagnostics']); // Diagnóstico geral
 });
 
 // MikroTik Sync (New - HTTP Polling)
