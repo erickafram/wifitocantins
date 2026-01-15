@@ -8,174 +8,251 @@ use Illuminate\Support\Facades\Log;
 class WalledGardenController extends Controller
 {
     /**
-     * Lista de domínios de bancos brasileiros para Walled Garden
-     * Estes domínios são liberados para acesso sem autenticação no hotspot
+     * Lista de domínios para Walled Garden do Hotspot
+     * Estes domínios são liberados para acesso sem autenticação
      * para que os usuários possam pagar via PIX
+     * 
+     * ATUALIZADO: 2026-01-11
      */
     private function getBankDomains(): array
     {
         return [
+            // ========== PORTAL DE PAGAMENTO ==========
+            'tocantinstransportewifi.com.br',
+            '*.tocantinstransportewifi.com.br',
+            '10.5.50.1',
+            
+            // ========== GATEWAYS DE PAGAMENTO ==========
+            '*.woovi.com',
+            '*.openpix.com.br',
+            '*.pagseguro.com.br',
+            '*.pagseguro.uol.com.br',
+            
             // ========== BANCOS DIGITAIS ==========
-            // Nubank (usa AWS)
+            // Nubank
             '*.nubank.com.br',
             '*.nubank.com',
-            'nubank.com.br',
-            'nubank.com',
             '*.nubankstatic.com',
+            '*.nubank.io',
             
             // PicPay
             '*.picpay.com',
-            'picpay.com',
             
             // Inter
             '*.bancointer.com.br',
             '*.inter.co',
-            'bancointer.com.br',
             
             // C6 Bank
             '*.c6bank.com.br',
             '*.c6bank.com',
-            'c6bank.com.br',
             
             // Neon
             '*.neon.com.br',
-            'neon.com.br',
             
             // Next (Bradesco)
             '*.next.me',
-            'next.me',
             
             // Will Bank
             '*.willbank.com.br',
-            'willbank.com.br',
             
             // Original
             '*.original.com.br',
-            'original.com.br',
-            
-            // PagBank/PagSeguro
-            '*.pagseguro.com.br',
-            '*.pagseguro.uol.com.br',
-            'pagseguro.com.br',
             
             // Mercado Pago
             '*.mercadopago.com.br',
             '*.mercadopago.com',
-            'mercadopago.com.br',
+            '*.mercadolivre.com.br',
+            '*.mercadolibre.com',
+            '*.mlstatic.com',
             
             // ========== BANCOS TRADICIONAIS ==========
             // Caixa Econômica Federal
             '*.caixa.gov.br',
-            'caixa.gov.br',
             '*.caixa.com.br',
-            'internetbanking.caixa.gov.br',
-            'acessoseguro.caixa.gov.br',
+            '*.caixaeconomica.com.br',
             
             // Banco do Brasil
             '*.bb.com.br',
-            'bb.com.br',
             '*.bancodobrasil.com.br',
             
             // Itaú
             '*.itau.com.br',
-            'itau.com.br',
             '*.itau-unibanco.com.br',
             
             // Bradesco
             '*.bradesco.com.br',
-            'bradesco.com.br',
             '*.banco.bradesco',
             
             // Santander
             '*.santander.com.br',
-            'santander.com.br',
             '*.santandernet.com.br',
             
             // BRB (Banco de Brasília)
             '*.brb.com.br',
-            'brb.com.br',
             
             // Banco da Amazônia
             '*.bancoamazonia.com.br',
-            'bancoamazonia.com.br',
             '*.basa.com.br',
             
             // Sicoob
             '*.sicoob.com.br',
-            'sicoob.com.br',
             
             // Sicredi
             '*.sicredi.com.br',
-            'sicredi.com.br',
             
             // Banrisul
             '*.banrisul.com.br',
-            'banrisul.com.br',
             
-            // ========== PIX / BANCO CENTRAL ==========
+            // Banco Central (PIX)
             '*.bcb.gov.br',
-            'bcb.gov.br',
             
-            // ========== GATEWAYS DE PAGAMENTO ==========
-            // Woovi/OpenPix
-            '*.woovi.com',
-            'woovi.com',
-            '*.openpix.com.br',
-            'openpix.com.br',
+            // ========== CDNs E CLOUD ==========
+            // AWS
+            '*.cloudfront.net',
+            '*.amazonaws.com',
+            '*.amazon.com',
+            '*.amazontrust.com',
+            '*.awstrust.com',
             
-            // ========== CDNs USADOS PELOS BANCOS ==========
-            '*.cloudflare.com',
-            '*.akamaized.net',
-            '*.azioncdn.net',
-            '*.azion.net',
-            '*.fastly.net',
+            // Akamai
+            '*.akamaihd.net',
+            '*.akamaiedge.net',
+            '*.akamaitechnologies.com',
+            '*.edgekey.net',
+            '*.edgesuite.net',
             
-            // Google (usado por vários apps)
+            // Azure
+            '*.azureedge.net',
+            '*.msecnd.net',
+            
+            // Google
             '*.googleapis.com',
             '*.gstatic.com',
-            '*.firebase.google.com',
             '*.firebaseio.com',
+            '*.firebase.google.com',
+            '*.pki.goog',
             
-            // Apple (para Apple Pay)
+            // Apple
             '*.apple.com',
             '*.icloud.com',
+            '*.mzstatic.com',
+            
+            // Azion (usado pela Caixa)
+            '*.azioncdn.net',
+            '*.azion.net',
+            
+            // ========== CERTIFICADOS SSL (OCSP/CRL) ==========
+            '*.ocsp.*',
+            'ocsp.*',
+            '*.crl.*',
+            'crl.*',
+            '*.pki.*',
+            '*.trust.*',
+            '*.digicert.com',
+            '*.globalsign.com',
+            '*.letsencrypt.org',
+            'r3.o.lencr.org',
+            'x1.c.lencr.org',
+            '*.verisign.com',
+            '*.symantec.com',
+            '*.thawte.com',
+            '*.geotrust.com',
+            '*.rapidssl.com',
+            '*.usertrust.com',
+            '*.comodoca.com',
+            '*.sectigo.com',
+            '*.entrust.net',
+            '*.identrust.com',
+            
+            // ========== ANALYTICS E TRACKING (usados pelos apps) ==========
+            'sentry.io',
+            '*.sentry.io',
+            '*.segment.io',
+            '*.segment.com',
+            '*.branch.io',
+            '*.app.link',
+            '*.adjust.com',
+            '*.appsflyer.com',
+            '*.crashlytics.com',
+            '*.fabric.io',
+            '*.newrelic.com',
+            '*.nr-data.net',
+            '*.datadoghq.com',
+            '*.mixpanel.com',
+            '*.amplitude.com',
+            '*.intercom.io',
+            '*.zendesk.com',
+            
+            // ========== FACEBOOK/META (usado por alguns apps) ==========
+            '*.facebook.com',
+            '*.fbcdn.net',
+            '*.connect.facebook.net',
         ];
     }
 
     /**
-     * Lista de ranges de IP dos bancos e CDNs
-     * Formato CIDR para uso no MikroTik
+     * Lista de ranges de IP para Walled Garden
      */
     private function getBankIpRanges(): array
     {
         return [
-            // ========== AWS BRASIL (usado por Nubank, PicPay, etc) ==========
+            // ========== PORTAL ==========
+            ['range' => '138.68.255.122/32', 'comment' => 'Portal'],
+            ['range' => '10.5.50.1/32', 'comment' => 'Gateway'],
+            
+            // ========== AWS BRASIL ==========
             ['range' => '18.228.0.0/14', 'comment' => 'AWS-BR-1'],
-            ['range' => '18.230.0.0/16', 'comment' => 'AWS-BR-2'],
-            ['range' => '18.231.0.0/16', 'comment' => 'AWS-BR-3'],
-            ['range' => '52.67.0.0/16', 'comment' => 'AWS-BR-4'],
-            ['range' => '54.207.0.0/16', 'comment' => 'AWS-BR-5'],
-            ['range' => '54.232.0.0/14', 'comment' => 'AWS-BR-6'],
-            ['range' => '177.71.128.0/17', 'comment' => 'AWS-BR-7'],
-            ['range' => '15.228.0.0/15', 'comment' => 'AWS-BR-8'],
-            ['range' => '3.0.0.0/8', 'comment' => 'AWS-Global'],
+            ['range' => '18.228.0.0/16', 'comment' => 'AWS-BR-2'],
+            ['range' => '18.229.0.0/16', 'comment' => 'AWS-BR-3'],
+            ['range' => '18.230.0.0/16', 'comment' => 'AWS-BR-4'],
+            ['range' => '18.231.0.0/16', 'comment' => 'AWS-BR-5'],
+            ['range' => '52.67.0.0/16', 'comment' => 'AWS-BR-6'],
+            ['range' => '54.207.0.0/16', 'comment' => 'AWS-BR-7'],
+            ['range' => '54.232.0.0/16', 'comment' => 'AWS-BR-8'],
+            ['range' => '54.233.0.0/16', 'comment' => 'AWS-BR-9'],
+            ['range' => '177.71.128.0/17', 'comment' => 'AWS-BR-10'],
+            ['range' => '15.228.0.0/16', 'comment' => 'AWS-BR-11'],
+            ['range' => '15.229.0.0/16', 'comment' => 'AWS-BR-12'],
+            ['range' => '54.94.0.0/16', 'comment' => 'AWS-SA'],
+            ['range' => '52.94.0.0/16', 'comment' => 'AWS-SA2'],
+            ['range' => '99.77.0.0/16', 'comment' => 'AWS-Global'],
+            ['range' => '99.78.0.0/16', 'comment' => 'AWS-Global2'],
+            
+            // ========== CLOUDFRONT ==========
+            ['range' => '13.32.0.0/15', 'comment' => 'CloudFront-1'],
+            ['range' => '13.35.0.0/16', 'comment' => 'CloudFront-2'],
+            ['range' => '52.84.0.0/15', 'comment' => 'CloudFront-3'],
+            ['range' => '54.182.0.0/16', 'comment' => 'CloudFront-4'],
+            ['range' => '54.192.0.0/16', 'comment' => 'CloudFront-5'],
+            ['range' => '54.230.0.0/16', 'comment' => 'CloudFront-6'],
+            ['range' => '54.239.128.0/18', 'comment' => 'CloudFront-7'],
+            ['range' => '64.252.64.0/18', 'comment' => 'CloudFront-8'],
+            ['range' => '143.204.0.0/16', 'comment' => 'CloudFront-9'],
+            ['range' => '204.246.164.0/22', 'comment' => 'CloudFront-10'],
+            ['range' => '205.251.200.0/21', 'comment' => 'CloudFront-11'],
+            ['range' => '216.137.32.0/19', 'comment' => 'CloudFront-12'],
             
             // ========== CLOUDFLARE ==========
-            ['range' => '104.16.0.0/12', 'comment' => 'Cloudflare-1'],
-            ['range' => '172.64.0.0/13', 'comment' => 'Cloudflare-2'],
-            ['range' => '131.0.72.0/22', 'comment' => 'Cloudflare-3'],
-            ['range' => '141.101.64.0/18', 'comment' => 'Cloudflare-4'],
-            ['range' => '162.158.0.0/15', 'comment' => 'Cloudflare-5'],
-            ['range' => '188.114.96.0/20', 'comment' => 'Cloudflare-6'],
-            ['range' => '190.93.240.0/20', 'comment' => 'Cloudflare-7'],
-            ['range' => '197.234.240.0/22', 'comment' => 'Cloudflare-8'],
-            ['range' => '198.41.128.0/17', 'comment' => 'Cloudflare-9'],
+            ['range' => '104.16.0.0/12', 'comment' => 'CF-1'],
+            ['range' => '172.64.0.0/13', 'comment' => 'CF-2'],
+            ['range' => '103.21.244.0/22', 'comment' => 'CF-3'],
+            ['range' => '103.22.200.0/22', 'comment' => 'CF-4'],
+            ['range' => '103.31.4.0/22', 'comment' => 'CF-5'],
+            ['range' => '141.101.64.0/18', 'comment' => 'CF-6'],
+            ['range' => '108.162.192.0/18', 'comment' => 'CF-7'],
+            ['range' => '190.93.240.0/20', 'comment' => 'CF-8'],
+            ['range' => '188.114.96.0/20', 'comment' => 'CF-9'],
+            ['range' => '197.234.240.0/22', 'comment' => 'CF-10'],
+            ['range' => '198.41.128.0/17', 'comment' => 'CF-11'],
+            ['range' => '162.158.0.0/15', 'comment' => 'CF-12'],
+            ['range' => '131.0.72.0/22', 'comment' => 'CF-13'],
             
-            // ========== AKAMAI (CDN de bancos) ==========
+            // ========== AKAMAI ==========
             ['range' => '23.0.0.0/12', 'comment' => 'Akamai-1'],
             ['range' => '104.64.0.0/10', 'comment' => 'Akamai-2'],
             ['range' => '184.24.0.0/13', 'comment' => 'Akamai-3'],
             ['range' => '184.50.0.0/15', 'comment' => 'Akamai-4'],
+            ['range' => '23.45.0.0/16', 'comment' => 'Akamai-OCSP'],
             
             // ========== AZURE BRASIL ==========
             ['range' => '191.232.0.0/13', 'comment' => 'Azure-BR-1'],
@@ -191,7 +268,7 @@ class WalledGardenController extends Controller
             ['range' => '35.247.0.0/16', 'comment' => 'GCP-BR-3'],
             
             // ========== BANCOS ESPECÍFICOS ==========
-            // Caixa Econômica Federal
+            // Caixa
             ['range' => '200.201.0.0/16', 'comment' => 'CEF-1'],
             ['range' => '200.201.160.0/20', 'comment' => 'CEF-2'],
             ['range' => '161.148.0.0/16', 'comment' => 'CEF-CDN'],
@@ -220,14 +297,23 @@ class WalledGardenController extends Controller
             // Banco da Amazônia
             ['range' => '45.5.204.0/22', 'comment' => 'BancoAmazonia'],
             
-            // ========== AZION (CDN usado pela Caixa) ==========
+            // Mercado Pago/Livre
+            ['range' => '216.33.197.0/24', 'comment' => 'MercadoLivre-1'],
+            ['range' => '209.225.49.0/24', 'comment' => 'MercadoLivre-2'],
+            
+            // ========== AZION (CDN Caixa) ==========
             ['range' => '179.191.160.0/20', 'comment' => 'Azion-1'],
             ['range' => '179.191.176.0/20', 'comment' => 'Azion-2'],
             ['range' => '186.195.64.0/20', 'comment' => 'Azion-3'],
             
-            // ========== FASTLY (CDN) ==========
+            // ========== FASTLY ==========
             ['range' => '151.101.0.0/16', 'comment' => 'Fastly-1'],
             ['range' => '199.232.0.0/16', 'comment' => 'Fastly-2'],
+            
+            // ========== OCSP/CRL SERVERS ==========
+            ['range' => '93.184.220.0/24', 'comment' => 'OCSP-1'],
+            ['range' => '72.21.91.0/24', 'comment' => 'OCSP-2'],
+            ['range' => '117.18.237.0/24', 'comment' => 'OCSP-3'],
             
             // ========== DNS ==========
             ['range' => '1.1.1.1/32', 'comment' => 'DNS-Cloudflare'],
@@ -238,8 +324,7 @@ class WalledGardenController extends Controller
     }
 
     /**
-     * Endpoint para MikroTik buscar lista de domínios do Walled Garden
-     * Formato: texto simples, um domínio por linha
+     * Endpoint para MikroTik buscar lista de domínios
      */
     public function getDomains(Request $request)
     {
@@ -255,12 +340,11 @@ class WalledGardenController extends Controller
         
         return response($output, 200)
             ->header('Content-Type', 'text/plain')
-            ->header('Cache-Control', 'max-age=3600'); // Cache 1 hora
+            ->header('Cache-Control', 'max-age=3600');
     }
 
     /**
-     * Endpoint para MikroTik buscar lista de IPs do Walled Garden
-     * Formato: texto simples, CIDR|comentário por linha
+     * Endpoint para MikroTik buscar lista de IPs
      */
     public function getIpRanges(Request $request)
     {
@@ -282,11 +366,11 @@ class WalledGardenController extends Controller
         
         return response($output, 200)
             ->header('Content-Type', 'text/plain')
-            ->header('Cache-Control', 'max-age=3600'); // Cache 1 hora
+            ->header('Cache-Control', 'max-age=3600');
     }
 
     /**
-     * Endpoint JSON com todas as informações do Walled Garden
+     * Endpoint JSON com todas as informações
      */
     public function getAll(Request $request)
     {
@@ -304,13 +388,12 @@ class WalledGardenController extends Controller
             'total_domains' => count($this->getBankDomains()),
             'total_ip_ranges' => count($this->getBankIpRanges()),
             'updated_at' => '2026-01-11',
-            'note' => 'Domínios e IPs de bancos brasileiros para Walled Garden do Hotspot'
+            'note' => 'Domínios e IPs de bancos brasileiros para Walled Garden'
         ]);
     }
 
     /**
      * Gera script RouterOS para configurar Walled Garden
-     * Pode ser executado diretamente no MikroTik
      */
     public function getRouterOSScript(Request $request)
     {
@@ -321,41 +404,22 @@ class WalledGardenController extends Controller
             return response('# ERROR: AUTH', 401)->header('Content-Type', 'text/plain');
         }
 
-        $hotspotServer = $request->get('server', 'tocantins-hotspot');
+        $script = "# WALLED GARDEN - BANCOS BRASILEIROS\n";
+        $script .= "# Gerado em " . now()->format('Y-m-d H:i:s') . "\n\n";
         
-        $script = "# ============================================================\n";
-        $script .= "# WALLED GARDEN - BANCOS BRASILEIROS\n";
-        $script .= "# Gerado automaticamente em " . now()->format('Y-m-d H:i:s') . "\n";
-        $script .= "# ============================================================\n\n";
-        
-        // Remover regras antigas com tag específica
-        $script .= "# Remover regras antigas\n";
-        $script .= "/ip hotspot walled-garden remove [find comment~\"AUTO-BANK\"]\n";
-        $script .= "/ip hotspot walled-garden ip remove [find comment~\"AUTO-BANK\"]\n\n";
-        
-        // Adicionar domínios
-        $script .= "# Adicionar domínios de bancos\n";
         $script .= "/ip hotspot walled-garden\n";
-        
         foreach ($this->getBankDomains() as $domain) {
-            // Escapar caracteres especiais
-            $escapedDomain = str_replace('*', '\\*', $domain);
-            $script .= "add dst-host=\"{$domain}\" server={$hotspotServer} comment=\"AUTO-BANK\"\n";
+            $comment = explode('.', str_replace('*', '', $domain))[0] ?: 'Domain';
+            $script .= "add dst-host=\"{$domain}\" comment=\"{$comment}\"\n";
         }
         
-        $script .= "\n# Adicionar ranges de IP\n";
-        $script .= "/ip hotspot walled-garden ip\n";
-        
+        $script .= "\n/ip hotspot walled-garden ip\n";
         foreach ($this->getBankIpRanges() as $range) {
-            $script .= "add action=accept dst-address={$range['range']} server={$hotspotServer} comment=\"AUTO-BANK-{$range['comment']}\"\n";
+            $script .= "add action=accept dst-address={$range['range']} comment=\"{$range['comment']}\"\n";
         }
-        
-        $script .= "\n# ============================================================\n";
-        $script .= "# FIM DO SCRIPT\n";
-        $script .= "# ============================================================\n";
         
         return response($script, 200)
             ->header('Content-Type', 'text/plain')
-            ->header('Content-Disposition', 'attachment; filename="walled-garden-banks.rsc"');
+            ->header('Content-Disposition', 'attachment; filename="walled-garden.rsc"');
     }
 }

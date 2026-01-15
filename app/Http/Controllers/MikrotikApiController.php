@@ -49,11 +49,12 @@ class MikrotikApiController extends Controller
             // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
             // Status 'connected' = pagou e está ativo
             // Status 'active' = alternativo para ativo
+            // IMPORTANTE: Liberamos TODOS os MACs, incluindo randomizados!
+            // O usuário pagou com esse MAC, então deve funcionar.
             $activeMacs = User::whereIn('status', ['connected', 'active'])
                 ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
-                ->where('mac_address', 'NOT LIKE', '02:%') // Ignorar MACs randomizados
                 ->orderBy('expires_at', 'desc') // Priorizar quem expira depois
                 ->limit(50) // Aumentado para 50
                 ->pluck('mac_address')
