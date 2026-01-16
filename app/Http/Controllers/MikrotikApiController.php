@@ -51,12 +51,13 @@ class MikrotikApiController extends Controller
             // Status 'active' = alternativo para ativo
             // IMPORTANTE: Liberamos TODOS os MACs, incluindo randomizados!
             // O usuário pagou com esse MAC, então deve funcionar.
+            // LIMITE: 200 para suportar vários ônibus
             $activeMacs = User::whereIn('status', ['connected', 'active'])
                 ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
                 ->orderBy('expires_at', 'desc') // Priorizar quem expira depois
-                ->limit(50) // Aumentado para 50
+                ->limit(200) // Suporta vários ônibus
                 ->pluck('mac_address')
                 ->map(fn($mac) => strtoupper(trim($mac))) // Normalizar
                 ->unique()
@@ -65,6 +66,7 @@ class MikrotikApiController extends Controller
 
             // 🗑️ Buscar MACs expirados para remover
             // Apenas usuários que expiraram recentemente (últimas 24h)
+            // LIMITE: 100 para suportar vários ônibus
             $expiredMacs = User::where('status', 'expired')
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
@@ -72,7 +74,7 @@ class MikrotikApiController extends Controller
                 ->where('expires_at', '>', now()->subHours(24)) // Apenas últimas 24h
                 ->where('expires_at', '<', now()) // Já expirou
                 ->orderBy('expires_at', 'desc')
-                ->limit(20)
+                ->limit(100) // Suporta vários ônibus
                 ->pluck('mac_address')
                 ->map(fn($mac) => strtoupper(trim($mac)))
                 ->unique()
@@ -232,9 +234,11 @@ class MikrotikApiController extends Controller
             }
 
             // 🚀 CONSULTA ULTRA-RÁPIDA - Buscar usuários pagos ativos
+            // LIMITE: 200 para suportar vários ônibus
             $paidUsers = User::whereIn('status', ['connected', 'active'])
                            ->where('expires_at', '>', now())
                            ->whereNotNull('mac_address')
+                           ->limit(200)
                            ->with(['payments' => function($query) {
                                $query->where('status', 'completed')
                                      ->latest()
@@ -247,13 +251,13 @@ class MikrotikApiController extends Controller
 
             // Buscar usuários expirados que devem ser removidos
             // EXCLUIR MACs que estão na lista de liberação (evita conflito)
-            // LIMITAR a 10 por vez para não sobrecarregar o MikroTik (16MB storage)
+            // LIMITE: 100 para suportar vários ônibus
             $expiredUsers = User::where('status', 'expired')
                               ->whereNotNull('mac_address')
                               ->whereNotIn('mac_address', $liberateMacs)
                               ->where('expires_at', '>', now()->subDays(7)) // Apenas últimos 7 dias
                               ->orderBy('expires_at', 'desc')
-                              ->limit(10) // Máximo 10 por consulta
+                              ->limit(100) // Suporta vários ônibus
                               ->get(['id', 'mac_address', 'ip_address', 'expires_at']);
 
             // Atualizar status dos usuários que expiraram AGORA para 'expired'
