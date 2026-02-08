@@ -264,8 +264,8 @@
 
     <!-- Registration Modal -->
     <div id="registration-modal" class="fixed inset-0 bg-black/50 z-50 hidden backdrop-blur-sm">
-        <div class="flex items-end sm:items-center justify-center h-full p-0 sm:p-4">
-            <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 sm:p-8 w-full max-w-md animate-slide-up shadow-xl">
+        <div class="flex items-center justify-center h-full p-4">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md animate-slide-up shadow-xl">
                 <div class="flex justify-between items-center mb-5">
                     <h3 class="text-lg font-bold text-gray-900">Acesso rápido</h3>
                     <button id="close-registration-modal" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">&times;</button>
