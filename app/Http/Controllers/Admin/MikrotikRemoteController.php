@@ -24,7 +24,7 @@ class MikrotikRemoteController extends Controller
     {
         try {
             // Usuários liberados (MAC vai como L: para o MikroTik)
-            $liberados = User::whereIn('status', ['connected', 'active'])
+            $liberados = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                 ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
@@ -166,7 +166,7 @@ class MikrotikRemoteController extends Controller
     {
         try {
             // Simular resposta do check-paid-users-lite
-            $activeMacs = User::whereIn('status', ['connected', 'active'])
+            $activeMacs = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                 ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')

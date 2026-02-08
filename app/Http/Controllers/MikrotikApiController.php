@@ -50,10 +50,11 @@ class MikrotikApiController extends Controller
             // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
             // Status 'connected' = pagou e está ativo
             // Status 'active' = alternativo para ativo
+            // Status 'temp_bypass' = bypass temporário de 3 min para abrir app do banco
             // IMPORTANTE: Liberamos TODOS os MACs, incluindo randomizados!
             // O usuário pagou com esse MAC, então deve funcionar.
             // LIMITE: 200 para suportar vários ônibus
-            $activeMacs = User::whereIn('status', ['connected', 'active'])
+            $activeMacs = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                 ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
                 ->where('mac_address', '!=', '')
@@ -83,7 +84,8 @@ class MikrotikApiController extends Controller
                 ->toArray();
 
             // 🔄 Atualizar status de usuários que acabaram de expirar
-            $justExpired = User::whereIn('status', ['connected', 'active'])
+            // Inclui temp_bypass que expirou (3 min sem pagar)
+            $justExpired = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                 ->where('expires_at', '<=', now())
                 ->whereNotNull('mac_address')
                 ->update([

@@ -966,6 +966,11 @@ class WiFiPortal {
                             <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2">
                                 <p class="text-amber-800 font-bold text-xs flex items-center gap-1.5">📱 Copie o código e cole no app do banco</p>
                             </div>
+                            ${data.temp_bypass ? `
+                            <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2 mb-2">
+                                <p class="text-emerald-800 font-bold text-[11px] flex items-center gap-1.5">🏦 Internet liberada por 3 min para você abrir o app do banco!</p>
+                            </div>
+                            ` : ''}
                             `}
                             
                             <!-- Copia e Cola -->
