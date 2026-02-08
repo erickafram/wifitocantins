@@ -916,25 +916,25 @@ class WiFiPortal {
                     </div>
                     
                     <!-- Timeline 3 Passos - Simplificada -->
-                    <div class="bg-gray-50 px-4 py-3 border-b">
+                    <div class="bg-gray-50 px-4 py-2 border-b">
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col items-center flex-1">
-                                <div id="step-1" class="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                <div id="step-1" class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                                 </div>
                                 <span id="step-1-text" class="text-[11px] mt-1 text-emerald-700 font-bold">Copiar</span>
                             </div>
                             <div class="h-1 flex-1 bg-gray-200 rounded-full -mt-4 mx-1"><div id="line-1-2" class="h-full bg-gray-200 rounded-full transition-all duration-500" style="width:0%"></div></div>
                             <div class="flex flex-col items-center flex-1">
-                                <div id="step-2" class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-bold">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                <div id="step-2" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-bold">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                                 </div>
                                 <span id="step-2-text" class="text-[11px] mt-1 text-gray-400 font-medium">Pagar</span>
                             </div>
                             <div class="h-1 flex-1 bg-gray-200 rounded-full -mt-4 mx-1"><div id="line-2-3" class="h-full bg-gray-200 rounded-full transition-all duration-500" style="width:0%"></div></div>
                             <div class="flex flex-col items-center flex-1">
-                                <div id="step-3" class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-bold">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                                <div id="step-3" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-bold">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
                                 </div>
                                 <span id="step-3-text" class="text-[11px] mt-1 text-gray-400 font-medium">Conectar</span>
                             </div>

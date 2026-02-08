@@ -133,6 +133,17 @@
             <div class="mb-4">
                 <p class="px-3 mb-2 text-xs font-semibold text-white/40 uppercase tracking-wider">Sistema</p>
                 
+                <!-- Mikrotik Remoto -->
+                <a href="{{ route('admin.mikrotik.remote.index') }}" onclick="closeSidebarOnMobile()" 
+                   class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.mikrotik.remote*') ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                    <span class="w-9 h-9 flex items-center justify-center rounded-lg {{ request()->routeIs('admin.mikrotik.remote*') ? 'bg-white/20' : 'bg-white/5 group-hover:bg-white/10' }} transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </span>
+                    <span class="ml-3 font-medium text-sm">Mikrotik Remoto</span>
+                </a>
+                
                 <!-- Configurações -->
                 <a href="{{ route('admin.settings.index') }}" onclick="closeSidebarOnMobile()" 
                    class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.settings*') ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-lg shadow-slate-500/30' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
