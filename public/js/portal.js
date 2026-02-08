@@ -822,7 +822,7 @@ class WiFiPortal {
         if (timerText && message) {
             timerText.textContent = message;
         } else if (timerText) {
-            timerText.textContent = `⏱️ Tempo restante: ${this.formatCountdown(this.pixCountdownSeconds)}`;
+            timerText.textContent = this.formatCountdown(this.pixCountdownSeconds);
         }
     }
 
@@ -898,152 +898,213 @@ class WiFiPortal {
         
         modal.innerHTML = `
             <div class="flex items-center justify-center min-h-screen p-2 overflow-y-auto">
-                <div class="bg-white rounded-xl w-full max-w-sm shadow-2xl my-2 max-h-[98vh] flex flex-col">
+                <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl my-2 max-h-[98vh] flex flex-col overflow-hidden">
                     
-                    <!-- Header Compacto -->
-                    <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-t-xl px-3 py-2 text-white">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-3 text-white">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-2">
-                                <span class="text-lg">📱</span>
+                                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
                                 <span class="text-sm font-bold">Pagamento PIX</span>
                             </div>
-                            <span class="text-lg font-bold">R$ ${data.qr_code.amount}</span>
+                            <div class="text-right">
+                                <span class="text-xl font-extrabold">R$ ${data.qr_code.amount}</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Timeline 5 Passos - Compacta -->
-                    <div class="bg-gray-50 px-2 py-2 border-b">
-                        <div class="flex items-center justify-between text-center">
+                    <!-- Timeline 3 Passos - Simplificada -->
+                    <div class="bg-gray-50 px-4 py-3 border-b">
+                        <div class="flex items-center justify-between">
                             <div class="flex flex-col items-center flex-1">
-                                <div id="step-1" class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
-                                <span class="text-[10px] mt-0.5 text-green-600 font-medium">Aviso</span>
+                                <div id="step-1" class="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                </div>
+                                <span id="step-1-text" class="text-[11px] mt-1 text-emerald-700 font-bold">Copiar</span>
                             </div>
-                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-1-2" class="h-full bg-green-500 transition-all" style="width:100%"></div></div>
+                            <div class="h-1 flex-1 bg-gray-200 rounded-full -mt-4 mx-1"><div id="line-1-2" class="h-full bg-gray-200 rounded-full transition-all duration-500" style="width:0%"></div></div>
                             <div class="flex flex-col items-center flex-1">
-                                <div id="step-2" class="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center text-white text-xs font-bold animate-pulse">2</div>
-                                <span id="step-2-text" class="text-[10px] mt-0.5 text-yellow-600 font-medium">Code</span>
+                                <div id="step-2" class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-bold">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                </div>
+                                <span id="step-2-text" class="text-[11px] mt-1 text-gray-400 font-medium">Pagar</span>
                             </div>
-                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-2-3" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
+                            <div class="h-1 flex-1 bg-gray-200 rounded-full -mt-4 mx-1"><div id="line-2-3" class="h-full bg-gray-200 rounded-full transition-all duration-500" style="width:0%"></div></div>
                             <div class="flex flex-col items-center flex-1">
-                                <div id="step-3" class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">3</div>
-                                <span id="step-3-text" class="text-[10px] mt-0.5 text-gray-400 font-medium">Pagar</span>
-                            </div>
-                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-3-4" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
-                            <div class="flex flex-col items-center flex-1">
-                                <div id="step-4" class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">4</div>
-                                <span id="step-4-text" class="text-[10px] mt-0.5 text-gray-400 font-medium">Liberar</span>
-                            </div>
-                            <div class="h-0.5 flex-1 bg-gray-300 -mt-3"><div id="line-4-5" class="h-full bg-gray-300 transition-all" style="width:0%"></div></div>
-                            <div class="flex flex-col items-center flex-1">
-                                <div id="step-5" class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">5</div>
-                                <span id="step-5-text" class="text-[10px] mt-0.5 text-gray-400 font-medium">Pronto</span>
+                                <div id="step-3" class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-bold">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                                </div>
+                                <span id="step-3-text" class="text-[11px] mt-1 text-gray-400 font-medium">Conectar</span>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Área de Conteúdo Dinâmico -->
-                    <div id="dynamic-content" class="p-3 flex-1 overflow-y-auto">
+                    <div id="dynamic-content" class="p-4 flex-1 overflow-y-auto">
                         
-                        <!-- PASSO 1: Aviso Importante (visível inicialmente) -->
+                        <!-- PASSO 1: QR Code + Copia e Cola (visível inicialmente) -->
                         <div id="step-1-content" class="hidden">
-                            <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-xl">⚠️</span>
-                                    <span class="text-red-700 font-bold text-sm">IMPORTANTE!</span>
-                                </div>
-                                <p class="text-red-600 text-xs leading-relaxed">
-                                    <strong>Não feche esta tela!</strong> Complete os 5 passos para liberar seu acesso à internet.
-                                </p>
-                            </div>
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                                <p class="text-blue-700 text-xs leading-relaxed">
-                                    <strong>📋 O que vai acontecer:</strong><br>
-                                    1. Você verá o QR Code PIX<br>
-                                    2. Pague pelo app do banco<br>
-                                    3. O status atualiza automaticamente<br>
-                                    4. Aguarde a liberação (1 min)<br>
-                                    5. Pronto! Navegue à vontade
-                                </p>
-                            </div>
-                            <button id="btn-start-payment" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg text-sm transition-all">
-                                ✅ ENTENDI, CONTINUAR
-                            </button>
-                        </div>
-                        
-                        <!-- PASSO 2: QR Code -->
-                        <div id="step-2-content" class="hidden">
-                            <div class="text-center">
-                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
-                                    <p class="text-amber-700 text-xs font-semibold">📱 Abra seu banco e efetue o pagamento</p>
-                                </div>
-                                ${!isMobile ? `
-                                <div class="bg-white p-2 rounded-lg border-2 border-dashed border-green-300 mb-2 inline-block">
-                                    <img src="${data.qr_code.image_url}" alt="QR Code" class="w-32 h-32 mx-auto">
-                                </div>
-                                ` : ''}
-                                <div class="bg-blue-50 rounded-lg p-2 mb-2 border border-blue-200">
-                                    <p class="text-[10px] font-bold text-blue-900 mb-1">📋 Código Copia e Cola ${isMobile ? '(USE ESTE!)' : ''}</p>
-                                    <div class="bg-white border rounded p-1.5 mb-2 max-h-12 overflow-y-auto">
-                                        <p class="text-[10px] text-gray-700 break-all font-mono" id="pix-code">${data.qr_code.emv_string}</p>
+                            
+                            <!-- Instrução clara -->
+                            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
+                                <div class="flex items-start gap-2">
+                                    <span class="text-lg mt-0.5">📱</span>
+                                    <div>
+                                        <p class="text-amber-800 font-bold text-sm">Pague pelo app do seu banco</p>
+                                        <p class="text-amber-600 text-xs mt-0.5">${isMobile ? 'Copie o código abaixo e cole no app do banco' : 'Escaneie o QR Code ou copie o código abaixo'}</p>
                                     </div>
-                                    <button id="copy-pix-code" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded text-xs">
-                                        📋 COPIAR CÓDIGO
-                                    </button>
                                 </div>
-                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2">
-                                    <p class="text-amber-700 text-[10px]"><strong>⏱️ Expira em:</strong> <span id="pix-timer-text">03:00</span></p>
+                            </div>
+                            
+                            ${!isMobile ? `
+                            <!-- QR Code (apenas desktop) -->
+                            <div class="text-center mb-3">
+                                <div class="bg-white p-3 rounded-xl border-2 border-dashed border-emerald-300 inline-block shadow-sm">
+                                    <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-40 h-40 mx-auto">
                                 </div>
-                                <button id="btn-paid" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-lg text-sm">
-                                    ✅ JÁ PAGUEI - VERIFICAR
+                                <p class="text-gray-400 text-[10px] mt-1.5">Escaneie com o app do banco</p>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="flex-1 h-px bg-gray-200"></div>
+                                <span class="text-[10px] text-gray-400 font-medium">OU COPIE O CÓDIGO</span>
+                                <div class="flex-1 h-px bg-gray-200"></div>
+                            </div>
+                            ` : ''}
+                            
+                            <!-- Copia e Cola -->
+                            <div class="bg-blue-50 rounded-xl p-3 mb-3 border border-blue-200">
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <span class="text-sm">📋</span>
+                                    <p class="text-xs font-bold text-blue-900">Código Copia e Cola</p>
+                                    ${isMobile ? '<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold ml-auto">RECOMENDADO</span>' : ''}
+                                </div>
+                                <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2.5 max-h-16 overflow-y-auto">
+                                    <p class="text-[10px] text-gray-600 break-all font-mono leading-relaxed" id="pix-code">${data.qr_code.emv_string}</p>
+                                </div>
+                                <button id="copy-pix-code" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold py-2.5 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    COPIAR CÓDIGO PIX
                                 </button>
-                                <p class="text-gray-500 text-[9px] mt-1">O status atualiza automaticamente a cada 5s</p>
                             </div>
+                            
+                            <!-- Timer -->
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 mb-3 border">
+                                <div class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span class="text-[11px] text-gray-500">Expira em:</span>
+                                </div>
+                                <span id="pix-timer-text" class="text-sm font-bold text-gray-700">03:00</span>
+                            </div>
+                            
+                            <!-- Botão Já Paguei -->
+                            <button id="btn-paid" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                JÁ PAGUEI
+                            </button>
+                            <p class="text-gray-400 text-[10px] mt-2 text-center">Verificação automática a cada 5 segundos</p>
                         </div>
                         
-                        <!-- PASSO 3: Verificando Pagamento -->
-                        <div id="step-3-content" class="hidden text-center">
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-3">
-                                <div class="animate-spin w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                                <p class="text-yellow-700 font-bold text-sm mb-1">Verificando pagamento...</p>
-                                <p class="text-yellow-600 text-xs">Aguarde, estamos confirmando</p>
-                            </div>
-                            <div class="bg-gray-100 rounded-lg p-2">
-                                <p class="text-gray-600 text-[10px]">🔄 Verificação automática a cada 5s</p>
-                            </div>
-                        </div>
-                        
-                        <!-- PASSO 4: Pagamento Confirmado + Liberando -->
-                        <div id="step-4-content" class="hidden text-center">
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
-                                <span class="text-3xl">✅</span>
-                                <p class="text-green-700 font-bold text-sm mt-1">Seu Pagamento foi Confirmado!</p>
-                            </div>
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <div class="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-                                <p class="text-blue-700 font-bold text-xs mb-1">Aguarde - Liberando acesso...</p>
-                                <p class="text-blue-600 text-[10px] mb-2">Configurando no MikroTik</p>
-                                <div class="bg-white rounded p-2 border">
-                                    <p class="text-lg font-bold text-blue-600" id="release-countdown">01:00</p>
-                                    <div class="w-full bg-blue-100 rounded-full h-1.5 mt-1">
-                                        <div id="release-progress" class="bg-blue-500 h-1.5 rounded-full transition-all" style="width:0%"></div>
+                        <!-- PASSO 2: Verificando / Pagamento Confirmado -->
+                        <div id="step-2-content" class="hidden">
+                            
+                            <!-- Sub-estado: Verificando -->
+                            <div id="step-2-checking" class="text-center">
+                                <div class="mb-4">
+                                    <div class="w-16 h-16 mx-auto mb-3 relative">
+                                        <div class="absolute inset-0 rounded-full border-4 border-amber-200"></div>
+                                        <div class="absolute inset-0 rounded-full border-4 border-amber-500 border-t-transparent animate-spin"></div>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-800 font-bold text-base">Verificando pagamento...</p>
+                                    <p class="text-gray-500 text-xs mt-1">Isso pode levar alguns segundos</p>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                                        <p class="text-amber-700 text-xs font-medium">Consultando banco...</p>
                                     </div>
                                 </div>
-                                <p class="text-red-500 text-[10px] mt-2 font-bold">⚠️ Não feche esta tela!</p>
+                            </div>
+                            
+                            <!-- Sub-estado: Pago! (aparece quando confirmado) -->
+                            <div id="step-2-paid" class="hidden text-center">
+                                <div class="mb-4">
+                                    <div class="w-20 h-20 mx-auto mb-3 bg-emerald-100 rounded-full flex items-center justify-center animate-bounce-once">
+                                        <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                    <p class="text-emerald-700 font-extrabold text-xl">Pagamento Confirmado!</p>
+                                    <p class="text-emerald-600 text-sm mt-1">R$ ${data.qr_code.amount} recebido</p>
+                                </div>
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <p class="text-emerald-700 text-xs font-bold">Pagamento verificado com sucesso</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- PASSO 5: Conectado -->
-                        <div id="step-5-content" class="hidden text-center">
-                            <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-4 text-white">
-                                <span class="text-4xl">🎉</span>
-                                <p class="font-bold text-lg mt-2">CONECTADO!</p>
-                                <p class="text-green-100 text-xs mt-1">Aproveite a internet</p>
-                                <div class="bg-white/20 rounded p-2 mt-2">
-                                    <p class="text-[10px]">⏰ Você tem acesso até:</p>
-                                    <p class="text-sm font-bold" id="access-expires-at">${this.calculateExpirationTime()}</p>
+                        <!-- PASSO 3: Liberando + Conectado -->
+                        <div id="step-3-content" class="hidden">
+                            
+                            <!-- Sub-estado: Liberando acesso -->
+                            <div id="step-3-releasing" class="text-center">
+                                <div class="mb-4">
+                                    <div class="w-16 h-16 mx-auto mb-3 relative">
+                                        <div class="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+                                        <div class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-800 font-bold text-base">Liberando seu acesso...</p>
+                                    <p class="text-gray-500 text-xs mt-1">Configurando sua conexão WiFi</p>
                                 </div>
-                                <div class="bg-white/10 rounded p-2 mt-2">
-                                    <p class="text-[10px]">Redirecionando para Google...</p>
+                                
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-blue-700 text-xs font-bold">Progresso</span>
+                                        <span class="text-blue-600 text-sm font-bold" id="release-countdown">01:00</span>
+                                    </div>
+                                    <div class="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden">
+                                        <div id="release-progress" class="bg-gradient-to-r from-blue-400 to-blue-600 h-2.5 rounded-full transition-all duration-1000" style="width:0%"></div>
+                                    </div>
+                                    <p class="text-blue-500 text-[10px] mt-2">Sincronizando com o roteador...</p>
+                                </div>
+                                
+                                <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                    <p class="text-red-600 text-[11px] font-bold flex items-center justify-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                                        Não feche esta tela!
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Sub-estado: Conectado! -->
+                            <div id="step-3-connected" class="hidden text-center">
+                                <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg">
+                                    <div class="w-20 h-20 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center">
+                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                                    </div>
+                                    <p class="font-extrabold text-2xl">Conectado!</p>
+                                    <p class="text-emerald-100 text-sm mt-1">Aproveite a internet durante toda a viagem</p>
+                                    
+                                    <div class="bg-white/15 rounded-xl p-3 mt-4">
+                                        <p class="text-emerald-100 text-[11px]">Acesso válido até</p>
+                                        <p class="text-lg font-bold mt-0.5" id="access-expires-at">${this.calculateExpirationTime()}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 bg-gray-50 rounded-xl p-3 border">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                        <p class="text-gray-600 text-xs">Redirecionando em <span id="redirect-timer">3</span>s...</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1054,170 +1115,170 @@ class WiFiPortal {
             </div>
         `;
         
+        // Adicionar animação CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes bounce-once { 0%{transform:scale(0.3);opacity:0} 50%{transform:scale(1.1)} 70%{transform:scale(0.95)} 100%{transform:scale(1);opacity:1} }
+            .animate-bounce-once { animation: bounce-once 0.6s ease-out; }
+        `;
+        document.head.appendChild(style);
+        
         document.body.appendChild(modal);
         
-        // Mostrar passo 1 (aviso) primeiro
+        // Mostrar passo 1 (QR Code) direto — sem aviso desnecessário
         document.getElementById('step-1-content').classList.remove('hidden');
-        
-        // Event: Botão "Entendi, Continuar" - vai para passo 2
-        document.getElementById('btn-start-payment').addEventListener('click', () => {
-            this.goToStep2();
-        });
         
         // Event: Copiar código PIX
         document.getElementById('copy-pix-code')?.addEventListener('click', () => {
             this.copyPixCode(data.qr_code.emv_string);
+            const btn = document.getElementById('copy-pix-code');
+            if (btn) {
+                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> COPIADO!';
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                btn.classList.add('bg-emerald-500');
+                setTimeout(() => {
+                    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> COPIAR CÓDIGO PIX';
+                    btn.classList.remove('bg-emerald-500');
+                    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }, 2000);
+            }
         });
         
-        // Event: Botão "Já Paguei" - vai para passo 3
+        // Event: Botão "Já Paguei" - vai para passo 2 (verificando)
         document.getElementById('btn-paid')?.addEventListener('click', () => {
-            this.goToStep3(data.payment_id);
-        });
-        
-        // Event: Cancelar (se existir o botão)
-        document.getElementById('cancel-payment')?.addEventListener('click', () => {
-            this.closePixModal();
+            this.goToStep2(data.payment_id);
         });
         
         // Salvar payment_id para uso posterior
         this.currentPaymentId = data.payment_id;
-    }
-    
-    /**
-     * Vai para o Passo 2 - QR Code
-     */
-    goToStep2() {
-        // Atualizar timeline
-        document.getElementById('step-1').classList.remove('bg-green-500');
-        document.getElementById('step-1').classList.add('bg-green-500');
-        document.getElementById('step-1').innerHTML = '✓';
         
-        document.getElementById('step-2').classList.remove('bg-yellow-500', 'animate-pulse');
-        document.getElementById('step-2').classList.add('bg-yellow-500', 'animate-pulse');
-        document.getElementById('line-1-2').style.width = '100%';
-        document.getElementById('line-1-2').classList.remove('bg-gray-300');
-        document.getElementById('line-1-2').classList.add('bg-green-500');
-        
-        // Trocar conteúdo
-        document.getElementById('step-1-content').classList.add('hidden');
-        document.getElementById('step-2-content').classList.remove('hidden');
-        
-        // Iniciar timer
+        // Iniciar timer e verificação automática imediatamente
         this.startPixCountdown();
-        
-        // Iniciar verificação automática
         this.paymentCheckInterval = setInterval(() => {
             this.checkPaymentStatus(this.currentPaymentId);
         }, 5000);
     }
     
     /**
-     * Vai para o Passo 3 - Verificando
+     * Vai para o Passo 2 - Verificando pagamento
      */
-    goToStep3(paymentId) {
-        // Atualizar timeline
-        document.getElementById('step-2').classList.remove('bg-yellow-500', 'animate-pulse');
-        document.getElementById('step-2').classList.add('bg-green-500');
-        document.getElementById('step-2').innerHTML = '✓';
-        document.getElementById('step-2-text').classList.remove('text-yellow-600');
-        document.getElementById('step-2-text').classList.add('text-green-600');
+    goToStep2(paymentId) {
+        // Atualizar timeline - Step 1 concluído
+        document.getElementById('step-1').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+        document.getElementById('step-1-text').textContent = 'Copiado';
+        document.getElementById('line-1-2').style.width = '100%';
+        document.getElementById('line-1-2').classList.remove('bg-gray-200');
+        document.getElementById('line-1-2').classList.add('bg-emerald-400');
         
-        document.getElementById('step-3').classList.remove('bg-gray-300', 'text-gray-500');
-        document.getElementById('step-3').classList.add('bg-yellow-500', 'text-white', 'animate-pulse');
-        document.getElementById('step-3-text').classList.remove('text-gray-400');
-        document.getElementById('step-3-text').classList.add('text-yellow-600');
+        // Step 2 ativo
+        document.getElementById('step-2').classList.remove('bg-gray-200', 'text-gray-400');
+        document.getElementById('step-2').classList.add('bg-amber-500', 'text-white', 'animate-pulse');
+        document.getElementById('step-2').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+        document.getElementById('step-2-text').classList.remove('text-gray-400');
+        document.getElementById('step-2-text').classList.add('text-amber-600', 'font-bold');
+        document.getElementById('step-2-text').textContent = 'Verificando';
+        
+        // Trocar conteúdo
+        document.getElementById('step-1-content').classList.add('hidden');
+        document.getElementById('step-2-content').classList.remove('hidden');
+        
+        // Verificar pagamento imediatamente
+        this.checkPaymentStatus(paymentId || this.currentPaymentId);
+    }
+    
+    /**
+     * Mostra confirmação de pagamento (sub-estado do passo 2)
+     * Depois vai para passo 3 automaticamente
+     */
+    showPaymentConfirmed() {
+        this.pixPaymentConfirmed = true;
+        this.stopPixCountdown();
+        
+        // Parar verificação automática
+        if (this.paymentCheckInterval) {
+            clearInterval(this.paymentCheckInterval);
+            this.paymentCheckInterval = null;
+        }
+        
+        // Step 2 - mostrar sub-estado "Pago!"
+        document.getElementById('step-2-checking')?.classList.add('hidden');
+        document.getElementById('step-2-paid')?.classList.remove('hidden');
+        
+        // Atualizar ícone do step 2
+        document.getElementById('step-2').classList.remove('bg-amber-500', 'animate-pulse');
+        document.getElementById('step-2').classList.add('bg-emerald-500');
+        document.getElementById('step-2').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+        document.getElementById('step-2-text').classList.remove('text-amber-600');
+        document.getElementById('step-2-text').classList.add('text-emerald-600');
+        document.getElementById('step-2-text').textContent = 'Pago!';
+        
+        // Após 2 segundos, ir para passo 3 (liberando)
+        setTimeout(() => {
+            this.goToStep3();
+        }, 2000);
+    }
+    
+    /**
+     * Vai para o Passo 3 - Liberando acesso
+     */
+    goToStep3() {
+        // Linha 2→3 completa
         document.getElementById('line-2-3').style.width = '100%';
-        document.getElementById('line-2-3').classList.remove('bg-gray-300');
-        document.getElementById('line-2-3').classList.add('bg-green-500');
+        document.getElementById('line-2-3').classList.remove('bg-gray-200');
+        document.getElementById('line-2-3').classList.add('bg-emerald-400');
+        
+        // Step 3 ativo
+        document.getElementById('step-3').classList.remove('bg-gray-200', 'text-gray-400');
+        document.getElementById('step-3').classList.add('bg-blue-500', 'text-white', 'animate-pulse');
+        document.getElementById('step-3').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>';
+        document.getElementById('step-3-text').classList.remove('text-gray-400');
+        document.getElementById('step-3-text').classList.add('text-blue-600', 'font-bold');
+        document.getElementById('step-3-text').textContent = 'Liberando';
         
         // Trocar conteúdo
         document.getElementById('step-2-content').classList.add('hidden');
         document.getElementById('step-3-content').classList.remove('hidden');
         
-        // Verificar pagamento imediatamente
-        this.checkPaymentStatus(paymentId);
-    }
-    
-    /**
-     * Vai para o Passo 4 - Liberando
-     */
-    goToStep4() {
-        this.pixPaymentConfirmed = true;
-        this.stopPixCountdown();
-        
-        // Atualizar timeline - Passo 2 concluído (verde)
-        document.getElementById('step-2').classList.remove('bg-yellow-500', 'animate-pulse');
-        document.getElementById('step-2').classList.add('bg-green-500');
-        document.getElementById('step-2').innerHTML = '✓';
-        document.getElementById('step-2-text').classList.remove('text-yellow-600');
-        document.getElementById('step-2-text').classList.add('text-green-600');
-        document.getElementById('line-2-3').style.width = '100%';
-        document.getElementById('line-2-3').classList.remove('bg-gray-300');
-        document.getElementById('line-2-3').classList.add('bg-green-500');
-        
-        // Atualizar timeline - Passo 3 concluído (verde)
-        document.getElementById('step-3').classList.remove('bg-yellow-500', 'bg-gray-300', 'animate-pulse', 'text-gray-500');
-        document.getElementById('step-3').classList.add('bg-green-500', 'text-white');
-        document.getElementById('step-3').innerHTML = '✓';
-        document.getElementById('step-3-text').classList.remove('text-yellow-600', 'text-gray-400');
-        document.getElementById('step-3-text').classList.add('text-green-600');
-        document.getElementById('step-3-text').textContent = 'Pago!';
-        document.getElementById('line-3-4').style.width = '100%';
-        document.getElementById('line-3-4').classList.remove('bg-gray-300');
-        document.getElementById('line-3-4').classList.add('bg-green-500');
-        
-        // Atualizar timeline - Passo 4 ativo (azul pulsando)
-        document.getElementById('step-4').classList.remove('bg-gray-300', 'text-gray-500');
-        document.getElementById('step-4').classList.add('bg-blue-500', 'text-white', 'animate-pulse');
-        document.getElementById('step-4-text').classList.remove('text-gray-400');
-        document.getElementById('step-4-text').classList.add('text-blue-600');
-        
-        // Trocar conteúdo
-        document.getElementById('step-2-content')?.classList.add('hidden');
-        document.getElementById('step-3-content')?.classList.add('hidden');
-        document.getElementById('step-4-content').classList.remove('hidden');
-        
-        // Esconder botões (pagamento já confirmado)
-        document.getElementById('cancel-payment')?.classList.add('hidden');
+        // Esconder botões antigos
         document.getElementById('btn-paid')?.classList.add('hidden');
         
         // Iniciar contador de 60 segundos
         this.startReleaseCountdown(60);
+        
+        // Liberar dispositivo no MikroTik em background
+        this.allowDevice(this.deviceMac);
     }
     
     /**
-     * Vai para o Passo 5 - Conectado
+     * Vai para estado final - Conectado!
      */
-    goToStep5() {
+    showConnected() {
         this.stopReleaseCountdown();
         
-        // Atualizar timeline
-        document.getElementById('step-4').classList.remove('bg-blue-500', 'animate-pulse');
-        document.getElementById('step-4').classList.add('bg-green-500');
-        document.getElementById('step-4').innerHTML = '✓';
-        document.getElementById('step-4-text').classList.remove('text-blue-600');
-        document.getElementById('step-4-text').classList.add('text-green-600');
-        document.getElementById('step-4-text').textContent = 'OK!';
-        
-        document.getElementById('step-5').classList.remove('bg-gray-300', 'text-gray-500');
-        document.getElementById('step-5').classList.add('bg-green-500', 'text-white');
-        document.getElementById('step-5').innerHTML = '✓';
-        document.getElementById('step-5-text').classList.remove('text-gray-400');
-        document.getElementById('step-5-text').classList.add('text-green-600');
-        document.getElementById('line-4-5').style.width = '100%';
-        document.getElementById('line-4-5').classList.remove('bg-gray-300');
-        document.getElementById('line-4-5').classList.add('bg-green-500');
+        // Step 3 concluído
+        document.getElementById('step-3').classList.remove('bg-blue-500', 'animate-pulse');
+        document.getElementById('step-3').classList.add('bg-emerald-500');
+        document.getElementById('step-3').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+        document.getElementById('step-3-text').classList.remove('text-blue-600');
+        document.getElementById('step-3-text').classList.add('text-emerald-600');
+        document.getElementById('step-3-text').textContent = 'Conectado!';
         
         // Trocar conteúdo
-        document.getElementById('step-4-content').classList.add('hidden');
-        document.getElementById('step-5-content').classList.remove('hidden');
+        document.getElementById('step-3-releasing')?.classList.add('hidden');
+        document.getElementById('step-3-connected')?.classList.remove('hidden');
         
-        // Redirecionar após 3 segundos
-        setTimeout(() => {
-            window.location.href = 'https://www.google.com';
-        }, 3000);
+        // Countdown para redirect
+        let redirectSeconds = 3;
+        const redirectTimer = setInterval(() => {
+            redirectSeconds--;
+            const el = document.getElementById('redirect-timer');
+            if (el) el.textContent = redirectSeconds;
+            if (redirectSeconds <= 0) {
+                clearInterval(redirectTimer);
+                window.location.href = 'https://www.google.com';
+            }
+        }, 1000);
     }
-
     /**
      * Copia código PIX para a área de transferência
      */
@@ -1238,7 +1299,7 @@ class WiFiPortal {
     }
 
     /**
-     * Verifica status do pagamento - Usa o novo fluxo de 5 passos
+     * Verifica status do pagamento - Usa o novo fluxo de 3 passos
      */
     async checkPaymentStatus(paymentId) {
         console.log('🔄 Verificando status do pagamento:', paymentId);
@@ -1252,17 +1313,8 @@ class WiFiPortal {
             if (result.success && result.payment.status === 'completed') {
                 console.log('✅ Pagamento confirmado!');
                 
-                // Parar verificação automática
-                if (this.paymentCheckInterval) {
-                    clearInterval(this.paymentCheckInterval);
-                    this.paymentCheckInterval = null;
-                }
-
-                // Ir para passo 4 (Liberando)
-                this.goToStep4();
-                
-                // Liberar dispositivo no MikroTik em background
-                this.allowDevice(this.deviceMac);
+                // Ir para confirmação (passo 2 sub-estado "pago") → depois passo 3
+                this.showPaymentConfirmed();
             } else {
                 console.log('⏱️ Pagamento ainda pendente');
             }
@@ -1272,7 +1324,7 @@ class WiFiPortal {
     }
     
     /**
-     * Inicia contador de liberação - Vai para passo 5 quando terminar
+     * Inicia contador de liberação - Mostra "Conectado" quando terminar
      */
     startReleaseCountdown(seconds) {
         this.releaseCountdownSeconds = seconds;
@@ -1293,9 +1345,9 @@ class WiFiPortal {
                 progressEl.style.width = `${progress}%`;
             }
             
-            // Quando o contador chegar a 0, ir para passo 5
+            // Quando o contador chegar a 0, mostrar conectado
             if (this.releaseCountdownSeconds <= 0) {
-                this.goToStep5();
+                this.showConnected();
             }
         }, 1000);
     }

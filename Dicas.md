@@ -8,7 +8,7 @@ git push -u origin main
 ----------------------------------
 
 # 1. Ir para o diretório correto
-cd /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br
+cd /home/tocantinstransportewifi/htdocs/tocantinstransportewifi.com.br
 
 # 2. Fazer backup do .env
 cp .env .env.backup
