@@ -338,46 +338,67 @@ class PaymentController extends Controller
                 return;
             }
 
-            // Montar mensagem
+            // Montar mensagens (2 separadas para facilitar cópia)
             $nome = $user->name ?? 'Cliente';
-            $message = "🚌 *Tocantins Transporte WiFi*\n\n"
-                     . "Olá {$nome}! Seu PIX foi gerado com sucesso.\n\n"
-                     . "💰 *Valor:* R\$ {$amount}\n"
-                     . "⏱️ *Válido por:* 3 minutos\n\n"
-                     . "📋 *Código PIX (Copia e Cola):*\n"
-                     . "{$pixCode}\n\n"
-                     . "👆 Copie o código acima, abra o app do seu banco e cole na opção *PIX Copia e Cola*.\n\n"
-                     . "✅ Após o pagamento, sua internet será liberada automaticamente!";
+            $message1 = "🚌 *Tocantins Transporte WiFi*\n\n"
+                      . "Olá {$nome}! Seu PIX de *R\$ {$amount}* foi gerado.\n"
+                      . "⏱️ Válido por 3 minutos.\n\n"
+                      . "A internet será liberada por 3 min para você abrir o app do banco e pagar.\n\n"
+                      . "👇 Copie o código na próxima mensagem e cole em *PIX Copia e Cola*.";
 
-            // Criar registro da mensagem
-            $whatsappMessage = \App\Models\WhatsappMessage::create([
-                'user_id' => $user->id,
-                'payment_id' => $payment->id,
-                'phone' => $phone,
-                'message' => $message,
-                'status' => 'pending',
-            ]);
+            $message2 = $pixCode;
 
             // Enviar via Baileys
             $baileysUrl = env('BAILEYS_SERVER_URL', 'http://localhost:3001');
-            $response = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+
+            // 1ª mensagem: instrução
+            $msg1Record = \App\Models\WhatsappMessage::create([
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
                 'phone' => $phone,
-                'message' => $message,
+                'message' => $message1,
+                'status' => 'pending',
             ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $whatsappMessage->markAsSent($data['messageId'] ?? null);
-                Log::info('📱 WhatsApp PIX: Mensagem enviada com sucesso', [
+            $resp1 = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+                'phone' => $phone,
+                'message' => $message1,
+            ]);
+
+            if ($resp1->successful()) {
+                $msg1Record->markAsSent($resp1->json('messageId'));
+            } else {
+                $msg1Record->markAsFailed($resp1->body());
+            }
+
+            // Pequeno delay para manter ordem
+            usleep(300000); // 0.3s
+
+            // 2ª mensagem: só o código PIX (fácil de copiar)
+            $msg2Record = \App\Models\WhatsappMessage::create([
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
+                'phone' => $phone,
+                'message' => $message2,
+                'status' => 'pending',
+            ]);
+
+            $resp2 = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+                'phone' => $phone,
+                'message' => $message2,
+            ]);
+
+            if ($resp2->successful()) {
+                $msg2Record->markAsSent($resp2->json('messageId'));
+                Log::info('📱 WhatsApp PIX: 2 mensagens enviadas', [
                     'payment_id' => $payment->id,
                     'phone' => $phone,
                 ]);
             } else {
-                $whatsappMessage->markAsFailed($response->body());
-                Log::warning('📱 WhatsApp PIX: Falha ao enviar', [
+                $msg2Record->markAsFailed($resp2->body());
+                Log::warning('📱 WhatsApp PIX: Falha na 2ª mensagem', [
                     'payment_id' => $payment->id,
-                    'phone' => $phone,
-                    'error' => $response->body(),
+                    'error' => $resp2->body(),
                 ]);
             }
 
