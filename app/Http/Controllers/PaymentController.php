@@ -278,6 +278,9 @@ class PaymentController extends Controller
                 'transaction_id' => $payment->transaction_id,
             ]);
 
+            // 📱 ENVIAR PIX VIA WHATSAPP (não bloqueia a resposta)
+            $this->sendPixViaWhatsapp($user, $payment, $response);
+
             return response()->json([
                 'success' => true,
                 'message' => 'QR Code PIX gerado com sucesso!',
@@ -304,6 +307,87 @@ class PaymentController extends Controller
     {
         // Redirecionar para geração de QR Code
         return $this->generatePixQRCode($request);
+    }
+
+    /**
+     * 📱 Envia o código PIX via WhatsApp para o usuário
+     * Chamado automaticamente após gerar o QR Code
+     * Não bloqueia a resposta ao frontend em caso de erro
+     */
+    private function sendPixViaWhatsapp(User $user, Payment $payment, array $pixData): void
+    {
+        try {
+            // Verificar se o usuário tem telefone
+            if (!$user->phone || strlen($user->phone) < 10) {
+                Log::info('📱 WhatsApp PIX: Usuário sem telefone válido', ['user_id' => $user->id]);
+                return;
+            }
+
+            // Verificar se o WhatsApp está conectado
+            if (!\App\Models\WhatsappSetting::isConnected()) {
+                Log::info('📱 WhatsApp PIX: WhatsApp não está conectado, pulando envio');
+                return;
+            }
+
+            $phone = \App\Models\WhatsappMessage::formatPhone($user->phone);
+            $amount = number_format((float) ($pixData['amount'] ?? $payment->amount), 2, ',', '.');
+            $pixCode = $pixData['emv_string'] ?? $payment->pix_emv_string;
+
+            if (!$pixCode) {
+                Log::warning('📱 WhatsApp PIX: Código PIX vazio', ['payment_id' => $payment->id]);
+                return;
+            }
+
+            // Montar mensagem
+            $nome = $user->name ?? 'Cliente';
+            $message = "🚌 *Tocantins Transporte WiFi*\n\n"
+                     . "Olá {$nome}! Seu PIX foi gerado com sucesso.\n\n"
+                     . "💰 *Valor:* R\$ {$amount}\n"
+                     . "⏱️ *Válido por:* 3 minutos\n\n"
+                     . "📋 *Código PIX (Copia e Cola):*\n"
+                     . "{$pixCode}\n\n"
+                     . "👆 Copie o código acima, abra o app do seu banco e cole na opção *PIX Copia e Cola*.\n\n"
+                     . "✅ Após o pagamento, sua internet será liberada automaticamente!";
+
+            // Criar registro da mensagem
+            $whatsappMessage = \App\Models\WhatsappMessage::create([
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
+                'phone' => $phone,
+                'message' => $message,
+                'status' => 'pending',
+            ]);
+
+            // Enviar via Baileys
+            $baileysUrl = env('BAILEYS_SERVER_URL', 'http://localhost:3001');
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+                'phone' => $phone,
+                'message' => $message,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $whatsappMessage->markAsSent($data['messageId'] ?? null);
+                Log::info('📱 WhatsApp PIX: Mensagem enviada com sucesso', [
+                    'payment_id' => $payment->id,
+                    'phone' => $phone,
+                ]);
+            } else {
+                $whatsappMessage->markAsFailed($response->body());
+                Log::warning('📱 WhatsApp PIX: Falha ao enviar', [
+                    'payment_id' => $payment->id,
+                    'phone' => $phone,
+                    'error' => $response->body(),
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            // Nunca deixar o erro de WhatsApp afetar a geração do PIX
+            Log::error('📱 WhatsApp PIX: Exceção ao enviar', [
+                'payment_id' => $payment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
