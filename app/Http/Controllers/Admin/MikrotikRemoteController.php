@@ -11,12 +11,6 @@ class MikrotikRemoteController extends Controller
 {
     private $client;
 
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware('admin');
-    }
-
     private function connect()
     {
         try {
