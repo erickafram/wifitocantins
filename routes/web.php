@@ -132,8 +132,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
             Route::post('/sync', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'syncNow'])->name('sync');
             Route::post('/liberate', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'liberateMac'])->name('liberate');
             Route::post('/block', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'blockMac'])->name('block');
+            Route::post('/edit-expiration', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'editExpiration'])->name('edit-expiration');
             Route::get('/logs', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'getLogs'])->name('logs');
-            Route::post('/command', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'executeCommand'])->name('command');
         });
     });
 });

@@ -737,7 +737,6 @@ class MikrotikApiController extends Controller
             ], 500);
         }
     }
-}
 
     /**
      * 🎛️ REMOTE ADMIN PANEL - Buscar comandos pendentes
