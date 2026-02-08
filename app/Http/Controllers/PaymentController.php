@@ -341,40 +341,75 @@ class PaymentController extends Controller
                 ]);
             }
 
-            // Anti-abuso: máximo 3 bypasses por MAC por hora
-            $recentBypasses = Payment::where('user_id', $user->id)
-                ->where('status', 'pending')
-                ->where('created_at', '>', now()->subHour())
-                ->count();
+            // 🔒 ANTI-ABUSO: Máximo 2 bypasses por hora
+            // Verificar por MAC (mesmo dispositivo)
+            $bypassesByMac = \Illuminate\Support\Facades\Cache::get('bypass_mac_' . strtoupper($user->mac_address), 0);
 
-            if ($recentBypasses > 3) {
-                Log::warning('⚠️ Bypass temporário negado - limite anti-abuso', [
+            // Verificar por telefone (mesmo usuário trocando de rede 2.4/5G)
+            $bypassesByPhone = 0;
+            if ($user->phone) {
+                $bypassesByPhone = \Illuminate\Support\Facades\Cache::get('bypass_phone_' . $user->phone, 0);
+            }
+
+            $totalBypasses = max($bypassesByMac, $bypassesByPhone);
+
+            if ($totalBypasses >= 2) {
+                Log::warning('⚠️ Bypass temporário negado - limite anti-abuso (máx 2/hora)', [
                     'user_id' => $user->id,
                     'mac_address' => $user->mac_address,
-                    'recent_bypasses' => $recentBypasses,
+                    'phone' => $user->phone,
+                    'bypasses_mac' => $bypassesByMac,
+                    'bypasses_phone' => $bypassesByPhone,
                 ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Muitas tentativas. Aguarde alguns minutos.',
+                    'message' => 'Limite de 2 liberações por hora atingido. Pague pelo seu plano de dados ou aguarde.',
+                    'limit_reached' => true,
                 ]);
             }
 
+            // Também verificar se já tem bypass ativo (não deixar gerar outro em cima)
+            if ($user->status === 'temp_bypass' && $user->expires_at && $user->expires_at > now()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Você já tem internet liberada! Abra o app do banco.',
+                    'already_bypassed' => true,
+                    'expires_in' => now()->diffInSeconds($user->expires_at),
+                ]);
+            }
+
+            // Ativar bypass
             $user->update([
                 'status' => 'temp_bypass',
                 'expires_at' => now()->addMinutes(3),
             ]);
 
-            Log::info('🏦 BYPASS TEMPORÁRIO DE 3 MIN ATIVADO (manual)', [
+            // Incrementar contadores (expiram em 1 hora)
+            $macKey = 'bypass_mac_' . strtoupper($user->mac_address);
+            \Illuminate\Support\Facades\Cache::put($macKey, $bypassesByMac + 1, now()->addHour());
+
+            if ($user->phone) {
+                $phoneKey = 'bypass_phone_' . $user->phone;
+                \Illuminate\Support\Facades\Cache::put($phoneKey, $bypassesByPhone + 1, now()->addHour());
+            }
+
+            Log::info('🏦 BYPASS TEMPORÁRIO DE 3 MIN ATIVADO', [
                 'user_id' => $user->id,
                 'mac_address' => $user->mac_address,
+                'phone' => $user->phone,
                 'payment_id' => $payment->id,
+                'bypass_count_mac' => $bypassesByMac + 1,
+                'bypass_count_phone' => $bypassesByPhone + 1,
                 'expires_at' => now()->addMinutes(3)->toISOString(),
             ]);
+
+            $remaining = 2 - ($totalBypasses + 1);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Internet liberada por 3 minutos! Abra o app do banco.',
                 'expires_in' => 180,
+                'bypasses_remaining' => $remaining,
             ]);
 
         } catch (\Exception $e) {

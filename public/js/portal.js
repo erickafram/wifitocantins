@@ -979,13 +979,25 @@ class WiFiPortal {
                                 </button>
                             </div>
                             
-                            <!-- Botão Abrir Banco (aparece após copiar) -->
+                            <!-- Status após copiar (aparece após copiar) -->
                             <div id="open-bank-area" class="hidden mb-2">
-                                <button id="btn-open-bank" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-[0.98] text-white font-bold py-3 rounded-lg text-xs transition-all shadow-lg flex items-center justify-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                    🏦 ABRIR APP DO BANCO
-                                </button>
-                                <p class="text-[10px] text-center text-gray-400 mt-1">Libera internet por 3 min para você pagar</p>
+                                <!-- Caso 1: Tem dados móveis -->
+                                <div id="has-mobile-data" class="hidden">
+                                    <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2.5">
+                                        <p class="text-emerald-800 font-bold text-xs flex items-center gap-1.5">✅ Abra o app do banco e cole o código PIX.</p>
+                                        <p class="text-emerald-600 text-[10px] mt-1">Após pagar, o WiFi será liberado automaticamente.</p>
+                                    </div>
+                                </div>
+                                <!-- Caso 2: Sem dados móveis - liberando automaticamente -->
+                                <div id="no-mobile-data" class="hidden">
+                                    <div class="bg-amber-50 border border-amber-300 rounded-lg p-2.5">
+                                        <p class="text-amber-800 font-bold text-xs flex items-center gap-1.5">
+                                            <span id="bypass-icon" class="inline-block"><div class="animate-spin w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full"></div></span>
+                                            <span id="bypass-text">Liberando internet por 3 min...</span>
+                                        </p>
+                                        <p class="text-amber-700 text-[10px] mt-1" id="bypass-subtext">Aguarde, esta tela pode fechar. Abra o banco e cole o código.</p>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Timer + Já Paguei lado a lado no mobile, empilhado no desktop -->
@@ -1148,56 +1160,19 @@ class WiFiPortal {
                 btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                 btn.classList.add('bg-emerald-500');
                 
-                // Mostrar botão "ABRIR APP DO BANCO" após copiar
+                // Mostrar área pós-cópia e detectar dados móveis
                 const openBankArea = document.getElementById('open-bank-area');
-                if (openBankArea) openBankArea.classList.remove('hidden');
+                if (openBankArea) {
+                    openBankArea.classList.remove('hidden');
+                    // Detectar se tem internet → se não tem, ativa bypass automaticamente
+                    this.detectAndBypass(data.payment_id);
+                }
                 
                 setTimeout(() => {
                     btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> COPIAR CÓDIGO PIX';
                     btn.classList.remove('bg-emerald-500');
                     btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 }, 2000);
-            }
-        });
-        
-        // Event: Botão "Abrir App do Banco" - ativa bypass temporário de 3 min
-        document.getElementById('btn-open-bank')?.addEventListener('click', async () => {
-            const btn = document.getElementById('btn-open-bank');
-            if (!btn) return;
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Liberando...';
-            
-            try {
-                const response = await fetch('/api/payment/pix/temp-bypass', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-                    },
-                    body: JSON.stringify({ payment_id: data.payment_id })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    btn.innerHTML = '✅ Internet liberada! Abra o app do banco';
-                    btn.classList.remove('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700');
-                    btn.classList.add('bg-emerald-500');
-                    btn.style.background = 'linear-gradient(to right, #10b981, #059669)';
-                    
-                    // Descrição atualizada
-                    const desc = btn.nextElementSibling;
-                    if (desc) desc.textContent = 'Você tem 3 min — cole o código PIX no banco!';
-                } else {
-                    btn.innerHTML = '🏦 ABRIR APP DO BANCO';
-                    btn.disabled = false;
-                    alert(result.message || 'Erro ao liberar. Tente novamente.');
-                }
-            } catch (e) {
-                btn.innerHTML = '🏦 ABRIR APP DO BANCO';
-                btn.disabled = false;
-                console.error('Erro ao ativar bypass:', e);
             }
         });
         
@@ -1367,6 +1342,115 @@ class WiFiPortal {
             document.execCommand('copy');
             document.body.removeChild(textArea);
             this.showSuccessMessage('Código PIX copiado!');
+        }
+    }
+
+    /**
+     * Detecta se tem internet (dados móveis) e ativa bypass automaticamente se não tem
+     * Chamado APÓS o usuário copiar o código PIX
+     */
+    detectAndBypass(paymentId) {
+        const showHasData = () => {
+            const el = document.getElementById('has-mobile-data');
+            if (el) el.classList.remove('hidden');
+        };
+        const showNoData = () => {
+            const el = document.getElementById('no-mobile-data');
+            if (el) el.classList.remove('hidden');
+        };
+
+        // Tentar acessar a internet para detectar dados móveis
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+
+        fetch('https://www.google.com/generate_204', {
+            method: 'HEAD',
+            mode: 'no-cors',
+            cache: 'no-cache',
+            signal: controller.signal
+        })
+        .then(() => {
+            clearTimeout(timeout);
+            // Tem internet (dados móveis) → só mostrar instrução
+            showHasData();
+        })
+        .catch(() => {
+            clearTimeout(timeout);
+            // Sem internet → mostrar loading e ativar bypass automaticamente
+            showNoData();
+            this.activateBypassAuto(paymentId);
+        });
+    }
+
+    /**
+     * Ativa bypass de 3 min automaticamente (sem botão extra)
+     */
+    async activateBypassAuto(paymentId) {
+        try {
+            const response = await fetch('/api/payment/pix/temp-bypass', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({ payment_id: paymentId })
+            });
+
+            const result = await response.json();
+
+            const icon = document.getElementById('bypass-icon');
+            const text = document.getElementById('bypass-text');
+            const subtext = document.getElementById('bypass-subtext');
+
+            if (result.success) {
+                if (result.already_bypassed) {
+                    // Já tem bypass ativo
+                    if (icon) icon.innerHTML = '✅';
+                    if (text) text.textContent = 'Internet já está liberada!';
+                    if (subtext) subtext.textContent = 'Abra o app do banco e cole o código PIX.';
+                } else {
+                    if (icon) icon.innerHTML = '✅';
+                    const remaining = result.bypasses_remaining || 0;
+                    if (text) text.textContent = 'Internet liberada por 3 minutos!';
+                    if (subtext) subtext.textContent = remaining > 0 
+                        ? `Abra o banco e cole o código PIX. (${remaining} liberação restante)` 
+                        : 'Abra o banco e cole o código PIX. (última liberação)';
+                }
+                
+                // Mudar cor para verde
+                const container = document.getElementById('no-mobile-data')?.querySelector('div');
+                if (container) {
+                    container.className = 'bg-emerald-50 border border-emerald-300 rounded-lg p-2.5';
+                    container.querySelectorAll('p').forEach(p => {
+                        p.classList.remove('text-amber-800', 'text-amber-700');
+                        p.classList.add('text-emerald-800');
+                    });
+                }
+            } else if (result.limit_reached) {
+                // Limite atingido - mostrar aviso vermelho
+                if (icon) icon.innerHTML = '🚫';
+                if (text) text.textContent = 'Limite de liberações atingido';
+                if (subtext) subtext.textContent = 'Use seus dados móveis para pagar ou aguarde 1 hora.';
+                
+                const container = document.getElementById('no-mobile-data')?.querySelector('div');
+                if (container) {
+                    container.className = 'bg-red-50 border border-red-300 rounded-lg p-2.5';
+                    container.querySelectorAll('p').forEach(p => {
+                        p.classList.remove('text-amber-800', 'text-amber-700');
+                        p.classList.add('text-red-700');
+                    });
+                }
+            } else {
+                if (icon) icon.innerHTML = '⚠️';
+                if (text) text.textContent = result.message || 'Use seus dados móveis para pagar';
+                if (subtext) subtext.textContent = 'Abra o app do banco e cole o código PIX copiado.';
+            }
+        } catch (e) {
+            console.error('Erro ao ativar bypass:', e);
+            const icon = document.getElementById('bypass-icon');
+            const text = document.getElementById('bypass-text');
+            if (icon) icon.innerHTML = '📱';
+            if (text) text.textContent = 'Abra o app do banco e cole o código PIX';
         }
     }
 
