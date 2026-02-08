@@ -412,6 +412,51 @@ class PaymentController extends Controller
     }
 
     /**
+     * 📱 Envia mensagem WhatsApp confirmando pagamento aprovado
+     */
+    private function sendPaymentConfirmedWhatsapp(User $user, Payment $payment, float $hours): void
+    {
+        try {
+            if (!$user->phone || strlen($user->phone) < 10) return;
+            if (!\App\Models\WhatsappSetting::isConnected()) return;
+
+            $phone = \App\Models\WhatsappMessage::formatPhone($user->phone);
+            $nome = $user->name ?? 'Cliente';
+            $horasTexto = $hours == (int) $hours ? (int) $hours . ' horas' : $hours . ' horas';
+            $amount = number_format((float) $payment->amount, 2, ',', '.');
+
+            $message = "✅ *Pagamento confirmado!*\n\n"
+                     . "Olá {$nome}, recebemos seu PIX de R\$ {$amount}.\n\n"
+                     . "📶 Sua internet está liberada por *{$horasTexto}*.\n"
+                     . "Aproveite ao máximo! 🚌💨\n\n"
+                     . "Obrigado por viajar com a Tocantins Transporte! 🙏";
+
+            $msg = \App\Models\WhatsappMessage::create([
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
+                'phone' => $phone,
+                'message' => $message,
+                'status' => 'pending',
+            ]);
+
+            $baileysUrl = env('BAILEYS_SERVER_URL', 'http://localhost:3001');
+            $resp = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+                'phone' => $phone,
+                'message' => $message,
+            ]);
+
+            if ($resp->successful()) {
+                $msg->markAsSent($resp->json('messageId'));
+                Log::info('📱 WhatsApp: Confirmação de pagamento enviada', ['payment_id' => $payment->id]);
+            } else {
+                $msg->markAsFailed($resp->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('📱 WhatsApp: Erro ao enviar confirmação', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * 🏦 Ativa bypass temporário de 3 minutos para o usuário abrir o app do banco
      * Chamado APÓS o usuário copiar o código PIX (não na geração do QR)
      * Isso evita que o captive portal sheet do iOS feche antes do usuário copiar o código
@@ -1257,6 +1302,9 @@ class PaymentController extends Controller
                 'expires_at' => $expiresAt->toISOString(),
                 'processing_time' => $processingTime.'ms',
             ]);
+
+            // 📱 Notificar usuário via WhatsApp que o pagamento foi aprovado
+            $this->sendPaymentConfirmedWhatsapp($payment->user, $payment, $sessionDurationHours);
 
         } catch (\Exception $e) {
             $processingTime = round((microtime(true) - $startTime) * 1000, 2);

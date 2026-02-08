@@ -98,46 +98,12 @@
                 </div>
             </div>
 
-            <!-- Tutorial Como Ativar -->
-            <div class="mt-6 bg-white rounded-2xl p-5 shadow-lg">
-                <h3 class="text-center text-gray-800 font-bold text-lg mb-4">📖 Como Ativar seu Voucher</h3>
-                
-                <div class="space-y-4">
-                    <!-- Passo 1 -->
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
-                        <div>
-                            <p class="font-semibold text-gray-800">Digite seu CPF</p>
-                            <p class="text-xs text-gray-500">Use o CPF cadastrado pela empresa ou o código do voucher (WIFI-XXXX-XXXX)</p>
-                        </div>
-                    </div>
-
-                    <!-- Passo 2 -->
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
-                        <div>
-                            <p class="font-semibold text-gray-800">Clique em "Buscar Voucher"</p>
-                            <p class="text-xs text-gray-500">O sistema vai encontrar seu voucher e mostrar as informações</p>
-                        </div>
-                    </div>
-
-                    <!-- Passo 3 -->
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
-                        <div>
-                            <p class="font-semibold text-gray-800">Clique em "Ativar Voucher"</p>
-                            <p class="text-xs text-gray-500">Aguarde a ativação e pronto! Sua internet será liberada</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Aviso -->
-                <div class="mt-4 bg-yellow-50 rounded-xl p-3 text-xs text-yellow-700 border border-yellow-200">
-                    <p class="flex items-center gap-2">
-                        <span class="text-base">⚠️</span>
-                        <span><strong>Importante:</strong> Você precisa estar conectado ao Wi-Fi "Tocantins Transporte" para ativar o voucher.</span>
-                    </p>
-                </div>
+            <!-- Aviso Importante -->
+            <div class="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200 shadow-sm">
+                <p class="flex items-center gap-2 text-sm text-gray-700">
+                    <span class="text-xl">⚠️</span>
+                    <span>Conecte-se ao Wi-Fi <strong>"Tocantins Transporte"</strong> antes de ativar</span>
+                </p>
             </div>
         @else
             <!-- ETAPA 2: Voucher Encontrado - Mostrar Informações -->
