@@ -88,16 +88,16 @@
 
 # Adicionar entradas DNS (com verificação)
 :if ([:len [/ip dns static find name="tocantinstransportewifi.com.br"]] = 0) do={
-    /ip dns static add name=tocantinstransportewifi.com.br address=138.68.255.122 comment="Portal Principal"
+    /ip dns static add name=tocantinstransportewifi.com.br address=104.248.185.39 comment="Portal Principal"
 }
 :if ([:len [/ip dns static find name="www.tocantinstransportewifi.com.br"]] = 0) do={
-    /ip dns static add name=www.tocantinstransportewifi.com.br address=138.68.255.122 comment="Portal WWW"
+    /ip dns static add name=www.tocantinstransportewifi.com.br address=104.248.185.39 comment="Portal WWW"
 }
 :if ([:len [/ip dns static find name="portal.wifi"]] = 0) do={
-    /ip dns static add name=portal.wifi address=138.68.255.122 comment="Portal Curto"
+    /ip dns static add name=portal.wifi address=104.248.185.39 comment="Portal Curto"
 }
 :if ([:len [/ip dns static find name="conectar.wifi"]] = 0) do={
-    /ip dns static add name=conectar.wifi address=138.68.255.122 comment="Portal Conectar"
+    /ip dns static add name=conectar.wifi address=104.248.185.39 comment="Portal Conectar"
 }
 :if ([:len [/ip dns static find name="login.tocantinswifi.local"]] = 0) do={
     /ip dns static add name=login.tocantinswifi.local address=10.5.50.1 comment="Login Local"
@@ -332,7 +332,7 @@
 # =====================
 # WALLED GARDEN IP (APENAS portal e DNS)
 # =====================
-/ip hotspot walled-garden ip add dst-address=138.68.255.122 action=accept comment="IP: Portal"
+/ip hotspot walled-garden ip add dst-address=104.248.185.39 action=accept comment="IP: Portal"
 /ip hotspot walled-garden ip add dst-address=8.8.8.8 action=accept comment="IP: Google DNS"
 /ip hotspot walled-garden ip add dst-address=8.8.4.4 action=accept comment="IP: Google DNS 2"
 /ip hotspot walled-garden ip add dst-address=1.1.1.1 action=accept comment="IP: Cloudflare DNS"

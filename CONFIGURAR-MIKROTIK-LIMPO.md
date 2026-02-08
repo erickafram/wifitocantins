@@ -77,8 +77,8 @@ add interface=bridgeLocal
 set allow-remote-requests=yes servers=1.1.1.1,8.8.8.8
 
 /ip dns static
-add address=138.68.255.122 name=tocantinstransportewifi.com.br
-add address=138.68.255.122 name=www.tocantinstransportewifi.com.br
+add address=104.248.185.39 name=tocantinstransportewifi.com.br
+add address=104.248.185.39 name=www.tocantinstransportewifi.com.br
 add address=10.5.50.1 name=hotspot.wifi
 ```
 
@@ -113,7 +113,7 @@ add dst-host=fonts.gstatic.com server=tocantins-hotspot
 add dst-host=cdn.tailwindcss.com server=tocantins-hotspot
 
 /ip hotspot walled-garden ip
-add action=accept dst-address=138.68.255.122 server=tocantins-hotspot
+add action=accept dst-address=104.248.185.39 server=tocantins-hotspot
 add action=accept dst-address=104.16.0.0/12
 add action=accept dst-address=10.5.50.1 server=tocantins-hotspot
 ```

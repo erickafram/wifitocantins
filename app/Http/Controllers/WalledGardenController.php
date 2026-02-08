@@ -197,7 +197,7 @@ class WalledGardenController extends Controller
     {
         return [
             // ========== PORTAL ==========
-            ['range' => '138.68.255.122/32', 'comment' => 'Portal'],
+            ['range' => '104.248.185.39/32', 'comment' => 'Portal'],
             ['range' => '10.5.50.1/32', 'comment' => 'Gateway'],
             
             // ========== AWS BRASIL ==========

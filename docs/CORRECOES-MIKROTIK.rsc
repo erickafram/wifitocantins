@@ -386,7 +386,7 @@
 # =============================================
 
 # Portal
-/ip hotspot walled-garden ip add dst-address=138.68.255.122 action=accept comment="IP: Portal"
+/ip hotspot walled-garden ip add dst-address=104.248.185.39 action=accept comment="IP: Portal"
 
 # DNS público (necessário para resolver nomes)
 /ip hotspot walled-garden ip add dst-address=8.8.8.8 action=accept comment="IP: Google DNS"

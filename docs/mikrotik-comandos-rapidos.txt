@@ -28,8 +28,8 @@
 # ============================================================================
 
 /ip dns set allow-remote-requests=yes servers=8.8.8.8,1.1.1.1
-/ip dns static add name=tocantinstransportewifi.com.br address=138.68.255.122 comment="Portal Principal"
-/ip dns static add name=www.tocantinstransportewifi.com.br address=138.68.255.122 comment="Portal WWW"
+/ip dns static add name=tocantinstransportewifi.com.br address=104.248.185.39 comment="Portal Principal"
+/ip dns static add name=www.tocantinstransportewifi.com.br address=104.248.185.39 comment="Portal WWW"
 /ip dns static add name=login.tocantinswifi.local address=10.5.50.1 comment="Login Local"
 
 # ============================================================================
@@ -124,7 +124,7 @@
 /ip hotspot walled-garden add dst-host=1.1.1.1 comment="DNS Cloudflare"
 
 # IP Direto do Portal
-/ip hotspot walled-garden ip add dst-address=138.68.255.122 action=accept comment="Portal IP"
+/ip hotspot walled-garden ip add dst-address=104.248.185.39 action=accept comment="Portal IP"
 
 # ============================================================================
 # PASSO 9: NAT
