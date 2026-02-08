@@ -124,6 +124,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         // Configurações de API
         Route::get('/api', [AdminController::class, 'apiSettings'])->name('api');
         Route::post('/api/gateway', [AdminController::class, 'updateGateway'])->name('api.update-gateway');
+        
+        // Painel Remoto Mikrotik
+        Route::prefix('mikrotik/remote')->name('mikrotik.remote.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'index'])->name('index');
+            Route::get('/status', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'getStatus'])->name('status');
+            Route::post('/sync', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'syncNow'])->name('sync');
+            Route::post('/liberate', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'liberateMac'])->name('liberate');
+            Route::post('/block', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'blockMac'])->name('block');
+            Route::get('/logs', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'getLogs'])->name('logs');
+            Route::post('/command', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'executeCommand'])->name('command');
+        });
     });
 });
 

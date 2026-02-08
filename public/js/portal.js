@@ -942,108 +942,110 @@ class WiFiPortal {
                     </div>
                     
                     <!-- Área de Conteúdo Dinâmico -->
-                    <div id="dynamic-content" class="p-4 flex-1 overflow-y-auto">
+                    <div id="dynamic-content" class="p-3 flex-1 overflow-y-auto">
                         
                         <!-- PASSO 1: QR Code + Copia e Cola (visível inicialmente) -->
                         <div id="step-1-content" class="hidden">
                             
-                            <!-- Instrução clara -->
-                            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg mt-0.5">📱</span>
-                                    <div>
-                                        <p class="text-amber-800 font-bold text-sm">Pague pelo app do seu banco</p>
-                                        <p class="text-amber-600 text-xs mt-0.5">${isMobile ? 'Copie o código abaixo e cole no app do banco' : 'Escaneie o QR Code ou copie o código abaixo'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             ${!isMobile ? `
                             <!-- QR Code (apenas desktop) -->
-                            <div class="text-center mb-3">
-                                <div class="bg-white p-3 rounded-xl border-2 border-dashed border-emerald-300 inline-block shadow-sm">
-                                    <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-40 h-40 mx-auto">
+                            <div class="text-center mb-2">
+                                <div class="bg-white p-2 rounded-xl border-2 border-dashed border-emerald-300 inline-block shadow-sm">
+                                    <img src="${data.qr_code.image_url}" alt="QR Code PIX" class="w-36 h-36 mx-auto">
                                 </div>
-                                <p class="text-gray-400 text-[10px] mt-1.5">Escaneie com o app do banco</p>
+                                <p class="text-gray-400 text-[10px] mt-1">Escaneie com o app do banco</p>
                             </div>
                             
-                            <div class="flex items-center gap-2 mb-3">
+                            <div class="flex items-center gap-2 mb-2">
                                 <div class="flex-1 h-px bg-gray-200"></div>
                                 <span class="text-[10px] text-gray-400 font-medium">OU COPIE O CÓDIGO</span>
                                 <div class="flex-1 h-px bg-gray-200"></div>
                             </div>
-                            ` : ''}
+                            ` : `
+                            <!-- Instrução mobile -->
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2">
+                                <p class="text-amber-800 font-bold text-xs flex items-center gap-1.5">📱 Copie o código e cole no app do banco</p>
+                            </div>
+                            `}
                             
                             <!-- Copia e Cola -->
-                            <div class="bg-blue-50 rounded-xl p-3 mb-3 border border-blue-200">
-                                <div class="flex items-center gap-1.5 mb-2">
-                                    <span class="text-sm">📋</span>
-                                    <p class="text-xs font-bold text-blue-900">Código Copia e Cola</p>
-                                    ${isMobile ? '<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold ml-auto">RECOMENDADO</span>' : ''}
-                                </div>
-                                <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2.5 max-h-16 overflow-y-auto">
+                            <div class="bg-blue-50 rounded-xl p-2.5 mb-2 border border-blue-200">
+                                <div class="bg-white border border-blue-200 rounded-lg p-2 mb-2 max-h-14 overflow-y-auto">
                                     <p class="text-[10px] text-gray-600 break-all font-mono leading-relaxed" id="pix-code">${data.qr_code.emv_string}</p>
                                 </div>
-                                <button id="copy-pix-code" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold py-2.5 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                                <button id="copy-pix-code" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                     COPIAR CÓDIGO PIX
                                 </button>
                             </div>
                             
-                            <!-- Timer -->
-                            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 mb-3 border">
-                                <div class="flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <span class="text-[11px] text-gray-500">Expira em:</span>
+                            <!-- Timer + Já Paguei lado a lado no mobile, empilhado no desktop -->
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2.5 py-1.5 border flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span id="pix-timer-text" class="text-xs font-bold text-gray-700">03:00</span>
                                 </div>
-                                <span id="pix-timer-text" class="text-sm font-bold text-gray-700">03:00</span>
+                                <button id="btn-paid" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold py-2.5 rounded-lg text-xs transition-all shadow-md flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    JÁ PAGUEI
+                                </button>
                             </div>
                             
-                            <!-- Botão Já Paguei -->
-                            <button id="btn-paid" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                JÁ PAGUEI
-                            </button>
-                            <p class="text-gray-400 text-[10px] mt-2 text-center">Verificação automática a cada 5 segundos</p>
+                            <!-- Indicador de verificação automática -->
+                            <div id="auto-check-indicator" class="flex items-center justify-center gap-2 py-1.5">
+                                <div class="flex gap-1">
+                                    <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                                    <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" style="animation-delay:0.2s"></div>
+                                    <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" style="animation-delay:0.4s"></div>
+                                </div>
+                                <span class="text-[10px] text-gray-400">Verificando pagamento automaticamente</span>
+                            </div>
                         </div>
                         
                         <!-- PASSO 2: Verificando / Pagamento Confirmado -->
                         <div id="step-2-content" class="hidden">
                             
                             <!-- Sub-estado: Verificando -->
-                            <div id="step-2-checking" class="text-center">
-                                <div class="mb-4">
-                                    <div class="w-16 h-16 mx-auto mb-3 relative">
+                            <div id="step-2-checking" class="text-center py-4">
+                                <div class="mb-3">
+                                    <div class="w-14 h-14 mx-auto mb-2 relative">
                                         <div class="absolute inset-0 rounded-full border-4 border-amber-200"></div>
                                         <div class="absolute inset-0 rounded-full border-4 border-amber-500 border-t-transparent animate-spin"></div>
                                         <div class="absolute inset-0 flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                         </div>
                                     </div>
-                                    <p class="text-gray-800 font-bold text-base">Verificando pagamento...</p>
-                                    <p class="text-gray-500 text-xs mt-1">Isso pode levar alguns segundos</p>
+                                    <p class="text-gray-800 font-bold text-sm">Verificando pagamento</p>
+                                    <div class="flex items-center justify-center gap-1 mt-1">
+                                        <span class="text-gray-500 text-xs">Consultando banco</span>
+                                        <span class="inline-flex gap-0.5">
+                                            <span class="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style="animation-delay:0s"></span>
+                                            <span class="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style="animation-delay:0.15s"></span>
+                                            <span class="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style="animation-delay:0.3s"></span>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                                    <div class="flex items-center gap-2">
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                                    <div class="flex items-center justify-center gap-2">
                                         <div class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                                        <p class="text-amber-700 text-xs font-medium">Consultando banco...</p>
+                                        <p class="text-amber-700 text-xs font-medium">Aguarde, estamos localizando seu pagamento...</p>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Sub-estado: Pago! (aparece quando confirmado) -->
-                            <div id="step-2-paid" class="hidden text-center">
-                                <div class="mb-4">
-                                    <div class="w-20 h-20 mx-auto mb-3 bg-emerald-100 rounded-full flex items-center justify-center animate-bounce-once">
-                                        <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            <div id="step-2-paid" class="hidden text-center py-4">
+                                <div class="mb-3">
+                                    <div class="w-16 h-16 mx-auto mb-2 bg-emerald-100 rounded-full flex items-center justify-center animate-bounce-once">
+                                        <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                     </div>
-                                    <p class="text-emerald-700 font-extrabold text-xl">Pagamento Confirmado!</p>
-                                    <p class="text-emerald-600 text-sm mt-1">R$ ${data.qr_code.amount} recebido</p>
+                                    <p class="text-emerald-700 font-extrabold text-lg">Pagamento Confirmado!</p>
+                                    <p class="text-emerald-600 text-xs mt-0.5">R$ ${data.qr_code.amount} recebido</p>
                                 </div>
-                                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <p class="text-emerald-700 text-xs font-bold">Pagamento verificado com sucesso</p>
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <p class="text-emerald-700 text-[11px] font-bold">Verificado com sucesso</p>
                                     </div>
                                 </div>
                             </div>
@@ -1053,54 +1055,54 @@ class WiFiPortal {
                         <div id="step-3-content" class="hidden">
                             
                             <!-- Sub-estado: Liberando acesso -->
-                            <div id="step-3-releasing" class="text-center">
-                                <div class="mb-4">
-                                    <div class="w-16 h-16 mx-auto mb-3 relative">
+                            <div id="step-3-releasing" class="text-center py-3">
+                                <div class="mb-3">
+                                    <div class="w-14 h-14 mx-auto mb-2 relative">
                                         <div class="absolute inset-0 rounded-full border-4 border-blue-200"></div>
                                         <div class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
                                         <div class="absolute inset-0 flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
                                         </div>
                                     </div>
-                                    <p class="text-gray-800 font-bold text-base">Liberando seu acesso...</p>
-                                    <p class="text-gray-500 text-xs mt-1">Configurando sua conexão WiFi</p>
+                                    <p class="text-gray-800 font-bold text-sm">Liberando seu acesso...</p>
+                                    <p class="text-gray-500 text-[11px] mt-0.5">Configurando sua conexão WiFi</p>
                                 </div>
                                 
-                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-blue-700 text-xs font-bold">Progresso</span>
-                                        <span class="text-blue-600 text-sm font-bold" id="release-countdown">01:00</span>
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="text-blue-700 text-[11px] font-bold">Progresso</span>
+                                        <span class="text-blue-600 text-xs font-bold" id="release-countdown">01:00</span>
                                     </div>
-                                    <div class="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden">
-                                        <div id="release-progress" class="bg-gradient-to-r from-blue-400 to-blue-600 h-2.5 rounded-full transition-all duration-1000" style="width:0%"></div>
+                                    <div class="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                                        <div id="release-progress" class="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-1000" style="width:0%"></div>
                                     </div>
-                                    <p class="text-blue-500 text-[10px] mt-2">Sincronizando com o roteador...</p>
+                                    <p class="text-blue-500 text-[10px] mt-1.5">Sincronizando com o roteador...</p>
                                 </div>
                                 
-                                <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                                    <p class="text-red-600 text-[11px] font-bold flex items-center justify-center gap-1">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                                <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+                                    <p class="text-red-600 text-[10px] font-bold flex items-center justify-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
                                         Não feche esta tela!
                                     </p>
                                 </div>
                             </div>
                             
                             <!-- Sub-estado: Conectado! -->
-                            <div id="step-3-connected" class="hidden text-center">
-                                <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg">
-                                    <div class="w-20 h-20 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center">
-                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                            <div id="step-3-connected" class="hidden text-center py-2">
+                                <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-5 text-white shadow-lg">
+                                    <div class="w-16 h-16 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
                                     </div>
-                                    <p class="font-extrabold text-2xl">Conectado!</p>
-                                    <p class="text-emerald-100 text-sm mt-1">Aproveite a internet durante toda a viagem</p>
+                                    <p class="font-extrabold text-xl">Conectado!</p>
+                                    <p class="text-emerald-100 text-xs mt-0.5">Aproveite a internet durante toda a viagem</p>
                                     
-                                    <div class="bg-white/15 rounded-xl p-3 mt-4">
-                                        <p class="text-emerald-100 text-[11px]">Acesso válido até</p>
-                                        <p class="text-lg font-bold mt-0.5" id="access-expires-at">${this.calculateExpirationTime()}</p>
+                                    <div class="bg-white/15 rounded-lg p-2.5 mt-3">
+                                        <p class="text-emerald-100 text-[10px]">Acesso válido até</p>
+                                        <p class="text-base font-bold mt-0.5" id="access-expires-at">${this.calculateExpirationTime()}</p>
                                     </div>
                                 </div>
                                 
-                                <div class="mt-4 bg-gray-50 rounded-xl p-3 border">
+                                <div class="mt-3 bg-gray-50 rounded-lg p-2 border">
                                     <div class="flex items-center justify-center gap-2">
                                         <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                                         <p class="text-gray-600 text-xs">Redirecionando em <span id="redirect-timer">3</span>s...</p>
@@ -1200,6 +1202,20 @@ class WiFiPortal {
             this.paymentCheckInterval = null;
         }
         
+        // Garantir que step-1-content está escondido (caso auto-check detectou antes do clique)
+        document.getElementById('step-1-content')?.classList.add('hidden');
+        document.getElementById('step-2-content')?.classList.remove('hidden');
+        
+        // Atualizar timeline step-1 como concluído
+        const step1 = document.getElementById('step-1');
+        if (step1 && !step1.classList.contains('bg-emerald-500')) {
+            step1.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+            document.getElementById('step-1-text').textContent = 'Copiado';
+            document.getElementById('line-1-2').style.width = '100%';
+            document.getElementById('line-1-2').classList.remove('bg-gray-200');
+            document.getElementById('line-1-2').classList.add('bg-emerald-400');
+        }
+        
         // Step 2 - mostrar sub-estado "Pago!"
         document.getElementById('step-2-checking')?.classList.add('hidden');
         document.getElementById('step-2-paid')?.classList.remove('hidden');
@@ -1235,9 +1251,10 @@ class WiFiPortal {
         document.getElementById('step-3-text').classList.add('text-blue-600', 'font-bold');
         document.getElementById('step-3-text').textContent = 'Liberando';
         
-        // Trocar conteúdo
-        document.getElementById('step-2-content').classList.add('hidden');
-        document.getElementById('step-3-content').classList.remove('hidden');
+        // Trocar conteúdo - esconder todos os passos anteriores
+        document.getElementById('step-1-content')?.classList.add('hidden');
+        document.getElementById('step-2-content')?.classList.add('hidden');
+        document.getElementById('step-3-content')?.classList.remove('hidden');
         
         // Esconder botões antigos
         document.getElementById('btn-paid')?.classList.add('hidden');
