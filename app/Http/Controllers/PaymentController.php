@@ -1206,10 +1206,23 @@ class PaymentController extends Controller
 
             $expiresAt = now()->addHours($sessionDurationHours);
 
+            // Descobrir em qual MikroTik/ônibus o usuário está
+            $mikrotikId = $payment->user->last_mikrotik_id;
+            if (!$mikrotikId && $payment->user->mac_address) {
+                $report = MikrotikMacReport::where('mac_address', strtoupper($payment->user->mac_address))
+                    ->whereNotNull('mikrotik_id')
+                    ->orderBy('last_seen', 'desc')
+                    ->first();
+                if ($report) {
+                    $mikrotikId = $report->mikrotik_id;
+                }
+            }
+
             $payment->user->update([
                 'status' => 'connected',
                 'connected_at' => now(),
                 'expires_at' => $expiresAt,
+                'last_mikrotik_id' => $mikrotikId ?: $payment->user->last_mikrotik_id,
             ]);
 
             Log::info('✅ Status do usuário atualizado', [

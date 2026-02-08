@@ -177,12 +177,13 @@ class MikrotikApiController extends Controller
             $mac = $request->get('mac');
             $ip = $request->get('ip');
             $hostname = $request->get('hostname', '');
+            $mikrotikId = $request->get('mid', ''); // ID do MikroTik (serial number)
             
             if (!$mac || !$ip) {
                 return response()->json(['error' => 'MAC e IP obrigatórios'], 400);
             }
             
-            // Registrar MAC no banco
+            // Registrar MAC no banco com identificação do MikroTik
             MikrotikMacReport::updateOrCreate(
                 [
                     'mac_address' => strtoupper($mac),
@@ -190,20 +191,21 @@ class MikrotikApiController extends Controller
                 ],
                 [
                     'hostname' => $hostname,
+                    'mikrotik_id' => $mikrotikId ?: null,
                     'reported_at' => now(),
                     'last_seen' => now()
                 ]
             );
-            
-            Log::info('📡 MAC registrado pelo MikroTik', [
-                'mac' => $mac,
-                'ip' => $ip,
-                'hostname' => $hostname
-            ]);
+
+            // Atualizar last_mikrotik_id do usuário (para saber em qual ônibus ele está)
+            if ($mikrotikId) {
+                User::where('mac_address', strtoupper($mac))
+                    ->whereNotNull('mac_address')
+                    ->update(['last_mikrotik_id' => $mikrotikId]);
+            }
             
             return response()->json([
                 'success' => true,
-                'message' => 'MAC registrado com sucesso',
                 'mac' => $mac,
                 'ip' => $ip
             ]);

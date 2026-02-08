@@ -12,7 +12,9 @@ class MikrotikMacReport extends Model
         'mac_address',
         'transaction_id',
         'mikrotik_ip',
+        'mikrotik_id',
         'reported_at',
+        'last_seen',
     ];
 
     protected function casts(): array

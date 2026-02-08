@@ -25,6 +25,7 @@ class User extends Authenticatable
         'mac_address',
         'ip_address',
         'device_name',
+        'last_mikrotik_id',
         'connected_at',
         'expires_at',
         'data_used',
