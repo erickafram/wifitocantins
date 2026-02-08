@@ -55,7 +55,17 @@ class HotspotIdentity
     }
 
     /**
-     * Determine if the provided MAC is a locally administered/mock address.
+     * Determine if the provided MAC is a locally administered (randomized) address.
+     * 
+     * IMPORTANT: Modern iOS (14+) and Android (10+) devices use randomized MACs
+     * by default. These MACs have the "locally administered" bit set (bit 1 of
+     * first byte), resulting in prefixes like 02:, 06:, 0A:, 0E:, etc.
+     * 
+     * These MACs are CONSISTENT per-network (same random MAC for same SSID),
+     * so they are VALID identifiers for our hotspot authentication.
+     * 
+     * We should NOT treat them as "mock" or invalid - they represent real devices.
+     * Only truly empty/null MACs should be considered invalid.
      */
     public static function isMockMac(?string $mac): bool
     {
@@ -63,7 +73,30 @@ class HotspotIdentity
             return true;
         }
 
-        return Str::startsWith(strtolower($mac), '02:');
+        $normalized = strtoupper(trim($mac));
+
+        // Only reject truly invalid/placeholder MACs
+        return in_array($normalized, [
+            '00:00:00:00:00:00',
+            'FF:FF:FF:FF:FF:FF',
+            'UNKNOWN',
+            '',
+        ]);
+    }
+
+    /**
+     * Check if a MAC is locally administered (randomized).
+     * This is informational only - randomized MACs are perfectly valid.
+     */
+    public static function isRandomizedMac(?string $mac): bool
+    {
+        if (! $mac || strlen($mac) < 2) {
+            return false;
+        }
+
+        $firstByte = hexdec(substr(strtoupper(trim($mac)), 0, 2));
+
+        return ($firstByte & 0x02) !== 0;
     }
 
     /**
@@ -101,6 +134,7 @@ class HotspotIdentity
         $normalizedMac = self::normalizeMac($mac);
 
         if (! $normalizedMac) {
+            // Try to get MAC from URL query params
             $queryMac = self::normalizeMac(request()->query('mac'));
             if ($queryMac && ! self::isMockMac($queryMac)) {
                 $normalizedMac = $queryMac;
@@ -117,6 +151,7 @@ class HotspotIdentity
                 }
             }
         } elseif (self::isMockMac($normalizedMac)) {
+            // Only nullify truly invalid MACs (00:00:00:00:00:00, etc.)
             $normalizedMac = null;
         }
 

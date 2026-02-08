@@ -159,9 +159,12 @@ class WiFiPortal {
             const macFromUrl = urlParams.get('mac') || urlParams.get('mikrotik_mac') || urlParams.get('client_mac');
             const ipFromUrl = urlParams.get('ip') || urlParams.get('client_ip');
             
-            if (macFromUrl && this.isValidMacAddress(macFromUrl) && !macFromUrl.startsWith('02:')) {
+            if (macFromUrl && this.isValidMacAddress(macFromUrl)) {
                 this.deviceMac = macFromUrl.toUpperCase();
-                console.log('🎯 MAC REAL capturado da URL:', this.deviceMac);
+                console.log('🎯 MAC capturado da URL:', this.deviceMac);
+                if (this.isRandomizedMac(this.deviceMac)) {
+                    console.log('ℹ️ MAC é randomizado (normal em dispositivos modernos)');
+                }
                 if (ipFromUrl) {
                     this.deviceIp = ipFromUrl;
                     console.log('🌐 IP do dispositivo capturado da URL:', this.deviceIp);
@@ -207,10 +210,13 @@ class WiFiPortal {
                 const mac = data.mac_address || '';
                 const detectedIp = data.client_ip || data.ip_address;
                 
-                // Se encontrou MAC real (não começa com 02:)
-                if (mac && !mac.startsWith('02:')) {
+                // Se encontrou MAC válido (aceitar todos, incluindo randomizados)
+                if (mac && this.isValidMacAddress(mac)) {
                     this.deviceMac = mac.toUpperCase();
-                    console.log('✅ MAC REAL detectado:', this.deviceMac);
+                    console.log('✅ MAC detectado:', this.deviceMac);
+                    if (this.isRandomizedMac(this.deviceMac)) {
+                        console.log('ℹ️ MAC randomizado (normal em dispositivos modernos)');
+                    }
                     if (detectedIp) {
                         this.deviceIp = detectedIp;
                         console.log('🌐 IP do dispositivo detectado:', this.deviceIp);
@@ -251,6 +257,18 @@ class WiFiPortal {
     isValidMacAddress(mac) {
         const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
         return macRegex.test(mac);
+    }
+
+    /**
+     * Verifica se MAC é randomizado (localmente administrado).
+     * MACs randomizados são perfeitamente válidos - dispositivos modernos
+     * (iOS 14+, Android 10+) usam MACs randomizados por padrão.
+     * O MAC randomizado é consistente por rede (mesmo MAC para mesmo SSID).
+     */
+    isRandomizedMac(mac) {
+        if (!mac || mac.length < 2) return false;
+        const firstByte = parseInt(mac.substring(0, 2), 16);
+        return (firstByte & 0x02) !== 0;
     }
 
     /**
@@ -1589,7 +1607,8 @@ class WiFiPortal {
         return (
             this.deviceMac &&
             this.deviceMac.length === 17 &&
-            !this.deviceMac.startsWith('02:') &&
+            this.isValidMacAddress(this.deviceMac) &&
+            this.deviceMac !== '00:00:00:00:00:00' &&
             this.deviceIp
         );
     }

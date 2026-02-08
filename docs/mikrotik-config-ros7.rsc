@@ -286,28 +286,57 @@
 /ip hotspot walled-garden add dst-host=*.amedigital.com comment="Ame API"
 
 # =====================
-# GOV.BR E SERVIÇOS PÚBLICOS
+# CDNs DE BANCO (SOMENTE CDN - NÃO abre sites/serviços)
 # =====================
-/ip hotspot walled-garden add dst-host=sso.acesso.gov.br comment="Login Gov.br"
-/ip hotspot walled-garden add dst-host=*.acesso.gov.br comment="Acesso Gov.br"
-/ip hotspot walled-garden add dst-host=gov.br comment="Gov.br"
-/ip hotspot walled-garden add dst-host=*.gov.br comment="Serviços Gov.br"
+# SÓ domínios puramente CDN - NÃO colocar *.google.com, *.amazonaws.com, etc.!
+/ip hotspot walled-garden add dst-host=*.cloudfront.net comment="CDN: AWS CloudFront"
+/ip hotspot walled-garden add dst-host=*.akamai.net comment="CDN: Akamai"
+/ip hotspot walled-garden add dst-host=*.akamaiedge.net comment="CDN: Akamai Edge"
+/ip hotspot walled-garden add dst-host=*.akamaitechnologies.com comment="CDN: Akamai Tech"
+/ip hotspot walled-garden add dst-host=*.akamaihd.net comment="CDN: Akamai HD"
+/ip hotspot walled-garden add dst-host=*.edgekey.net comment="CDN: Akamai EdgeKey"
+/ip hotspot walled-garden add dst-host=*.edgesuite.net comment="CDN: Akamai EdgeSuite"
+/ip hotspot walled-garden add dst-host=*.azureedge.net comment="CDN: Azure Edge"
+/ip hotspot walled-garden add dst-host=*.msecnd.net comment="CDN: Microsoft CDN"
+/ip hotspot walled-garden add dst-host=*.cloudflare.com comment="CDN: Cloudflare"
+/ip hotspot walled-garden add dst-host=*.fastly.net comment="CDN: Fastly"
+/ip hotspot walled-garden add dst-host=*.firebaseio.com comment="CDN: Firebase IO"
+/ip hotspot walled-garden add dst-host=*.firebaseapp.com comment="CDN: Firebase App"
+/ip hotspot walled-garden add dst-host=fcm.googleapis.com comment="CDN: Firebase Messaging"
 
 # =====================
-# DNS PÚBLICOS
+# DETECÇÃO DE CAPTIVE PORTAL
 # =====================
-/ip hotspot walled-garden add dst-host=8.8.8.8 comment="DNS Google"
-/ip hotspot walled-garden add dst-host=8.8.4.4 comment="DNS Google 2"
-/ip hotspot walled-garden add dst-host=1.1.1.1 comment="DNS Cloudflare"
-/ip hotspot walled-garden add dst-host=1.0.0.1 comment="DNS Cloudflare 2"
-/ip hotspot walled-garden add dst-host=208.67.222.222 comment="DNS OpenDNS"
-/ip hotspot walled-garden add dst-host=208.67.220.220 comment="DNS OpenDNS 2"
+/ip hotspot walled-garden add dst-host=connectivitycheck.gstatic.com comment="Captive: Android"
+/ip hotspot walled-garden add dst-host=clients3.google.com comment="Captive: Android Alt"
+/ip hotspot walled-garden add dst-host=connectivitycheck.android.com comment="Captive: Android Alt2"
+/ip hotspot walled-garden add dst-host=captive.apple.com comment="Captive: Apple"
+/ip hotspot walled-garden add dst-host=www.apple.com comment="Captive: Apple WWW"
+/ip hotspot walled-garden add dst-host=www.msftncsi.com comment="Captive: Windows"
+/ip hotspot walled-garden add dst-host=www.msftconnecttest.com comment="Captive: Windows Alt"
 
 # =====================
-# WALLED GARDEN IP (para IPs diretos)
+# CERTIFICADOS SSL (OCSP/CRL - necessários para HTTPS dos bancos)
 # =====================
-/ip hotspot walled-garden ip add dst-address=138.68.255.122 action=accept comment="Portal IP"
-/ip hotspot walled-garden ip add dst-address=104.0.0.0/8 action=accept comment="Cloudflare Range"
+/ip hotspot walled-garden add dst-host=ocsp.digicert.com comment="SSL: DigiCert OCSP"
+/ip hotspot walled-garden add dst-host=crl3.digicert.com comment="SSL: DigiCert CRL"
+/ip hotspot walled-garden add dst-host=crl4.digicert.com comment="SSL: DigiCert CRL4"
+/ip hotspot walled-garden add dst-host=ocsp.verisign.com comment="SSL: VeriSign OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.globalsign.com comment="SSL: GlobalSign OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.pki.goog comment="SSL: Google OCSP"
+/ip hotspot walled-garden add dst-host=pki.goog comment="SSL: Google PKI"
+/ip hotspot walled-garden add dst-host=ocsp.sectigo.com comment="SSL: Sectigo OCSP"
+/ip hotspot walled-garden add dst-host=r3.o.lencr.org comment="SSL: LetsEncrypt OCSP"
+/ip hotspot walled-garden add dst-host=x1.c.lencr.org comment="SSL: LetsEncrypt CRL"
+
+# =====================
+# WALLED GARDEN IP (APENAS portal e DNS)
+# =====================
+/ip hotspot walled-garden ip add dst-address=138.68.255.122 action=accept comment="IP: Portal"
+/ip hotspot walled-garden ip add dst-address=8.8.8.8 action=accept comment="IP: Google DNS"
+/ip hotspot walled-garden ip add dst-address=8.8.4.4 action=accept comment="IP: Google DNS 2"
+/ip hotspot walled-garden ip add dst-address=1.1.1.1 action=accept comment="IP: Cloudflare DNS"
+/ip hotspot walled-garden ip add dst-address=1.0.0.1 action=accept comment="IP: Cloudflare DNS 2"
 
 # ============================================================================
 # 8. NAT E FIREWALL
@@ -436,30 +465,35 @@
 :log info "=== SYNC MACS PAGOS FINALIZADA ==="
 }
 
-# Script: Registrar MACs conectados
+# Script: Registrar MACs conectados (aceita TODOS os MACs, incluindo randomizados)
 /system script remove [find name="registrarMacs"]
 /system script add name="registrarMacs" policy=read,write,policy,test source={
 :local token "mikrotik-sync-2024"
 
-:log info "=== REGISTRANDO MACS ==="
+:log info "=== REGISTRANDO MACS (todos, incluindo randomizados) ==="
+
+:local registrados 0
 
 :foreach lease in=[/ip dhcp-server lease find where dynamic=yes] do={
     :local mac [/ip dhcp-server lease get $lease mac-address]
     :local ip [/ip dhcp-server lease get $lease address]
     
-    # Ignorar MACs virtuais
-    :if (([:len $mac] = 17) && ([:pick $mac 0 3] != "02:") && ([:len $ip] > 0)) do={
-        :local url ("https://www.tocantinstransportewifi.com.br/api/mikrotik/register-mac?token=" . $token . "&mac=" . $mac . "&ip=" . $ip)
+    # Aceitar TODOS os MACs válidos (17 chars = XX:XX:XX:XX:XX:XX)
+    # MACs randomizados (02:xx, 06:xx, etc.) são VÁLIDOS em dispositivos modernos
+    # iOS 14+ e Android 10+ usam MACs randomizados que são consistentes por rede
+    :if (([:len $mac] = 17) && ([:len $ip] > 0)) do={
+        :local url ("https://www.tocantinstransportewifi.com.br/api/mikrotik/register-mac\?token=" . $token . "&mac=" . $mac . "&ip=" . $ip)
         
         :do {
             /tool fetch url=$url http-method=get mode=https keep-result=no check-certificate=no
+            :set registrados ($registrados + 1)
         } on-error={
             :log warning ("Falha ao registrar: " . $mac)
         }
     }
 }
 
-:log info "=== REGISTRO FINALIZADO ==="
+:log info ("=== REGISTRO FINALIZADO: " . $registrados . " MACs ===")
 }
 
 # ============================================================================

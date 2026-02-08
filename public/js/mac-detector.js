@@ -1,4 +1,7 @@
-// Sistema de detecção de MAC real melhorado
+// Sistema de detecção de MAC melhorado
+// NOTA: MACs randomizados (02:xx, 06:xx, etc.) são VÁLIDOS e ACEITOS.
+// Dispositivos modernos (iOS 14+, Android 10+) usam MACs randomizados por padrão.
+// Esses MACs são consistentes por rede (mesmo MAC para mesmo SSID).
 class MacDetector {
     constructor() {
         this.realMac = null;
@@ -6,30 +9,40 @@ class MacDetector {
         this.maxAttempts = 6; // 30 segundos total
     }
 
-    // Detectar MAC real com retry
+    // Verificar se MAC é válido (formato correto)
+    isValidMac(mac) {
+        if (!mac) return false;
+        const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+        if (!macRegex.test(mac)) return false;
+        // Rejeitar apenas MACs claramente inválidos
+        const upper = mac.toUpperCase();
+        return upper !== '00:00:00:00:00:00' && upper !== 'FF:FF:FF:FF:FF:FF';
+    }
+
+    // Detectar MAC com retry
     async detectRealMac() {
-        console.log('🔍 Tentando detectar MAC real...');
+        console.log('🔍 Tentando detectar MAC do dispositivo...');
         
         for (let i = 0; i < this.maxAttempts; i++) {
             try {
-                // Tentar diferentes métodos
                 const mac = await this.tryDetectMac();
                 
-                if (mac && !mac.startsWith('02:')) {
-                    console.log('✅ MAC real encontrado:', mac);
-                    this.realMac = mac;
-                    return mac;
+                if (mac && this.isValidMac(mac)) {
+                    console.log('✅ MAC encontrado:', mac);
+                    this.realMac = mac.toUpperCase();
+                    this.saveDetectedMac(this.realMac);
+                    return this.realMac;
                 }
                 
                 console.log(`⏳ Tentativa ${i + 1}/${this.maxAttempts} - aguardando...`);
-                await this.delay(5000); // 5 segundos entre tentativas
+                await this.delay(5000);
                 
             } catch (error) {
                 console.error('Erro na detecção:', error);
             }
         }
         
-        console.warn('⚠️ Não foi possível detectar MAC real');
+        console.warn('⚠️ Não foi possível detectar MAC');
         return null;
     }
 
@@ -46,7 +59,7 @@ class MacDetector {
             });
             
             const data = await response.json();
-            if (data.mac_address && !data.mac_address.startsWith('02:')) {
+            if (data.mac_address && this.isValidMac(data.mac_address)) {
                 return data.mac_address;
             }
         } catch (error) {
@@ -56,13 +69,13 @@ class MacDetector {
         // Método 2: Via parâmetros URL (se vier do hotspot)
         const urlParams = new URLSearchParams(window.location.search);
         const macFromUrl = urlParams.get('mac');
-        if (macFromUrl && !macFromUrl.startsWith('02:')) {
+        if (macFromUrl && this.isValidMac(macFromUrl)) {
             return macFromUrl;
         }
 
         // Método 3: Via localStorage (cache)
         const cachedMac = localStorage.getItem('real_mac');
-        if (cachedMac && !cachedMac.startsWith('02:')) {
+        if (cachedMac && this.isValidMac(cachedMac)) {
             return cachedMac;
         }
 
@@ -74,12 +87,12 @@ class MacDetector {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // Salvar MAC real detectado
-    saveRealMac(mac) {
-        if (mac && !mac.startsWith('02:')) {
-            localStorage.setItem('real_mac', mac);
-            this.realMac = mac;
-            console.log('💾 MAC real salvo:', mac);
+    // Salvar MAC detectado
+    saveDetectedMac(mac) {
+        if (mac && this.isValidMac(mac)) {
+            localStorage.setItem('real_mac', mac.toUpperCase());
+            this.realMac = mac.toUpperCase();
+            console.log('💾 MAC salvo:', this.realMac);
         }
     }
 
