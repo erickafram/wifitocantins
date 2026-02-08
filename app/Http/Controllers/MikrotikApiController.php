@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\MikrotikMacReport;
+use App\Models\MikrotikCommand;
 use Carbon\Carbon;
 
 class MikrotikApiController extends Controller
@@ -730,6 +731,113 @@ class MikrotikApiController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+}
+
+    /**
+     * 🎛️ REMOTE ADMIN PANEL - Buscar comandos pendentes
+     * Mikrotik chama este endpoint a cada 15 segundos para buscar comandos
+     */
+    public function getCommands(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                return response('ERROR:AUTH', 401)->header('Content-Type', 'text/plain');
+            }
+
+            // Buscar comandos pendentes
+            $commands = MikrotikCommand::pending()
+                ->orderBy('created_at', 'asc')
+                ->limit(50)
+                ->get();
+
+            if ($commands->isEmpty()) {
+                return response("OK\nEND", 200)->header('Content-Type', 'text/plain');
+            }
+
+            // Formato: CMD:ID:TYPE:MAC
+            // Exemplo: CMD:1:liberate:AA:BB:CC:DD:EE:FF
+            $output = "OK\n";
+            foreach ($commands as $cmd) {
+                $output .= "CMD:{$cmd->id}:{$cmd->command_type}:{$cmd->mac_address}\n";
+            }
+            $output .= "END";
+
+            Log::info('🎛️ Comandos enviados para Mikrotik', [
+                'mikrotik_ip' => $request->ip(),
+                'commands_count' => $commands->count(),
+                'commands' => $commands->pluck('command_type', 'id')->toArray(),
+            ]);
+
+            return response($output, 200)
+                ->header('Content-Type', 'text/plain')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao buscar comandos: ' . $e->getMessage());
+            return response('ERROR:INTERNAL', 500)->header('Content-Type', 'text/plain');
+        }
+    }
+
+    /**
+     * 🎛️ REMOTE ADMIN PANEL - Receber resultado de comando executado
+     * Mikrotik reporta se o comando foi executado com sucesso ou falhou
+     */
+    public function commandResult(Request $request)
+    {
+        try {
+            $token = $request->get('token') ?? $request->bearerToken();
+            $expectedToken = config('wifi.mikrotik_sync_token', 'mikrotik-sync-2024');
+            
+            if (str_replace('Bearer ', '', $token) !== $expectedToken) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $request->validate([
+                'command_id' => 'required|integer',
+                'status' => 'required|in:executed,failed',
+                'response' => 'nullable|string',
+            ]);
+
+            $command = MikrotikCommand::find($request->command_id);
+            
+            if (!$command) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Comando não encontrado'
+                ], 404);
+            }
+
+            if ($request->status === 'executed') {
+                $command->markAsExecuted($request->response);
+            } else {
+                $command->markAsFailed($request->response ?? 'Erro desconhecido');
+            }
+
+            Log::info('✅ Resultado de comando recebido', [
+                'command_id' => $command->id,
+                'type' => $command->command_type,
+                'mac' => $command->mac_address,
+                'status' => $request->status,
+                'response' => $request->response,
+                'mikrotik_ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Resultado registrado com sucesso'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao processar resultado: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()

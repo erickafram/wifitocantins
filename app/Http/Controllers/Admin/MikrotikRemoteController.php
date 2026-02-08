@@ -4,29 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use RouterOS\Client;
-use RouterOS\Query;
+use App\Models\User;
+use App\Models\MikrotikCommand;
+use App\Models\Device;
 
 class MikrotikRemoteController extends Controller
 {
-    private $client;
-
-    private function connect()
-    {
-        try {
-            $config = [
-                'host' => env('MIKROTIK_HOST', '10.5.50.1'),
-                'user' => env('MIKROTIK_USER', 'admin'),
-                'pass' => env('MIKROTIK_PASSWORD', ''),
-                'port' => (int) env('MIKROTIK_PORT', 8728),
-            ];
-
-            $this->client = new Client($config);
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 
     public function index()
     {
@@ -35,36 +18,69 @@ class MikrotikRemoteController extends Controller
 
     public function getStatus()
     {
-        if (!$this->connect()) {
-            return response()->json(['error' => 'Não foi possível conectar ao Mikrotik'], 500);
-        }
-
         try {
-            // Informações do sistema
-            $query = new Query('/system/resource/print');
-            $system = $this->client->query($query)->read();
+            // Estatísticas do banco de dados
+            $activeUsers = User::where('status', 'connected')
+                ->where('expires_at', '>', now())
+                ->count();
 
-            // Usuários ativos
-            $query = new Query('/ip/hotspot/active/print');
-            $activeUsers = $this->client->query($query)->read();
+            $paidUsers = User::where('status', 'connected')
+                ->where('expires_at', '>', now())
+                ->count();
 
-            // Bindings (usuários pagos)
-            $query = new Query('/ip/hotspot/ip-binding/print');
-            $bindings = $this->client->query($query)->read();
+            $totalDevices = User::whereNotNull('mac_address')->count();
 
-            // DHCP Leases
-            $query = new Query('/ip/dhcp-server/lease/print');
-            $leases = $this->client->query($query)->read();
+            // Comandos pendentes
+            $pendingCommands = MikrotikCommand::pending()->count();
+
+            // Últimos usuários ativos
+            $recentUsers = User::where('status', 'connected')
+                ->where('expires_at', '>', now())
+                ->orderBy('connected_at', 'desc')
+                ->limit(20)
+                ->get();
+
+            // Usuários pagos (com bypass)
+            $paidUsersList = User::where('status', 'connected')
+                ->where('expires_at', '>', now())
+                ->get();
+
+            // Todos os dispositivos
+            $allDevices = User::whereNotNull('mac_address')
+                ->orderBy('connected_at', 'desc')
+                ->limit(50)
+                ->get();
 
             return response()->json([
-                'system' => $system,
-                'activeUsers' => count($activeUsers),
-                'paidUsers' => count($bindings),
-                'totalDevices' => count($leases),
+                'activeUsers' => $activeUsers,
+                'paidUsers' => $paidUsers,
+                'totalDevices' => $totalDevices,
+                'pendingCommands' => $pendingCommands,
                 'details' => [
-                    'active' => $activeUsers,
-                    'bindings' => $bindings,
-                    'leases' => $leases,
+                    'active' => $recentUsers->map(function($user) {
+                        return [
+                            'mac-address' => $user->mac_address,
+                            'address' => $user->ip_address,
+                            'uptime' => $user->connected_at ? $user->connected_at->diffForHumans() : '-',
+                            'expires' => $user->expires_at ? $user->expires_at->format('d/m/Y H:i') : '-',
+                        ];
+                    }),
+                    'bindings' => $paidUsersList->map(function($user) {
+                        return [
+                            'mac-address' => $user->mac_address,
+                            'type' => 'bypassed',
+                            'comment' => 'PAGO-AUTO',
+                            'expires' => $user->expires_at ? $user->expires_at->format('d/m/Y H:i') : '-',
+                        ];
+                    }),
+                    'leases' => $allDevices->map(function($user) {
+                        return [
+                            'mac-address' => $user->mac_address,
+                            'address' => $user->ip_address,
+                            'host-name' => $user->device_name ?? $user->name ?? '-',
+                            'status' => $user->status,
+                        ];
+                    }),
                 ]
             ]);
         } catch (\Exception $e) {
@@ -78,75 +94,37 @@ class MikrotikRemoteController extends Controller
             'command' => 'required|string',
         ]);
 
-        if (!$this->connect()) {
-            return response()->json(['error' => 'Não foi possível conectar ao Mikrotik'], 500);
-        }
+        // Listar comandos pendentes
+        $pendingCommands = MikrotikCommand::pending()
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
 
-        try {
-            $command = $request->input('command');
-            
-            // Segurança: apenas comandos de leitura e alguns específicos
-            $allowedCommands = [
-                '/system/resource/print',
-                '/ip/hotspot/active/print',
-                '/ip/hotspot/ip-binding/print',
-                '/ip/dhcp-server/lease/print',
-                '/log/print',
-                '/interface/print',
-                '/ip/address/print',
-                '/system/script/run',
-            ];
-
-            $isAllowed = false;
-            foreach ($allowedCommands as $allowed) {
-                if (str_starts_with($command, $allowed)) {
-                    $isAllowed = true;
-                    break;
-                }
-            }
-
-            if (!$isAllowed) {
-                return response()->json(['error' => 'Comando não permitido'], 403);
-            }
-
-            $query = new Query($command);
-            $response = $this->client->query($query)->read();
-
-            return response()->json([
-                'success' => true,
-                'data' => $response
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $pendingCommands
+        ]);
     }
 
     public function syncNow()
     {
-        if (!$this->connect()) {
-            return response()->json(['error' => 'Não foi possível conectar ao Mikrotik'], 500);
-        }
-
         try {
-            // Executar script de sincronização
-            $query = (new Query('/system/script/run'))
-                ->equal('number', 'syncPagos');
-            
-            $this->client->query($query)->read();
+            // Forçar sincronização criando um comando especial
+            MikrotikCommand::create([
+                'command_type' => 'sync',
+                'mac_address' => '00:00:00:00:00:00',
+                'status' => 'pending',
+            ]);
 
-            // Aguardar 2 segundos
-            sleep(2);
-
-            // Buscar logs
-            $query = (new Query('/log/print'))
-                ->where('message', '~SYNC');
-            
-            $logs = $this->client->query($query)->read();
+            // Buscar últimos logs de sincronização
+            $recentCommands = MikrotikCommand::orderBy('executed_at', 'desc')
+                ->limit(10)
+                ->get();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Sincronização executada',
-                'logs' => $logs
+                'message' => 'Comando de sincronização enviado. O Mikrotik executará em até 15 segundos.',
+                'logs' => $recentCommands
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -156,27 +134,22 @@ class MikrotikRemoteController extends Controller
     public function liberateMac(Request $request)
     {
         $request->validate([
-            'mac' => 'required|string',
+            'mac' => 'required|string|regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
         ]);
 
-        if (!$this->connect()) {
-            return response()->json(['error' => 'Não foi possível conectar ao Mikrotik'], 500);
-        }
-
         try {
-            $mac = strtoupper($request->input('mac'));
+            $mac = strtoupper(str_replace('-', ':', $request->input('mac')));
 
-            // Adicionar binding
-            $query = (new Query('/ip/hotspot/ip-binding/add'))
-                ->equal('mac-address', $mac)
-                ->equal('type', 'bypassed')
-                ->equal('comment', 'PAGO-MANUAL');
-            
-            $this->client->query($query)->read();
+            // Criar comando para liberar
+            MikrotikCommand::create([
+                'command_type' => 'liberate',
+                'mac_address' => $mac,
+                'status' => 'pending',
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => "MAC {$mac} liberado com sucesso"
+                'message' => "Comando enviado! O MAC {$mac} será liberado em até 15 segundos pelo Mikrotik."
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -186,35 +159,22 @@ class MikrotikRemoteController extends Controller
     public function blockMac(Request $request)
     {
         $request->validate([
-            'mac' => 'required|string',
+            'mac' => 'required|string|regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
         ]);
 
-        if (!$this->connect()) {
-            return response()->json(['error' => 'Não foi possível conectar ao Mikrotik'], 500);
-        }
-
         try {
-            $mac = strtoupper($request->input('mac'));
+            $mac = strtoupper(str_replace('-', ':', $request->input('mac')));
 
-            // Buscar binding
-            $query = (new Query('/ip/hotspot/ip-binding/print'))
-                ->where('mac-address', $mac);
-            
-            $bindings = $this->client->query($query)->read();
-
-            if (empty($bindings)) {
-                return response()->json(['error' => 'MAC não encontrado'], 404);
-            }
-
-            // Remover binding
-            $query = (new Query('/ip/hotspot/ip-binding/remove'))
-                ->equal('.id', $bindings[0]['.id']);
-            
-            $this->client->query($query)->read();
+            // Criar comando para bloquear
+            MikrotikCommand::create([
+                'command_type' => 'block',
+                'mac_address' => $mac,
+                'status' => 'pending',
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => "MAC {$mac} bloqueado com sucesso"
+                'message' => "Comando enviado! O MAC {$mac} será bloqueado em até 15 segundos pelo Mikrotik."
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -223,16 +183,18 @@ class MikrotikRemoteController extends Controller
 
     public function getLogs()
     {
-        if (!$this->connect()) {
-            return response()->json(['error' => 'Não foi possível conectar ao Mikrotik'], 500);
-        }
-
         try {
-            $query = (new Query('/log/print'));
-            $logs = $this->client->query($query)->read();
-
-            // Pegar últimos 50 logs
-            $logs = array_slice($logs, -50);
+            // Buscar últimos comandos executados
+            $logs = MikrotikCommand::orderBy('created_at', 'desc')
+                ->limit(100)
+                ->get()
+                ->map(function($cmd) {
+                    return [
+                        'time' => $cmd->created_at->format('H:i:s'),
+                        'message' => "[{$cmd->status}] {$cmd->command_type}: {$cmd->mac_address}" . 
+                                   ($cmd->response ? " - {$cmd->response}" : ''),
+                    ];
+                });
 
             return response()->json([
                 'success' => true,

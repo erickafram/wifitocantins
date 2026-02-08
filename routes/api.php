@@ -96,6 +96,10 @@ Route::prefix('mikrotik')->group(function () {
     Route::match(['GET', 'POST'], '/force-liberate', [MikrotikApiController::class, 'forceLiberate']); // Forçar liberação
     Route::get('/diagnostics', [MikrotikApiController::class, 'diagnostics']); // Diagnóstico geral
     
+    // 🎛️ REMOTE ADMIN PANEL - Command Queue
+    Route::get('/get-commands', [MikrotikApiController::class, 'getCommands']); // Buscar comandos pendentes
+    Route::post('/command-result', [MikrotikApiController::class, 'commandResult']); // Reportar resultado de comando
+    
     // 🏦 WALLED GARDEN - BANCOS BRASILEIROS
     Route::get('/walled-garden/domains', [\App\Http\Controllers\WalledGardenController::class, 'getDomains']);
     Route::get('/walled-garden/ip-ranges', [\App\Http\Controllers\WalledGardenController::class, 'getIpRanges']);
