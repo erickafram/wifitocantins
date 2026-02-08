@@ -278,61 +278,12 @@ class PaymentController extends Controller
                 'transaction_id' => $payment->transaction_id,
             ]);
 
-            // 🏦 BYPASS TEMPORÁRIO DE 3 MINUTOS
-            // Libera o MAC temporariamente para o usuário abrir o app do banco e pagar via WiFi
-            // Se pagar dentro de 3 min → activateUserAccess() estende para duração completa
-            // Se não pagar → expira automaticamente via checkPaidUsersLite()
-            $tempBypassGranted = false;
-            try {
-                // Anti-abuso: máximo 2 bypasses por MAC por hora
-                $recentBypasses = Payment::where('user_id', $user->id)
-                    ->where('status', 'pending')
-                    ->where('created_at', '>', now()->subHour())
-                    ->count();
-
-                if ($recentBypasses <= 2 && $user->mac_address) {
-                    // Só aplicar bypass se o usuário NÃO está já conectado (não rebaixar acesso pago)
-                    if (!in_array($user->status, ['connected', 'active'])) {
-                        $user->update([
-                            'status' => 'temp_bypass',
-                            'expires_at' => now()->addMinutes(3),
-                        ]);
-                        $tempBypassGranted = true;
-
-                        Log::info('🏦 BYPASS TEMPORÁRIO DE 3 MIN ATIVADO', [
-                            'user_id' => $user->id,
-                            'mac_address' => $user->mac_address,
-                            'expires_at' => now()->addMinutes(3)->toISOString(),
-                            'recent_bypasses' => $recentBypasses,
-                        ]);
-                    } else {
-                        Log::info('🏦 Bypass não necessário - usuário já conectado', [
-                            'user_id' => $user->id,
-                            'status' => $user->status,
-                        ]);
-                    }
-                } else {
-                    Log::warning('⚠️ Bypass temporário negado - limite anti-abuso', [
-                        'user_id' => $user->id,
-                        'mac_address' => $user->mac_address,
-                        'recent_bypasses' => $recentBypasses,
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::error('❌ Erro ao aplicar bypass temporário', [
-                    'error' => $e->getMessage(),
-                    'user_id' => $user->id,
-                ]);
-                // Não falhar a geração do PIX por causa do bypass
-            }
-
             return response()->json([
                 'success' => true,
                 'message' => 'QR Code PIX gerado com sucesso!',
                 'payment_id' => $payment->id,
                 'gateway' => $gateway,
                 'qr_code' => $response,
-                'temp_bypass' => $tempBypassGranted,
             ]);
 
         } catch (\Exception $e) {
@@ -353,6 +304,83 @@ class PaymentController extends Controller
     {
         // Redirecionar para geração de QR Code
         return $this->generatePixQRCode($request);
+    }
+
+    /**
+     * 🏦 Ativa bypass temporário de 3 minutos para o usuário abrir o app do banco
+     * Chamado APÓS o usuário copiar o código PIX (não na geração do QR)
+     * Isso evita que o captive portal sheet do iOS feche antes do usuário copiar o código
+     */
+    public function activateTempBypass(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'payment_id' => 'required|integer|exists:payments,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Payment ID inválido'], 422);
+        }
+
+        try {
+            $payment = Payment::find($request->payment_id);
+            if (!$payment || $payment->status !== 'pending') {
+                return response()->json(['success' => false, 'message' => 'Pagamento não encontrado ou já processado'], 404);
+            }
+
+            $user = User::find($payment->user_id);
+            if (!$user || !$user->mac_address) {
+                return response()->json(['success' => false, 'message' => 'Usuário sem MAC'], 404);
+            }
+
+            // Não rebaixar quem já está conectado/ativo
+            if (in_array($user->status, ['connected', 'active'])) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Usuário já tem acesso',
+                    'already_connected' => true,
+                ]);
+            }
+
+            // Anti-abuso: máximo 3 bypasses por MAC por hora
+            $recentBypasses = Payment::where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->where('created_at', '>', now()->subHour())
+                ->count();
+
+            if ($recentBypasses > 3) {
+                Log::warning('⚠️ Bypass temporário negado - limite anti-abuso', [
+                    'user_id' => $user->id,
+                    'mac_address' => $user->mac_address,
+                    'recent_bypasses' => $recentBypasses,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Muitas tentativas. Aguarde alguns minutos.',
+                ]);
+            }
+
+            $user->update([
+                'status' => 'temp_bypass',
+                'expires_at' => now()->addMinutes(3),
+            ]);
+
+            Log::info('🏦 BYPASS TEMPORÁRIO DE 3 MIN ATIVADO (manual)', [
+                'user_id' => $user->id,
+                'mac_address' => $user->mac_address,
+                'payment_id' => $payment->id,
+                'expires_at' => now()->addMinutes(3)->toISOString(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Internet liberada por 3 minutos! Abra o app do banco.',
+                'expires_in' => 180,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao ativar bypass temporário', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro interno'], 500);
+        }
     }
 
     /**

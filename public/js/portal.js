@@ -966,11 +966,6 @@ class WiFiPortal {
                             <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2">
                                 <p class="text-amber-800 font-bold text-xs flex items-center gap-1.5">📱 Copie o código e cole no app do banco</p>
                             </div>
-                            ${data.temp_bypass ? `
-                            <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-2 mb-2">
-                                <p class="text-emerald-800 font-bold text-[11px] flex items-center gap-1.5">🏦 Internet liberada por 3 min para você abrir o app do banco!</p>
-                            </div>
-                            ` : ''}
                             `}
                             
                             <!-- Copia e Cola -->
@@ -982,6 +977,15 @@ class WiFiPortal {
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                     COPIAR CÓDIGO PIX
                                 </button>
+                            </div>
+                            
+                            <!-- Botão Abrir Banco (aparece após copiar) -->
+                            <div id="open-bank-area" class="hidden mb-2">
+                                <button id="btn-open-bank" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-[0.98] text-white font-bold py-3 rounded-lg text-xs transition-all shadow-lg flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    🏦 ABRIR APP DO BANCO
+                                </button>
+                                <p class="text-[10px] text-center text-gray-400 mt-1">Libera internet por 3 min para você pagar</p>
                             </div>
                             
                             <!-- Timer + Já Paguei lado a lado no mobile, empilhado no desktop -->
@@ -1143,11 +1147,57 @@ class WiFiPortal {
                 btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> COPIADO!';
                 btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                 btn.classList.add('bg-emerald-500');
+                
+                // Mostrar botão "ABRIR APP DO BANCO" após copiar
+                const openBankArea = document.getElementById('open-bank-area');
+                if (openBankArea) openBankArea.classList.remove('hidden');
+                
                 setTimeout(() => {
                     btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> COPIAR CÓDIGO PIX';
                     btn.classList.remove('bg-emerald-500');
                     btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 }, 2000);
+            }
+        });
+        
+        // Event: Botão "Abrir App do Banco" - ativa bypass temporário de 3 min
+        document.getElementById('btn-open-bank')?.addEventListener('click', async () => {
+            const btn = document.getElementById('btn-open-bank');
+            if (!btn) return;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Liberando...';
+            
+            try {
+                const response = await fetch('/api/payment/pix/temp-bypass', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                    },
+                    body: JSON.stringify({ payment_id: data.payment_id })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    btn.innerHTML = '✅ Internet liberada! Abra o app do banco';
+                    btn.classList.remove('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700');
+                    btn.classList.add('bg-emerald-500');
+                    btn.style.background = 'linear-gradient(to right, #10b981, #059669)';
+                    
+                    // Descrição atualizada
+                    const desc = btn.nextElementSibling;
+                    if (desc) desc.textContent = 'Você tem 3 min — cole o código PIX no banco!';
+                } else {
+                    btn.innerHTML = '🏦 ABRIR APP DO BANCO';
+                    btn.disabled = false;
+                    alert(result.message || 'Erro ao liberar. Tente novamente.');
+                }
+            } catch (e) {
+                btn.innerHTML = '🏦 ABRIR APP DO BANCO';
+                btn.disabled = false;
+                console.error('Erro ao ativar bypass:', e);
             }
         });
         
