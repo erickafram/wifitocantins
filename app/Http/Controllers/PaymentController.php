@@ -354,6 +354,18 @@ class PaymentController extends Controller
             $totalBypasses = max($bypassesByMac, $bypassesByPhone);
 
             if ($totalBypasses >= 2) {
+                // 📝 Registrar tentativa NEGADA
+                \App\Models\TempBypassLog::create([
+                    'user_id' => $user->id,
+                    'payment_id' => $payment->id,
+                    'mac_address' => $user->mac_address,
+                    'phone' => $user->phone,
+                    'ip_address' => $request->ip(),
+                    'bypass_number' => $totalBypasses + 1,
+                    'was_denied' => true,
+                    'deny_reason' => "Limite atingido (MAC: {$bypassesByMac}, Phone: {$bypassesByPhone})",
+                ]);
+
                 Log::warning('⚠️ Bypass temporário negado - limite anti-abuso (máx 2/hora)', [
                     'user_id' => $user->id,
                     'mac_address' => $user->mac_address,
@@ -379,9 +391,22 @@ class PaymentController extends Controller
             }
 
             // Ativar bypass
+            $expiresAt = now()->addMinutes(3);
             $user->update([
                 'status' => 'temp_bypass',
-                'expires_at' => now()->addMinutes(3),
+                'expires_at' => $expiresAt,
+            ]);
+
+            // 📝 Registrar bypass APROVADO
+            \App\Models\TempBypassLog::create([
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
+                'mac_address' => $user->mac_address,
+                'phone' => $user->phone,
+                'ip_address' => $request->ip(),
+                'bypass_number' => $totalBypasses + 1,
+                'expires_at' => $expiresAt,
+                'was_denied' => false,
             ]);
 
             // Incrementar contadores (expiram em 1 hora)

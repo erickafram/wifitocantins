@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class MikrotikRemoteController extends Controller
 {
+    use \Illuminate\Foundation\Auth\Access\AuthorizesRequests;
     public function index()
     {
         return view('admin.mikrotik.remote');
@@ -240,6 +241,46 @@ class MikrotikRemoteController extends Controller
             return response()->json([
                 'success' => true,
                 'logs' => array_values(array_slice($mikrotikLogs, -50)),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Retorna logs de bypass temporário (aprovados e negados)
+     */
+    public function getBypassLogs(Request $request)
+    {
+        try {
+            $query = \App\Models\TempBypassLog::orderBy('created_at', 'desc');
+
+            // Filtros opcionais
+            if ($request->filled('mac')) {
+                $query->where('mac_address', 'like', '%' . $request->mac . '%');
+            }
+            if ($request->filled('phone')) {
+                $query->where('phone', 'like', '%' . $request->phone . '%');
+            }
+            if ($request->filled('denied_only')) {
+                $query->where('was_denied', true);
+            }
+
+            $logs = $query->limit(100)->get();
+
+            // Estatísticas
+            $today = now()->startOfDay();
+            $stats = [
+                'total_hoje' => \App\Models\TempBypassLog::where('created_at', '>=', $today)->count(),
+                'aprovados_hoje' => \App\Models\TempBypassLog::where('created_at', '>=', $today)->where('was_denied', false)->count(),
+                'negados_hoje' => \App\Models\TempBypassLog::where('created_at', '>=', $today)->where('was_denied', true)->count(),
+                'total_geral' => \App\Models\TempBypassLog::count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'logs' => $logs,
+                'stats' => $stats,
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

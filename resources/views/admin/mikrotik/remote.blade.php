@@ -24,6 +24,10 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Logs
             </button>
+            <button onclick="switchTab('bypass')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-300 rounded-lg text-sm font-medium text-amber-700 hover:bg-amber-100 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Bypass Logs
+            </button>
         </div>
     </div>
 
@@ -120,6 +124,9 @@
                 <button onclick="switchTab('todos')" id="tab-todos" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
                     📋 Todos <span id="badge-todos" class="ml-1 bg-gray-300 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">0</span>
                 </button>
+                <button onclick="switchTab('bypass')" id="tab-bypass" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
+                    ⏱️ Bypass <span id="badge-bypass" class="ml-1 bg-amber-300 text-amber-800 text-xs px-1.5 py-0.5 rounded-full">0</span>
+                </button>
             </div>
         </div>
 
@@ -183,6 +190,47 @@
                     </thead>
                     <tbody id="table-todos" class="divide-y divide-gray-100">
                         <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Bypass Logs -->
+        <div id="content-bypass" class="tab-content hidden">
+            <!-- Stats bypass -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-amber-50 border-b">
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">Total Hoje</p>
+                    <p class="text-lg font-bold text-amber-700" id="bypass-stat-total">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">Aprovados Hoje</p>
+                    <p class="text-lg font-bold text-emerald-600" id="bypass-stat-aprovados">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">Negados Hoje</p>
+                    <p class="text-lg font-bold text-red-600" id="bypass-stat-negados">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">Total Geral</p>
+                    <p class="text-lg font-bold text-gray-700" id="bypass-stat-geral">-</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Data/Hora</th>
+                            <th class="px-4 py-3 text-left">Telefone</th>
+                            <th class="px-4 py-3 text-left">MAC</th>
+                            <th class="px-4 py-3 text-left">IP</th>
+                            <th class="px-4 py-3 text-center">Nº</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3 text-left">Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-bypass" class="divide-y divide-gray-100">
+                        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Clique em "Bypass Logs" para carregar</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -556,6 +604,53 @@ function switchTab(tab) {
 
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('content-' + tab).classList.remove('hidden');
+
+    // Auto-carregar bypass logs quando clicar na tab
+    if (tab === 'bypass') loadBypassLogs();
+}
+
+async function loadBypassLogs() {
+    const tbody = document.getElementById('table-bypass');
+    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400"><svg class="animate-spin h-5 w-5 mx-auto text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></td></tr>';
+
+    try {
+        const resp = await fetch('{{ route("admin.mikrotik.remote.bypass-logs") }}');
+        const data = await resp.json();
+
+        if (!data.success) throw new Error(data.error || 'Erro');
+
+        // Stats
+        document.getElementById('bypass-stat-total').textContent = data.stats.total_hoje;
+        document.getElementById('bypass-stat-aprovados').textContent = data.stats.aprovados_hoje;
+        document.getElementById('bypass-stat-negados').textContent = data.stats.negados_hoje;
+        document.getElementById('bypass-stat-geral').textContent = data.stats.total_geral;
+        document.getElementById('badge-bypass').textContent = data.stats.total_hoje;
+
+        if (data.logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Nenhum registro de bypass ainda</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.logs.map(log => {
+            const date = formatDate(log.created_at);
+            const statusBadge = log.was_denied
+                ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">❌ Negado</span>'
+                : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">✅ Aprovado</span>';
+
+            return `<tr class="hover:bg-gray-50 user-row" data-search="${(log.phone || '').toLowerCase()} ${(log.mac_address || '').toLowerCase()} ${(log.ip_address || '').toLowerCase()}">
+                <td class="px-4 py-3 text-xs text-gray-600">${date}</td>
+                <td class="px-4 py-3 text-sm">${log.phone || '-'}</td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-600">${log.mac_address || '-'}</td>
+                <td class="px-4 py-3 text-xs text-gray-500">${log.ip_address || '-'}</td>
+                <td class="px-4 py-3 text-center"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${log.bypass_number > 2 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}">${log.bypass_number}</span></td>
+                <td class="px-4 py-3 text-center">${statusBadge}</td>
+                <td class="px-4 py-3 text-xs text-gray-500">${log.deny_reason || '-'}</td>
+            </tr>`;
+        }).join('');
+
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-red-500">Erro: ${err.message}</td></tr>`;
+    }
 }
 
 function filterTable() {
