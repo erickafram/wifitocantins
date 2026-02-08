@@ -167,15 +167,27 @@
 # ============================================================================
 # REGRA: Quem NÃO pagou acessa APENAS:
 #   1. Portal de pagamento (tocantinstransportewifi.com.br)
-#   2. CDNs do portal (Tailwind, Fonts)
+#   2. CDNs ESPECÍFICOS do portal (Tailwind, Fonts - hostnames exatos)
 #   3. Gateways PIX (Woovi, OpenPix, PagBank, Santander)
 #   4. Apps de banco (domínios específicos dos bancos)
-#   5. CDNs de banco (CloudFront, Akamai, AzureCDN - SÓ CDN, não serviços)
-#   6. Detecção de captive portal (Android/iOS/Windows)
-#   7. Validação de certificados HTTPS (OCSP)
+#   5. Validação de certificados HTTPS (OCSP)
 #
-# NÃO LIBERAR: *.google.com, *.amazonaws.com, *.microsoft.com, *.apple.com
-# Esses domínios dão acesso à internet inteira!
+# NÃO LIBERAR wildcards de CDN:
+#   *.cloudfront.net, *.cloudflare.com, *.akamai.net, *.azureedge.net,
+#   *.fastly.net
+#   ESSES WILDCARDS DÃO ACESSO À INTERNET INTEIRA!
+#
+# EXCECAO CONTROLADA:
+#   *.googleapis.com e *.gstatic.com sao NECESSARIOS para apps bancarios
+#   (Google Play Services). Para NAO liberar internet completa, vamos
+#   BLOQUEAR os hosts de teste de conectividade via DNS estatico:
+#   connectivitycheck.gstatic.com, connectivitycheck.android.com,
+#   clients3.google.com, captive.apple.com
+#
+# NÃO LIBERAR detecção de captive portal:
+#   connectivitycheck.gstatic.com, captive.apple.com, www.apple.com
+#   SEM eles na lista, o MikroTik redireciona o teste de conectividade
+#   para a página de login → celular mostra popup "Entrar na rede WiFi"
 # ============================================================================
 
 # LIMPAR TODAS as entradas existentes do walled-garden
@@ -187,214 +199,179 @@
     :do { /ip hotspot walled-garden ip remove $i } on-error={}
 }
 
+# Remover regra padrao que libera TODO o trafego
+:do { /ip hotspot walled-garden remove [find comment="place hotspot rules here"] } on-error={}
+:do { /ip hotspot walled-garden set [find comment="place hotspot rules here"] disabled=yes } on-error={}
+
 :log info ">>> Configurando Walled Garden RESTRITIVO..."
 
 # =============================================
-# GRUPO 1: PORTAL DE PAGAMENTO (OBRIGATÓRIO)
+# GRUPO 1: PORTAL DE PAGAMENTO
 # =============================================
-/ip hotspot walled-garden add dst-host=tocantinstransportewifi.com.br comment="Portal Principal"
-/ip hotspot walled-garden add dst-host=*.tocantinstransportewifi.com.br comment="Portal Wildcard"
-/ip hotspot walled-garden add dst-host=www.tocantinstransportewifi.com.br comment="Portal WWW"
+/ip hotspot walled-garden add dst-host=tocantinstransportewifi.com.br comment="Portal"
+/ip hotspot walled-garden add dst-host=*.tocantinstransportewifi.com.br comment="Portal *"
 
-# CDNs necessários APENAS para o portal carregar
-/ip hotspot walled-garden add dst-host=cdn.tailwindcss.com comment="Portal: Tailwind CSS"
-/ip hotspot walled-garden add dst-host=fonts.googleapis.com comment="Portal: Google Fonts API"
-/ip hotspot walled-garden add dst-host=fonts.gstatic.com comment="Portal: Google Fonts Static"
-/ip hotspot walled-garden add dst-host=cdnjs.cloudflare.com comment="Portal: Cloudflare CDN"
+# CDNs do portal - HOSTNAMES EXATOS, não wildcards
+/ip hotspot walled-garden add dst-host=cdn.tailwindcss.com comment="Portal: Tailwind"
+/ip hotspot walled-garden add dst-host=fonts.googleapis.com comment="Portal: Fonts API"
+/ip hotspot walled-garden add dst-host=fonts.gstatic.com comment="Portal: Fonts"
+/ip hotspot walled-garden add dst-host=cdnjs.cloudflare.com comment="Portal: CDNJS"
+
+# Infra minima para apps bancarios (Google Play Services)
+/ip hotspot walled-garden add dst-host=*.googleapis.com comment="Infra: Google APIs"
+/ip hotspot walled-garden add dst-host=*.gstatic.com comment="Infra: Google Static"
 
 # =============================================
 # GRUPO 2: GATEWAYS DE PAGAMENTO PIX
 # =============================================
-/ip hotspot walled-garden add dst-host=api.woovi.com comment="PIX: Woovi API"
 /ip hotspot walled-garden add dst-host=*.woovi.com comment="PIX: Woovi"
-/ip hotspot walled-garden add dst-host=api.openpix.com.br comment="PIX: OpenPix API"
 /ip hotspot walled-garden add dst-host=*.openpix.com.br comment="PIX: OpenPix"
 /ip hotspot walled-garden add dst-host=api.qrserver.com comment="PIX: QR Code"
-/ip hotspot walled-garden add dst-host=chart.googleapis.com comment="PIX: Google Charts QR"
-/ip hotspot walled-garden add dst-host=pix.bcb.gov.br comment="PIX: Banco Central"
+/ip hotspot walled-garden add dst-host=chart.googleapis.com comment="PIX: QR Charts"
 /ip hotspot walled-garden add dst-host=*.bcb.gov.br comment="PIX: BCB"
-
-# PagBank/PagSeguro
 /ip hotspot walled-garden add dst-host=pagseguro.uol.com.br comment="PIX: PagSeguro"
-/ip hotspot walled-garden add dst-host=*.pagseguro.uol.com.br comment="PIX: PagSeguro API"
-/ip hotspot walled-garden add dst-host=api.pagseguro.com comment="PIX: PagSeguro API Direct"
-/ip hotspot walled-garden add dst-host=pagbank.com.br comment="PIX: PagBank"
-/ip hotspot walled-garden add dst-host=*.pagbank.com.br comment="PIX: PagBank API"
-
-# Santander PIX API
-/ip hotspot walled-garden add dst-host=api.santander.com.br comment="PIX: Santander API"
-/ip hotspot walled-garden add dst-host=pix.santander.com.br comment="PIX: Santander PIX"
+/ip hotspot walled-garden add dst-host=*.pagseguro.uol.com.br comment="PIX: PagSeguro *"
+/ip hotspot walled-garden add dst-host=*.pagseguro.com comment="PIX: PagSeguro Alt"
+/ip hotspot walled-garden add dst-host=*.pagbank.com.br comment="PIX: PagBank"
 
 # =============================================
 # GRUPO 3: APPS DE BANCOS (para pagar PIX)
 # =============================================
+# Cada banco usa seu próprio domínio para APIs do app.
+# O wildcard *.banco.com.br cobre todos os subdomínios.
+# NÃO precisamos de CDN genérico - o app bancário
+# já está instalado no celular com assets cacheados.
+# =============================================
 
 # Banco do Brasil
-/ip hotspot walled-garden add dst-host=bb.com.br comment="Banco: BB"
-/ip hotspot walled-garden add dst-host=*.bb.com.br comment="Banco: BB Mobile"
+/ip hotspot walled-garden add dst-host=*.bb.com.br comment="Banco: BB"
+/ip hotspot walled-garden add dst-host=*.bbseguros.com.br comment="Banco: BB Seguros"
 
 # Caixa Econômica Federal
-/ip hotspot walled-garden add dst-host=caixa.gov.br comment="Banco: Caixa"
-/ip hotspot walled-garden add dst-host=*.caixa.gov.br comment="Banco: Caixa Mobile"
+/ip hotspot walled-garden add dst-host=*.caixa.gov.br comment="Banco: Caixa"
+/ip hotspot walled-garden add dst-host=*.caixa.com.br comment="Banco: Caixa Alt"
+/ip hotspot walled-garden add dst-host=*.caixaseguridade.com.br comment="Banco: Caixa Seg"
 
 # Itaú
-/ip hotspot walled-garden add dst-host=itau.com.br comment="Banco: Itau"
-/ip hotspot walled-garden add dst-host=*.itau.com.br comment="Banco: Itau Mobile"
+/ip hotspot walled-garden add dst-host=*.itau.com.br comment="Banco: Itau"
+/ip hotspot walled-garden add dst-host=*.itau.com comment="Banco: Itau Alt"
+/ip hotspot walled-garden add dst-host=*.itau-unibanco.com.br comment="Banco: Itau Uni"
+/ip hotspot walled-garden add dst-host=*.iti.com.br comment="Banco: Iti"
 
 # Nubank
-/ip hotspot walled-garden add dst-host=nubank.com.br comment="Banco: Nubank"
-/ip hotspot walled-garden add dst-host=*.nubank.com.br comment="Banco: Nubank Mobile"
+/ip hotspot walled-garden add dst-host=*.nubank.com.br comment="Banco: Nubank"
+/ip hotspot walled-garden add dst-host=*.nubank.com comment="Banco: Nubank Alt"
+/ip hotspot walled-garden add dst-host=*.nuinvest.com.br comment="Banco: NuInvest"
 
 # Banco Inter
-/ip hotspot walled-garden add dst-host=bancointer.com.br comment="Banco: Inter"
-/ip hotspot walled-garden add dst-host=*.bancointer.com.br comment="Banco: Inter Mobile"
+/ip hotspot walled-garden add dst-host=*.bancointer.com.br comment="Banco: Inter"
+/ip hotspot walled-garden add dst-host=*.inter.co comment="Banco: Inter Alt"
 
 # Santander
-/ip hotspot walled-garden add dst-host=santander.com.br comment="Banco: Santander"
-/ip hotspot walled-garden add dst-host=*.santander.com.br comment="Banco: Santander Mobile"
+/ip hotspot walled-garden add dst-host=*.santander.com.br comment="Banco: Santander"
 
 # Bradesco
-/ip hotspot walled-garden add dst-host=bradesco.com.br comment="Banco: Bradesco"
-/ip hotspot walled-garden add dst-host=*.bradesco.com.br comment="Banco: Bradesco Mobile"
+/ip hotspot walled-garden add dst-host=*.bradesco.com.br comment="Banco: Bradesco"
+/ip hotspot walled-garden add dst-host=*.bradescocard.com.br comment="Banco: Bradesco Card"
+/ip hotspot walled-garden add dst-host=*.next.me comment="Banco: Next"
 
-# BRB
-/ip hotspot walled-garden add dst-host=brb.com.br comment="Banco: BRB"
-/ip hotspot walled-garden add dst-host=*.brb.com.br comment="Banco: BRB Mobile"
+# BRB (Banco de Brasília) - usa vários domínios separados
+/ip hotspot walled-garden add dst-host=*.brb.com.br comment="Banco: BRB"
+/ip hotspot walled-garden add dst-host=*.brbservicos.com.br comment="Banco: BRB Servicos"
+/ip hotspot walled-garden add dst-host=*.brbcard.com.br comment="Banco: BRB Card"
+/ip hotspot walled-garden add dst-host=*.brbseguros.com.br comment="Banco: BRB Seguros"
 
 # PicPay
-/ip hotspot walled-garden add dst-host=picpay.com comment="Banco: PicPay"
-/ip hotspot walled-garden add dst-host=*.picpay.com comment="Banco: PicPay Mobile"
+/ip hotspot walled-garden add dst-host=*.picpay.com comment="Banco: PicPay"
+/ip hotspot walled-garden add dst-host=*.picpay.com.br comment="Banco: PicPay Alt"
 
 # Mercado Pago
-/ip hotspot walled-garden add dst-host=mercadopago.com.br comment="Banco: Mercado Pago"
-/ip hotspot walled-garden add dst-host=*.mercadopago.com.br comment="Banco: MP Mobile"
-/ip hotspot walled-garden add dst-host=api.mercadopago.com comment="Banco: MP API"
+/ip hotspot walled-garden add dst-host=*.mercadopago.com.br comment="Banco: MP"
+/ip hotspot walled-garden add dst-host=*.mercadopago.com comment="Banco: MP Alt"
 /ip hotspot walled-garden add dst-host=*.mercadolibre.com comment="Banco: ML"
+/ip hotspot walled-garden add dst-host=*.mercadolivre.com.br comment="Banco: ML BR"
 
 # C6 Bank
-/ip hotspot walled-garden add dst-host=c6bank.com.br comment="Banco: C6"
-/ip hotspot walled-garden add dst-host=*.c6bank.com.br comment="Banco: C6 Mobile"
+/ip hotspot walled-garden add dst-host=*.c6bank.com.br comment="Banco: C6"
 
 # Sicoob
-/ip hotspot walled-garden add dst-host=sicoob.com.br comment="Banco: Sicoob"
-/ip hotspot walled-garden add dst-host=*.sicoob.com.br comment="Banco: Sicoob Mobile"
+/ip hotspot walled-garden add dst-host=*.sicoob.com.br comment="Banco: Sicoob"
 
 # Sicredi
-/ip hotspot walled-garden add dst-host=sicredi.com.br comment="Banco: Sicredi"
-/ip hotspot walled-garden add dst-host=*.sicredi.com.br comment="Banco: Sicredi Mobile"
+/ip hotspot walled-garden add dst-host=*.sicredi.com.br comment="Banco: Sicredi"
 
 # Neon
-/ip hotspot walled-garden add dst-host=neon.com.br comment="Banco: Neon"
-/ip hotspot walled-garden add dst-host=*.neon.com.br comment="Banco: Neon Mobile"
-
-# Next (Bradesco)
-/ip hotspot walled-garden add dst-host=next.me comment="Banco: Next"
-/ip hotspot walled-garden add dst-host=*.next.me comment="Banco: Next Mobile"
+/ip hotspot walled-garden add dst-host=*.neon.com.br comment="Banco: Neon"
 
 # Ame Digital
-/ip hotspot walled-garden add dst-host=amedigital.com comment="Banco: Ame"
-/ip hotspot walled-garden add dst-host=*.amedigital.com comment="Banco: Ame Mobile"
+/ip hotspot walled-garden add dst-host=*.amedigital.com comment="Banco: Ame"
 
 # Banco Original
-/ip hotspot walled-garden add dst-host=original.com.br comment="Banco: Original"
-/ip hotspot walled-garden add dst-host=*.original.com.br comment="Banco: Original Mobile"
+/ip hotspot walled-garden add dst-host=*.original.com.br comment="Banco: Original"
+
+# Banco Safra
+/ip hotspot walled-garden add dst-host=*.safra.com.br comment="Banco: Safra"
+
+# Banco BMG
+/ip hotspot walled-garden add dst-host=*.bancobmg.com.br comment="Banco: BMG"
+
+# Banrisul
+/ip hotspot walled-garden add dst-host=*.banrisul.com.br comment="Banco: Banrisul"
+
+# Banco Pan
+/ip hotspot walled-garden add dst-host=*.bancopan.com.br comment="Banco: Pan"
+
+# Cielo/Stone/Elo (processamento de pagamento)
+/ip hotspot walled-garden add dst-host=*.cielo.com.br comment="Banco: Cielo"
+/ip hotspot walled-garden add dst-host=*.stone.com.br comment="Banco: Stone"
+/ip hotspot walled-garden add dst-host=*.elo.com.br comment="Banco: Elo"
 
 # =============================================
-# GRUPO 4: CDNs DOS BANCOS (SOMENTE CDN!)
+# GRUPO 4: CERTIFICADOS SSL (OCSP/CRL)
 # =============================================
-# IMPORTANTE: Esses domínios são EXCLUSIVAMENTE de CDN.
-# Eles servem assets (JS, CSS, imagens) que os apps bancários
-# precisam para funcionar. NÃO dão acesso a sites/serviços.
-#
-# *.cloudfront.net = CDN da AWS (NÃO dá acesso a gmail, youtube, etc.)
-# *.akamai.net     = CDN Akamai (NÃO é um site navegável)
-# *.azureedge.net  = CDN Azure (NÃO dá acesso ao Office, Bing, etc.)
+# Verificação de certificados HTTPS. Sem isso bancos
+# mostram "erro de certificado". São requisições pequenas,
+# NÃO dão acesso a sites.
 # =============================================
-
-# AWS CloudFront (CDN) - usado por Nubank, Inter, C6, PicPay
-/ip hotspot walled-garden add dst-host=*.cloudfront.net comment="CDN: AWS CloudFront"
-
-# Akamai (CDN) - usado por BB, Caixa, Bradesco, Itaú
-/ip hotspot walled-garden add dst-host=*.akamai.net comment="CDN: Akamai"
-/ip hotspot walled-garden add dst-host=*.akamaiedge.net comment="CDN: Akamai Edge"
-/ip hotspot walled-garden add dst-host=*.akamaitechnologies.com comment="CDN: Akamai Tech"
-/ip hotspot walled-garden add dst-host=*.akamaihd.net comment="CDN: Akamai HD"
-/ip hotspot walled-garden add dst-host=*.edgekey.net comment="CDN: Akamai EdgeKey"
-/ip hotspot walled-garden add dst-host=*.edgesuite.net comment="CDN: Akamai EdgeSuite"
-
-# Azure CDN - usado por Santander, PagBank
-/ip hotspot walled-garden add dst-host=*.azureedge.net comment="CDN: Azure Edge"
-/ip hotspot walled-garden add dst-host=*.msecnd.net comment="CDN: Microsoft CDN"
-
-# Cloudflare CDN
-/ip hotspot walled-garden add dst-host=*.cloudflare.com comment="CDN: Cloudflare"
-
-# Fastly CDN - usado por fintechs
-/ip hotspot walled-garden add dst-host=*.fastly.net comment="CDN: Fastly"
-
-# Firebase (push notifications e analytics dos apps bancários)
-/ip hotspot walled-garden add dst-host=*.firebaseio.com comment="CDN: Firebase IO"
-/ip hotspot walled-garden add dst-host=*.firebaseapp.com comment="CDN: Firebase App"
-/ip hotspot walled-garden add dst-host=fcm.googleapis.com comment="CDN: Firebase Messaging"
-
-# =============================================
-# GRUPO 5: DETECÇÃO DE CAPTIVE PORTAL
-# =============================================
-# Quando o celular conecta no WiFi, ele verifica se tem internet.
-# Se não tiver, mostra a tela de login automaticamente.
-# =============================================
-
-# Android
-/ip hotspot walled-garden add dst-host=connectivitycheck.gstatic.com comment="Captive: Android"
-/ip hotspot walled-garden add dst-host=clients3.google.com comment="Captive: Android Alt"
-/ip hotspot walled-garden add dst-host=connectivitycheck.android.com comment="Captive: Android Alt2"
-
-# Apple/iOS
-/ip hotspot walled-garden add dst-host=captive.apple.com comment="Captive: Apple"
-/ip hotspot walled-garden add dst-host=www.apple.com comment="Captive: Apple WWW"
-
-# Windows
-/ip hotspot walled-garden add dst-host=www.msftncsi.com comment="Captive: Windows"
-/ip hotspot walled-garden add dst-host=www.msftconnecttest.com comment="Captive: Windows Alt"
-
-# =============================================
-# GRUPO 6: CERTIFICADOS SSL (OCSP/CRL)
-# =============================================
-# Apps bancários verificam certificados SSL. Sem isso = "erro de conexão".
-# São requisições pequenas (não dão acesso a sites).
-# =============================================
-
-/ip hotspot walled-garden add dst-host=ocsp.digicert.com comment="SSL: DigiCert OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.digicert.com comment="SSL: DigiCert"
 /ip hotspot walled-garden add dst-host=crl3.digicert.com comment="SSL: DigiCert CRL"
 /ip hotspot walled-garden add dst-host=crl4.digicert.com comment="SSL: DigiCert CRL4"
-/ip hotspot walled-garden add dst-host=ocsp.verisign.com comment="SSL: VeriSign OCSP"
-/ip hotspot walled-garden add dst-host=ocsp.globalsign.com comment="SSL: GlobalSign OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.verisign.com comment="SSL: VeriSign"
+/ip hotspot walled-garden add dst-host=ocsp.globalsign.com comment="SSL: GlobalSign"
 /ip hotspot walled-garden add dst-host=crl.globalsign.com comment="SSL: GlobalSign CRL"
-/ip hotspot walled-garden add dst-host=ocsp.pki.goog comment="SSL: Google OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.pki.goog comment="SSL: Google"
 /ip hotspot walled-garden add dst-host=pki.goog comment="SSL: Google PKI"
-/ip hotspot walled-garden add dst-host=ocsp.sectigo.com comment="SSL: Sectigo OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.sectigo.com comment="SSL: Sectigo"
 /ip hotspot walled-garden add dst-host=crl.sectigo.com comment="SSL: Sectigo CRL"
-/ip hotspot walled-garden add dst-host=ocsp.comodoca.com comment="SSL: Comodo OCSP"
-/ip hotspot walled-garden add dst-host=ocsp.usertrust.com comment="SSL: UserTrust OCSP"
-/ip hotspot walled-garden add dst-host=r3.o.lencr.org comment="SSL: LetsEncrypt OCSP"
+/ip hotspot walled-garden add dst-host=ocsp.comodoca.com comment="SSL: Comodo"
+/ip hotspot walled-garden add dst-host=ocsp.usertrust.com comment="SSL: UserTrust"
+/ip hotspot walled-garden add dst-host=r3.o.lencr.org comment="SSL: LetsEncrypt"
 /ip hotspot walled-garden add dst-host=x1.c.lencr.org comment="SSL: LetsEncrypt CRL"
 
 # =============================================
-# WALLED GARDEN IP (acesso por IP direto)
+# WALLED GARDEN IP
 # =============================================
-# APENAS o IP do portal e DNS. SEM ranges enormes!
-# =============================================
-
-# Portal
 /ip hotspot walled-garden ip add dst-address=104.248.185.39 action=accept comment="IP: Portal"
-
-# DNS público (necessário para resolver nomes)
+/ip hotspot walled-garden ip add dst-address=10.5.50.1 action=accept comment="IP: Router DNS"
 /ip hotspot walled-garden ip add dst-address=8.8.8.8 action=accept comment="IP: Google DNS"
 /ip hotspot walled-garden ip add dst-address=8.8.4.4 action=accept comment="IP: Google DNS 2"
 /ip hotspot walled-garden ip add dst-address=1.1.1.1 action=accept comment="IP: Cloudflare DNS"
 /ip hotspot walled-garden ip add dst-address=1.0.0.1 action=accept comment="IP: Cloudflare DNS 2"
 
-:log info ">>> Walled Garden configurado: APENAS portal, bancos e pagamento"
+# Bloquear teste de conectividade para forcar popup do captive
+:do { /ip dns static remove [find name="connectivitycheck.gstatic.com"] } on-error={}
+:do { /ip dns static remove [find name="connectivitycheck.android.com"] } on-error={}
+:do { /ip dns static remove [find name="clients3.google.com"] } on-error={}
+:do { /ip dns static remove [find name="captive.apple.com"] } on-error={}
+
+/ip dns static add name=connectivitycheck.gstatic.com address=127.0.0.1 comment="Block captive check"
+/ip dns static add name=connectivitycheck.android.com address=127.0.0.1 comment="Block captive check"
+/ip dns static add name=clients3.google.com address=127.0.0.1 comment="Block captive check"
+/ip dns static add name=captive.apple.com address=127.0.0.1 comment="Block captive check"
+
+:log info ">>> Walled Garden RESTRITIVO configurado"
+:log info ">>> SEM CDN wildcards, SEM captive portal detection"
+:log info ">>> Captive portal popup VAI APARECER automaticamente"
 
 
 # ============================================================================
@@ -444,7 +421,12 @@
 # CORREÇÃO 6: FIREWALL - LIMPAR DUPLICATAS E REGRAS PROBLEMÁTICAS
 # ============================================================================
 
-# Remover regras DoH que bloqueiam HTTPS legítimo
+# Remover regras que bloqueiam porta 443 (HTTPS)
+# PROBLEMA: Block Google DoH e Block Cloudflare DoH bloqueiam HTTPS
+# para 8.8.8.8 e 1.1.1.1, interferindo com apps bancários que
+# usam DoH para resolver DNS antes de conectar ao banco.
+# Como já temos DNS redirect (porta 53 → MikroTik), não precisamos
+# bloquear DoH - o DNS já é forçado pelo NAT redirect.
 :foreach rule in=[/ip firewall filter find where dst-port=443 action=drop] do={
     :local dstAddr ""
     :do { :set dstAddr [/ip firewall filter get $rule dst-address] } on-error={}
@@ -454,20 +436,48 @@
     }
 }
 
-# Remover masquerade duplicados (manter apenas o primeiro)
-:local masqRules [/ip firewall nat find where chain=srcnat action=masquerade]
-:if ([:len $masqRules] > 1) do={
-    :for i from=1 to=([:len $masqRules] - 1) do={
-        :log info "Removendo masquerade duplicado"
-        /ip firewall nat remove ($masqRules->$i)
+# Remover masquerade duplicados (manter apenas 1 por interface)
+# PROBLEMA ATUAL: 2x masquerade para ether1 (NAT-Starlink + NAT Principal)
+:local masqEther1 [/ip firewall nat find where chain=srcnat action=masquerade out-interface=ether1]
+:if ([:len $masqEther1] > 1) do={
+    :for i from=1 to=([:len $masqEther1] - 1) do={
+        :log info "Removendo masquerade duplicado ether1"
+        /ip firewall nat remove ($masqEther1->$i)
     }
 }
 
-# Remover DNS redirect duplicados
-:local dnsRules [/ip firewall nat find where chain=dstnat protocol=udp dst-port=53]
-:if ([:len $dnsRules] > 1) do={
-    :for i from=1 to=([:len $dnsRules] - 1) do={
-        /ip firewall nat remove ($dnsRules->$i)
+# Remover DNS redirect duplicados (UDP)
+:local dnsUdp [/ip firewall nat find where chain=dstnat protocol=udp dst-port=53]
+:if ([:len $dnsUdp] > 1) do={
+    :for i from=1 to=([:len $dnsUdp] - 1) do={
+        :log info "Removendo DNS redirect UDP duplicado"
+        /ip firewall nat remove ($dnsUdp->$i)
+    }
+}
+
+# Remover DNS redirect duplicados (TCP)
+:local dnsTcp [/ip firewall nat find where chain=dstnat protocol=tcp dst-port=53]
+:if ([:len $dnsTcp] > 1) do={
+    :for i from=1 to=([:len $dnsTcp] - 1) do={
+        :log info "Removendo DNS redirect TCP duplicado"
+        /ip firewall nat remove ($dnsTcp->$i)
+    }
+}
+
+# Remover walled-garden IP duplicados
+:local portalWg [/ip hotspot walled-garden ip find where dst-address="104.248.185.39"]
+:if ([:len $portalWg] > 1) do={
+    :for i from=1 to=([:len $portalWg] - 1) do={
+        :log info "Removendo walled-garden IP duplicado"
+        /ip hotspot walled-garden ip remove ($portalWg->$i)
+    }
+}
+
+# Remover logging duplicado
+:local hotspotLogs [/system logging find where topics~"hotspot"]
+:if ([:len $hotspotLogs] > 1) do={
+    :for i from=1 to=([:len $hotspotLogs] - 1) do={
+        /system logging remove ($hotspotLogs->$i)
     }
 }
 

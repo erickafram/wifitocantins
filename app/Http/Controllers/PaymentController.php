@@ -118,6 +118,10 @@ class PaymentController extends Controller
                 'transaction_id' => $this->generateTransactionId(),
             ]);
 
+            // 🔧 FIX: Usar SettingsHelper para ler tokens do banco de dados (painel admin)
+            // config() lê do .env que pode estar vazio mesmo com token configurado no painel
+            $pagbankTokenCheck = \App\Helpers\SettingsHelper::getPagBankToken();
+
             if ($gateway === 'woovi' && config('wifi.payment_gateways.pix.woovi_app_id')) {
                 // Usar API da Woovi
                 $wooviService = new WooviPixService;
@@ -167,7 +171,7 @@ class PaymentController extends Controller
                     'expires_at' => $qrData['expires_at'],
                 ];
 
-            } elseif ($gateway === 'pagbank' && config('wifi.payment_gateways.pix.pagbank_token')) {
+            } elseif ($gateway === 'pagbank' && $pagbankTokenCheck) {
                 // Usar API do PagBank
                 $pagbankService = new \App\Services\PagBankPixService;
                 $qrData = $pagbankService->createPixPayment(
