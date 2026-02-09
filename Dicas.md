@@ -30,7 +30,7 @@ php artisan migrate --force
 php artisan db:seed --class=SystemSettingsSeeder
 
 # 8. Limpar TODOS os caches
-php artisan config:clear
+php artisan config:clear  
 php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
