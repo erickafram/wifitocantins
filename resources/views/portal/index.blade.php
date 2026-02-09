@@ -135,46 +135,121 @@
                     JÁ DESLIGUEI, CONTINUAR
                 </button>
 
+                <p class="text-xs text-gray-400 mt-2">
+                    Sem desligar os dados móveis, o pagamento não<br>poderá ser processado corretamente.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- No-MAC Blocking Overlay (não conseguiu identificar o dispositivo) -->
+    <div id="no-mac-warning" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden">
+        <div class="flex items-center justify-center h-full p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm animate-slide-up shadow-2xl text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    </svg>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Dispositivo Não Identificado</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    Não foi possível identificar seu celular na rede WiFi. Para se conectar, siga os passos abaixo:
+                </p>
+
+                <div class="bg-gray-50 rounded-xl p-4 mb-5 text-left">
+                    <div class="space-y-2.5">
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <p class="text-sm text-gray-700"><strong>Desligue os dados móveis</strong> (4G/5G)</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <p class="text-sm text-gray-700">Certifique-se que está conectado ao WiFi <strong>TocantinsTransporteWiFi</strong></p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <p class="text-sm text-gray-700">Aguarde o <strong>popup automático</strong> de login</p>
+                        </div>
+                    </div>
+                </div>
+
                 <button 
-                    onclick="dismissMobileWarning()"
-                    class="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    id="no-mac-retry-btn"
+                    onclick="retryMacDetection()"
+                    class="connect-button w-full text-white font-bold py-3.5 rounded-xl shadow-md text-sm"
                 >
-                    Continuar mesmo assim
+                    JÁ DESLIGUEI, TENTAR NOVAMENTE
                 </button>
+
+                <p class="text-xs text-gray-400 mt-3">
+                    O popup de login aparece automaticamente<br>ao conectar ao WiFi com dados móveis desligados.
+                </p>
             </div>
         </div>
     </div>
 
     <script>
+    // ============================================
+    // DETECÇÃO DE DADOS MÓVEIS & BLOQUEIO SEM MAC
+    // ============================================
+    window._portalBlocked = false;
+    window._hasRealMac = false;
+
     function detectMobileData() {
         const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (conn && conn.type === 'cellular') {
             return true;
         }
-        // Fallback: se não tem parâmetros do MikroTik e o IP não é da rede local, provavelmente está em dados móveis
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasMikrotikParams = urlParams.has('mac') || urlParams.has('from_mikrotik') || urlParams.has('from_router') || urlParams.has('captive') || urlParams.has('from_login');
-        // Se não tem nenhum parâmetro do MikroTik, pode estar acessando via dados móveis
-        if (!hasMikrotikParams && !urlParams.has('skip_mobile_check')) {
-            // Tentar acessar o IP do MikroTik para confirmar se está na rede WiFi
-            return 'uncertain';
-        }
         return false;
+    }
+
+    function hasMikrotikContext() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.has('mac') || urlParams.has('from_mikrotik') || urlParams.has('from_router') || urlParams.has('captive') || urlParams.has('from_login');
     }
 
     function showMobileWarning() {
         document.getElementById('mobile-data-warning').classList.remove('hidden');
+        disableConnectButtons();
+    }
+
+    function showNoMacWarning() {
+        document.getElementById('no-mac-warning').classList.remove('hidden');
+        disableConnectButtons();
     }
 
     function dismissMobileWarning() {
         document.getElementById('mobile-data-warning').classList.add('hidden');
-        sessionStorage.setItem('mobile_warning_dismissed', '1');
+    }
+
+    function disableConnectButtons() {
+        window._portalBlocked = true;
+        const btns = [document.getElementById('connect-btn'), document.getElementById('connect-btn-desktop')];
+        btns.forEach(btn => {
+            if (!btn) return;
+            btn.disabled = true;
+            btn.classList.remove('connect-button', 'btn-pulse');
+            btn.classList.add('bg-gray-300', 'cursor-not-allowed');
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg> INDISPONÍVEL - DESLIGUE DADOS MÓVEIS';
+        });
+    }
+
+    function enableConnectButtons() {
+        window._portalBlocked = false;
+        const btns = [document.getElementById('connect-btn'), document.getElementById('connect-btn-desktop')];
+        btns.forEach(btn => {
+            if (!btn) return;
+            btn.disabled = false;
+            btn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+            btn.classList.add('connect-button', 'btn-pulse');
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg> CONECTAR AGORA';
+        });
     }
 
     function checkMobileDataAndRetry() {
         const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (conn && conn.type === 'cellular') {
-            // Ainda está com dados móveis
             const btn = document.getElementById('mobile-data-retry-btn');
             btn.textContent = 'DADOS MÓVEIS AINDA ATIVOS!';
             btn.classList.remove('connect-button');
@@ -185,38 +260,48 @@
                 btn.classList.remove('bg-red-500');
             }, 2000);
         } else {
-            // Desligou os dados ou API não disponível - recarregar a página
             dismissMobileWarning();
             window.location.reload();
         }
     }
 
+    function retryMacDetection() {
+        const btn = document.getElementById('no-mac-retry-btn');
+        btn.textContent = 'VERIFICANDO...';
+        btn.disabled = true;
+        // Recarregar a página para tentar novamente 
+        setTimeout(() => { window.location.reload(); }, 500);
+    }
+
     // Executar detecção ao carregar a página
     document.addEventListener('DOMContentLoaded', function() {
-        if (sessionStorage.getItem('mobile_warning_dismissed')) return;
+        const isMobileData = detectMobileData();
+        const hasContext = hasMikrotikContext();
 
-        const result = detectMobileData();
-        if (result === true) {
-            // Network API confirma dados móveis
+        if (isMobileData) {
+            // Network API confirma dados móveis - bloquear
             showMobileWarning();
-        } else if (result === 'uncertain') {
-            // Sem parâmetros do MikroTik - testar conectividade com o gateway
+            return;
+        }
+
+        if (!hasContext) {
+            // Sem parâmetros do MikroTik - testar se está na rede WiFi
             const img = new Image();
             let responded = false;
-            img.onload = function() { responded = true; }; // Está na rede WiFi (conseguiu alcançar o gateway)
+            img.onload = function() { 
+                responded = true;
+                // Está na rede WiFi, mas sem parâmetros - ok, continuar
+            };
             img.onerror = function() {
-                if (!responded) {
-                    // Não conseguiu alcançar o gateway - provavelmente está em dados móveis
-                    showMobileWarning();
-                }
+                // Não alcançou o gateway
             };
             img.src = 'http://10.5.50.1/favicon.ico?t=' + Date.now();
-            // Timeout: se não responder em 3s, mostrar aviso
+            // Timeout: se não alcançou o gateway em 4s, provavelmente fora da rede
             setTimeout(function() {
-                if (!responded && !sessionStorage.getItem('mobile_warning_dismissed')) {
-                    showMobileWarning();
+                if (!responded) {
+                    showNoMacWarning();
                 }
-            }, 3000);
+            }, 4000);
         }
     });
     </script>

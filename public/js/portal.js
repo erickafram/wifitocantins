@@ -490,6 +490,14 @@ class WiFiPortal {
             return;
         }
 
+        // � BLOQUEAR se portal detectou falta de MAC
+        if (window._portalBlocked) {
+            if (typeof showNoMacWarning === 'function') {
+                showNoMacWarning();
+            }
+            return;
+        }
+
         // 🚀 MOSTRAR LOADING IMEDIATAMENTE
         const submitBtn = document.getElementById('registration-submit-btn');
         const originalText = submitBtn.innerHTML;
@@ -503,7 +511,8 @@ class WiFiPortal {
         try {
             // 🚀 VERIFICAR MAC EM PARALELO (não bloqueia)
             if (!this.deviceMac || this.deviceMac === 'DETECTING...') {
-                await this.ensureRealIdentifiers();
+                const macOk = await this.ensureRealIdentifiers();
+                if (!macOk) return;
             }
 
             const data = {
@@ -715,6 +724,16 @@ class WiFiPortal {
      * Verifica se usuário existe e decide se mostra cadastro ou pagamento
      */
     async handleConnectClick() {
+        // 🚫 BLOQUEAR se portal detectou dados móveis ou sem MAC
+        if (window._portalBlocked) {
+            if (document.getElementById('no-mac-warning')) {
+                document.getElementById('no-mac-warning').classList.remove('hidden');
+            } else if (document.getElementById('mobile-data-warning')) {
+                document.getElementById('mobile-data-warning').classList.remove('hidden');
+            }
+            return;
+        }
+
         this.showLoading();
 
         try {
@@ -1829,6 +1848,7 @@ class WiFiPortal {
 
     async ensureRealIdentifiers() {
         if (this.hasRealIdentifiers()) {
+            window._hasRealMac = true;
             return true;
         }
 
@@ -1839,11 +1859,18 @@ class WiFiPortal {
         }
 
         if (this.hasRealIdentifiers()) {
+            window._hasRealMac = true;
             return true;
         }
 
-        this.showErrorMessage('Não conseguimos identificar seu dispositivo. Você será redirecionado para a tela de login.');
-        setTimeout(() => this.redirectToCaptivePortal(), 1500);
+        // 🚫 Bloquear pagamento - sem MAC real o acesso não será liberado
+        window._portalBlocked = true;
+        this.hideLoading();
+        if (typeof showNoMacWarning === 'function') {
+            showNoMacWarning();
+        } else {
+            this.showErrorMessage('Não foi possível identificar seu dispositivo. Desligue os dados móveis e conecte-se ao WiFi.');
+        }
         return false;
     }
 }
