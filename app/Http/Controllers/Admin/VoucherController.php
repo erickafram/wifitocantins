@@ -12,13 +12,53 @@ class VoucherController extends Controller
     /**
      * Lista todos os vouchers
      */
-    public function index()
+    public function index(Request $request)
     {
-        $vouchers = Voucher::driverVouchers()
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $query = Voucher::driverVouchers();
 
-        return view('admin.vouchers.index', compact('vouchers'));
+        // Filtro de busca (nome, código, telefone)
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('driver_name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%")
+                  ->orWhere('driver_phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro de status
+        if ($status = $request->input('status')) {
+            if ($status === 'active') {
+                $query->where('is_active', true)
+                      ->where(function ($q) {
+                          $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                      });
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            } elseif ($status === 'expired') {
+                $query->where('expires_at', '<=', now());
+            }
+        }
+
+        // Filtro de tipo
+        if ($type = $request->input('type')) {
+            $query->where('voucher_type', $type);
+        }
+
+        $vouchers = $query->orderBy('created_at', 'desc')->paginate(20)->appends($request->query());
+
+        // Estatísticas gerais (sem filtros)
+        $allVouchers = Voucher::driverVouchers();
+        $stats = [
+            'total' => $allVouchers->count(),
+            'active' => Voucher::driverVouchers()->where('is_active', true)
+                ->where(function ($q) { $q->whereNull('expires_at')->orWhere('expires_at', '>', now()); })
+                ->count(),
+            'inactive' => Voucher::driverVouchers()->where('is_active', false)->count(),
+            'unlimited' => Voucher::driverVouchers()->where('voucher_type', 'unlimited')->count(),
+            'expired' => Voucher::driverVouchers()->whereNotNull('expires_at')->where('expires_at', '<=', now())->count(),
+        ];
+
+        return view('admin.vouchers.index', compact('vouchers', 'stats'));
     }
 
     /**

@@ -11,6 +11,8 @@ use App\Models\Voucher;
 use App\Models\Device;
 use App\Models\Session;
 use App\Models\SystemSetting;
+use App\Models\TempBypassLog;
+use App\Models\MikrotikMacReport;
 
 class AdminController extends Controller
 {
@@ -23,12 +25,18 @@ class AdminController extends Controller
         $connected_users = $this->getConnectedUsers();
         $revenue_chart = $this->getRevenueChartData();
         $connections_chart = $this->getConnectionsChartData();
+        $system_status = $this->getSystemStatus();
+        $recent_payments = $this->getRecentPayments();
+        $bypass_stats = $this->getBypassStats();
 
         return view('admin.dashboard', compact(
             'stats',
             'connected_users', 
             'revenue_chart',
-            'connections_chart'
+            'connections_chart',
+            'system_status',
+            'recent_payments',
+            'bypass_stats'
         ));
     }
 
@@ -37,18 +45,45 @@ class AdminController extends Controller
      */
     private function getDashboardStats()
     {
+        $connectedUsers = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+            ->where('expires_at', '>', now())
+            ->whereNotNull('mac_address')
+            ->where('mac_address', '!=', '')
+            ->count();
+
+        $dailyRevenue = Payment::where('status', 'completed')
+            ->whereDate('created_at', today())
+            ->sum('amount');
+
+        $yesterdayRevenue = Payment::where('status', 'completed')
+            ->whereDate('created_at', today()->subDay())
+            ->sum('amount');
+
+        $pendingCount = Payment::where('status', 'pending')
+            ->whereDate('created_at', today())
+            ->count();
+
+        $pendingAmount = Payment::where('status', 'pending')
+            ->whereDate('created_at', today())
+            ->sum('amount');
+
+        $weekRevenue = Payment::where('status', 'completed')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->sum('amount');
+
+        $monthRevenue = Payment::where('status', 'completed')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->sum('amount');
+
         return [
-            'connected_users' => User::where('status', 'connected')->count(),
+            'connected_users' => $connectedUsers,
             'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
-            'daily_revenue' => Payment::where('status', 'completed')
-                ->whereDate('created_at', today())
-                ->sum('amount'),
-            'yesterday_revenue' => Payment::where('status', 'completed')
-                ->whereDate('created_at', today()->subDay())
-                ->sum('amount'),
-            'pending_payments' => Payment::where('status', 'pending')
-                ->whereDate('created_at', today())
-                ->sum('amount'),
+            'daily_revenue' => $dailyRevenue,
+            'yesterday_revenue' => $yesterdayRevenue,
+            'week_revenue' => $weekRevenue,
+            'month_revenue' => $monthRevenue,
+            'pending_payments' => $pendingAmount,
+            'pending_payments_count' => $pendingCount,
             'total_devices' => Device::count(),
             'active_vouchers' => Voucher::where('is_active', true)
                 ->where(function($query) {
@@ -62,21 +97,114 @@ class AdminController extends Controller
                 ->count(),
             'yesterday_payments_count' => Payment::where('status', 'completed')
                 ->whereDate('created_at', today()->subDay())
-                ->count()
+                ->count(),
+            'temp_bypass_active' => User::where('status', 'temp_bypass')
+                ->where('expires_at', '>', now())
+                ->count(),
         ];
     }
 
     /**
-     * Obtém usuários conectados
+     * Obtém usuários conectados (inclui temp_bypass e active)
      */
     private function getConnectedUsers()
     {
-        return User::where('status', 'connected')
+        return User::whereIn('status', ['connected', 'active', 'temp_bypass'])
             ->whereNotNull('expires_at')
             ->where('expires_at', '>', now())
+            ->whereNotNull('mac_address')
+            ->where('mac_address', '!=', '')
             ->orderBy('connected_at', 'desc')
-            ->limit(10)
+            ->limit(15)
             ->get();
+    }
+
+    /**
+     * Status real do sistema
+     */
+    private function getSystemStatus()
+    {
+        $status = [];
+
+        // Database - testar conexão real
+        try {
+            DB::connection()->getPdo();
+            $status['database'] = ['online' => true, 'detail' => 'Conectado'];
+        } catch (\Exception $e) {
+            $status['database'] = ['online' => false, 'detail' => 'Erro de conexão'];
+        }
+
+        // MikroTik - verificar última sincronização via MAC reports
+        try {
+            $lastReport = MikrotikMacReport::orderBy('reported_at', 'desc')->first();
+            if ($lastReport && $lastReport->reported_at) {
+                $diffMinutes = now()->diffInMinutes($lastReport->reported_at);
+                if ($diffMinutes <= 5) {
+                    $status['mikrotik'] = ['online' => true, 'detail' => "Sync há {$diffMinutes}min"];
+                } elseif ($diffMinutes <= 30) {
+                    $status['mikrotik'] = ['online' => true, 'detail' => "Sync há {$diffMinutes}min", 'warning' => true];
+                } else {
+                    $hours = floor($diffMinutes / 60);
+                    $status['mikrotik'] = ['online' => false, 'detail' => "Sem sync há {$hours}h"];
+                }
+            } else {
+                $status['mikrotik'] = ['online' => false, 'detail' => 'Nunca sincronizou'];
+            }
+        } catch (\Exception $e) {
+            $status['mikrotik'] = ['online' => false, 'detail' => 'Erro ao verificar'];
+        }
+
+        // Gateway de Pagamento - verificar se tem configuração
+        try {
+            $gateway = SystemSetting::getValue('payment_gateway', '');
+            $gatewayKey = SystemSetting::getValue('mercadopago_access_token', '') ?: SystemSetting::getValue('gateway_api_key', '');
+            if (!empty($gateway) && !empty($gatewayKey)) {
+                $status['pagamentos'] = ['online' => true, 'detail' => ucfirst($gateway)];
+            } elseif (!empty($gateway)) {
+                $status['pagamentos'] = ['online' => false, 'detail' => 'API Key ausente', 'warning' => true];
+            } else {
+                $status['pagamentos'] = ['online' => false, 'detail' => 'Não configurado'];
+            }
+        } catch (\Exception $e) {
+            $status['pagamentos'] = ['online' => false, 'detail' => 'Erro ao verificar'];
+        }
+
+        // API - verificar se os scripts estão rodando (última ação recente)
+        try {
+            $lastSync = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+                ->where('expires_at', '>', now())
+                ->where('updated_at', '>=', now()->subMinutes(5))
+                ->exists();
+            $status['api_sync'] = ['online' => $lastSync, 'detail' => $lastSync ? 'Ativo' : 'Sem atividade recente'];
+        } catch (\Exception $e) {
+            $status['api_sync'] = ['online' => false, 'detail' => 'Erro'];
+        }
+
+        return $status;
+    }
+
+    /**
+     * Últimos pagamentos
+     */
+    private function getRecentPayments()
+    {
+        return Payment::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Estatísticas de bypass temporário
+     */
+    private function getBypassStats()
+    {
+        $today = now()->startOfDay();
+        return [
+            'total_hoje' => TempBypassLog::where('created_at', '>=', $today)->count(),
+            'aprovados_hoje' => TempBypassLog::where('created_at', '>=', $today)->where('was_denied', false)->count(),
+            'negados_hoje' => TempBypassLog::where('created_at', '>=', $today)->where('was_denied', true)->count(),
+        ];
     }
 
     /**
@@ -238,41 +366,80 @@ class AdminController extends Controller
     }
 
     /**
-     * Dispositivos conectados
+     * Dispositivos e Usuários que pagaram
      */
-    public function devices()
+    public function devices(Request $request)
     {
-        $devices = Device::with(['user' => function($query) {
-            $query->where('status', 'connected');
-        }])
-        ->orderBy('last_seen', 'desc')
-        ->paginate(30);
+        // Filtro de busca
+        $search = $request->input('search', '');
+        $statusFilter = $request->input('status', '');
 
-        // Usuários que pagaram com MAC address - com paginação
-        // Buscar pagamentos completed com usuário que tem MAC, ordenado pelo mais recente
-        $paidUsers = Payment::where('status', 'completed')
+        // Usuários que pagaram com MAC address - com filtros
+        $paidUsersQuery = Payment::where('status', 'completed')
             ->whereHas('user', function($query) {
-                $query->whereNotNull('mac_address');
+                $query->whereNotNull('mac_address')
+                    ->where('mac_address', '!=', '');
             })
-            ->with('user')
-            ->orderBy('paid_at', 'desc')
-            ->paginate(20, ['*'], 'paid_page');
+            ->with('user');
+
+        if ($search) {
+            $paidUsersQuery->whereHas('user', function($query) use ($search) {
+                $query->where('mac_address', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($statusFilter) {
+            $paidUsersQuery->whereHas('user', function($query) use ($statusFilter) {
+                if ($statusFilter === 'online') {
+                    $query->whereIn('status', ['connected', 'active', 'temp_bypass'])
+                          ->where('expires_at', '>', now());
+                } elseif ($statusFilter === 'expired') {
+                    $query->where(function($q) {
+                        $q->where('status', 'expired')
+                          ->orWhere('expires_at', '<=', now());
+                    });
+                }
+            });
+        }
+
+        $paidUsers = $paidUsersQuery->orderBy('paid_at', 'desc')
+            ->paginate(25, ['*'], 'paid_page')
+            ->appends($request->query());
+
+        // Dispositivos detectados (tabela devices) - sem relationship problemática
+        $devicesQuery = Device::orderBy('last_seen', 'desc');
+
+        if ($search) {
+            $devicesQuery->where(function($q) use ($search) {
+                $q->where('mac_address', 'like', "%{$search}%")
+                  ->orWhere('device_name', 'like', "%{$search}%");
+            });
+        }
+
+        $devices = $devicesQuery->paginate(30, ['*'], 'devices_page')
+            ->appends($request->query());
 
         // Estatísticas dos usuários que pagaram
         $paidStats = [
             'total' => Payment::where('status', 'completed')
-                ->whereHas('user', function($q) { $q->whereNotNull('mac_address'); })
+                ->whereHas('user', function($q) { $q->whereNotNull('mac_address')->where('mac_address', '!=', ''); })
                 ->count(),
-            'online' => User::where('status', 'connected')
+            'online' => User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+                ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
                 ->whereHas('payments', function($q) { $q->where('status', 'completed'); })
                 ->count(),
             'active' => User::whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
                 ->whereNotNull('expires_at')
                 ->where('expires_at', '>', now())
                 ->whereHas('payments', function($q) { $q->where('status', 'completed'); })
                 ->count(),
             'expired' => User::whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
                 ->whereNotNull('expires_at')
                 ->where('expires_at', '<=', now())
                 ->whereHas('payments', function($q) { $q->where('status', 'completed'); })
@@ -285,7 +452,7 @@ class AdminController extends Controller
                 ->count(),
         ];
 
-        return view('admin.devices', compact('devices', 'paidUsers', 'paidStats'));
+        return view('admin.devices', compact('devices', 'paidUsers', 'paidStats', 'search', 'statusFilter'));
     }
 
     /**
