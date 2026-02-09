@@ -92,6 +92,135 @@
     </style>
 </head>
 <body class="font-sans min-h-screen bg-gray-50">
+    <!-- Mobile Data Warning Overlay -->
+    <div id="mobile-data-warning" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden">
+        <div class="flex items-center justify-center h-full p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm animate-slide-up shadow-2xl text-center">
+                <!-- Ícone de alerta -->
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Dados Móveis Ativados</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    Para conectar ao <strong>WiFi Tocantins</strong>, você precisa <strong>desligar os dados móveis</strong> do seu celular antes de continuar.
+                </p>
+
+                <!-- Instrução visual -->
+                <div class="bg-gray-50 rounded-xl p-4 mb-5 text-left">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Como fazer:</p>
+                    <div class="space-y-2.5">
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <p class="text-sm text-gray-700">Deslize a barra de notificações para baixo</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <p class="text-sm text-gray-700">Desative o botão de <strong>Dados Móveis</strong> / <strong>4G</strong></p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <p class="text-sm text-gray-700">Volte ao navegador e clique no botão abaixo</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button 
+                    id="mobile-data-retry-btn"
+                    onclick="checkMobileDataAndRetry()"
+                    class="connect-button w-full text-white font-bold py-3.5 rounded-xl shadow-md text-sm mb-3"
+                >
+                    JÁ DESLIGUEI, CONTINUAR
+                </button>
+
+                <button 
+                    onclick="dismissMobileWarning()"
+                    class="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                    Continuar mesmo assim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function detectMobileData() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn && conn.type === 'cellular') {
+            return true;
+        }
+        // Fallback: se não tem parâmetros do MikroTik e o IP não é da rede local, provavelmente está em dados móveis
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasMikrotikParams = urlParams.has('mac') || urlParams.has('from_mikrotik') || urlParams.has('from_router') || urlParams.has('captive') || urlParams.has('from_login');
+        // Se não tem nenhum parâmetro do MikroTik, pode estar acessando via dados móveis
+        if (!hasMikrotikParams && !urlParams.has('skip_mobile_check')) {
+            // Tentar acessar o IP do MikroTik para confirmar se está na rede WiFi
+            return 'uncertain';
+        }
+        return false;
+    }
+
+    function showMobileWarning() {
+        document.getElementById('mobile-data-warning').classList.remove('hidden');
+    }
+
+    function dismissMobileWarning() {
+        document.getElementById('mobile-data-warning').classList.add('hidden');
+        sessionStorage.setItem('mobile_warning_dismissed', '1');
+    }
+
+    function checkMobileDataAndRetry() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn && conn.type === 'cellular') {
+            // Ainda está com dados móveis
+            const btn = document.getElementById('mobile-data-retry-btn');
+            btn.textContent = 'DADOS MÓVEIS AINDA ATIVOS!';
+            btn.classList.remove('connect-button');
+            btn.classList.add('bg-red-500');
+            setTimeout(() => {
+                btn.textContent = 'JÁ DESLIGUEI, CONTINUAR';
+                btn.classList.add('connect-button');
+                btn.classList.remove('bg-red-500');
+            }, 2000);
+        } else {
+            // Desligou os dados ou API não disponível - recarregar a página
+            dismissMobileWarning();
+            window.location.reload();
+        }
+    }
+
+    // Executar detecção ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        if (sessionStorage.getItem('mobile_warning_dismissed')) return;
+
+        const result = detectMobileData();
+        if (result === true) {
+            // Network API confirma dados móveis
+            showMobileWarning();
+        } else if (result === 'uncertain') {
+            // Sem parâmetros do MikroTik - testar conectividade com o gateway
+            const img = new Image();
+            let responded = false;
+            img.onload = function() { responded = true; }; // Está na rede WiFi (conseguiu alcançar o gateway)
+            img.onerror = function() {
+                if (!responded) {
+                    // Não conseguiu alcançar o gateway - provavelmente está em dados móveis
+                    showMobileWarning();
+                }
+            };
+            img.src = 'http://10.5.50.1/favicon.ico?t=' + Date.now();
+            // Timeout: se não responder em 3s, mostrar aviso
+            setTimeout(function() {
+                if (!responded && !sessionStorage.getItem('mobile_warning_dismissed')) {
+                    showMobileWarning();
+                }
+            }, 3000);
+        }
+    });
+    </script>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
         <div class="flex items-center justify-center h-full">
