@@ -92,217 +92,185 @@
     </style>
 </head>
 <body class="font-sans min-h-screen bg-gray-50">
-    <!-- Mobile Data Warning Overlay -->
-    <div id="mobile-data-warning" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden">
+    <!-- No-WiFi Warning Overlay (aparece APENAS quando acessa pelo navegador sem estar no WiFi) -->
+    <div id="no-wifi-warning" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden">
         <div class="flex items-center justify-center h-full p-4">
             <div class="bg-white rounded-2xl p-6 w-full max-w-sm animate-slide-up shadow-2xl text-center">
-                <!-- Ícone de alerta -->
-                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                <!-- Ícone WiFi desconectado -->
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6 18L18 6"/>
                     </svg>
                 </div>
 
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Dados Móveis Ativados</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Conecte-se ao WiFi primeiro</h3>
                 <p class="text-sm text-gray-600 mb-4">
-                    Para conectar ao <strong>WiFi Tocantins</strong>, você precisa <strong>desligar os dados móveis</strong> do seu celular antes de continuar.
+                    Você está acessando pelo <strong>navegador</strong> sem estar conectado ao <strong>WiFi do ônibus</strong>. Para pagar e usar a internet, siga os passos abaixo:
                 </p>
 
-                <!-- Instrução visual -->
+                <!-- Instruções -->
                 <div class="bg-gray-50 rounded-xl p-4 mb-5 text-left">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Como fazer:</p>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Como conectar:</p>
                     <div class="space-y-2.5">
                         <div class="flex items-start gap-3">
                             <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                            <p class="text-sm text-gray-700">Deslize a barra de notificações para baixo</p>
+                            <p class="text-sm text-gray-700"><strong>Desative os Dados Móveis</strong> (4G/5G) do celular</p>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                            <p class="text-sm text-gray-700">Desative o botão de <strong>Dados Móveis</strong> / <strong>4G</strong></p>
+                            <p class="text-sm text-gray-700">Conecte ao WiFi <strong>"TocantinsTransporteWiFi"</strong></p>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                            <p class="text-sm text-gray-700">Volte ao navegador e clique no botão abaixo</p>
+                            <p class="text-sm text-gray-700">Aguarde a <strong>tela de login</strong> aparecer automaticamente</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                            <p class="text-sm text-gray-700">Clique em <strong>"Conectar Agora"</strong> e faça o pagamento PIX</p>
                         </div>
                     </div>
                 </div>
 
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
+                    <p class="text-xs text-amber-800">
+                        <strong>Importante:</strong> Se você pagar sem estar no WiFi do ônibus, o acesso <strong>não será liberado</strong> porque não conseguimos identificar seu dispositivo.
+                    </p>
+                </div>
+
                 <button 
-                    id="mobile-data-retry-btn"
-                    onclick="checkMobileDataAndRetry()"
+                    id="no-wifi-retry-btn"
+                    onclick="retryWifiCheck()"
                     class="connect-button w-full text-white font-bold py-3.5 rounded-xl shadow-md text-sm mb-3"
                 >
-                    JÁ DESLIGUEI, CONTINUAR
+                    JÁ CONECTEI NO WIFI, VERIFICAR
                 </button>
 
-                <p class="text-xs text-gray-400 mt-2">
-                    Sem desligar os dados móveis, o pagamento não<br>poderá ser processado corretamente.
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- No-MAC Blocking Overlay (não conseguiu identificar o dispositivo) -->
-    <div id="no-mac-warning" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden">
-        <div class="flex items-center justify-center h-full p-4">
-            <div class="bg-white rounded-2xl p-6 w-full max-w-sm animate-slide-up shadow-2xl text-center">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                    </svg>
-                </div>
-
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Dispositivo Não Identificado</h3>
-                <p class="text-sm text-gray-600 mb-4">
-                    Não foi possível identificar seu celular na rede WiFi. Para se conectar, siga os passos abaixo:
-                </p>
-
-                <div class="bg-gray-50 rounded-xl p-4 mb-5 text-left">
-                    <div class="space-y-2.5">
-                        <div class="flex items-start gap-3">
-                            <span class="flex-shrink-0 w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                            <p class="text-sm text-gray-700"><strong>Desligue os dados móveis</strong> (4G/5G)</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="flex-shrink-0 w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                            <p class="text-sm text-gray-700">Certifique-se que está conectado ao WiFi <strong>TocantinsTransporteWiFi</strong></p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="flex-shrink-0 w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                            <p class="text-sm text-gray-700">Aguarde o <strong>popup automático</strong> de login</p>
-                        </div>
-                    </div>
-                </div>
-
-                <button 
-                    id="no-mac-retry-btn"
-                    onclick="retryMacDetection()"
-                    class="connect-button w-full text-white font-bold py-3.5 rounded-xl shadow-md text-sm"
-                >
-                    JÁ DESLIGUEI, TENTAR NOVAMENTE
-                </button>
-
-                <p class="text-xs text-gray-400 mt-3">
-                    O popup de login aparece automaticamente<br>ao conectar ao WiFi com dados móveis desligados.
-                </p>
+                <p class="text-[11px] text-gray-400 mt-2">A tela de pagamento só aparece quando você estiver no WiFi do ônibus</p>
             </div>
         </div>
     </div>
 
     <script>
-    // ============================================
-    // DETECÇÃO DE DADOS MÓVEIS & BLOQUEIO SEM MAC
-    // ============================================
-    window._portalBlocked = false;
-    window._hasRealMac = false;
-
-    function detectMobileData() {
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (conn && conn.type === 'cellular') {
-            return true;
-        }
-        return false;
-    }
-
+    /**
+     * Detecção inteligente:
+     * - Se tem parâmetros do MikroTik (mac, from_mikrotik, captive, etc.) = veio pelo captive portal = OK
+     * - Se NÃO tem parâmetros = acessou direto pelo navegador = precisa verificar se está no WiFi
+     */
     function hasMikrotikContext() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.has('mac') || urlParams.has('from_mikrotik') || urlParams.has('from_router') || urlParams.has('captive') || urlParams.has('from_login');
+        return urlParams.has('mac') || urlParams.has('mikrotik_mac') || urlParams.has('client_mac') ||
+               urlParams.has('from_mikrotik') || urlParams.has('from_router') || 
+               urlParams.has('captive') || urlParams.has('from_login');
     }
 
-    function showMobileWarning() {
-        document.getElementById('mobile-data-warning').classList.remove('hidden');
-        disableConnectButtons();
+    function showNoWifiWarning() {
+        document.getElementById('no-wifi-warning').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        // Marcar globalmente que o acesso sem WiFi está bloqueado
+        window._noWifiBlocked = true;
     }
 
-    function showNoMacWarning() {
-        document.getElementById('no-mac-warning').classList.remove('hidden');
-        disableConnectButtons();
+    function hideNoWifiWarning() {
+        document.getElementById('no-wifi-warning').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        window._noWifiBlocked = false;
     }
 
-    function dismissMobileWarning() {
-        document.getElementById('mobile-data-warning').classList.add('hidden');
-    }
-
-    function disableConnectButtons() {
-        window._portalBlocked = true;
-        const btns = [document.getElementById('connect-btn'), document.getElementById('connect-btn-desktop')];
-        btns.forEach(btn => {
-            if (!btn) return;
-            btn.disabled = true;
-            btn.classList.remove('connect-button', 'btn-pulse');
-            btn.classList.add('bg-gray-300', 'cursor-not-allowed');
-            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg> INDISPONÍVEL - DESLIGUE DADOS MÓVEIS';
-        });
-    }
-
-    function enableConnectButtons() {
-        window._portalBlocked = false;
-        const btns = [document.getElementById('connect-btn'), document.getElementById('connect-btn-desktop')];
-        btns.forEach(btn => {
-            if (!btn) return;
-            btn.disabled = false;
-            btn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-            btn.classList.add('connect-button', 'btn-pulse');
-            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg> CONECTAR AGORA';
-        });
-    }
-
-    function checkMobileDataAndRetry() {
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (conn && conn.type === 'cellular') {
-            const btn = document.getElementById('mobile-data-retry-btn');
-            btn.textContent = 'DADOS MÓVEIS AINDA ATIVOS!';
-            btn.classList.remove('connect-button');
-            btn.classList.add('bg-red-500');
-            setTimeout(() => {
-                btn.textContent = 'JÁ DESLIGUEI, CONTINUAR';
-                btn.classList.add('connect-button');
-                btn.classList.remove('bg-red-500');
-            }, 2000);
-        } else {
-            dismissMobileWarning();
-            window.location.reload();
-        }
-    }
-
-    function retryMacDetection() {
-        const btn = document.getElementById('no-mac-retry-btn');
-        btn.textContent = 'VERIFICANDO...';
+    function retryWifiCheck() {
+        const btn = document.getElementById('no-wifi-retry-btn');
+        btn.innerHTML = '<span class="animate-pulse">Verificando...</span>';
         btn.disabled = true;
-        // Recarregar a página para tentar novamente 
-        setTimeout(() => { window.location.reload(); }, 500);
+
+        // Testar se consegue alcançar o gateway do MikroTik
+        const img = new Image();
+        let responded = false;
+        
+        img.onload = function() {
+            responded = true;
+            // Está no WiFi! Recarregar a página
+            hideNoWifiWarning();
+            window.location.href = 'http://10.5.50.1';
+        };
+        
+        img.onerror = function() {
+            // onerror também pode significar que alcançou mas não tem a imagem
+            // Tentar via fetch como fallback
+            fetch('http://10.5.50.1', { mode: 'no-cors', cache: 'no-cache' })
+                .then(() => {
+                    responded = true;
+                    hideNoWifiWarning();
+                    window.location.href = 'http://10.5.50.1';
+                })
+                .catch(() => {
+                    btn.innerHTML = 'WIFI NÃO DETECTADO!';
+                    btn.classList.remove('connect-button');
+                    btn.classList.add('bg-red-500');
+                    setTimeout(() => {
+                        btn.innerHTML = 'JÁ CONECTEI NO WIFI, VERIFICAR';
+                        btn.classList.add('connect-button');
+                        btn.classList.remove('bg-red-500');
+                        btn.disabled = false;
+                    }, 2500);
+                });
+        };
+        
+        img.src = 'http://10.5.50.1/favicon.ico?t=' + Date.now();
+        
+        // Timeout de 4 segundos
+        setTimeout(function() {
+            if (!responded) {
+                btn.innerHTML = 'WIFI NÃO DETECTADO!';
+                btn.classList.remove('connect-button');
+                btn.classList.add('bg-red-500');
+                setTimeout(() => {
+                    btn.innerHTML = 'JÁ CONECTEI NO WIFI, VERIFICAR';
+                    btn.classList.add('connect-button');
+                    btn.classList.remove('bg-red-500');
+                    btn.disabled = false;
+                }, 2500);
+            }
+        }, 4000);
     }
 
     // Executar detecção ao carregar a página
     document.addEventListener('DOMContentLoaded', function() {
-        const isMobileData = detectMobileData();
-        const hasContext = hasMikrotikContext();
-
-        if (isMobileData) {
-            // Network API confirma dados móveis - bloquear
-            showMobileWarning();
+        // Se veio pelo captive portal (tem parâmetros do MikroTik), não precisa verificar nada
+        if (hasMikrotikContext()) {
+            window._noWifiBlocked = false;
             return;
         }
 
-        if (!hasContext) {
-            // Sem parâmetros do MikroTik - testar se está na rede WiFi
-            const img = new Image();
-            let responded = false;
-            img.onload = function() { 
-                responded = true;
-                // Está na rede WiFi, mas sem parâmetros - ok, continuar
-            };
-            img.onerror = function() {
-                // Não alcançou o gateway
-            };
-            img.src = 'http://10.5.50.1/favicon.ico?t=' + Date.now();
-            // Timeout: se não alcançou o gateway em 4s, provavelmente fora da rede
-            setTimeout(function() {
-                if (!responded) {
-                    showNoMacWarning();
-                }
-            }, 4000);
+        // Acessou direto pelo navegador - verificar se está na rede WiFi
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn && conn.type === 'cellular') {
+            // API confirma que está em dados móveis
+            showNoWifiWarning();
+            return;
         }
+
+        // Testar conectividade com o gateway para confirmar
+        let gatewayReached = false;
+        
+        fetch('http://10.5.50.1', { mode: 'no-cors', cache: 'no-cache' })
+            .then(() => {
+                gatewayReached = true;
+                // Está no WiFi sem parâmetros - redirecionar para o captive portal
+                // para que pegue MAC e IP corretamente
+                window.location.href = 'http://10.5.50.1';
+            })
+            .catch(() => {
+                // Não alcançou o gateway = não está no WiFi do ônibus
+                if (!gatewayReached) {
+                    showNoWifiWarning();
+                }
+            });
+        
+        // Timeout: se não responder em 4s, mostrar aviso
+        setTimeout(function() {
+            if (!gatewayReached) {
+                showNoWifiWarning();
+            }
+        }, 4000);
     });
     </script>
 

@@ -490,14 +490,6 @@ class WiFiPortal {
             return;
         }
 
-        // � BLOQUEAR se portal detectou falta de MAC
-        if (window._portalBlocked) {
-            if (typeof showNoMacWarning === 'function') {
-                showNoMacWarning();
-            }
-            return;
-        }
-
         // 🚀 MOSTRAR LOADING IMEDIATAMENTE
         const submitBtn = document.getElementById('registration-submit-btn');
         const originalText = submitBtn.innerHTML;
@@ -511,8 +503,22 @@ class WiFiPortal {
         try {
             // 🚀 VERIFICAR MAC EM PARALELO (não bloqueia)
             if (!this.deviceMac || this.deviceMac === 'DETECTING...') {
-                const macOk = await this.ensureRealIdentifiers();
-                if (!macOk) return;
+                await this.ensureRealIdentifiers();
+            }
+
+            // 🛡️ BLOQUEAR REGISTRO SEM MAC VÁLIDO (evita pagamento sem liberação)
+            if (!this.deviceMac || !this.isValidMacAddress(this.deviceMac)) {
+                this.hideLoading();
+                const warning = document.getElementById('no-wifi-warning');
+                if (warning) {
+                    warning.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    window._noWifiBlocked = true;
+                } else {
+                    this.showRegistrationModal();
+                    this.showRegistrationError('Não foi possível identificar seu dispositivo. Desative os dados móveis, conecte ao WiFi "TocantinsTransporteWiFi" e tente novamente.');
+                }
+                return;
             }
 
             const data = {
@@ -724,13 +730,10 @@ class WiFiPortal {
      * Verifica se usuário existe e decide se mostra cadastro ou pagamento
      */
     async handleConnectClick() {
-        // 🚫 BLOQUEAR se portal detectou dados móveis ou sem MAC
-        if (window._portalBlocked) {
-            if (document.getElementById('no-mac-warning')) {
-                document.getElementById('no-mac-warning').classList.remove('hidden');
-            } else if (document.getElementById('mobile-data-warning')) {
-                document.getElementById('mobile-data-warning').classList.remove('hidden');
-            }
+        // 🛡️ BLOQUEAR se não está no WiFi (sem MAC/IP)
+        if (window._noWifiBlocked) {
+            const warning = document.getElementById('no-wifi-warning');
+            if (warning) warning.classList.remove('hidden');
             return;
         }
 
@@ -742,9 +745,17 @@ class WiFiPortal {
                 await this.ensureRealIdentifiers();
             }
 
-            if (!this.deviceMac) {
+            if (!this.deviceMac || !this.isValidMacAddress(this.deviceMac)) {
                 this.hideLoading();
-                this.showErrorMessage('Não foi possível identificar seu dispositivo. Reconecte ao WiFi.');
+                // Mostrar overlay de "conecte ao WiFi" em vez de mensagem genérica
+                const warning = document.getElementById('no-wifi-warning');
+                if (warning) {
+                    warning.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    window._noWifiBlocked = true;
+                } else {
+                    this.showErrorMessage('Não foi possível identificar seu dispositivo. Desative os dados móveis e conecte ao WiFi "TocantinsTransporteWiFi".');
+                }
                 return;
             }
 
@@ -1848,7 +1859,6 @@ class WiFiPortal {
 
     async ensureRealIdentifiers() {
         if (this.hasRealIdentifiers()) {
-            window._hasRealMac = true;
             return true;
         }
 
@@ -1859,17 +1869,18 @@ class WiFiPortal {
         }
 
         if (this.hasRealIdentifiers()) {
-            window._hasRealMac = true;
             return true;
         }
 
-        // 🚫 Bloquear pagamento - sem MAC real o acesso não será liberado
-        window._portalBlocked = true;
+        // Mostrar overlay de "conecte ao WiFi" em vez de redirecionar
         this.hideLoading();
-        if (typeof showNoMacWarning === 'function') {
-            showNoMacWarning();
+        const warning = document.getElementById('no-wifi-warning');
+        if (warning) {
+            warning.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            window._noWifiBlocked = true;
         } else {
-            this.showErrorMessage('Não foi possível identificar seu dispositivo. Desligue os dados móveis e conecte-se ao WiFi.');
+            this.showErrorMessage('Não conseguimos identificar seu dispositivo. Desative os dados móveis e conecte ao WiFi "TocantinsTransporteWiFi".');
         }
         return false;
     }
