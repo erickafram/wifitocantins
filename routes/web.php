@@ -135,6 +135,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
             Route::post('/edit-expiration', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'editExpiration'])->name('edit-expiration');
             Route::get('/logs', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'getLogs'])->name('logs');
             Route::get('/bypass-logs', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'getBypassLogs'])->name('bypass-logs');
+            Route::post('/reset-bypass', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'resetBypass'])->name('reset-bypass');
         });
     });
 });

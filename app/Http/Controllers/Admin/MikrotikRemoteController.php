@@ -288,6 +288,51 @@ class MikrotikRemoteController extends Controller
     }
 
     /**
+     * Resetar contador de bypass para um MAC/telefone
+     * Limpa o cache de anti-abuso para que o usuário possa usar mais bypasses
+     */
+    public function resetBypass(Request $request)
+    {
+        $request->validate([
+            'mac' => 'nullable|string',
+            'phone' => 'nullable|string',
+        ]);
+
+        try {
+            $mac = $request->input('mac');
+            $phone = $request->input('phone');
+            $resetted = [];
+
+            if ($mac) {
+                $macKey = 'bypass_mac_' . strtoupper(trim($mac));
+                \Illuminate\Support\Facades\Cache::forget($macKey);
+                $resetted[] = "MAC: {$mac}";
+            }
+
+            if ($phone) {
+                $phoneKey = 'bypass_phone_' . $phone;
+                \Illuminate\Support\Facades\Cache::forget($phoneKey);
+                $resetted[] = "Phone: {$phone}";
+            }
+
+            if (empty($resetted)) {
+                return response()->json(['error' => 'Informe MAC ou telefone para resetar'], 422);
+            }
+
+            $desc = implode(', ', $resetted);
+            Log::info("🔄 Admin: Bypass resetado para {$desc}");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Bypass resetado para {$desc}. O usuário pode usar mais 2 liberações.",
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao resetar bypass: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Editar tempo de expiração de um usuário
      */
     public function editExpiration(Request $request)

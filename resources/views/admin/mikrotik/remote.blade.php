@@ -227,10 +227,11 @@
                             <th class="px-4 py-3 text-center">Nº</th>
                             <th class="px-4 py-3 text-center">Status</th>
                             <th class="px-4 py-3 text-left">Motivo</th>
+                            <th class="px-4 py-3 text-center">Ação</th>
                         </tr>
                     </thead>
                     <tbody id="table-bypass" class="divide-y divide-gray-100">
-                        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Clique em "Bypass Logs" para carregar</td></tr>
+                        <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">Clique em "Bypass Logs" para carregar</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -611,7 +612,7 @@ function switchTab(tab) {
 
 async function loadBypassLogs() {
     const tbody = document.getElementById('table-bypass');
-    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400"><svg class="animate-spin h-5 w-5 mx-auto text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-400"><svg class="animate-spin h-5 w-5 mx-auto text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></td></tr>';
 
     try {
         const resp = await fetch('{{ route("admin.mikrotik.remote.bypass-logs") }}');
@@ -627,7 +628,7 @@ async function loadBypassLogs() {
         document.getElementById('badge-bypass').textContent = data.stats.total_hoje;
 
         if (data.logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Nenhum registro de bypass ainda</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">Nenhum registro de bypass ainda</td></tr>';
             return;
         }
 
@@ -645,11 +646,19 @@ async function loadBypassLogs() {
                 <td class="px-4 py-3 text-center"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${log.bypass_number > 2 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}">${log.bypass_number}</span></td>
                 <td class="px-4 py-3 text-center">${statusBadge}</td>
                 <td class="px-4 py-3 text-xs text-gray-500">${log.deny_reason || '-'}</td>
+                <td class="px-4 py-3 text-center">
+                    ${log.was_denied && log.bypass_number > 2 ? `
+                        <button onclick="resetBypass('${log.mac_address || ''}', '${log.phone || ''}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-300 rounded-lg text-xs font-medium hover:bg-amber-100 transition" title="Resetar contador de bypass">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Resetar
+                        </button>
+                    ` : '<span class="text-gray-300">-</span>'}
+                </td>
             </tr>`;
         }).join('');
 
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-red-500">Erro: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-red-500">Erro: ${err.message}</td></tr>`;
     }
 }
 
@@ -660,6 +669,28 @@ function filterTable() {
         const match = row.dataset.search.includes(query);
         row.style.display = match ? '' : 'none';
     });
+}
+
+async function resetBypass(mac, phone) {
+    if (!confirm(`Resetar contador de bypass para:\nMAC: ${mac || 'N/A'}\nTelefone: ${phone || 'N/A'}\n\nO usuário poderá usar mais 2 liberações temporárias.`)) return;
+
+    try {
+        const res = await fetch('/admin/mikrotik/remote/reset-bypass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ mac: mac || null, phone: phone || null })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+            loadBypassLogs();
+        } else {
+            showToast(data.error || 'Erro ao resetar', 'error');
+        }
+    } catch (e) {
+        showToast('Erro de conexão', 'error');
+    }
 }
 
 // ========== Utils ==========
