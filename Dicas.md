@@ -1,6 +1,6 @@
 # 1. Entrar no diretório do projeto
 git add .
-git commit -m "Implementação de questionários dinâmicos e override de competência"
+git commit -m "implementar projeto"
 git push -u origin main
 
 ----------------------------------
@@ -36,7 +36,7 @@ php artisan route:clear
 php artisan view:clear
 
 # 9. Corrigir permissões
-chown -R tocantinstransportewifi:tocantinstransportewifi /home/tocantinstransportewifi/htdocs/www.tocantinstransportewifi.com.br
+chown -R tocantinstransportewifi:tocantinstransportewifi /home/tocantinstransportewifi/htdocs/tocantinstransportewifi.com.br
 chmod -R 775 storage bootstrap/cache
 
 # 10. Otimizar para produção (APÓS limpar cache)
