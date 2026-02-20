@@ -60,7 +60,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::get('/', [AdminController::class, 'dashboard']);
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report');
-    Route::get('/devices', [AdminController::class, 'devices'])->name('devices');
     Route::get('/connection-logs', [AdminController::class, 'connectionLogs'])->name('connection-logs');
     Route::get('/api/stats', [AdminController::class, 'apiStats'])->name('api.stats');
     Route::post('/export', [AdminController::class, 'exportReport'])->name('export');
@@ -79,20 +78,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::post('/vouchers/{voucher}/reset', [AdminVoucherController::class, 'resetDaily'])->name('vouchers.reset');
     Route::delete('/vouchers/{voucher}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
     
-    // Rotas do WhatsApp (Admin e Manager)
-    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
-        Route::get('/', [WhatsappController::class, 'index'])->name('index');
-        Route::get('/messages', [WhatsappController::class, 'messages'])->name('messages');
-        Route::get('/settings', [WhatsappController::class, 'settings'])->name('settings');
-        Route::put('/settings', [WhatsappController::class, 'updateSettings'])->name('settings.update');
-        Route::get('/qrcode', [WhatsappController::class, 'getQrCode'])->name('qrcode');
-        Route::get('/status', [WhatsappController::class, 'checkStatus'])->name('status');
-        Route::post('/disconnect', [WhatsappController::class, 'disconnect'])->name('disconnect');
-        Route::post('/send', [WhatsappController::class, 'sendMessage'])->name('send');
-        Route::post('/send-pending', [WhatsappController::class, 'sendToPendingPayments'])->name('send-pending');
-        Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
-    });
-    
     // Rotas do Chat (Atendimento Online)
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('index');
@@ -106,6 +91,23 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
+        // Dispositivos
+        Route::get('/devices', [AdminController::class, 'devices'])->name('devices');
+
+        // Rotas do WhatsApp
+        Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+            Route::get('/', [WhatsappController::class, 'index'])->name('index');
+            Route::get('/messages', [WhatsappController::class, 'messages'])->name('messages');
+            Route::get('/settings', [WhatsappController::class, 'settings'])->name('settings');
+            Route::put('/settings', [WhatsappController::class, 'updateSettings'])->name('settings.update');
+            Route::get('/qrcode', [WhatsappController::class, 'getQrCode'])->name('qrcode');
+            Route::get('/status', [WhatsappController::class, 'checkStatus'])->name('status');
+            Route::post('/disconnect', [WhatsappController::class, 'disconnect'])->name('disconnect');
+            Route::post('/send', [WhatsappController::class, 'sendMessage'])->name('send');
+            Route::post('/send-pending', [WhatsappController::class, 'sendToPendingPayments'])->name('send-pending');
+            Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
+        });
+
         // Gerenciamento de Usuários
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');

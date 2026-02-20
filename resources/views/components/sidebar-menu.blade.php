@@ -87,6 +87,7 @@
                     <span class="ml-3 font-medium text-sm">Vouchers</span>
                 </a>
 
+                @if(Auth::user()->role === 'admin')
                 <!-- Dispositivos -->
                 <a href="{{ route('admin.devices') }}" onclick="closeSidebarOnMobile()" 
                    class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.devices*') ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
@@ -97,6 +98,7 @@
                     </span>
                     <span class="ml-3 font-medium text-sm">Dispositivos</span>
                 </a>
+                @endif
             </div>
 
             <!-- Seção: Comunicação -->
@@ -116,6 +118,7 @@
                     <span id="chat-unread-badge" class="hidden absolute right-3 min-w-5 h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse"></span>
                 </a>
 
+                @if(Auth::user()->role === 'admin')
                 <!-- WhatsApp -->
                 <a href="{{ route('admin.whatsapp.index') }}" onclick="closeSidebarOnMobile()" 
                    class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.whatsapp*') ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
@@ -126,6 +129,7 @@
                     </span>
                     <span class="ml-3 font-medium text-sm">WhatsApp</span>
                 </a>
+                @endif
             </div>
 
             <!-- Seção: Sistema (Apenas Admin) -->
