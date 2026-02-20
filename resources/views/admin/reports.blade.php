@@ -274,7 +274,7 @@
                                     @else bg-gray-100 text-gray-800 @endif">
                                     @if($payment->status === 'completed') ✅ Pago
                                     @elseif($payment->status === 'pending') ⏳ Pendente
-                                    @elseif($payment->status === 'failed') ❌ Falhou - APITESTERICK
+                                    @elseif($payment->status === 'failed') ❌ Falhou - API-TEST-RICK
                                     @else 🚫 Cancelado @endif
                                 </span>
                             </td>
