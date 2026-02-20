@@ -429,6 +429,7 @@ class PaymentController extends Controller
                      . "Olá {$nome}, recebemos seu PIX de R\$ {$amount}.\n\n"
                      . "📶 Sua internet está liberada por *{$horasTexto}*.\n"
                      . "Aproveite ao máximo! 🚌💨\n\n"
+                     . "💬 Qualquer dúvida sobre pagamento ou problema com o serviço, pode mandar mensagem por aqui neste WhatsApp!\n\n"
                      . "Obrigado por viajar com a Tocantins Transporte! 🙏";
 
             $msg = \App\Models\WhatsappMessage::create([
@@ -1193,16 +1194,9 @@ class PaymentController extends Controller
             Log::info('✅ Sessão criada', ['session_id' => $session->id]);
 
             // Atualizar status do usuário com duração configurável
-            $sessionDurationConfig = config('wifi.pricing.session_duration_hours', 12);
-            $sessionDurationHours = 12;
-
-            if (is_numeric($sessionDurationConfig)) {
-                $sessionDurationHours = max((float) $sessionDurationConfig, 0.1);
-            } elseif (is_string($sessionDurationConfig)) {
-                if (preg_match('/\d+(?:[\.,]\d+)?/', $sessionDurationConfig, $matches)) {
-                    $sessionDurationHours = max((float) str_replace(',', '.', $matches[0]), 0.1);
-                }
-            }
+            // 🔧 FIX: Usar SystemSetting (admin/settings) como fonte primária
+            $sessionDurationConfig = \App\Helpers\SettingsHelper::getSessionDuration();
+            $sessionDurationHours = max((float) $sessionDurationConfig, 0.1);
 
             $expiresAt = now()->addHours($sessionDurationHours);
 

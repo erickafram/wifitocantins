@@ -44,7 +44,7 @@
                         <option value="all" {{ $paymentStatus == 'all' ? 'selected' : '' }}>Todos</option>
                         <option value="pending" {{ $paymentStatus == 'pending' ? 'selected' : '' }}>Pendente</option>
                         <option value="completed" {{ $paymentStatus == 'completed' ? 'selected' : '' }}>Pago</option>
-                        <option value="failed" {{ $paymentStatus == 'failed' ? 'selected' : '' }}>Falhou</option>
+                        <option value="failed" {{ $paymentStatus == 'failed' ? 'selected' : '' }}>Falhou - APIERICKTEST</option>
                         <option value="cancelled" {{ $paymentStatus == 'cancelled' ? 'selected' : '' }}>Cancelado</option>
                     </select>
                 </div>
