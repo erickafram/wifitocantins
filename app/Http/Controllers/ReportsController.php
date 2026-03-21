@@ -203,6 +203,39 @@ class ReportsController extends Controller
         
         return back()->with('error', 'Tipo de exportação inválido');
     }
+
+    public function destroyPaymentRecord(Payment $payment)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return back()->with('error', 'Apenas administradores podem excluir registros de pagamento.');
+        }
+
+        try {
+            DB::transaction(function () use ($payment) {
+                $user = $payment->user;
+
+                // Evita remoção acidental de contas administrativas.
+                if ($user && in_array($user->role, ['admin', 'manager'])) {
+                    throw new \RuntimeException('Não é permitido excluir usuários administrativos por esta tela.');
+                }
+
+                if ($user) {
+                    // A FK em payments.user_id possui onDelete('cascade').
+                    $user->delete();
+                    return;
+                }
+
+                $payment->delete();
+            });
+
+            return back()->with('success', 'Registro removido com sucesso. Os indicadores do relatório foram atualizados.');
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->with('error', 'Não foi possível excluir o registro neste momento.');
+        }
+    }
     
     private function exportPayments($startDate, $endDate, $format)
     {

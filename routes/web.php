@@ -91,6 +91,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
+        // Exclusão de registro de relatório (pagamento + usuário vinculado)
+        Route::delete('/reports/payments/{payment}', [ReportsController::class, 'destroyPaymentRecord'])
+            ->name('reports.payments.destroy');
+
         // Dispositivos
         Route::get('/devices', [AdminController::class, 'devices'])->name('devices');
 

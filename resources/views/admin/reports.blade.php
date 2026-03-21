@@ -14,6 +14,18 @@
 @endpush
 
 @section('content')
+    @if(session('success'))
+        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <!-- Filtros -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-200/50">
         <h2 class="text-lg font-bold text-tocantins-gray-green mb-4 flex items-center">
@@ -245,6 +257,9 @@
                             <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Status</th>
                             <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Data Pagamento</th>
                             <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Criado em</th>
+                            @if(auth()->user()?->role === 'admin')
+                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Ações</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -284,10 +299,21 @@
                             <td class="py-3 px-4 text-sm text-gray-900">
                                 {{ $payment->created_at->format('d/m/Y H:i:s') }}
                             </td>
+                            @if(auth()->user()?->role === 'admin')
+                            <td class="py-3 px-4 text-sm text-gray-900">
+                                <form method="POST" action="{{ route('admin.reports.payments.destroy', $payment) }}" onsubmit="return confirm('Tem certeza que deseja excluir este registro? Esta ação remove também o usuário vinculado e os pagamentos dele.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 transition-colors">
+                                        Excluir
+                                    </button>
+                                </form>
+                            </td>
+                            @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-gray-500">
+                            <td colspan="{{ auth()->user()?->role === 'admin' ? 8 : 7 }}" class="py-8 px-4 text-center text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <span class="text-4xl mb-2">📊</span>
                                     <p class="text-sm">Nenhum pagamento encontrado no período selecionado.</p>
