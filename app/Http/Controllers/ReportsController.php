@@ -18,6 +18,7 @@ class ReportsController extends Controller
         $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
         $paymentStatus = $request->get('payment_status', 'all');
         $userStatus = $request->get('user_status', 'all');
+        $canViewUsersTab = auth()->user()?->role === 'admin';
         
         // Estatísticas gerais
         $stats = $this->getGeneralStats($startDate, $endDate, $paymentStatus, $userStatus);
@@ -26,7 +27,7 @@ class ReportsController extends Controller
         $payments = $this->getPaymentsData($startDate, $endDate, $paymentStatus);
         
         // Dados dos usuários
-        $users = $this->getUsersData($startDate, $endDate, $userStatus);
+        $users = $canViewUsersTab ? $this->getUsersData($startDate, $endDate, $userStatus) : null;
         
         // Dados para gráficos
         $charts = $this->getChartsData($startDate, $endDate);
@@ -39,7 +40,8 @@ class ReportsController extends Controller
             'startDate',
             'endDate',
             'paymentStatus',
-            'userStatus'
+            'userStatus',
+            'canViewUsersTab'
         ));
     }
     
@@ -194,6 +196,10 @@ class ReportsController extends Controller
         $format = $request->get('format', 'csv');
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
+
+        if ($type === 'users' && auth()->user()?->role !== 'admin') {
+            return back()->with('error', 'A aba e a exportação de usuários estão disponíveis apenas para administradores.');
+        }
         
         if ($type === 'payments') {
             return $this->exportPayments($startDate, $endDate, $format);

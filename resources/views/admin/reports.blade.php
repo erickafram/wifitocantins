@@ -236,9 +236,11 @@
             <button onclick="showTab('payments')" id="tab-payments" class="tab-button flex-1 px-6 py-4 text-sm font-medium text-tocantins-green border-b-2 border-tocantins-green bg-tocantins-green/5">
                 💳 Pagamentos ({{ $payments->total() }})
             </button>
+            @if($canViewUsersTab)
             <button onclick="showTab('users')" id="tab-users" class="tab-button flex-1 px-6 py-4 text-sm font-medium text-gray-500 hover:text-tocantins-green transition-colors">
                 👥 Usuários ({{ $users->total() }})
             </button>
+            @endif
         </div>
 
         <!-- Conteúdo das Abas -->
@@ -380,6 +382,7 @@
             @endif
         </div>
 
+        @if($canViewUsersTab)
         <!-- Aba de Usuários -->
         <div id="content-users" class="tab-content p-6 hidden">
             <div class="flex justify-between items-center mb-4">
@@ -492,6 +495,7 @@
             </div>
             @endif
         </div>
+        @endif
     </div>
 
     <!-- Scripts específicos da página -->
