@@ -141,15 +141,25 @@
                         <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['total_payments'] }}</p>
                     </div>
                 </div>
-                <div class="flex items-center justify-between text-xs">
-                    <span class="flex items-center text-green-600">
-                        <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                        {{ $stats['completed_payments_count'] }} pagos
-                    </span>
-                    <span class="flex items-center text-yellow-600">
-                        <span class="w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
-                        {{ $stats['pending_payments_count'] }} pendentes
-                    </span>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div class="rounded-lg bg-green-50 px-2 py-2 text-center">
+                        <span class="mb-1 inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                        <p class="font-semibold text-green-700">{{ $stats['completed_payments_count'] }}</p>
+                        <p class="text-green-600">Pagos</p>
+                    </div>
+                    <div class="rounded-lg bg-yellow-50 px-2 py-2 text-center">
+                        <span class="mb-1 inline-block w-2 h-2 bg-yellow-500 rounded-full"></span>
+                        <p class="font-semibold text-yellow-700">{{ $stats['pending_payments_count'] }}</p>
+                        <p class="text-yellow-600">Pendentes</p>
+                    </div>
+                    <div class="rounded-lg bg-red-50 px-2 py-2 text-center">
+                        <span class="mb-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                        <p class="font-semibold text-red-700">{{ $stats['failed_payments_count'] }}</p>
+                        <p class="text-red-600">Falhos</p>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-gray-500">
+                    Total do periodo com distribuicao completa por status.
                 </div>
             </div>
         </div>
