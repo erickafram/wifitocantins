@@ -236,6 +236,72 @@ class ReportsController extends Controller
             return back()->with('error', 'Não foi possível excluir o registro neste momento.');
         }
     }
+
+    public function destroyPaymentRecords(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return back()->with('error', 'Apenas administradores podem excluir registros de pagamento.');
+        }
+
+        $validated = $request->validate([
+            'payment_ids' => ['required', 'array', 'min:1'],
+            'payment_ids.*' => ['integer', 'exists:payments,id'],
+        ]);
+
+        $paymentIds = collect($validated['payment_ids'])->unique()->values();
+        $payments = Payment::with('user')->whereIn('id', $paymentIds)->get();
+
+        if ($payments->isEmpty()) {
+            return back()->with('error', 'Nenhum pagamento válido foi selecionado para exclusão.');
+        }
+
+        $deletedUsers = 0;
+        $deletedPayments = 0;
+        $blockedRecords = 0;
+
+        try {
+            DB::transaction(function () use ($payments, &$deletedUsers, &$deletedPayments, &$blockedRecords) {
+                $deletedUserIds = [];
+
+                foreach ($payments as $payment) {
+                    $user = $payment->user;
+
+                    if ($user && in_array($user->role, ['admin', 'manager'])) {
+                        $blockedRecords++;
+                        continue;
+                    }
+
+                    if ($user) {
+                        if (in_array($user->id, $deletedUserIds)) {
+                            continue;
+                        }
+
+                        $user->delete();
+                        $deletedUsers++;
+                        $deletedUserIds[] = $user->id;
+                        continue;
+                    }
+
+                    $payment->delete();
+                    $deletedPayments++;
+                }
+            });
+
+            if ($deletedUsers === 0 && $deletedPayments === 0 && $blockedRecords > 0) {
+                return back()->with('error', 'Nenhum registro foi removido. Existem itens vinculados a usuários administrativos.');
+            }
+
+            $message = "Exclusão concluída. Usuários removidos: {$deletedUsers}. Pagamentos removidos diretamente: {$deletedPayments}.";
+            if ($blockedRecords > 0) {
+                $message .= " Itens bloqueados por segurança: {$blockedRecords}.";
+            }
+
+            return back()->with('success', $message);
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->with('error', 'Não foi possível excluir os registros selecionados neste momento.');
+        }
+    }
     
     private function exportPayments($startDate, $endDate, $format)
     {

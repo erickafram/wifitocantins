@@ -238,6 +238,15 @@
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-tocantins-gray-green">Lista de Pagamentos</h3>
                 <div class="flex space-x-2">
+                    @if(auth()->user()?->role === 'admin')
+                    <form id="bulk-delete-form" method="POST" action="{{ route('admin.reports.payments.bulk-destroy') }}" onsubmit="return confirmBulkDelete();">
+                        @csrf
+                        @method('DELETE')
+                        <button id="bulk-delete-button" type="submit" disabled class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm opacity-50 cursor-not-allowed transition-all">
+                            Excluir selecionados (0)
+                        </button>
+                    </form>
+                    @endif
                     <a href="{{ route('admin.reports.export', ['type' => 'payments', 'format' => 'csv', 'start_date' => $startDate, 'end_date' => $endDate, 'payment_status' => $paymentStatus]) }}" 
                        class="bg-tocantins-green text-white px-4 py-2 rounded-lg text-sm hover:bg-tocantins-dark-green transition-colors flex items-center">
                         <span class="mr-2">📥</span>
@@ -250,6 +259,11 @@
                 <table class="min-w-full">
                     <thead>
                         <tr class="border-b border-gray-200 bg-gray-50">
+                            @if(auth()->user()?->role === 'admin')
+                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 w-10">
+                                <input type="checkbox" id="select-all-payments" class="rounded border-gray-300 text-tocantins-green focus:ring-tocantins-green">
+                            </th>
+                            @endif
                             <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">ID</th>
                             <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Usuário</th>
                             <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Valor</th>
@@ -265,6 +279,11 @@
                     <tbody class="divide-y divide-gray-200">
                         @forelse($payments as $payment)
                         <tr class="hover:bg-gray-50">
+                            @if(auth()->user()?->role === 'admin')
+                            <td class="py-3 px-4">
+                                <input type="checkbox" class="payment-checkbox rounded border-gray-300 text-tocantins-green focus:ring-tocantins-green" value="{{ $payment->id }}">
+                            </td>
+                            @endif
                             <td class="py-3 px-4 text-sm text-gray-900">#{{ $payment->id }}</td>
                             <td class="py-3 px-4">
                                 <div>
@@ -313,7 +332,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ auth()->user()?->role === 'admin' ? 8 : 7 }}" class="py-8 px-4 text-center text-gray-500">
+                            <td colspan="{{ auth()->user()?->role === 'admin' ? 9 : 7 }}" class="py-8 px-4 text-center text-gray-500">
                                 <div class="flex flex-col items-center">
                                     <span class="text-4xl mb-2">📊</span>
                                     <p class="text-sm">Nenhum pagamento encontrado no período selecionado.</p>
@@ -330,8 +349,22 @@
                 <div class="text-sm text-gray-700">
                     Mostrando {{ $payments->firstItem() }} a {{ $payments->lastItem() }} de {{ $payments->total() }} pagamentos
                 </div>
-                <div>
-                    {{ $payments->withQueryString()->links() }}
+                <div class="flex items-center gap-2">
+                    @if ($payments->onFirstPage())
+                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Anterior</span>
+                    @else
+                        <a href="{{ $payments->previousPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Anterior</a>
+                    @endif
+
+                    <span class="px-3 py-1.5 rounded-lg border border-tocantins-green/30 bg-tocantins-green/10 text-tocantins-gray-green text-sm font-medium">
+                        Página {{ $payments->currentPage() }} de {{ $payments->lastPage() }}
+                    </span>
+
+                    @if ($payments->hasMorePages())
+                        <a href="{{ $payments->nextPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Próxima</a>
+                    @else
+                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Próxima</span>
+                    @endif
                 </div>
             </div>
             @endif
@@ -429,8 +462,22 @@
                 <div class="text-sm text-gray-700">
                     Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} usuários
                 </div>
-                <div>
-                    {{ $users->withQueryString()->links() }}
+                <div class="flex items-center gap-2">
+                    @if ($users->onFirstPage())
+                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Anterior</span>
+                    @else
+                        <a href="{{ $users->previousPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Anterior</a>
+                    @endif
+
+                    <span class="px-3 py-1.5 rounded-lg border border-tocantins-green/30 bg-tocantins-green/10 text-tocantins-gray-green text-sm font-medium">
+                        Página {{ $users->currentPage() }} de {{ $users->lastPage() }}
+                    </span>
+
+                    @if ($users->hasMorePages())
+                        <a href="{{ $users->nextPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Próxima</a>
+                    @else
+                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Próxima</span>
+                    @endif
                 </div>
             </div>
             @endif
@@ -459,6 +506,47 @@
             const activeButton = document.getElementById('tab-' + tabName);
             activeButton.classList.remove('text-gray-500');
             activeButton.classList.add('text-tocantins-green', 'border-tocantins-green', 'bg-tocantins-green/5');
+        }
+
+        function updateBulkDeleteState() {
+            const checkboxes = Array.from(document.querySelectorAll('.payment-checkbox'));
+            const selected = checkboxes.filter(cb => cb.checked);
+            const button = document.getElementById('bulk-delete-button');
+            const form = document.getElementById('bulk-delete-form');
+
+            if (!button || !form) {
+                return;
+            }
+
+            form.querySelectorAll('input[name="payment_ids[]"]').forEach(input => input.remove());
+
+            selected.forEach(cb => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'payment_ids[]';
+                hidden.value = cb.value;
+                form.appendChild(hidden);
+            });
+
+            button.textContent = `Excluir selecionados (${selected.length})`;
+            button.disabled = selected.length === 0;
+
+            if (button.disabled) {
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+                button.classList.remove('hover:bg-red-700');
+            } else {
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.classList.add('hover:bg-red-700');
+            }
+        }
+
+        function confirmBulkDelete() {
+            const selectedCount = document.querySelectorAll('.payment-checkbox:checked').length;
+            if (selectedCount === 0) {
+                return false;
+            }
+
+            return confirm(`Tem certeza que deseja excluir ${selectedCount} registro(s)? Esta ação remove também os usuários vinculados e pagamentos relacionados.`);
         }
 
         // Função para inicializar gráficos
@@ -611,6 +699,27 @@
             showTab('payments');
             // Aguardar um pouco para garantir que o DOM está completamente carregado
             setTimeout(initializeCharts, 500);
+
+            const selectAll = document.getElementById('select-all-payments');
+            const checkboxes = Array.from(document.querySelectorAll('.payment-checkbox'));
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                    updateBulkDeleteState();
+                });
+            }
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (selectAll) {
+                        selectAll.checked = checkboxes.length > 0 && checkboxes.every(item => item.checked);
+                    }
+                    updateBulkDeleteState();
+                });
+            });
+
+            updateBulkDeleteState();
         });
 
         // Reinicializar gráficos se a janela for redimensionada
