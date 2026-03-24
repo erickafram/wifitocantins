@@ -47,43 +47,9 @@ class MikrotikApiController extends Controller
                 return response('ERROR:AUTH', 401)->header('Content-Type', 'text/plain');
             }
 
-            // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
-            // Status 'connected' = pagou e está ativo
-            // Status 'active' = alternativo para ativo
-            // Status 'temp_bypass' = bypass temporário de 3 min para abrir app do banco
-            // IMPORTANTE: Liberamos TODOS os MACs, incluindo randomizados!
-            // O usuário pagou com esse MAC, então deve funcionar.
-            // LIMITE: 200 para suportar vários ônibus
-            $activeMacs = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
-                ->where('expires_at', '>', now())
-                ->whereNotNull('mac_address')
-                ->where('mac_address', '!=', '')
-                ->orderBy('expires_at', 'desc') // Priorizar quem expira depois
-                ->limit(200) // Suporta vários ônibus
-                ->pluck('mac_address')
-                ->map(fn($mac) => strtoupper(trim($mac))) // Normalizar
-                ->unique()
-                ->values()
-                ->toArray();
+            $mikrotikId = $request->get('mid'); // Serial number do MikroTik
 
-            // 🗑️ Buscar MACs expirados para remover
-            // Apenas usuários que expiraram recentemente (últimas 24h)
-            // LIMITE: 100 para suportar vários ônibus
-            $expiredMacs = User::where('status', 'expired')
-                ->whereNotNull('mac_address')
-                ->where('mac_address', '!=', '')
-                ->whereNotIn('mac_address', $activeMacs) // Não remover quem está ativo
-                ->where('expires_at', '>', now()->subHours(24)) // Apenas últimas 24h
-                ->where('expires_at', '<', now()) // Já expirou
-                ->orderBy('expires_at', 'desc')
-                ->limit(100) // Suporta vários ônibus
-                ->pluck('mac_address')
-                ->map(fn($mac) => strtoupper(trim($mac)))
-                ->unique()
-                ->values()
-                ->toArray();
-
-            // 🔄 Atualizar status de usuários que acabaram de expirar
+            // 🔄 Atualizar status de usuários que acabaram de expirar ANTES de buscar
             // Inclui temp_bypass que expirou (3 min sem pagar)
             $justExpired = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                 ->where('expires_at', '<=', now())
@@ -97,6 +63,56 @@ class MikrotikApiController extends Controller
                 Log::info("⏰ MikroTik Lite: $justExpired usuários expiraram agora");
             }
 
+            // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
+            // Se mid fornecido: filtra por ônibus + usuários sem ônibus definido
+            // Se mid não fornecido: retorna todos (compatível com scripts antigos)
+            $activeQuery = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+                ->where('expires_at', '>', now())
+                ->whereNotNull('mac_address')
+                ->where('mac_address', '!=', '');
+
+            if ($mikrotikId) {
+                $activeQuery->where(function($q) use ($mikrotikId) {
+                    $q->where('last_mikrotik_id', $mikrotikId)
+                      ->orWhereNull('last_mikrotik_id')
+                      ->orWhere('last_mikrotik_id', '');
+                });
+            }
+
+            $activeMacs = $activeQuery
+                ->orderBy('expires_at', 'desc')
+                ->limit(200)
+                ->pluck('mac_address')
+                ->map(fn($mac) => strtoupper(trim($mac)))
+                ->unique()
+                ->values()
+                ->toArray();
+
+            // 🗑️ Buscar MACs expirados para remover (apenas últimas 2h para reduzir payload)
+            $expiredQuery = User::where('status', 'expired')
+                ->whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
+                ->whereNotIn('mac_address', $activeMacs)
+                ->where('expires_at', '>', now()->subHours(2))
+                ->where('expires_at', '<', now());
+
+            if ($mikrotikId) {
+                $expiredQuery->where(function($q) use ($mikrotikId) {
+                    $q->where('last_mikrotik_id', $mikrotikId)
+                      ->orWhereNull('last_mikrotik_id')
+                      ->orWhere('last_mikrotik_id', '');
+                });
+            }
+
+            $expiredMacs = $expiredQuery
+                ->orderBy('expires_at', 'desc')
+                ->limit(100)
+                ->pluck('mac_address')
+                ->map(fn($mac) => strtoupper(trim($mac)))
+                ->unique()
+                ->values()
+                ->toArray();
+
             // 📝 Formato ultra-compacto: L:MAC = liberar, R:MAC = remover
             $output = "OK\n";
             foreach ($activeMacs as $mac) {
@@ -107,15 +123,22 @@ class MikrotikApiController extends Controller
             }
             $output .= "END";
 
-            // 📊 Log para debug (apenas se houver ações)
-            if (count($activeMacs) > 0 || count($expiredMacs) > 0) {
+            // 📊 Log para debug (reduzir spam: só logar a cada 2min ou quando houver mudança)
+            $cacheKey = 'mikrotik_sync_last_' . ($mikrotikId ?: 'unknown');
+            $lastState = cache()->get($cacheKey);
+            $currentState = md5(json_encode([$activeMacs, $expiredMacs]));
+
+            if ($lastState !== $currentState) {
                 Log::info('📡 MikroTik Lite sync', [
                     'mikrotik_ip' => $request->ip(),
+                    'mikrotik_id' => $mikrotikId ?: 'não informado',
                     'liberar' => count($activeMacs),
                     'remover' => count($expiredMacs),
+                    'filtrado_por_mid' => !empty($mikrotikId),
                     'macs_liberar' => $activeMacs,
                     'macs_remover' => $expiredMacs,
                 ]);
+                cache()->put($cacheKey, $currentState, 120); // Cache por 2 min
             }
 
             return response($output, 200)
