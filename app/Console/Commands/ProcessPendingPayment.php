@@ -81,15 +81,17 @@ class ProcessPendingPayment extends Command
                 $this->line("   IP: {$user->ip_address}");
                 $this->newLine();
                 
+                $sessionDurationHours = \App\Helpers\SettingsHelper::getSessionDuration();
+
                 // Atualizar status do usuário
                 $user->update([
                     'status' => 'connected',
                     'connected_at' => now(),
-                    'expires_at' => now()->addHours(24), // 24 horas de acesso
+                    'expires_at' => now()->addHours($sessionDurationHours),
                 ]);
                 
                 $this->info("✅ Status do usuário atualizado para 'connected'");
-                $this->info("✅ Acesso válido até: " . now()->addHours(24)->format('d/m/Y H:i:s'));
+                $this->info("✅ Acesso válido até: " . now()->addHours($sessionDurationHours)->format('d/m/Y H:i:s'));
                 $this->newLine();
                 
                 // Criar sessão WiFi
@@ -117,7 +119,7 @@ class ProcessPendingPayment extends Command
             $this->line("   - Pagamento marcado como 'completed'");
             $this->line("   - Usuário marcado como 'connected'");
             $this->line("   - Sessão WiFi criada");
-            $this->line("   - Acesso liberado por 24 horas");
+            $this->line("   - Acesso liberado por {$sessionDurationHours} horas");
             $this->newLine();
             
             if ($user) {

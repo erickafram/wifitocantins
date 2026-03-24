@@ -12,7 +12,7 @@ class SystemSettingsSeeder extends Seeder
         $settings = [
             ['key' => 'wifi_price', 'value' => '5.99'],
             ['key' => 'pix_gateway', 'value' => 'pagbank'],
-            ['key' => 'session_duration', 'value' => '24'],
+            ['key' => 'session_duration', 'value' => '12'],
         ];
 
         foreach ($settings as $setting) {

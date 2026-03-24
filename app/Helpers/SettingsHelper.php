@@ -33,7 +33,7 @@ class SettingsHelper
     public static function getSessionDuration(): int
     {
         return (int) Cache::remember('session_duration', 3600, function () {
-            return SystemSetting::getValue('session_duration', 24);
+            return SystemSetting::getValue('session_duration', 12);
         });
     }
 
