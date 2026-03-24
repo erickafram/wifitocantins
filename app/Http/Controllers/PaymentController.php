@@ -403,6 +403,35 @@ class PaymentController extends Controller
                 if (file_exists($manualPath)) {
                     $manualUrl = url('manual/manualpassageiro.pdf');
                     $manualCaption = '📘 Manual do passageiro: se tiver dúvidas, veja este guia rápido.';
+                    $manualNotice = "📘 *Manual do Passageiro*\n\n"
+                                  . "Se precisar de ajuda, clique no link abaixo para abrir e ler o manual:\n"
+                                  . "{$manualUrl}\n\n"
+                                  . "Na próxima mensagem vou te enviar o manual em PDF também.";
+
+                    $manualNoticeRecord = \App\Models\WhatsappMessage::create([
+                        'user_id' => $user->id,
+                        'payment_id' => $payment->id,
+                        'phone' => $phone,
+                        'message' => $manualNotice,
+                        'status' => 'pending',
+                    ]);
+
+                    usleep(300000);
+
+                    $manualNoticeResp = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+                        'phone' => $phone,
+                        'message' => $manualNotice,
+                    ]);
+
+                    if ($manualNoticeResp->successful()) {
+                        $manualNoticeRecord->markAsSent($manualNoticeResp->json('messageId'));
+                    } else {
+                        $manualNoticeRecord->markAsFailed($manualNoticeResp->body());
+                        Log::warning('📱 WhatsApp PIX: Falha ao enviar aviso do manual', [
+                            'payment_id' => $payment->id,
+                            'error' => $manualNoticeResp->body(),
+                        ]);
+                    }
 
                     $manualRecord = \App\Models\WhatsappMessage::create([
                         'user_id' => $user->id,
