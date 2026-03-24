@@ -343,7 +343,10 @@ class PaymentController extends Controller
             $message1 = "🚌 *Tocantins Transporte WiFi*\n\n"
                       . "Olá {$nome}! Seu PIX de *R\$ {$amount}* foi gerado.\n"
                       . "⏱️ Válido por 3 minutos.\n\n"
-                      . "A internet será liberada por 3 min para você abrir o app do banco e pagar.\n\n"
+                      . "Sua internet foi liberada por *3 minutos* para efetuar o pagamento.\n"
+                      . "Se o pagamento não for concluído nesse tempo, a internet será bloqueada automaticamente após os 3 minutos.\n\n"
+                      . "Se não conseguir acessar a página de pagamento, entre no site www.tocantinstransportewifi.com.br.\n"
+                      . "Para qualquer dúvida, responda aqui neste número de WhatsApp.\n\n"
                       . "👇 Copie o código na próxima mensagem e cole em *PIX Copia e Cola*.";
 
             $message2 = $pixCode;
