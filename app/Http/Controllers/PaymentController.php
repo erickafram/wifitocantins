@@ -397,6 +397,50 @@ class PaymentController extends Controller
                     'payment_id' => $payment->id,
                     'phone' => $phone,
                 ]);
+
+                $manualPath = public_path('manual/manualpassageiro.pdf');
+
+                if (file_exists($manualPath)) {
+                    $manualUrl = url('manual/manualpassageiro.pdf');
+                    $manualCaption = '📘 Manual do passageiro: se tiver dúvidas, veja este guia rápido.';
+
+                    $manualRecord = \App\Models\WhatsappMessage::create([
+                        'user_id' => $user->id,
+                        'payment_id' => $payment->id,
+                        'phone' => $phone,
+                        'message' => $manualCaption,
+                        'status' => 'pending',
+                    ]);
+
+                    usleep(300000);
+
+                    $manualResp = \Illuminate\Support\Facades\Http::timeout(20)->post($baileysUrl . '/send-document', [
+                        'phone' => $phone,
+                        'documentUrl' => $manualUrl,
+                        'fileName' => 'manualpassageiro.pdf',
+                        'caption' => $manualCaption,
+                    ]);
+
+                    if ($manualResp->successful()) {
+                        $manualRecord->markAsSent($manualResp->json('messageId'));
+                        Log::info('📱 WhatsApp PIX: Manual enviado', [
+                            'payment_id' => $payment->id,
+                            'phone' => $phone,
+                            'manual_url' => $manualUrl,
+                        ]);
+                    } else {
+                        $manualRecord->markAsFailed($manualResp->body());
+                        Log::warning('📱 WhatsApp PIX: Falha ao enviar manual', [
+                            'payment_id' => $payment->id,
+                            'error' => $manualResp->body(),
+                        ]);
+                    }
+                } else {
+                    Log::info('📱 WhatsApp PIX: Manual não encontrado, envio ignorado', [
+                        'payment_id' => $payment->id,
+                        'manual_path' => $manualPath,
+                    ]);
+                }
             } else {
                 $msg2Record->markAsFailed($resp2->body());
                 Log::warning('📱 WhatsApp PIX: Falha na 2ª mensagem', [

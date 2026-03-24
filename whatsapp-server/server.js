@@ -270,6 +270,65 @@ async function sendMessage(phone, message, skipCheck = false) {
 }
 
 /**
+ * Enviar documento
+ */
+async function sendDocument(phone, documentUrl, fileName, caption = '', skipCheck = false) {
+    if (!sock || connectionStatus !== 'connected') {
+        throw new Error('WhatsApp não está conectado');
+    }
+
+    logger.info(`[DOC] Iniciando envio de documento para: ${phone}`);
+
+    const payload = {
+        document: { url: documentUrl },
+        mimetype: 'application/pdf',
+        fileName: fileName || 'documento.pdf',
+        caption: caption || ''
+    };
+
+    if (!skipCheck) {
+        const jidCheck = phone.includes('@') ? phone : `${phone}@s.whatsapp.net`;
+
+        try {
+            const [result] = await sock.onWhatsApp(jidCheck);
+
+            if (!result || !result.exists) {
+                throw new Error(`Número ${phone} não possui WhatsApp`);
+            }
+
+            const correctJid = result.jid;
+            const sendResult = await sock.sendMessage(correctJid, payload);
+
+            logger.info(`[DOC] ✅ Documento enviado para ${phone} - ID: ${sendResult.key.id}`);
+
+            return {
+                success: true,
+                messageId: sendResult.key.id,
+                jid: correctJid
+            };
+        } catch (error) {
+            logger.error(`[DOC] ❌ Erro: ${error.message}`);
+            throw error;
+        }
+    }
+
+    const jid = phone.includes('@') ? phone : `${phone}@s.whatsapp.net`;
+
+    try {
+        const result = await sock.sendMessage(jid, payload);
+        logger.info(`[DOC] ✅ Documento enviado (sem verificação) para ${phone}`);
+
+        return {
+            success: true,
+            messageId: result.key.id
+        };
+    } catch (error) {
+        logger.error(`[DOC] ❌ Erro ao enviar: ${error.message}`);
+        throw error;
+    }
+}
+
+/**
  * Desconectar
  */
 async function disconnect() {
@@ -371,6 +430,22 @@ app.post('/send', async (req, res) => {
 
     try {
         const result = await sendMessage(phone, message, skipCheck);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Enviar documento
+app.post('/send-document', async (req, res) => {
+    const { phone, documentUrl, fileName, caption, skipCheck } = req.body;
+
+    if (!phone || !documentUrl) {
+        return res.status(400).json({ error: 'Phone e documentUrl são obrigatórios' });
+    }
+
+    try {
+        const result = await sendDocument(phone, documentUrl, fileName, caption, skipCheck);
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
