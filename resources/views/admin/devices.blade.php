@@ -3,7 +3,7 @@
 @section('title', 'Dispositivos & Pagamentos')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="max-w-8xl mx-auto px-4 py-6">
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">

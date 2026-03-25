@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\User;
@@ -81,7 +82,7 @@ class PortalController extends Controller
             'discount_percentage' => $priceInfo['discount_percentage'],
             'savings' => $priceInfo['savings'],
             'speed' => '100+ Mbps',
-            'session_duration' => \App\Models\SystemSetting::getValue('session_duration', 12),
+            'session_duration' => \App\Helpers\SettingsHelper::getSessionDuration(),
             'connected_user' => $existingUser,
         ]);
     }
@@ -242,17 +243,17 @@ class PortalController extends Controller
      */
     private function getMacAddressFromMikrotik(Request $request, $ip)
     {
-        Log::info('🔍 INICIANDO DETECÇÃO DE MAC', [
-            'ip' => $ip,
-            'user_agent' => $request->userAgent(),
-            'headers' => $request->headers->all()
-        ]);
+        if (config('app.debug')) {
+            Log::debug('Iniciando deteccao de MAC', [
+                'ip' => $ip,
+                'user_agent' => $request->userAgent(),
+            ]);
+        }
+
+        $internalIp = $this->getInternalIpFromHeaders($request);
 
         // 0. 🔥 PRIORIDADE MÁXIMA: CONSULTAR MACS REPORTADOS PELO MIKROTIK
         try {
-            // Converter IP externo para IP interno do hotspot
-            $internalIp = $this->getInternalIpFromHeaders($request);
-
             // Verificar se temos MAC reportado para este IP (interno ou externo)
             $reportedMac = MikrotikMacReport::getLatestMacForIp($internalIp);
             if (!$reportedMac && $internalIp !== $ip) {
@@ -336,15 +337,15 @@ class PortalController extends Controller
         }
 
         // 3. TENTAR CONSULTAR DIRETAMENTE NO MIKROTIK POR IP
-        $macFromMikrotik = $this->queryMacByIpFromMikrotik($ip);
+        $macFromMikrotik = $this->queryMacByIpFromMikrotik($internalIp ?: $ip);
         if ($macFromMikrotik && $macFromMikrotik !== null) {
             if ($this->isLikelyMockMac($macFromMikrotik)) {
                 Log::warning('🚨 MAC virtual/mock retornado pela consulta ARP MikroTik', [
                     'mac_virtual' => $macFromMikrotik,
-                    'ip' => $ip,
+                    'ip' => $internalIp ?: $ip,
                 ]);
             } else {
-                Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $ip]);
+                Log::info('✅ MAC REAL obtido consultando MikroTik ARP', ['mac' => $macFromMikrotik, 'ip' => $internalIp ?: $ip]);
 
                 $this->markMikrotikContextVerified($request);
 
@@ -369,16 +370,30 @@ class PortalController extends Controller
     private function queryMacByIpFromMikrotik($ip)
     {
         try {
-            if (!config('wifi.mikrotik.enabled', false)) {
+            if (!$ip || !config('wifi.mikrotik.enabled', false)) {
                 return null;
+            }
+
+            if (!$this->ipMatchesHotspotSubnets($ip)) {
+                return null;
+            }
+
+            $cacheKey = 'mikrotik:arp_lookup:'.$ip;
+            $cachedResult = Cache::get($cacheKey);
+
+            if (is_array($cachedResult) && array_key_exists('mac', $cachedResult)) {
+                return $cachedResult['mac'] ?: null;
             }
 
             // Consultar ARP table do MikroTik para obter MAC por IP
             $mikrotikController = new \App\Http\Controllers\MikrotikController();
             $macAddress = $mikrotikController->getMacByIp($ip);
 
+            Cache::put($cacheKey, ['mac' => $macAddress ?: null], now()->addSeconds(30));
+
             return $macAddress;
         } catch (\Exception $e) {
+            Cache::put('mikrotik:arp_lookup:'.$ip, ['mac' => null], now()->addSeconds(15));
             Log::error('Erro ao consultar MAC no MikroTik', [
                 'ip' => $ip,
                 'error' => $e->getMessage()
@@ -512,7 +527,9 @@ class PortalController extends Controller
 
     private function markMikrotikContextVerified(Request $request): void
     {
-        $request->session()->put('mikrotik_context_verified', true);
+        if (!$request->session()->get('mikrotik_context_verified')) {
+            $request->session()->put('mikrotik_context_verified', true);
+        }
     }
 
     private function isLikelyMockMac(string $mac): bool

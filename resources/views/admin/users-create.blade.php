@@ -3,7 +3,7 @@
 @section('title', 'Novo Usuario')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="max-w-8xl mx-auto px-4 py-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Novo Usuario</h1>

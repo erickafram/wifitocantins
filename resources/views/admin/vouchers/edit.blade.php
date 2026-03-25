@@ -12,7 +12,7 @@
 @section('page-title', 'Editar Voucher')
 
 @section('content')
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-8xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Formulário Principal -->
             <div class="lg:col-span-2">

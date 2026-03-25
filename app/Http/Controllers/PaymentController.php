@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
+    private function whatsappHttpClient()
+    {
+        return \Illuminate\Support\Facades\Http::connectTimeout(2)->timeout(10);
+    }
+
     /**
      * Gera QR Code PIX para pagamento
      */
@@ -366,7 +371,7 @@ class PaymentController extends Controller
                 'status' => 'pending',
             ]);
 
-            $resp1 = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+            $resp1 = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
                 'phone' => $phone,
                 'message' => $message1,
             ]);
@@ -389,7 +394,7 @@ class PaymentController extends Controller
                 'status' => 'pending',
             ]);
 
-            $resp2 = \Illuminate\Support\Facades\Http::timeout(10)->post($baileysUrl . '/send', [
+            $resp2 = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
                 'phone' => $phone,
                 'message' => $message2,
             ]);
@@ -415,7 +420,7 @@ class PaymentController extends Controller
 
                     usleep(300000);
 
-                    $manualResp = \Illuminate\Support\Facades\Http::timeout(20)->post($baileysUrl . '/send-document', [
+                    $manualResp = $this->whatsappHttpClient()->timeout(20)->post($baileysUrl . '/send-document', [
                         'phone' => $phone,
                         'documentUrl' => $manualUrl,
                         'fileName' => 'manualpassageiro.pdf',
