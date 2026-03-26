@@ -47,6 +47,11 @@ Route::get('/portal', function () {
     return redirect('/');
 })->name('portal.redirect');
 
+// Página pública de reativação de acesso
+Route::get('/reativar', function () {
+    return view('portal.reativar');
+})->name('portal.reativar');
+
 // Rotas de Autenticação
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);

@@ -482,11 +482,16 @@ class PaymentController extends Controller
             $horasTexto = $hours == (int) $hours ? (int) $hours . ' horas' : $hours . ' horas';
             $amount = number_format((float) $payment->amount, 2, ',', '.');
 
+            $reativarUrl = url('/reativar');
+
             $message = "✅ *Pagamento confirmado!*\n\n"
                      . "Olá {$nome}, recebemos seu PIX de R\$ {$amount}.\n\n"
                      . "📶 Sua internet está liberada por *{$horasTexto}*.\n"
                      . "Aproveite ao máximo! 🚌💨\n\n"
                      . "💬 Qualquer dúvida sobre pagamento ou problema com o serviço, pode mandar mensagem por aqui neste WhatsApp!\n\n"
+                     . "⚠️ *Pagou e não tem acesso?*\n"
+                     . "Clique no link abaixo para reativar sua internet:\n"
+                     . "{$reativarUrl}\n\n"
                      . "Obrigado por viajar com a Tocantins Transporte! 🙏";
 
             $msg = \App\Models\WhatsappMessage::create([
@@ -1990,8 +1995,8 @@ class PaymentController extends Controller
                 ], 404);
             }
 
-            // Tentar atualizar MAC dos mikrotik_mac_reports
-            $macUpdated = $this->tryUpdateMacFromReports($user, $request);
+            // NÃO atualizar MAC aqui — a reativação é feita de qualquer dispositivo
+            // Se trocarmos o MAC, o dispositivo que pagou perderia o acesso
 
             // Se o status já é connected e expires_at é futuro, apenas confirmar
             if (in_array($user->status, ['connected', 'active']) && $user->expires_at && $user->expires_at > now()) {
@@ -1999,7 +2004,6 @@ class PaymentController extends Controller
                     'success' => true,
                     'message' => 'Seu acesso já está ativo! Aguarde até 30 segundos para liberar. Tente desconectar e reconectar o WiFi.',
                     'already_active' => true,
-                    'mac_updated' => $macUpdated,
                     'expires_at' => $user->expires_at->toISOString(),
                     'mac_address' => $user->mac_address,
                 ]);
@@ -2024,27 +2028,12 @@ class PaymentController extends Controller
                 'expires_at' => $expiresAt,
             ]);
 
-            // Registrar MAC no mikrotik_mac_reports
-            if ($user->mac_address && $user->ip_address) {
-                MikrotikMacReport::updateOrCreate(
-                    [
-                        'ip_address' => $user->ip_address,
-                        'mac_address' => $user->mac_address,
-                    ],
-                    [
-                        'transaction_id' => 'REACTIVATED_' . $payment->id,
-                        'reported_at' => now(),
-                    ]
-                );
-            }
-
             Log::info('🔄 ACESSO REATIVADO VIA PORTAL', [
                 'user_id' => $user->id,
                 'mac_address' => $user->mac_address,
                 'phone' => $cleanPhone,
                 'payment_id' => $payment->id,
                 'expires_at' => $expiresAt->toISOString(),
-                'mac_updated' => $macUpdated,
             ]);
 
             return response()->json([
