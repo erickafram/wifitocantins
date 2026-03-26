@@ -1319,11 +1319,16 @@ class WiFiPortal {
         // Esconder botões antigos
         document.getElementById('btn-paid')?.classList.add('hidden');
         
-        // Iniciar contador de 60 segundos
-        this.startReleaseCountdown(60);
+        // Iniciar contador de 30 segundos (MikroTik sincroniza a cada 15s)
+        this.startReleaseCountdown(30);
         
         // Liberar dispositivo no MikroTik em background
         this.allowDevice(this.deviceMac);
+
+        // Após 35 segundos, mostrar ajuda de troubleshooting se ainda não conectou
+        this.troubleshootTimer = setTimeout(() => {
+            this.showTroubleshootingHelp();
+        }, 35000);
     }
     
     /**
@@ -1510,6 +1515,87 @@ class WiFiPortal {
     }
     
     /**
+     * Mostra painel de troubleshooting quando a liberação demora
+     * Aparece após 35 segundos do passo 3 (liberando)
+     */
+    showTroubleshootingHelp() {
+        const step3Content = document.getElementById('step-3-content');
+        if (!step3Content) return;
+
+        // Verificar se já mostrou
+        if (document.getElementById('troubleshoot-panel')) return;
+
+        const panel = document.createElement('div');
+        panel.id = 'troubleshoot-panel';
+        panel.className = 'mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 animate-fade-in';
+        panel.innerHTML = `
+            <p class="text-sm font-bold text-amber-800 mb-2">Ainda sem acesso?</p>
+            <p class="text-xs text-amber-700 mb-3">Tente estas soluções:</p>
+            <ol class="text-xs text-amber-700 space-y-1.5 mb-3">
+                <li><strong>1.</strong> Desconecte e reconecte o WiFi</li>
+                <li><strong>2.</strong> Desative e ative o WiFi do celular</li>
+                <li><strong>3.</strong> <strong>iPhone:</strong> Ajustes &gt; WiFi &gt; (i) ao lado da rede &gt; Desative "Endereço Privado WiFi" e reconecte</li>
+                <li><strong>4.</strong> Feche e abra o navegador</li>
+            </ol>
+            <div class="border-t border-amber-200 pt-3">
+                <p class="text-xs text-amber-700 mb-2">Se nada funcionar, reative seu acesso:</p>
+                <div class="flex gap-2">
+                    <input type="tel" id="troubleshoot-phone" placeholder="(63) 99999-9999" 
+                        class="flex-1 px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-400"
+                        maxlength="15">
+                    <button type="button" id="troubleshoot-reactivate-btn"
+                        class="px-3 py-2 bg-amber-500 text-white font-bold rounded-lg text-xs hover:bg-amber-600 transition-colors whitespace-nowrap">
+                        Reativar
+                    </button>
+                </div>
+                <div id="troubleshoot-result" class="hidden mt-2"></div>
+            </div>
+        `;
+        step3Content.appendChild(panel);
+
+        // Mask
+        document.getElementById('troubleshoot-phone')?.addEventListener('input', function(e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 7) v = '(' + v.substring(0,2) + ') ' + v.substring(2,7) + '-' + v.substring(7);
+            else if (v.length > 2) v = '(' + v.substring(0,2) + ') ' + v.substring(2);
+            e.target.value = v;
+        });
+
+        // Reactivate handler
+        document.getElementById('troubleshoot-reactivate-btn')?.addEventListener('click', async () => {
+            const phoneInput = document.getElementById('troubleshoot-phone');
+            const btn = document.getElementById('troubleshoot-reactivate-btn');
+            const result = document.getElementById('troubleshoot-result');
+            const phone = (phoneInput?.value || '').replace(/\D/g, '');
+
+            if (phone.length < 10) {
+                if (result) { result.classList.remove('hidden'); result.innerHTML = '<p class="text-xs text-red-600">Informe seu telefone com DDD</p>'; }
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-pulse">...</span>';
+
+            try {
+                const resp = await fetch('/api/reativar-acesso', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.getCSRFToken(), 'Accept': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await resp.json();
+                if (result) {
+                    result.classList.remove('hidden');
+                    result.innerHTML = data.success
+                        ? '<p class="text-xs text-emerald-700 font-semibold">' + data.message + '</p>'
+                        : '<p class="text-xs text-red-600">' + (data.message || 'Erro ao reativar') + '</p>';
+                }
+            } catch { if (result) { result.classList.remove('hidden'); result.innerHTML = '<p class="text-xs text-red-600">Erro de conexão</p>'; } }
+            finally { btn.disabled = false; btn.innerHTML = 'Reativar'; }
+        });
+    }
+
+    /**
      * Inicia contador de liberação - Mostra "Conectado" quando terminar
      */
     startReleaseCountdown(seconds) {
@@ -1557,6 +1643,10 @@ class WiFiPortal {
             if (this.paymentCheckInterval) {
                 clearInterval(this.paymentCheckInterval);
                 this.paymentCheckInterval = null;
+            }
+            if (this.troubleshootTimer) {
+                clearTimeout(this.troubleshootTimer);
+                this.troubleshootTimer = null;
             }
             this.stopReleaseCountdown();
             this.stopPixCountdown();

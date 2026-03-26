@@ -406,6 +406,49 @@
                     </a>
                 </section>
 
+                <!-- SEÇÃO 2.5: Já Paguei e não tenho acesso -->
+                <section id="reactivate-section" class="bg-white rounded-xl border border-amber-200 shadow-sm animate-fade-in">
+                    <button 
+                        type="button"
+                        onclick="toggleReactivatePanel()"
+                        class="flex items-center justify-between p-4 group w-full text-left"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center border border-red-200">
+                                <span class="text-lg">&#x26A0;&#xFE0F;</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Já paguei e não tenho acesso</p>
+                                <p class="text-xs text-gray-400">Clique para reativar sua internet</p>
+                            </div>
+                        </div>
+                        <svg id="reactivate-arrow" class="w-5 h-5 text-gray-300 group-hover:text-amber-500 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="reactivate-panel" class="hidden px-4 pb-4">
+                        <div class="bg-amber-50 rounded-lg p-3 mb-3">
+                            <p class="text-xs text-amber-700">Se você pagou mas não consegue navegar, informe seu telefone para reativar o acesso.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input 
+                                type="tel" 
+                                id="reactivate-phone" 
+                                placeholder="(63) 99999-9999" 
+                                class="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                                maxlength="15"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="reactivateAccess()" 
+                                id="reactivate-btn"
+                                class="px-4 py-2.5 bg-amber-500 text-white font-bold rounded-lg text-sm hover:bg-amber-600 transition-colors whitespace-nowrap"
+                            >
+                                Reativar
+                            </button>
+                        </div>
+                        <div id="reactivate-result" class="hidden mt-3"></div>
+                    </div>
+                </section>
+
                 <!-- SEÇÃO 3: Serviços extras -->
                 <section class="animate-fade-in">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 px-1">Outros serviços</p>
@@ -672,6 +715,82 @@
     <script>
         window.WIFI_PRICE = {{ $price }};
         window.SESSION_DURATION = {{ $session_duration ?? 12 }};
+    </script>
+
+    <script>
+        // === REATIVAR ACESSO ===
+        function toggleReactivatePanel() {
+            const panel = document.getElementById('reactivate-panel');
+            const arrow = document.getElementById('reactivate-arrow');
+            if (panel) {
+                panel.classList.toggle('hidden');
+                if (arrow) arrow.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+            }
+        }
+
+        function reactivateAccess() {
+            const phoneInput = document.getElementById('reactivate-phone');
+            const btn = document.getElementById('reactivate-btn');
+            const result = document.getElementById('reactivate-result');
+            const phone = (phoneInput?.value || '').replace(/\D/g, '');
+
+            if (phone.length < 10) {
+                showReactivateResult('Informe um telefone válido com DDD.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-pulse">Verificando...</span>';
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+            fetch('/api/reativar-acesso', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showReactivateResult(data.message, 'success');
+                    // Mostrar dicas de troubleshooting
+                    setTimeout(() => {
+                        const tips = document.createElement('div');
+                        tips.className = 'mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-700';
+                        tips.innerHTML = '<strong>Dicas se ainda não funcionar:</strong><br>' +
+                            '1. Desconecte e reconecte o WiFi<br>' +
+                            '2. Desative e ative o WiFi do celular<br>' +
+                            '3. No iPhone: Ajustes > WiFi > (i) > Endereço Privado WiFi > desative e reconecte';
+                        result.appendChild(tips);
+                    }, 2000);
+                } else {
+                    showReactivateResult(data.message || 'Não foi possível reativar.', data.needs_payment ? 'warning' : 'error');
+                }
+            })
+            .catch(() => showReactivateResult('Erro de conexão. Tente novamente.', 'error'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = 'Reativar';
+            });
+        }
+
+        function showReactivateResult(message, type) {
+            const result = document.getElementById('reactivate-result');
+            if (!result) return;
+            result.classList.remove('hidden');
+            const colors = { success: 'bg-emerald-50 text-emerald-700 border-emerald-200', error: 'bg-red-50 text-red-700 border-red-200', warning: 'bg-amber-50 text-amber-700 border-amber-200' };
+            const icons = { success: '&#x2705;', error: '&#x274C;', warning: '&#x26A0;&#xFE0F;' };
+            result.innerHTML = '<div class="p-3 rounded-lg border text-sm ' + (colors[type] || colors.error) + '">' + (icons[type] || '') + ' ' + message + '</div>';
+        }
+
+        // Mask telefone no campo de reativação
+        document.getElementById('reactivate-phone')?.addEventListener('input', function(e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 7) v = '(' + v.substring(0,2) + ') ' + v.substring(2,7) + '-' + v.substring(7);
+            else if (v.length > 2) v = '(' + v.substring(0,2) + ') ' + v.substring(2);
+            e.target.value = v;
+        });
     </script>
     
     <script src="{{ asset('js/mac-detector.js') }}?v={{ time() }}"></script>

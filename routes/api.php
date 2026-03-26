@@ -60,6 +60,9 @@ Route::prefix('payment')->group(function () {
     Route::get('/export-pagbank-logs', [PaymentController::class, 'exportPagBankLogs']);
 });
 
+// 🔧 Reativar acesso (usuário pagou mas não conectou)
+Route::post('/reativar-acesso', [PaymentController::class, 'reactivateAccess']);
+
 // Vouchers
 Route::prefix('voucher')->group(function () {
     Route::post('/apply', [VoucherController::class, 'apply']);

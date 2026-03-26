@@ -1994,4 +1994,176 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 🔧 Reativar acesso de usuário que pagou mas não tem internet
+     * Endpoint público - usuário chama pelo portal quando pagou mas não conectou
+     */
+    public function reactivateAccess(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|min:10|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Telefone inválido'], 422);
+        }
+
+        try {
+            $cleanPhone = preg_replace('/[^\d]/', '', $request->phone);
+
+            // Buscar usuário pelo telefone (múltiplas estratégias)
+            $user = User::where('phone', $cleanPhone)
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            if (!$user) {
+                // Tentar com prefixo 55
+                $user = User::where('phone', '55' . $cleanPhone)
+                    ->orderBy('updated_at', 'desc')
+                    ->first();
+            }
+
+            if (!$user) {
+                // Busca parcial (últimos dígitos)
+                $user = User::where('phone', 'LIKE', '%' . substr($cleanPhone, -9))
+                    ->orderBy('updated_at', 'desc')
+                    ->first();
+            }
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nenhum cadastro encontrado com este telefone. Verifique o número ou faça um novo pagamento.',
+                ], 404);
+            }
+
+            // Buscar pagamento recente completado
+            $sessionDuration = max((float) \App\Helpers\SettingsHelper::getSessionDuration(), 1);
+            $payment = Payment::where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->where('paid_at', '>', now()->subHours($sessionDuration))
+                ->orderBy('paid_at', 'desc')
+                ->first();
+
+            if (!$payment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nenhum pagamento ativo encontrado. Seu acesso pode ter expirado. Faça um novo pagamento.',
+                    'needs_payment' => true,
+                ], 404);
+            }
+
+            // Tentar atualizar MAC dos mikrotik_mac_reports
+            $macUpdated = $this->tryUpdateMacFromReports($user, $request);
+
+            // Se o status já é connected e expires_at é futuro, apenas confirmar
+            if (in_array($user->status, ['connected', 'active']) && $user->expires_at && $user->expires_at > now()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Seu acesso já está ativo! Aguarde até 30 segundos para liberar. Tente desconectar e reconectar o WiFi.',
+                    'already_active' => true,
+                    'mac_updated' => $macUpdated,
+                    'expires_at' => $user->expires_at->toISOString(),
+                    'mac_address' => $user->mac_address,
+                ]);
+            }
+
+            // Reativar acesso
+            $paidAt = $payment->paid_at ? \Carbon\Carbon::parse($payment->paid_at) : now();
+            $expiresAt = $paidAt->copy()->addHours($sessionDuration);
+
+            // Se já expirou baseado no pagamento, não reativar
+            if ($expiresAt <= now()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'O tempo do seu pagamento já expirou. Faça um novo pagamento para continuar navegando.',
+                    'needs_payment' => true,
+                ], 404);
+            }
+
+            $user->update([
+                'status' => 'connected',
+                'connected_at' => now(),
+                'expires_at' => $expiresAt,
+            ]);
+
+            // Registrar MAC no mikrotik_mac_reports
+            if ($user->mac_address && $user->ip_address) {
+                MikrotikMacReport::updateOrCreate(
+                    [
+                        'ip_address' => $user->ip_address,
+                        'mac_address' => $user->mac_address,
+                    ],
+                    [
+                        'transaction_id' => 'REACTIVATED_' . $payment->id,
+                        'reported_at' => now(),
+                    ]
+                );
+            }
+
+            Log::info('🔄 ACESSO REATIVADO VIA PORTAL', [
+                'user_id' => $user->id,
+                'mac_address' => $user->mac_address,
+                'phone' => $cleanPhone,
+                'payment_id' => $payment->id,
+                'expires_at' => $expiresAt->toISOString(),
+                'mac_updated' => $macUpdated,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Acesso reativado! Sua internet será liberada em até 30 segundos. Se não funcionar, desconecte e reconecte o WiFi.',
+                'expires_at' => $expiresAt->toISOString(),
+                'mac_address' => $user->mac_address,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao reativar acesso', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro interno. Tente novamente.'], 500);
+        }
+    }
+
+    /**
+     * Tenta atualizar o MAC do usuário usando mikrotik_mac_reports
+     */
+    private function tryUpdateMacFromReports(User $user, Request $request): bool
+    {
+        try {
+            $clientIp = HotspotIdentity::resolveClientIp($request);
+
+            if (!$clientIp) return false;
+
+            $report = MikrotikMacReport::getLatestMacForIp($clientIp);
+
+            if ($report && $report->mac_address) {
+                $newMac = strtoupper($report->mac_address);
+
+                if ($newMac !== $user->mac_address && !HotspotIdentity::isMockMac($newMac)) {
+                    Log::info('🔧 MAC atualizado via mikrotik_mac_reports', [
+                        'user_id' => $user->id,
+                        'old_mac' => $user->mac_address,
+                        'new_mac' => $newMac,
+                        'ip' => $clientIp,
+                    ]);
+
+                    $user->update([
+                        'mac_address' => $newMac,
+                        'ip_address' => $clientIp,
+                    ]);
+
+                    return true;
+                }
+            }
+
+            // Atualizar IP se mudou
+            if ($clientIp && $user->ip_address !== $clientIp) {
+                $user->update(['ip_address' => $clientIp]);
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }

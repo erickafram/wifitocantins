@@ -63,6 +63,18 @@ class MikrotikApiController extends Controller
                 Log::info("⏰ MikroTik Lite: $justExpired usuários expiraram agora");
             }
 
+            // 🔧 AUTO-HEAL: Recuperar usuários que pagaram mas perderam o status
+            // Roda a cada 2 minutos (controle via cache) para não sobrecarregar
+            $lastAutoHeal = cache()->get('auto_heal_last_run');
+            if (!$lastAutoHeal || $lastAutoHeal < now()->subMinutes(2)) {
+                $this->autoHealPaidUsers();
+                cache()->put('auto_heal_last_run', now(), 300);
+            }
+
+            // 🔧 MAC CROSS-REFERENCE: Atualizar MACs de usuários ativos usando mikrotik_mac_reports
+            // Corrige casos onde o MAC no banco não corresponde ao MAC real no MikroTik
+            $this->crossReferenceMacs();
+
             // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
             // Se mid fornecido: filtra por ônibus + usuários sem ônibus definido
             // Se mid não fornecido: retorna todos (compatível com scripts antigos)
@@ -868,6 +880,123 @@ class MikrotikApiController extends Controller
                 'success' => false,
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * 🔧 AUTO-HEAL: Recuperar automaticamente usuários com pagamento recente
+     * que perderam o status 'connected' por algum motivo (bug, reset, etc.)
+     */
+    private function autoHealPaidUsers(): void
+    {
+        try {
+            $sessionDuration = max((float) \App\Helpers\SettingsHelper::getSessionDuration(), 1);
+            $autoHealed = 0;
+
+            // Buscar usuários com pagamento completed recente mas sem status 'connected'
+            $usersNeedingHeal = User::whereIn('status', ['expired', 'offline', 'pending'])
+                ->whereNotNull('mac_address')
+                ->where('mac_address', '!=', '')
+                ->whereHas('payments', function($q) use ($sessionDuration) {
+                    $q->where('status', 'completed')
+                      ->where('paid_at', '>', now()->subHours($sessionDuration));
+                })
+                ->limit(50)
+                ->get();
+
+            foreach ($usersNeedingHeal as $healUser) {
+                $latestPayment = $healUser->payments()
+                    ->where('status', 'completed')
+                    ->where('paid_at', '>', now()->subHours($sessionDuration))
+                    ->orderBy('paid_at', 'desc')
+                    ->first();
+
+                if ($latestPayment && $latestPayment->paid_at) {
+                    $newExpires = Carbon::parse($latestPayment->paid_at)->addHours($sessionDuration);
+
+                    if ($newExpires > now()) {
+                        $previousStatus = $healUser->status;
+                        $healUser->update([
+                            'status' => 'connected',
+                            'expires_at' => $newExpires,
+                            'connected_at' => $healUser->connected_at ?: now(),
+                        ]);
+                        $autoHealed++;
+
+                        Log::info('🔧 AUTO-HEAL: Usuário reativado', [
+                            'user_id' => $healUser->id,
+                            'mac_address' => $healUser->mac_address,
+                            'payment_id' => $latestPayment->id,
+                            'previous_status' => $previousStatus,
+                            'new_expires_at' => $newExpires->toISOString(),
+                        ]);
+                    }
+                }
+            }
+
+            if ($autoHealed > 0) {
+                Log::info("🔧 AUTO-HEAL: $autoHealed usuários reativados automaticamente");
+            }
+        } catch (\Exception $e) {
+            Log::error('❌ AUTO-HEAL erro: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 🔧 MAC CROSS-REFERENCE: Atualizar MACs de usuários conectados
+     * Usa mikrotik_mac_reports para corrigir MACs desatualizados
+     */
+    private function crossReferenceMacs(): void
+    {
+        try {
+            // Buscar usuários conectados com IP registrado
+            $connectedUsers = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+                ->where('expires_at', '>', now())
+                ->whereNotNull('mac_address')
+                ->whereNotNull('ip_address')
+                ->limit(100)
+                ->get(['id', 'mac_address', 'ip_address']);
+
+            if ($connectedUsers->isEmpty()) return;
+
+            // Buscar reports recentes para os IPs desses usuários (batch)
+            $ips = $connectedUsers->pluck('ip_address')->unique()->toArray();
+            $recentReports = MikrotikMacReport::whereIn('ip_address', $ips)
+                ->where('reported_at', '>', now()->subMinutes(10))
+                ->orderBy('reported_at', 'desc')
+                ->get()
+                ->groupBy('ip_address');
+
+            $updated = 0;
+            foreach ($connectedUsers as $user) {
+                $reports = $recentReports->get($user->ip_address);
+                if (!$reports) continue;
+
+                $latestReport = $reports->first();
+                $reportMac = strtoupper(trim($latestReport->mac_address));
+
+                // Se o MAC no report é diferente do que está no banco, atualizar
+                if ($reportMac !== strtoupper($user->mac_address) && strlen($reportMac) === 17) {
+                    // Verificar se não é mock MAC
+                    if (!in_array($reportMac, ['00:00:00:00:00:00', 'FF:FF:FF:FF:FF:FF'])) {
+                        User::where('id', $user->id)->update(['mac_address' => $reportMac]);
+                        $updated++;
+
+                        Log::info('🔧 MAC CROSS-REF: Atualizado', [
+                            'user_id' => $user->id,
+                            'old_mac' => $user->mac_address,
+                            'new_mac' => $reportMac,
+                            'ip' => $user->ip_address,
+                        ]);
+                    }
+                }
+            }
+
+            if ($updated > 0) {
+                Log::info("🔧 MAC CROSS-REF: $updated MACs atualizados");
+            }
+        } catch (\Exception $e) {
+            Log::error('❌ MAC CROSS-REF erro: ' . $e->getMessage());
         }
     }
 }

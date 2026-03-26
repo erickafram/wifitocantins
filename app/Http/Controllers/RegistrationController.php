@@ -221,12 +221,23 @@ class RegistrationController extends Controller
             
             if ($existingUserByMac) {
                 // Dispositivo já foi usado antes - atualizar telefone e IP
-                $existingUserByMac->update([
+                $updateData = [
                     'phone' => $cleanPhone,
                     'ip_address' => $ipAddress,
                     'registered_at' => now(),
-                    'status' => 'pending',
-                ]);
+                ];
+
+                // 🔧 FIX: NÃO resetar status para 'pending' se o usuário já tem acesso ativo
+                // Isso evita que um usuário que já pagou perca o acesso ao reabrir o portal
+                $hasActiveAccess = in_array($existingUserByMac->status, ['connected', 'active'])
+                    && $existingUserByMac->expires_at
+                    && $existingUserByMac->expires_at > now();
+
+                if (!$hasActiveAccess) {
+                    $updateData['status'] = 'pending';
+                }
+
+                $existingUserByMac->update($updateData);
 
                 \Log::info('🔄 Reutilizando usuário existente pelo MAC', [
                     'user_id' => $existingUserByMac->id,

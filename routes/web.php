@@ -11,6 +11,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PortalDashboardController;
 use App\Http\Controllers\PortalAuthController;
+use App\Http\Controllers\SupportDiagnosticController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\Admin\WhatsappController;
@@ -26,6 +27,9 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/entrar', [PortalAuthController::class, 'showLogin'])->name('portal.login');
 Route::post('/entrar', [PortalAuthController::class, 'login'])->name('portal.login.submit');
 Route::post('/sair', [PortalAuthController::class, 'logout'])->middleware('auth')->name('portal.logout');
+
+Route::get('/suporte/diagnostico', [SupportDiagnosticController::class, 'show'])->name('support.diagnostics');
+Route::post('/suporte/diagnostico/consultar', [SupportDiagnosticController::class, 'lookup'])->name('support.diagnostics.lookup');
 
 // Rotas de Vouchers para Motoristas (Não requer autenticação)
 Route::prefix('voucher')->name('voucher.')->group(function () {
