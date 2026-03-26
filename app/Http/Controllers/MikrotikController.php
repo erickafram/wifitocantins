@@ -200,21 +200,22 @@ class MikrotikController extends Controller
                 ]);
             }
 
-            // Consultar status real no MikroTik
-            $mikrotikStatus = $this->getMikrotikDeviceStatus($macAddress);
+            // Status baseado no banco de dados (servidor cloud não acessa MikroTik diretamente)
+            $isConnected = in_array($user->status, ['connected', 'active', 'temp_bypass'])
+                && $user->expires_at
+                && $user->expires_at > now();
 
             return response()->json([
-                'connected' => $user->isConnected(),
+                'connected' => $isConnected,
                 'mac_address' => $user->mac_address,
                 'ip_address' => $user->ip_address,
                 'expires_at' => $user->expires_at,
                 'data_used' => $user->data_used,
                 'status' => $user->status,
-                'mikrotik_data' => $mikrotikStatus
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao obter status MikroTik: ' . $e->getMessage());
+            Log::error('Erro ao obter status: ' . $e->getMessage());
             
             return response()->json([
                 'error' => 'Erro ao consultar status do dispositivo'
@@ -366,8 +367,7 @@ class MikrotikController extends Controller
                 ]);
             }
 
-            // Obter dados do MikroTik
-            $mikrotikUsage = $this->getMikrotikUsageData($macAddress);
+            // Dados de uso baseados no banco (servidor cloud não acessa MikroTik diretamente)
 
             // Calcular duração da sessão atual
             $currentSession = $user->sessions()
@@ -383,8 +383,8 @@ class MikrotikController extends Controller
             return response()->json([
                 'data_used' => $user->data_used,
                 'session_duration' => $sessionDuration,
-                'download_speed' => $mikrotikUsage['download_speed'] ?? 0,
-                'upload_speed' => $mikrotikUsage['upload_speed'] ?? 0,
+                'download_speed' => 0,
+                'upload_speed' => 0,
                 'total_sessions' => $user->sessions()->count(),
                 'total_payments' => $user->payments()->where('status', 'completed')->count()
             ]);

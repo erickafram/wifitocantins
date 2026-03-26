@@ -1279,78 +1279,15 @@ class PaymentController extends Controller
                 'mac_address' => $payment->user->mac_address,
             ]);
 
-            // 🚀 LIBERAÇÃO IMEDIATA NO MIKROTIK VIA WEBHOOK
-            try {
-                // Usar o novo serviço de webhook
-                $webhookService = new \App\Services\MikrotikWebhookService;
-                $liberado = $webhookService->liberarMacAddress($payment->user->mac_address);
-
-                if ($liberado) {
-                    Log::info('🎉 ACESSO LIBERADO NO MIKROTIK VIA WEBHOOK COM SUCESSO!', [
-                        'user_id' => $payment->user_id,
-                        'mac_address' => $payment->user->mac_address,
-                        'expires_at' => $expiresAt->toISOString(),
-                        'method' => 'webhook_direct',
-                    ]);
-                } else {
-                    // Tentar método antigo como fallback
-                    try {
-                        $liberacaoController = new \App\Http\Controllers\MikrotikLiberacaoController;
-                        $liberado = $liberacaoController->liberarAcessoImediato($payment->user_id);
-
-                        if ($liberado) {
-                            Log::info('✅ Liberado via método fallback', [
-                                'user_id' => $payment->user_id,
-                            ]);
-                        } else {
-                            Log::warning('⚠️ Falha na liberação automática do MikroTik', [
-                                'user_id' => $payment->user_id,
-                                'note' => 'O acesso será liberado na próxima sincronização',
-                            ]);
-                        }
-                    } catch (\Exception $fallbackError) {
-                        Log::warning('⚠️ Métodos de liberação falharam', [
-                            'error' => $fallbackError->getMessage(),
-                        ]);
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::error('❌ Erro ao liberar no MikroTik via webhook', [
-                    'error' => $e->getMessage(),
-                    'user_id' => $payment->user_id,
-                ]);
-                // Não falhar o pagamento por causa disso
-            }
-
-            // Tentar liberar no MikroTik
-            try {
-                if (class_exists('\App\Http\Controllers\MikrotikController')) {
-                    $mikrotikController = new \App\Http\Controllers\MikrotikController;
-                    $result = $mikrotikController->allowDeviceByUser($payment->user);
-
-                    if ($result) {
-                        Log::info('🌐 Usuário liberado no MikroTik IMEDIATAMENTE', [
-                            'mac_address' => $payment->user->mac_address,
-                            'result' => $result,
-                            'success' => true,
-                        ]);
-                    } else {
-                        Log::warning('⚠️ Falha ao liberar no MikroTik - será liberado no próximo sync', [
-                            'mac_address' => $payment->user->mac_address,
-                        ]);
-                    }
-                } else {
-                    Log::info('ℹ️ MikroTik Controller não disponível - usuário será liberado no próximo sync');
-                }
-
-            } catch (\Exception $e) {
-                Log::warning('⚠️ Falha ao liberar no MikroTik imediatamente', [
-                    'error' => $e->getMessage(),
-                    'mac_address' => $payment->user->mac_address,
-                    'note' => 'Usuário será liberado no próximo sync automático (1 minuto)',
-                ]);
-                // Não falhar a ativação por causa do MikroTik
-            }
+            // 🚀 LIBERAÇÃO NO MIKROTIK
+            // O servidor está na nuvem e NÃO consegue conectar diretamente ao MikroTik (10.10.10.1)
+            // A liberação acontece via syncPagos que roda a cada 15 segundos no MikroTik
+            // O status já está 'connected' no banco, o MikroTik vai buscar na próxima sync
+            Log::info('🚀 Pagamento ativado - MAC será liberado no próximo sync (até 15s)', [
+                'user_id' => $payment->user_id,
+                'mac_address' => $payment->user->mac_address,
+                'expires_at' => $expiresAt->toISOString(),
+            ]);
 
             $processingTime = round((microtime(true) - $startTime) * 1000, 2);
 
