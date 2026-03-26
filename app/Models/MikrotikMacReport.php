@@ -34,13 +34,22 @@ class MikrotikMacReport extends Model
 
     /**
      * Buscar MAC mais recente para um IP
+     * @param string $ipAddress
+     * @param string|null $mikrotikId Serial number do MikroTik (filtra por ônibus)
      */
-    public static function getLatestMacForIp($ipAddress)
+    public static function getLatestMacForIp($ipAddress, $mikrotikId = null)
     {
-        return static::where('ip_address', $ipAddress)
+        $query = static::where('ip_address', $ipAddress)
             ->recent()
-            ->orderBy('reported_at', 'desc')
-            ->first();
+            ->orderBy('reported_at', 'desc');
+
+        // Se mikrotik_id fornecido, priorizar reports daquele MikroTik
+        // (evita colisão de IP entre ônibus com mesma faixa 10.5.50.x)
+        if ($mikrotikId) {
+            $query->where('mikrotik_id', $mikrotikId);
+        }
+
+        return $query->first();
     }
 
     /**

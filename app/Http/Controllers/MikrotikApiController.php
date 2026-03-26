@@ -950,44 +950,57 @@ class MikrotikApiController extends Controller
     {
         try {
             // Buscar usuários conectados com IP registrado
+            // Inclui last_mikrotik_id para filtrar por ônibus (mesma faixa IP 10.5.50.x)
             $connectedUsers = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                 ->where('expires_at', '>', now())
                 ->whereNotNull('mac_address')
                 ->whereNotNull('ip_address')
                 ->limit(100)
-                ->get(['id', 'mac_address', 'ip_address']);
+                ->get(['id', 'mac_address', 'ip_address', 'last_mikrotik_id']);
 
             if ($connectedUsers->isEmpty()) return;
 
-            // Buscar reports recentes para os IPs desses usuários (batch)
-            $ips = $connectedUsers->pluck('ip_address')->unique()->toArray();
-            $recentReports = MikrotikMacReport::whereIn('ip_address', $ips)
-                ->where('reported_at', '>', now()->subMinutes(10))
-                ->orderBy('reported_at', 'desc')
-                ->get()
-                ->groupBy('ip_address');
-
+            // Agrupar usuários por mikrotik_id para fazer queries filtradas
+            $usersByMikrotik = $connectedUsers->groupBy(fn($u) => $u->last_mikrotik_id ?: '__unknown__');
             $updated = 0;
-            foreach ($connectedUsers as $user) {
-                $reports = $recentReports->get($user->ip_address);
-                if (!$reports) continue;
 
-                $latestReport = $reports->first();
-                $reportMac = strtoupper(trim($latestReport->mac_address));
+            foreach ($usersByMikrotik as $mikrotikId => $users) {
+                $ips = $users->pluck('ip_address')->unique()->toArray();
 
-                // Se o MAC no report é diferente do que está no banco, atualizar
-                if ($reportMac !== strtoupper($user->mac_address) && strlen($reportMac) === 17) {
-                    // Verificar se não é mock MAC
-                    if (!in_array($reportMac, ['00:00:00:00:00:00', 'FF:FF:FF:FF:FF:FF'])) {
-                        User::where('id', $user->id)->update(['mac_address' => $reportMac]);
-                        $updated++;
+                // Buscar reports recentes FILTRANDO por mikrotik_id
+                // Evita colisão: IP 10.5.50.50 no Ônibus A ≠ IP 10.5.50.50 no Ônibus B
+                $reportQuery = MikrotikMacReport::whereIn('ip_address', $ips)
+                    ->where('reported_at', '>', now()->subMinutes(10))
+                    ->orderBy('reported_at', 'desc');
 
-                        Log::info('🔧 MAC CROSS-REF: Atualizado', [
-                            'user_id' => $user->id,
-                            'old_mac' => $user->mac_address,
-                            'new_mac' => $reportMac,
-                            'ip' => $user->ip_address,
-                        ]);
+                if ($mikrotikId !== '__unknown__') {
+                    $reportQuery->where('mikrotik_id', $mikrotikId);
+                }
+
+                $recentReports = $reportQuery->get()->groupBy('ip_address');
+
+                foreach ($users as $user) {
+                    $reports = $recentReports->get($user->ip_address);
+                    if (!$reports) continue;
+
+                    $latestReport = $reports->first();
+                    $reportMac = strtoupper(trim($latestReport->mac_address));
+
+                    // Se o MAC no report é diferente do que está no banco, atualizar
+                    if ($reportMac !== strtoupper($user->mac_address) && strlen($reportMac) === 17) {
+                        // Verificar se não é mock MAC
+                        if (!in_array($reportMac, ['00:00:00:00:00:00', 'FF:FF:FF:FF:FF:FF'])) {
+                            User::where('id', $user->id)->update(['mac_address' => $reportMac]);
+                            $updated++;
+
+                            Log::info('🔧 MAC CROSS-REF: Atualizado', [
+                                'user_id' => $user->id,
+                                'old_mac' => $user->mac_address,
+                                'new_mac' => $reportMac,
+                                'ip' => $user->ip_address,
+                                'mikrotik_id' => $mikrotikId,
+                            ]);
+                        }
                     }
                 }
             }

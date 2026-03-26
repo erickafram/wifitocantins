@@ -2134,7 +2134,14 @@ class PaymentController extends Controller
 
             if (!$clientIp) return false;
 
-            $report = MikrotikMacReport::getLatestMacForIp($clientIp);
+            // Filtrar por mikrotik_id do usuário para evitar colisão de IP
+            // (múltiplos ônibus usam a mesma faixa 10.5.50.x)
+            $report = MikrotikMacReport::getLatestMacForIp($clientIp, $user->last_mikrotik_id);
+
+            // Se não encontrou com filtro de mikrotik, tenta sem filtro (fallback)
+            if (!$report && $user->last_mikrotik_id) {
+                $report = MikrotikMacReport::getLatestMacForIp($clientIp);
+            }
 
             if ($report && $report->mac_address) {
                 $newMac = strtoupper($report->mac_address);
