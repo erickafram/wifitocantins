@@ -159,10 +159,15 @@ class HotspotIdentity
             return $normalizedMac;
         }
 
-        $report = MikrotikMacReport::getLatestMacForIp($ip);
+        // Só consultar mikrotik_mac_reports se NÃO temos um MAC válido do frontend
+        // Se o frontend já enviou um MAC real (não-mock), ele é confiável - não substituir
+        // Isso evita trocar o MAC correto pelo MAC de outro dispositivo com mesmo IP
+        if (! $normalizedMac || self::isMockMac($normalizedMac)) {
+            $report = MikrotikMacReport::getLatestMacForIp($ip);
 
-        if ($report && self::shouldReplaceMac($normalizedMac, $report->mac_address)) {
-            return $report->mac_address;
+            if ($report && ! self::isMockMac($report->mac_address)) {
+                return self::normalizeMac($report->mac_address);
+            }
         }
 
         return $normalizedMac;

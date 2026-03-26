@@ -66,7 +66,34 @@ class PaymentController extends Controller
                 ], 422);
             }
 
-            // 🔧 FIX: Primeiro verificar se já existe usuário com este MAC
+            // 🔧 FIX: Se frontend enviou user_id (do registerForPayment), priorizar esse usuário
+            // Isso evita que o sistema troque o usuário quando IPs coincidem entre ônibus
+            $user = null;
+            
+            if ($request->user_id) {
+                $user = User::find($request->user_id);
+                if ($user) {
+                    // Atualizar MAC e IP se necessário
+                    $userUpdates = [];
+                    if ($macAddress && HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
+                        $userUpdates['mac_address'] = $macAddress;
+                    }
+                    if ($clientIp && $user->ip_address !== $clientIp) {
+                        $userUpdates['ip_address'] = $clientIp;
+                    }
+                    if (!empty($userUpdates)) {
+                        $user->update($userUpdates);
+                    }
+
+                    Log::info('🔄 Usando usuário do registro (user_id)', [
+                        'user_id' => $user->id,
+                        'mac_address' => $user->mac_address,
+                    ]);
+                }
+            }
+
+            if (!$user) {
+            // Verificar se já existe usuário com este MAC
             $existingUserByMac = User::where('mac_address', $macAddress)->first();
             
             if ($existingUserByMac) {
@@ -82,33 +109,10 @@ class PaymentController extends Controller
                     'user_id' => $user->id,
                     'mac_address' => $macAddress,
                 ]);
-            } elseif ($request->user_id) {
-                // Se tem user_id e MAC não existe em outro usuário, usar usuário existente
-                $user = User::find($request->user_id);
-                if (! $user) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Usuário não encontrado',
-                    ], 404);
-                }
-
-                // Atualizar MAC e IP do usuário (seguro pois já verificamos que MAC não existe)
-                $userUpdates = [];
-                if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
-                    $userUpdates['mac_address'] = $macAddress;
-                }
-                if ($clientIp && $user->ip_address !== $clientIp) {
-                    $userUpdates['ip_address'] = $clientIp;
-                }
-                if (! empty($userUpdates)) {
-                    $user->update([
-                        ...$userUpdates,
-                        'status' => $user->status === 'connected' ? $user->status : 'offline',
-                    ]);
-                }
             } else {
                 // Buscar ou criar usuário pelo MAC
                 $user = $this->findOrCreateUser($macAddress, $clientIp);
+            }
             }
 
             // Verificar qual gateway usar
@@ -748,14 +752,9 @@ class PaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        // 3. TERCEIRA CHANCE: Buscar usuário pendente pelo IP (mesmo com MAC diferente)
-        if (! $pendingUser) {
-            $pendingUser = User::where('ip_address', $ipAddress)
-                ->where('status', 'pending')
-                ->where('created_at', '>', now()->subMinutes(10))
-                ->orderBy('created_at', 'desc')
-                ->first();
-        }
+        // NÃO buscar por IP — múltiplos ônibus usam a mesma faixa 10.5.50.x,
+        // então o IP pode pertencer a dispositivos diferentes em ônibus diferentes.
+        // Busca por IP causava atribuição de pagamento ao usuário errado.
 
         if ($pendingUser) {
             // Atualizar usuário existente com o MAC
