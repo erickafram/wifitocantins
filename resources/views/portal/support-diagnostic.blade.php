@@ -131,6 +131,20 @@
                 </div>
 
                 <div id="result-panel" class="hidden space-y-6">
+                    <div class="glass-card rounded-[28px] p-4 sm:p-5">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.18em] text-slate-500 font-bold">Compartilhar com suporte</p>
+                                <p class="mt-1 text-sm text-slate-600">Clique em enviar relatorio para copiar um resumo pronto e colar no WhatsApp do administrador.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span id="copy-feedback" class="hidden text-xs font-bold text-emerald-700">Relatorio copiado.</span>
+                                <button id="copy-report-button" type="button" class="rounded-2xl bg-brand-pine text-white font-extrabold px-5 py-3 transition hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                                    Enviar relatorio
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="summary-card" class="glass-card rounded-[28px] p-6 sm:p-7"></div>
                     <div id="warning-list" class="hidden glass-card rounded-[28px] p-6"></div>
 
@@ -165,6 +179,9 @@
         const paymentCard = document.getElementById('payment-card');
         const sessionCard = document.getElementById('session-card');
         const connectionBadge = document.getElementById('connection-badge');
+        const copyReportButton = document.getElementById('copy-report-button');
+        const copyFeedback = document.getElementById('copy-feedback');
+        let latestDiagnosticData = null;
 
         document.getElementById('phone').value = formatPhone(initialState.phone || '');
         document.getElementById('ip_address').value = initialState.ip || 'Nao detectado';
@@ -177,6 +194,29 @@
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             await runLookup();
+        });
+
+        copyReportButton.addEventListener('click', async () => {
+            const reportText = buildDiagnosticReportText(latestDiagnosticData);
+
+            if (!reportText) {
+                showCopyFeedback('Faça a consulta antes de enviar o relatorio.', true);
+                return;
+            }
+
+            const originalText = copyReportButton.textContent;
+            copyReportButton.disabled = true;
+            copyReportButton.textContent = 'Copiando...';
+
+            try {
+                await copyText(reportText);
+                showCopyFeedback('Relatorio copiado. Agora cole no WhatsApp do administrador.', false);
+            } catch (error) {
+                showCopyFeedback('Nao foi possivel copiar automaticamente. Tente novamente.', true);
+            } finally {
+                copyReportButton.disabled = false;
+                copyReportButton.textContent = originalText;
+            }
         });
 
         if (initialState.mac || initialState.phone) {
@@ -214,6 +254,7 @@
 
                 renderResult(data);
             } catch (error) {
+                latestDiagnosticData = null;
                 resultEmpty.classList.add('hidden');
                 resultPanel.classList.remove('hidden');
                 summaryCard.innerHTML = `
@@ -237,6 +278,7 @@
         }
 
         function renderResult(data) {
+            latestDiagnosticData = data;
             resultEmpty.classList.add('hidden');
             resultPanel.classList.remove('hidden');
 
@@ -497,6 +539,88 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        function buildDiagnosticReportText(data) {
+            if (!data || !data.summary) {
+                return '';
+            }
+
+            const summary = data.summary || {};
+            const resolved = data.resolved || {};
+            const user = data.user || null;
+            const latestCompleted = data.payments?.latest_completed || null;
+            const latestPending = data.payments?.latest_pending || null;
+            const mikrotikReport = data.mikrotik_report || null;
+            const tempBypass = data.temp_bypass || null;
+            const warnings = Array.isArray(summary.warnings) ? summary.warnings : [];
+            const matchedBy = (resolved.matched_by || []).length ? resolved.matched_by.join(', ') : 'nenhum';
+
+            const lines = [
+                'RELATORIO DE DIAGNOSTICO WIFI TOCANTINS',
+                '',
+                `Resumo: ${summary.headline || 'Nao informado'}`,
+                `Detalhe: ${summary.detail || 'Nao informado'}`,
+                `Status: ${summary.status || 'Nao informado'}`,
+                '',
+                `Telefone informado: ${formatPhone(resolved.phone_input || '') || 'Nao informado'}`,
+                `Telefone do cadastro: ${formatPhone(resolved.phone_registered || '') || 'Nao informado'}`,
+                `Localizado por: ${matchedBy}`,
+                `IP atual: ${resolved.ip_address || 'Nao detectado'}`,
+                `MAC atual: ${resolved.mac_address || 'Nao detectado'}`,
+                '',
+                `Usuario ID: ${user?.id ?? 'Nao encontrado'}`,
+                `Status do cadastro: ${user?.status || 'Nao encontrado'}`,
+                `Expira em: ${formatDateForReport(user?.expires_at)}`,
+                '',
+                `Ultimo pagamento concluido: ${latestCompleted ? `R$ ${formatMoney(latestCompleted.amount)} em ${formatDateForReport(latestCompleted.paid_at || latestCompleted.created_at)}` : 'Nenhum'}`,
+                `PIX pendente: ${latestPending ? `R$ ${formatMoney(latestPending.amount)} em ${formatDateForReport(latestPending.created_at)}` : 'Nenhum'}`,
+                '',
+                `MikroTik ID: ${mikrotikReport?.mikrotik_id || 'Nao encontrado'}`,
+                `MAC no report MikroTik: ${mikrotikReport?.mac_address || 'Nao encontrado'}`,
+                `Ultimo report MikroTik: ${formatDateForReport(mikrotikReport?.reported_at)}`,
+                '',
+                `Bypass recente: ${tempBypass ? `${tempBypass.was_denied ? 'Negado' : 'Aprovado'} #${tempBypass.bypass_number || 0}` : 'Nenhum'}`,
+            ];
+
+            if (warnings.length) {
+                lines.push('', 'Alertas:');
+                warnings.forEach((warning, index) => lines.push(`${index + 1}. ${warning}`));
+            }
+
+            return lines.join('\n');
+        }
+
+        async function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            const copied = document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            if (!copied) {
+                throw new Error('copy_failed');
+            }
+        }
+
+        function showCopyFeedback(message, isError) {
+            copyFeedback.textContent = message;
+            copyFeedback.classList.remove('hidden', 'text-emerald-700', 'text-rose-700');
+            copyFeedback.classList.add(isError ? 'text-rose-700' : 'text-emerald-700');
+        }
+
+        function formatDateForReport(value) {
+            return value ? formatDate(value) : 'Nao informado';
         }
     </script>
 </body>
