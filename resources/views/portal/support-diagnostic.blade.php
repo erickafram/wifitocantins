@@ -51,37 +51,6 @@
 </head>
 <body class="font-sans text-brand-ink min-h-screen">
     <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <header class="mb-6 sm:mb-8">
-            <div class="glass-card rounded-[28px] p-6 sm:p-8 lg:p-10 overflow-hidden relative">
-                <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-brand-sand/60 blur-2xl"></div>
-                <div class="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-brand-mint/70 blur-2xl"></div>
-
-                <div class="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-                    <div>
-                        <p class="uppercase tracking-[0.24em] text-xs font-bold text-brand-pine mb-3">Suporte tecnico WiFi</p>
-                        <h1 class="text-3xl sm:text-4xl font-extrabold leading-tight max-w-3xl">Pagina de diagnostico para confirmar telefone, MAC, IP, pagamento e liberacao.</h1>
-                        <p class="mt-4 max-w-2xl text-sm sm:text-base text-slate-600 leading-7">
-                            Envie este link para o passageiro. Ele deve abrir a pagina conectado ao Wi-Fi do onibus. O sistema tenta localizar o cadastro pelo dispositivo atual e cruza isso com pagamento, sessao ativa e liberacao temporaria.
-                        </p>
-                    </div>
-
-                    <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                        <div class="rounded-2xl bg-slate-950 text-white px-4 py-4">
-                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Passo 1</p>
-                            <p class="mt-2 text-sm font-semibold">Conectar no Wi-Fi do onibus</p>
-                        </div>
-                        <div class="rounded-2xl bg-brand-pine text-white px-4 py-4">
-                            <p class="text-xs uppercase tracking-[0.18em] text-emerald-100">Passo 2</p>
-                            <p class="mt-2 text-sm font-semibold">Desligar 4G/5G antes de consultar</p>
-                        </div>
-                        <div class="rounded-2xl bg-white px-4 py-4 border border-slate-200">
-                            <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Passo 3</p>
-                            <p class="mt-2 text-sm font-semibold text-slate-800">Enviar print do resultado</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
 
         <main class="grid gap-6 lg:grid-cols-[380px_1fr]">
             <section class="glass-card rounded-[28px] p-5 sm:p-6 h-fit">
