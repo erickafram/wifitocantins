@@ -224,23 +224,43 @@ class MikrotikRemoteController extends Controller
                 return response()->json(['success' => true, 'logs' => []]);
             }
 
-            $content = file_get_contents($logFile);
-            $lines = explode("\n", $content);
-            $lines = array_slice($lines, -200); // Últimas 200 linhas
+            // Ler apenas as últimas ~100KB do arquivo (evita estouro de memória em logs grandes)
+            $maxBytes = 100 * 1024;
+            $fileSize = filesize($logFile);
+            $offset = max(0, $fileSize - $maxBytes);
 
-            // Filtrar apenas logs do MikroTik
-            $mikrotikLogs = array_filter($lines, function ($line) {
-                return stripos($line, 'mikrotik') !== false 
+            $handle = fopen($logFile, 'r');
+            if (!$handle) {
+                return response()->json(['success' => true, 'logs' => ['Não foi possível abrir o arquivo de log']]);
+            }
+
+            if ($offset > 0) {
+                fseek($handle, $offset);
+                fgets($handle); // Descarta linha parcial
+            }
+
+            $lines = [];
+            while (($line = fgets($handle)) !== false) {
+                $line = trim($line);
+                if ($line === '') continue;
+
+                if (stripos($line, 'mikrotik') !== false 
                     || stripos($line, 'sync') !== false
                     || stripos($line, 'PAGO') !== false
                     || stripos($line, 'liberar') !== false
                     || stripos($line, 'remover') !== false
-                    || stripos($line, 'MAC') !== false;
-            });
+                    || stripos($line, 'AUTO-HEAL') !== false
+                    || stripos($line, 'CROSS-REF') !== false
+                    || stripos($line, 'REATIVAD') !== false
+                    || stripos($line, 'MAC') !== false) {
+                    $lines[] = $line;
+                }
+            }
+            fclose($handle);
 
             return response()->json([
                 'success' => true,
-                'logs' => array_values(array_slice($mikrotikLogs, -50)),
+                'logs' => array_slice($lines, -50),
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
