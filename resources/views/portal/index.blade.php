@@ -406,6 +406,25 @@
                     </a>
                 </section>
 
+                <!-- SEÇÃO 2.5: Tutorial em vídeo -->
+                <section class="bg-white rounded-xl border border-gray-200 shadow-sm animate-fade-in">
+                    <button
+                        onclick="openVideoTutorial()"
+                        class="flex items-center justify-between p-4 w-full group"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center border border-red-200">
+                                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Como se conectar?</p>
+                                <p class="text-xs text-gray-400">Assista o passo a passo</p>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </section>
+
                 <!-- SEÇÃO 3: Serviços extras -->
                 <section class="animate-fade-in">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 px-1">Outros serviços</p>
@@ -443,6 +462,92 @@
             <p class="text-[11px] text-gray-300">WiFi Tocantins Express &bull; Internet via Starlink</p>
         </footer>
     </div>
+
+    <!-- Modal Vídeo Tutorial -->
+    <div id="video-tutorial-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex-col lg:items-center lg:justify-center">
+
+        <!-- DESKTOP: card centralizado -->
+        <div class="hidden lg:flex flex-col w-full max-w-2xl bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-5 py-3 bg-gray-800">
+                <p class="text-white font-semibold text-sm">Como se conectar ao WiFi</p>
+                <button
+                    onclick="closeVideoTutorial()"
+                    class="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    FECHAR
+                </button>
+            </div>
+            <video
+                id="tutorial-video-desktop"
+                class="w-full max-h-[70vh] object-contain bg-black"
+                autoplay
+                controls
+                playsinline
+                preload="auto"
+            >
+                <source src="{{ asset('videos/CaptivePortalVideo.mp4') }}" type="video/mp4">
+            </video>
+        </div>
+
+        <!-- MOBILE: tela cheia -->
+        <div class="flex flex-col flex-1 w-full lg:hidden">
+            <div class="flex items-center justify-between px-4 py-3 bg-gray-900 flex-shrink-0">
+                <p class="text-white font-semibold text-sm">Como se conectar ao WiFi</p>
+                <button
+                    onclick="closeVideoTutorial()"
+                    class="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    FECHAR
+                </button>
+            </div>
+            <div class="flex-1 flex items-center justify-center bg-black">
+                <video
+                    id="tutorial-video"
+                    class="w-full h-full object-contain"
+                    autoplay
+                    controls
+                    playsinline
+                    preload="auto"
+                >
+                    <source src="{{ asset('videos/CaptivePortalVideo.mp4') }}" type="video/mp4">
+                </video>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    function openVideoTutorial() {
+        const modal = document.getElementById('video-tutorial-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+
+        // Toca o vídeo correto dependendo do tamanho da tela
+        const isDesktop = window.innerWidth >= 1024;
+        const videoId = isDesktop ? 'tutorial-video-desktop' : 'tutorial-video';
+        const video = document.getElementById(videoId);
+        if (video) { video.currentTime = 0; video.play(); }
+    }
+    function closeVideoTutorial() {
+        const modal = document.getElementById('video-tutorial-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+
+        // Para os dois vídeos
+        ['tutorial-video', 'tutorial-video-desktop'].forEach(id => {
+            const v = document.getElementById(id);
+            if (v) v.pause();
+        });
+    }
+    // Fechar clicando no fundo (desktop)
+    document.getElementById('video-tutorial-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeVideoTutorial();
+    });
+    </script>
 
     <!-- Registration Modal -->
     <div id="registration-modal" class="fixed inset-0 bg-black/50 z-50 hidden backdrop-blur-sm">
