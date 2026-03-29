@@ -26,3 +26,6 @@ composer.phar
 *.sql
 /certificado/*.pfx
 /certificado/*.p12
+testar_scope_santander.sh
+testar_scope_santander_simples.php
+COMO_TESTAR_SCOPE.md
