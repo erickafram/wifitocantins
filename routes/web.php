@@ -130,7 +130,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
 
         Route::prefix('avaliacoes')->name('reviews.')->group(function () {
             Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
-            Route::put('/settings', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
+            Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
+            Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
+            Route::post('/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('send-test');
         });
 
         // Gerenciamento de Usuários

@@ -7,10 +7,17 @@
     <span class="text-tocantins-green font-medium">Avaliacoes</span>
 @endsection
 
-@section('page-title', 'Modulo de Avaliacoes')
+@section('page-title', 'Lista de Avaliacoes')
 
 @section('content')
 <div class="space-y-6">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-2">
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.reviews.index') }}" class="px-4 py-2 rounded-xl text-sm font-medium {{ request()->routeIs('admin.reviews.index') ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Lista</a>
+            <a href="{{ route('admin.reviews.settings') }}" class="px-4 py-2 rounded-xl text-sm font-medium {{ request()->routeIs('admin.reviews.settings*') ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Configuracoes</a>
+        </div>
+    </div>
+
     @if(session('success'))
     <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-2xl">
         {{ session('success') }}
@@ -40,121 +47,77 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div class="p-6 border-b border-gray-100">
-                <h2 class="text-lg font-bold text-gray-800">Configuracoes do envio</h2>
-                <p class="mt-1 text-sm text-gray-500">O scheduler dispara automaticamente todo dia as 06:30 e considera a janela de passageiros cadastrados entre 18:30 do dia anterior e 06:00 do dia atual.</p>
-            </div>
-
-            <form method="POST" action="{{ route('admin.reviews.settings.update') }}" class="p-6 space-y-6">
-                @csrf
-                @method('PUT')
-
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                    <div>
-                        <p class="font-semibold text-gray-800">Enviar link por WhatsApp</p>
-                        <p class="text-sm text-gray-500">Desative aqui se quiser pausar o disparo automatico das avaliacoes.</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="review_auto_send_enabled" value="1" class="sr-only peer" {{ $settings['review_auto_send_enabled'] ? 'checked' : '' }}>
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                    </label>
-                </div>
-
+    <div class="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensagem do WhatsApp</label>
-                    <p class="text-xs text-gray-500 mb-2">Variaveis disponiveis: <span class="font-mono">{nome}</span>, <span class="font-mono">{telefone}</span>, <span class="font-mono">{link}</span>, <span class="font-mono">{data_viagem}</span></p>
-                    <textarea name="review_message_template" rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent font-mono text-sm" required>{{ old('review_message_template', $settings['review_message_template']) }}</textarea>
-                    @error('review_message_template')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                        <option value="">Todos</option>
+                        <option value="answered" {{ request('status') === 'answered' ? 'selected' : '' }}>Respondidas</option>
+                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Aguardando resposta</option>
+                        <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Falha no envio</option>
+                        <option value="not_sent" {{ request('status') === 'not_sent' ? 'selected' : '' }}>Nao enviados</option>
+                    </select>
                 </div>
-
-                <div class="flex justify-end">
-                    <button type="submit" class="bg-gradient-to-r from-tocantins-green to-green-600 text-white px-5 py-3 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-lg">
-                        Salvar configuracoes
-                    </button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nota</label>
+                    <select name="rating" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                        <option value="">Todas</option>
+                        @for($rating = 1; $rating <= 5; $rating++)
+                        <option value="{{ $rating }}" {{ (string) request('rating') === (string) $rating ? 'selected' : '' }}>{{ $rating }} estrela{{ $rating > 1 ? 's' : '' }}</option>
+                        @endfor
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                    <input type="text" name="phone" value="{{ request('phone') }}" placeholder="63999999999" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="flex-1 bg-tocantins-green text-white py-2 px-4 rounded-xl font-medium hover:bg-green-700 transition-colors text-sm">Filtrar</button>
+                    <a href="{{ route('admin.reviews.index') }}" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors text-sm">Limpar</a>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lote de</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lote ate</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Respondida de</label>
+                    <input type="date" name="answered_from" value="{{ request('answered_from') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Respondida ate</label>
+                    <input type="date" name="answered_to" value="{{ request('answered_to') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
                 </div>
             </form>
         </div>
 
-        <div class="space-y-6">
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h2 class="text-lg font-bold text-gray-800">Janela do lote atual</h2>
-                <div class="mt-4 space-y-3 text-sm text-gray-600">
-                    <div class="flex items-center justify-between">
-                        <span>Lote</span>
-                        <span class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($currentWindow['batch_date'])->format('d/m/Y') }}</span>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h2 class="text-lg font-bold text-gray-800">Distribuicao das notas</h2>
+            <div class="mt-4 space-y-3">
+                @for($rating = 5; $rating >= 1; $rating--)
+                <div>
+                    <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
+                        <span>{{ $rating }} estrela{{ $rating > 1 ? 's' : '' }}</span>
+                        <span>{{ $distribution[$rating] ?? 0 }}</span>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span>Inicio</span>
-                        <span class="font-semibold text-gray-900">{{ $currentWindow['start']->format('d/m/Y H:i') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Fim</span>
-                        <span class="font-semibold text-gray-900">{{ $currentWindow['end']->format('d/m/Y H:i') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Disparo</span>
-                        <span class="font-semibold text-gray-900">{{ $currentWindow['dispatch_at']->format('d/m/Y H:i') }}</span>
+                    <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div class="h-full bg-amber-400" style="width: {{ $stats['answered'] > 0 ? (($distribution[$rating] ?? 0) / $stats['answered']) * 100 : 0 }}%"></div>
                     </div>
                 </div>
+                @endfor
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h2 class="text-lg font-bold text-gray-800">Distribuicao das notas</h2>
-                <div class="mt-4 space-y-3">
-                    @for($rating = 5; $rating >= 1; $rating--)
-                    <div>
-                        <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
-                            <span>{{ $rating }} estrela{{ $rating > 1 ? 's' : '' }}</span>
-                            <span>{{ $distribution[$rating] ?? 0 }}</span>
-                        </div>
-                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
-                            <div class="h-full bg-amber-400" style="width: {{ $stats['answered'] > 0 ? (($distribution[$rating] ?? 0) / $stats['answered']) * 100 : 0 }}%"></div>
-                        </div>
-                    </div>
-                    @endfor
-                </div>
+            <div class="mt-6 pt-6 border-t border-gray-100">
+                <a href="{{ route('admin.reviews.settings') }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium transition-colors">
+                    Abrir configuracoes e teste manual
+                </a>
             </div>
         </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-5 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-                    <option value="">Todos</option>
-                    <option value="answered" {{ request('status') === 'answered' ? 'selected' : '' }}>Respondidas</option>
-                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Aguardando resposta</option>
-                    <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Falha no envio</option>
-                    <option value="not_sent" {{ request('status') === 'not_sent' ? 'selected' : '' }}>Nao enviados</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nota</label>
-                <select name="rating" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-                    <option value="">Todas</option>
-                    @for($rating = 1; $rating <= 5; $rating++)
-                    <option value="{{ $rating }}" {{ (string) request('rating') === (string) $rating ? 'selected' : '' }}>{{ $rating }} estrela{{ $rating > 1 ? 's' : '' }}</option>
-                    @endfor
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data inicial</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data final</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-            </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" class="flex-1 bg-tocantins-green text-white py-2 px-4 rounded-xl font-medium hover:bg-green-700 transition-colors text-sm">Filtrar</button>
-                <a href="{{ route('admin.reviews.index') }}" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors text-sm">Limpar</a>
-            </div>
-        </form>
     </div>
 
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">

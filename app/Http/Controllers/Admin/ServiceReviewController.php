@@ -5,10 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceReview;
 use App\Models\WhatsappSetting;
+use App\Services\ServiceReviewWhatsappService;
 use Illuminate\Http\Request;
 
 class ServiceReviewController extends Controller
 {
+    public function __construct(
+        protected ServiceReviewWhatsappService $reviewWhatsappService
+    ) {
+    }
+
     public function index(Request $request)
     {
         $query = ServiceReview::with(['user', 'whatsappMessage']);
@@ -27,12 +33,24 @@ class ServiceReviewController extends Controller
             $query->where('rating', (int) $request->rating);
         }
 
+        if ($request->filled('phone')) {
+            $query->where('phone', 'like', '%' . $request->phone . '%');
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('batch_date', '>=', $request->date_from);
         }
 
         if ($request->filled('date_to')) {
             $query->whereDate('batch_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('answered_from')) {
+            $query->whereDate('submitted_at', '>=', $request->answered_from);
+        }
+
+        if ($request->filled('answered_to')) {
+            $query->whereDate('submitted_at', '<=', $request->answered_to);
         }
 
         $reviews = $query
@@ -55,20 +73,25 @@ class ServiceReviewController extends Controller
                 $rating => ServiceReview::where('rating', $rating)->count(),
             ]);
 
+        return view('admin.reviews.index', compact(
+            'reviews',
+            'stats',
+            'distribution'
+        ));
+    }
+
+    public function settings()
+    {
         $settings = [
             'review_auto_send_enabled' => WhatsappSetting::isReviewAutoSendEnabled(),
             'review_message_template' => WhatsappSetting::getReviewMessageTemplate(),
+            'is_connected' => WhatsappSetting::isConnected(),
+            'connected_phone' => WhatsappSetting::getConnectedPhone(),
         ];
 
         $currentWindow = ServiceReview::resolveBatchWindow(today());
 
-        return view('admin.reviews.index', compact(
-            'reviews',
-            'stats',
-            'distribution',
-            'settings',
-            'currentWindow'
-        ));
+        return view('admin.reviews.settings', compact('settings', 'currentWindow'));
     }
 
     public function updateSettings(Request $request)
@@ -85,7 +108,43 @@ class ServiceReviewController extends Controller
         WhatsappSetting::set('review_message_template', $request->review_message_template);
 
         return redirect()
-            ->route('admin.reviews.index')
+            ->route('admin.reviews.settings')
             ->with('success', 'Configuracoes do modulo de avaliacao atualizadas com sucesso!');
+    }
+
+    public function sendTest(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string|min:10|max:20',
+            'name' => 'nullable|string|max:255',
+            'batch_date' => 'nullable|date',
+        ], [
+            'phone.required' => 'Informe o numero que vai receber o teste.',
+            'phone.min' => 'O numero precisa ter pelo menos 10 digitos.',
+            'batch_date.date' => 'A data do lote precisa ser valida.',
+        ]);
+
+        $result = $this->reviewWhatsappService->sendManualTest(
+            $validated['phone'],
+            $validated['name'] ?? null,
+            $validated['batch_date'] ?? today()->toDateString()
+        );
+
+        if (! $result['success']) {
+            return redirect()
+                ->route('admin.reviews.settings')
+                ->withInput()
+                ->with('error', 'Falha ao enviar teste: ' . ($result['error'] ?? 'erro desconhecido'));
+        }
+
+        $phone = $result['review']->phone ?: $validated['phone'];
+        $linkedUserMessage = $result['matched_user']
+            ? ' Usuario vinculado automaticamente ao cadastro existente.'
+            : ' O envio foi gerado como teste sem vinculo a usuario cadastrado.';
+
+        return redirect()
+            ->route('admin.reviews.settings')
+            ->with('success', 'Link de avaliacao enviado para ' . $phone . '.' . $linkedUserMessage)
+            ->with('manual_review_link', $result['link']);
     }
 }

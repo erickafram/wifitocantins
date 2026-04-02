@@ -4,13 +4,11 @@ namespace App\Console\Commands;
 
 use App\Models\ServiceReview;
 use App\Models\User;
-use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
+use App\Services\ServiceReviewWhatsappService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class SendReviewWhatsappMessages extends Command
 {
@@ -20,15 +18,7 @@ class SendReviewWhatsappMessages extends Command
 
     protected $description = 'Envia links de avaliacao via WhatsApp para passageiros do lote 18:30-06:00';
 
-    protected string $baileysServerUrl;
-
-    public function __construct()
-    {
-        parent::__construct();
-        $this->baileysServerUrl = env('BAILEYS_SERVER_URL', 'http://localhost:3001');
-    }
-
-    public function handle(): int
+    public function handle(ServiceReviewWhatsappService $reviewWhatsappService): int
     {
         if (! $this->option('force') && ! WhatsappSetting::isReviewAutoSendEnabled()) {
             $this->info('Envio de avaliacao via WhatsApp esta desabilitado. Use --force para ignorar o toggle.');
@@ -53,8 +43,6 @@ class SendReviewWhatsappMessages extends Command
         }
 
         $window = ServiceReview::resolveBatchWindow($batchDate);
-        $messageTemplate = WhatsappSetting::getReviewMessageTemplate();
-
         $this->info(sprintf(
             'Buscando passageiros cadastrados entre %s e %s...',
             $window['start']->format('d/m/Y H:i'),
@@ -79,80 +67,24 @@ class SendReviewWhatsappMessages extends Command
         $skipped = 0;
 
         foreach ($users as $user) {
-            $review = ServiceReview::firstOrNew([
-                'batch_date' => $window['batch_date'],
-                'user_id' => $user->id,
-            ]);
-
-            if (! $review->exists) {
-                $review->token = (string) Str::uuid();
-            }
-
-            $review->fill([
-                'phone' => $user->phone,
-                'registration_at' => $user->registered_at,
-            ]);
-            $review->save();
+            $review = $reviewWhatsappService->prepareReviewForUser($user, $batchDate);
 
             if ($review->whatsapp_status === 'sent') {
                 $skipped++;
                 continue;
             }
 
-            $phone = WhatsappMessage::formatPhone($user->phone);
-            $digits = preg_replace('/\D/', '', $phone ?? '');
+            $result = $reviewWhatsappService->sendPreparedReview($review, $user->name ?: 'Passageiro');
 
-            if (strlen($digits) < 12) {
-                $review->update([
-                    'whatsapp_status' => 'skipped',
-                    'whatsapp_error_message' => 'Telefone invalido para envio via WhatsApp.',
-                ]);
-                $skipped++;
-                continue;
-            }
-
-            $link = route('reviews.show', $review->token);
-            $message = strtr($messageTemplate, [
-                '{nome}' => $user->name ?: 'Passageiro',
-                '{telefone}' => $user->phone ?: $digits,
-                '{link}' => $link,
-                '{data_viagem}' => Carbon::parse($window['batch_date'])->format('d/m/Y'),
-            ]);
-
-            $whatsappMessage = WhatsappMessage::create([
-                'user_id' => $user->id,
-                'phone' => $phone,
-                'message' => $message,
-                'status' => 'pending',
-            ]);
-
-            try {
-                $response = Http::timeout(30)->post($this->baileysServerUrl . '/send', [
-                    'phone' => $phone,
-                    'message' => $message,
-                ]);
-
-                if ($response->successful()) {
-                    $data = $response->json();
-                    $whatsappMessage->markAsSent($data['messageId'] ?? null);
-                    $review->markWhatsappSent($whatsappMessage);
-                    $sent++;
-                    $this->line("  ✓ Link enviado para {$phone}");
-                } else {
-                    $errorMessage = $response->body();
-                    $whatsappMessage->markAsFailed($errorMessage);
-                    $review->markWhatsappFailed($errorMessage, $whatsappMessage);
-                    $failed++;
-                    $this->error("  ✗ Falha ao enviar para {$phone}");
-                }
-
-                usleep(500000);
-            } catch (\Throwable $exception) {
-                $whatsappMessage->markAsFailed($exception->getMessage());
-                $review->markWhatsappFailed($exception->getMessage(), $whatsappMessage);
+            if ($result['success']) {
+                $sent++;
+                $this->line('  ✓ Link enviado para ' . ($review->phone ?: $user->phone));
+            } else {
                 $failed++;
-                $this->error("  ✗ Erro ao enviar para {$phone}: {$exception->getMessage()}");
+                $this->error('  ✗ Falha ao enviar para ' . ($review->phone ?: $user->phone));
             }
+
+            usleep(500000);
         }
 
         $this->newLine();
