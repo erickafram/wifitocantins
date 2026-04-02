@@ -33,7 +33,7 @@
                             Feedback Rápido
                         </p>
                         <h1 class="text-base sm:text-lg font-bold tracking-tight leading-snug">
-                            Como foi sua experiência <br class="hidden sm:block"> durante a viagem?
+                            Descreva sua experiência durante a viagem e, se necessário, explique o motivo da sua nota.
                         </h1>
                         <p class="mt-1.5 text-[11px] text-white/70 font-medium">Atendimento, internet e suporte geral.</p>
                     </div>
