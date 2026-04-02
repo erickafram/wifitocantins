@@ -13,39 +13,51 @@
 </head>
 <body class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(11,116,85,0.18),_transparent_35%),linear-gradient(180deg,#f6f8ef_0%,#fffdf8_55%,#ffffff_100%)] text-slate-800">
     <div class="max-w-md mx-auto px-4 py-4 sm:py-6">
-        <div class="mb-4 flex items-center justify-between">
-            <div class="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur px-3 py-1.5 shadow-sm border border-white text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-800">
-                <span>Pesquisa</span>
-                <span class="w-1 h-1 rounded-full bg-emerald-700"></span>
-                <span>Viagem</span>
+        <div class="mb-5 flex items-center justify-between">
+            <div class="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-md px-3.5 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-white text-[10px] font-bold uppercase tracking-wider text-emerald-900">
+                <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Avaliação de Serviço</span>
             </div>
-            <div class="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-xs font-semibold">
-                Leva 20s
+            <div class="rounded-full bg-amber-50 text-amber-700 px-3 py-1 text-[11px] font-bold border border-amber-100/50">
+                ⏱️ 15 seg
             </div>
         </div>
 
         <div class="bg-white/92 backdrop-blur rounded-[28px] shadow-[0_18px_50px_rgba(15,23,42,0.08)] border border-white overflow-hidden">
-            <div class="px-4 pt-4 pb-3 bg-[linear-gradient(135deg,#0f766e_0%,#166534_55%,#14532d_100%)] text-white">
-                <div class="flex items-start justify-between gap-3">
+            <div class="px-5 py-5 bg-[linear-gradient(135deg,#064e3b_0%,#065f46_100%)] text-white relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
+                <div class="flex items-center justify-between gap-4 relative z-10">
                     <div class="min-w-0">
-                        <p class="text-[10px] uppercase tracking-[0.18em] text-white/65">Pesquisa rapida</p>
-                        <h1 class="mt-1 text-lg sm:text-xl font-extrabold tracking-tight leading-tight">Descreva sua experiência durante a viagem e, se necessário, explique o motivo da sua nota.</h1>
-                        <p class="mt-1 text-xs text-white/80">Atendimento, internet e experiencia geral.</p>
+                        <p class="text-[9px] uppercase tracking-[0.2em] font-bold text-white/50 mb-1 flex items-center gap-1.5">
+                            <span class="w-1 h-3 rounded-full bg-emerald-400/60"></span>
+                            Feedback Rápido
+                        </p>
+                        <h1 class="text-base sm:text-lg font-bold tracking-tight leading-snug">
+                            Como foi sua experiência <br class="hidden sm:block"> durante a viagem?
+                        </h1>
+                        <p class="mt-1.5 text-[11px] text-white/70 font-medium">Atendimento, internet e suporte geral.</p>
                     </div>
-                    <div class="w-10 h-10 shrink-0 rounded-2xl bg-white/12 flex items-center justify-center text-xl">🚌</div>
+                    <div class="w-11 h-11 shrink-0 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-2xl shadow-inner shadow-white/5">
+                        🚌
+                    </div>
                 </div>
             </div>
 
             <div class="px-5 py-4">
-                <div class="mb-4 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
+                <div class="mb-5 rounded-[20px] bg-slate-50/50 border border-slate-100 p-4">
                     <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Passageiro</p>
-                            <p class="mt-1 text-sm font-bold text-slate-800">{{ $review->user?->name ?: 'Passageiro da viagem' }}</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-sm font-bold">
+                                {{ substr($review->user?->name ?: 'P', 0, 1) }}
+                            </div>
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Passageiro</p>
+                                <p class="text-sm font-bold text-slate-800 tracking-tight">{{ $review->user?->name ?: 'Visitante' }}</p>
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Viagem</p>
-                            <p class="mt-1 text-sm font-semibold text-slate-700">{{ $review->registration_at?->format('d/m H:i') ?: 'Nao informado' }}</p>
+                        <div class="text-right border-l border-slate-200 pl-4">
+                            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Horário</p>
+                            <p class="text-sm font-semibold text-slate-600">{{ $review->registration_at?->format('H:i') ?: '--:--' }}</p>
                         </div>
                     </div>
                 </div>
@@ -95,9 +107,9 @@
                                     class="sr-only"
                                     {{ (int) old('rating') === $rating ? 'checked' : '' }}
                                 >
-                                <label for="rating-{{ $rating }}" data-rating="{{ $rating }}" class="rating-card flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-1 py-3 text-center transition-all duration-150 active:scale-[0.98]">
-                                    <span class="rating-star text-2xl text-slate-300">★</span>
-                                    <span class="mt-1 text-sm font-extrabold text-slate-700">{{ $rating }}</span>
+                                <label for="rating-{{ $rating }}" data-rating="{{ $rating }}" class="rating-card flex flex-col items-center justify-center rounded-[20px] border border-slate-100 bg-white px-1 py-4 text-center transition-all duration-200 cursor-pointer active:scale-[0.95] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                    <span class="rating-star text-2xl text-slate-200 transition-colors">★</span>
+                                    <span class="mt-1 text-[13px] font-bold text-slate-500">{{ $rating }}</span>
                                 </label>
                             </div>
                             @endfor
@@ -125,12 +137,15 @@
                         @enderror
                     </div>
 
-                    <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600">
-                        Resposta rapida, vinculada a esta viagem e enviada uma unica vez.
+                    <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4 text-center">
+                        <p class="text-[11px] text-slate-500 font-medium">
+                            <span class="inline-block w-1 h-1 rounded-full bg-emerald-400 mr-1.5 mb-0.5"></span>
+                            Sua opinião é anônima e ajuda a melhorar nossos serviços.
+                        </p>
                     </div>
 
-                    <button type="submit" class="w-full py-3 rounded-2xl bg-[linear-gradient(135deg,#0f766e_0%,#166534_100%)] text-white font-bold text-[15px] shadow-lg hover:opacity-95 transition-all">
-                        Enviar opiniao
+                    <button type="submit" class="w-full py-4 rounded-[20px] bg-[linear-gradient(135deg,#059669_0%,#047857_100%)] text-white font-bold text-base shadow-[0_10px_25px_-5px_rgba(5,150,105,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(5,150,105,0.5)] active:scale-[0.98] transition-all duration-200">
+                        Enviar Avaliação
                     </button>
                 </form>
                 @endif
@@ -161,20 +176,23 @@
                 const active = value !== null && labelValue <= value;
                 const star = label.querySelector('.rating-star');
 
-                label.classList.toggle('bg-amber-50', active);
-                label.classList.toggle('border-amber-300', active);
-                label.classList.toggle('shadow-sm', active);
+                label.classList.toggle('bg-amber-50/50', active);
+                label.classList.toggle('border-amber-200', active);
+                label.classList.toggle('shadow-md', active);
+                label.classList.toggle('shadow-amber-200/20', active);
                 label.classList.toggle('bg-white', !active);
-                label.classList.toggle('border-slate-200', !active);
+                label.classList.toggle('border-slate-100', !active);
 
                 if (star) {
                     star.classList.toggle('text-amber-400', active);
-                    star.classList.toggle('text-slate-300', !active);
+                    star.classList.toggle('text-slate-200', !active);
                 }
             });
 
             if (ratingHint) {
                 ratingHint.textContent = value !== null ? ratingMap[value] : 'Toque nas estrelas';
+                ratingHint.classList.toggle('text-amber-600', value !== null);
+                ratingHint.classList.toggle('text-slate-500', value === null);
             }
 
             if (value !== null && value <= 3) {
