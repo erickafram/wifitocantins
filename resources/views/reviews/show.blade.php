@@ -29,7 +29,7 @@
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="text-[10px] uppercase tracking-[0.18em] text-white/65">Pesquisa rapida</p>
-                        <h1 class="mt-1 text-lg sm:text-xl font-extrabold tracking-tight leading-tight">Avalie o servico oferecido durante a viagem</h1>
+                        <h1 class="mt-1 text-lg sm:text-xl font-extrabold tracking-tight leading-tight">Descreva sua experiência durante a viagem e, se necessário, explique o motivo da sua nota.</h1>
                         <p class="mt-1 text-xs text-white/80">Atendimento, internet e experiencia geral.</p>
                     </div>
                     <div class="w-10 h-10 shrink-0 rounded-2xl bg-white/12 flex items-center justify-center text-xl">🚌</div>
