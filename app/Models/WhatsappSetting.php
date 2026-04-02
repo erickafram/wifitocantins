@@ -95,7 +95,7 @@ class WhatsappSetting extends Model
     {
         return static::get(
             'review_message_template',
-            "Ola, {nome}! Sua viagem terminou e queremos ouvir voce.\n\nAvalie o servico do WiFi Tocantins de 1 a 5 estrelas no link abaixo:\n{link}\n\nSe sua nota for 1, 2 ou 3, voce podera informar o motivo da avaliacao.\n\nData da viagem: {data_viagem}"
+            "Ola, {nome}! Queremos saber sua opiniao sobre o atendimento e o servico oferecido durante a viagem.\n\nLeva menos de 20 segundos para responder:\n{link}\n\nSua nota vai de 1 a 5 estrelas. Se a nota for 1, 2 ou 3, voce podera contar o que aconteceu.\n\nData da viagem: {data_viagem}"
         );
     }
 

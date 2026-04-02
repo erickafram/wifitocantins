@@ -62,8 +62,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensagem do WhatsApp</label>
-                    <p class="text-xs text-gray-500 mb-2">Variaveis disponiveis: <span class="font-mono">{nome}</span>, <span class="font-mono">{telefone}</span>, <span class="font-mono">{link}</span>, <span class="font-mono">{data_viagem}</span></p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensagem da pesquisa</label>
+                    <p class="text-xs text-gray-500 mb-2">Use essa mensagem para pedir a opiniao do passageiro sobre atendimento, servico e experiencia durante a viagem. Variaveis: <span class="font-mono">{nome}</span>, <span class="font-mono">{telefone}</span>, <span class="font-mono">{link}</span>, <span class="font-mono">{data_viagem}</span></p>
                     <textarea name="review_message_template" rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent font-mono text-sm" required>{{ old('review_message_template', $settings['review_message_template']) }}</textarea>
                     @error('review_message_template')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -117,7 +117,7 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="p-6 border-b border-gray-100">
             <h2 class="text-lg font-bold text-gray-800">Disparo manual para teste</h2>
-            <p class="mt-1 text-sm text-gray-500">Use este formulario para enviar o link de avaliacao para um numero especifico e testar o fluxo imediatamente.</p>
+            <p class="mt-1 text-sm text-gray-500">Use este formulario para enviar a pesquisa de opiniao para um numero especifico e testar o fluxo imediatamente.</p>
         </div>
 
         <form method="POST" action="{{ route('admin.reviews.send-test') }}" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

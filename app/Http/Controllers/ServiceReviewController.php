@@ -41,7 +41,7 @@ class ServiceReviewController extends Controller
         if ($rating <= 3 && $reason === '') {
             return back()
                 ->withErrors([
-                    'reason' => 'Informe o motivo da sua avaliacao quando a nota for 1, 2 ou 3 estrelas.',
+                    'reason' => 'Conte o que podemos melhorar no atendimento ou no servico quando a nota for 1, 2 ou 3 estrelas.',
                 ])
                 ->withInput();
         }
@@ -55,6 +55,6 @@ class ServiceReviewController extends Controller
 
         return redirect()
             ->route('reviews.show', $review->token)
-            ->with('success', 'Obrigado! Sua avaliacao foi registrada com sucesso.');
+            ->with('success', 'Obrigado! Sua opiniao sobre o atendimento e o servico foi registrada.');
     }
 }
