@@ -81,6 +81,25 @@ class WhatsappSetting extends Model
     }
 
     /**
+     * Verificar se envio automatico de avaliacao esta habilitado
+     */
+    public static function isReviewAutoSendEnabled()
+    {
+        return static::get('review_auto_send_enabled', 'true') === 'true';
+    }
+
+    /**
+     * Obter template da mensagem de avaliacao
+     */
+    public static function getReviewMessageTemplate()
+    {
+        return static::get(
+            'review_message_template',
+            "Ola, {nome}! Sua viagem terminou e queremos ouvir voce.\n\nAvalie o servico do WiFi Tocantins de 1 a 5 estrelas no link abaixo:\n{link}\n\nSe sua nota for 1, 2 ou 3, voce podera informar o motivo da avaliacao.\n\nData da viagem: {data_viagem}"
+        );
+    }
+
+    /**
      * Obter QR Code
      */
     public static function getQrCode()

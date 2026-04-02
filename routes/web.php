@@ -14,6 +14,8 @@ use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\SupportDiagnosticController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
+use App\Http\Controllers\Admin\ServiceReviewController as AdminServiceReviewController;
+use App\Http\Controllers\ServiceReviewController;
 use App\Http\Controllers\Admin\WhatsappController;
 use App\Http\Controllers\DriverVoucherController;
 
@@ -51,6 +53,9 @@ Route::get('/portal', function () {
 Route::get('/reativar', function () {
     return view('portal.reativar');
 })->name('portal.reativar');
+
+Route::get('/avaliacao/{token}', [ServiceReviewController::class, 'show'])->name('reviews.show');
+Route::post('/avaliacao/{token}', [ServiceReviewController::class, 'store'])->name('reviews.store');
 
 // Rotas de Autenticação
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -121,6 +126,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
             Route::post('/send', [WhatsappController::class, 'sendMessage'])->name('send');
             Route::post('/send-pending', [WhatsappController::class, 'sendToPendingPayments'])->name('send-pending');
             Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
+        });
+
+        Route::prefix('avaliacoes')->name('reviews.')->group(function () {
+            Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
+            Route::put('/settings', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
         });
 
         // Gerenciamento de Usuários

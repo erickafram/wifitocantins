@@ -129,6 +129,16 @@
                     </span>
                     <span class="ml-3 font-medium text-sm">WhatsApp</span>
                 </a>
+
+                <a href="{{ route('admin.reviews.index') }}" onclick="closeSidebarOnMobile()" 
+                   class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.reviews*') ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                    <span class="w-9 h-9 flex items-center justify-center rounded-lg {{ request()->routeIs('admin.reviews*') ? 'bg-white/20' : 'bg-white/5 group-hover:bg-white/10' }} transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.124 3.457a1 1 0 00.95.69h3.636c.969 0 1.371 1.24.588 1.81l-2.942 2.137a1 1 0 00-.364 1.118l1.124 3.457c.3.921-.755 1.688-1.539 1.118l-2.942-2.137a1 1 0 00-1.176 0l-2.942 2.137c-.783.57-1.838-.197-1.539-1.118l1.124-3.457a1 1 0 00-.364-1.118L2.75 8.884c-.783-.57-.38-1.81.588-1.81h3.636a1 1 0 00.95-.69l1.124-3.457z"></path>
+                        </svg>
+                    </span>
+                    <span class="ml-3 font-medium text-sm">Avaliacoes</span>
+                </a>
                 @endif
             </div>
 

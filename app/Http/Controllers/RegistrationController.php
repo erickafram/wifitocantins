@@ -268,6 +268,7 @@ class RegistrationController extends Controller
                 // Atualizar dados (seguro pois já verificamos que MAC não existe em outro usuário)
                 $updateData = [
                     'phone' => $cleanPhone,
+                    'registered_at' => now(),
                 ];
 
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
@@ -294,6 +295,7 @@ class RegistrationController extends Controller
             if ($existingUserByPhone) {
                 // Usuário já existe com este telefone - atualizar MAC/IP (seguro pois já verificamos MAC)
                 $updateData = ['phone' => $cleanPhone];
+                $updateData['registered_at'] = now();
                 
                 if (HotspotIdentity::shouldReplaceMac($existingUserByPhone->mac_address, $macAddress)) {
                     $updateData['mac_address'] = $macAddress;
