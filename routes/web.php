@@ -102,6 +102,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::delete('/{id}', [App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('destroy')->where('id', '[0-9]+');
         Route::get('/{id}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getMessages'])->name('messages')->where('id', '[0-9]+');
     });
+
+    Route::prefix('avaliacoes')->name('reviews.')->group(function () {
+        Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
+        Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
+        Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('send-test');
+    });
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
@@ -126,13 +133,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
             Route::post('/send', [WhatsappController::class, 'sendMessage'])->name('send');
             Route::post('/send-pending', [WhatsappController::class, 'sendToPendingPayments'])->name('send-pending');
             Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
-        });
-
-        Route::prefix('avaliacoes')->name('reviews.')->group(function () {
-            Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
-            Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
-            Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
-            Route::post('/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('send-test');
         });
 
         // Gerenciamento de Usuários

@@ -25,19 +25,14 @@
         </div>
 
         <div class="bg-white/92 backdrop-blur rounded-[28px] shadow-[0_18px_50px_rgba(15,23,42,0.08)] border border-white overflow-hidden">
-            <div class="px-5 pt-5 pb-4 bg-[linear-gradient(135deg,#0f766e_0%,#166534_55%,#14532d_100%)] text-white">
+            <div class="px-4 pt-4 pb-3 bg-[linear-gradient(135deg,#0f766e_0%,#166534_55%,#14532d_100%)] text-white">
                 <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <p class="text-[11px] uppercase tracking-[0.22em] text-white/70">Sua opiniao importa</p>
-                        <h1 class="mt-2 text-2xl font-extrabold tracking-tight leading-tight">Como foi o atendimento e o servico da sua viagem?</h1>
+                    <div class="min-w-0">
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-white/65">Pesquisa rapida</p>
+                        <h1 class="mt-1 text-lg sm:text-xl font-extrabold tracking-tight leading-tight">Avalie o servico oferecido durante a viagem</h1>
+                        <p class="mt-1 text-xs text-white/80">Atendimento, internet e experiencia geral.</p>
                     </div>
-                    <div class="w-12 h-12 shrink-0 rounded-2xl bg-white/12 flex items-center justify-center text-2xl">🚌</div>
-                </div>
-
-                <div class="mt-4 flex flex-wrap gap-2 text-xs">
-                    <span class="px-2.5 py-1 rounded-full bg-white/12 text-white/90">Atendimento</span>
-                    <span class="px-2.5 py-1 rounded-full bg-white/12 text-white/90">Servico</span>
-                    <span class="px-2.5 py-1 rounded-full bg-white/12 text-white/90">Experiencia</span>
+                    <div class="w-10 h-10 shrink-0 rounded-2xl bg-white/12 flex items-center justify-center text-xl">🚌</div>
                 </div>
             </div>
 

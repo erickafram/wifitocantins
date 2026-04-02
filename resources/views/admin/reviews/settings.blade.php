@@ -86,7 +86,11 @@
                         <p class="font-semibold {{ $settings['is_connected'] ? 'text-green-800' : 'text-red-800' }}">{{ $settings['is_connected'] ? 'Conectado' : 'Desconectado' }}</p>
                         <p class="text-sm {{ $settings['is_connected'] ? 'text-green-600' : 'text-red-600' }}">{{ $settings['connected_phone'] ?: 'Nenhum numero conectado' }}</p>
                     </div>
+                    @if(Auth::user()->role === 'admin')
                     <a href="{{ route('admin.whatsapp.index') }}" class="text-sm font-medium {{ $settings['is_connected'] ? 'text-green-700' : 'text-red-700' }} underline">Abrir modulo WhatsApp</a>
+                    @else
+                    <span class="text-xs font-medium {{ $settings['is_connected'] ? 'text-green-700' : 'text-red-700' }}">Acompanhamento disponivel</span>
+                    @endif
                 </div>
             </div>
 

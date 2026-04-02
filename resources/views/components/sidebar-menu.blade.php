@@ -129,6 +129,7 @@
                     </span>
                     <span class="ml-3 font-medium text-sm">WhatsApp</span>
                 </a>
+                @endif
 
                 <a href="{{ route('admin.reviews.index') }}" onclick="closeSidebarOnMobile()" 
                    class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.reviews*') ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
@@ -139,7 +140,6 @@
                     </span>
                     <span class="ml-3 font-medium text-sm">Avaliacoes</span>
                 </a>
-                @endif
             </div>
 
             <!-- Seção: Sistema (Apenas Admin) -->
