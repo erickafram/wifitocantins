@@ -416,4 +416,45 @@ class MikrotikRemoteController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Atualiza geolocalização de todos os ônibus via IP público
+     */
+    public function updateBusLocations()
+    {
+        try {
+            $buses = \App\Models\Bus::whereNotNull('last_public_ip')
+                ->where('last_sync_at', '>', now()->subHours(12))
+                ->get();
+
+            $updated = 0;
+            foreach ($buses as $bus) {
+                try {
+                    $resp = \Illuminate\Support\Facades\Http::timeout(5)
+                        ->get("http://ip-api.com/json/{$bus->last_public_ip}?fields=status,city,regionName,lat,lon&lang=pt-BR");
+
+                    if ($resp->successful()) {
+                        $data = $resp->json();
+                        if (($data['status'] ?? '') === 'success') {
+                            $bus->update([
+                                'last_city' => $data['city'] ?? null,
+                                'last_state' => $data['regionName'] ?? null,
+                                'last_lat' => $data['lat'] ?? null,
+                                'last_lng' => $data['lon'] ?? null,
+                            ]);
+                            $updated++;
+                        }
+                    }
+                    // ip-api.com free: max 45 req/min
+                    usleep(1500000);
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            return response()->json(['success' => true, 'updated' => $updated, 'total' => $buses->count()]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

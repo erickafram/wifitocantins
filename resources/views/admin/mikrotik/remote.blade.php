@@ -747,6 +747,12 @@ async function loadBuses() {
     container.innerHTML = '<p class="text-center text-muted text-sm py-8">Carregando...</p>';
 
     try {
+        // Atualizar geolocalizações primeiro
+        await fetch('/admin/mikrotik/remote/buses/locations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+        }).catch(() => {});
+
         const resp = await fetch('/admin/mikrotik/remote/buses');
         const data = await resp.json();
 
@@ -767,20 +773,39 @@ async function loadBuses() {
             return;
         }
 
-        container.innerHTML = buses.map(bus => `
+        container.innerHTML = buses.map(bus => {
+            const isOnline = bus.last_sync_at && (new Date() - new Date(bus.last_sync_at)) < 600000; // 10 min
+            const syncAgo = bus.last_sync_at ? timeAgo(new Date(bus.last_sync_at)) : 'Nunca';
+            const location = bus.last_city ? `${bus.last_city}, ${bus.last_state || ''}` : 'Localização desconhecida';
+            const hasLocation = bus.last_lat && bus.last_lng;
+            const mapUrl = hasLocation ? `https://www.google.com/maps?q=${bus.last_lat},${bus.last_lng}` : '#';
+
+            return `
             <div class="bg-surface border border-border rounded-xl p-4 hover:shadow-hover transition-all" id="bus-${bus.id}">
                 <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-green-dark to-green rounded-xl flex items-center justify-center flex-shrink-0 shadow-card">
+                    <div class="w-10 h-10 bg-gradient-to-br ${isOnline ? 'from-green-dark to-green' : 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center flex-shrink-0 shadow-card">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
                             <input type="text" value="${bus.name}" id="bus-name-${bus.id}"
                                    class="flex-1 px-3 py-1.5 text-sm font-bold text-ink bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${isOnline ? 'bg-green/10 text-green' : 'bg-surface text-muted border border-border'}">${isOnline ? 'Online' : 'Offline'}</span>
                             <button onclick="saveBus(${bus.id})" class="px-3 py-1.5 bg-green hover:bg-green-light text-white font-semibold text-[10px] rounded-lg transition-colors shadow-card">
                                 Salvar
                             </button>
                         </div>
+
+                        <!-- Localização -->
+                        <div class="flex items-center gap-2 mb-2 p-2 bg-white border border-border rounded-lg">
+                            <svg class="w-4 h-4 ${hasLocation ? 'text-red' : 'text-muted'} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-ink truncate">${location}</p>
+                                <p class="text-[10px] text-muted">IP: ${bus.last_public_ip || '—'} · Sync: ${syncAgo}</p>
+                            </div>
+                            ${hasLocation ? `<a href="${mapUrl}" target="_blank" class="px-2 py-1 bg-blue-pale text-blue text-[10px] font-bold rounded-lg hover:bg-blue/10 transition-colors flex-shrink-0">Ver mapa</a>` : ''}
+                        </div>
+
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="text-[9px] font-bold text-muted uppercase tracking-wider">Serial MikroTik</label>
@@ -797,16 +822,23 @@ async function loadBuses() {
                             <input type="text" value="${bus.route_description || ''}" id="bus-route-${bus.id}" placeholder="Ex: Palmas → Araguaína"
                                    class="w-full text-xs text-ink bg-white border border-border rounded-lg px-2.5 py-1.5 mt-0.5 focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                         </div>
-                        <p class="text-[9px] text-muted mt-2">Cadastrado em ${new Date(bus.created_at).toLocaleDateString('pt-BR')}</p>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
 
     } catch (e) {
         container.innerHTML = '<p class="text-center text-red text-sm py-8">Erro ao carregar ônibus</p>';
         console.error(e);
     }
+}
+
+function timeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return 'agora';
+    if (seconds < 3600) return Math.floor(seconds / 60) + 'min atrás';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + 'h atrás';
+    return Math.floor(seconds / 86400) + 'd atrás';
 }
 
 async function saveBus(id) {

@@ -12,10 +12,19 @@ class Bus extends Model
         'plate',
         'route_description',
         'is_active',
+        'last_public_ip',
+        'last_sync_at',
+        'last_city',
+        'last_state',
+        'last_lat',
+        'last_lng',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'last_sync_at' => 'datetime',
+        'last_lat' => 'decimal:7',
+        'last_lng' => 'decimal:7',
     ];
 
     /**

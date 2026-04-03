@@ -51,10 +51,15 @@ class MikrotikApiController extends Controller
 
             // Auto-registrar ônibus e cachear mapeamento IP público → mikrotik_id
             if ($mikrotikId) {
-                \App\Models\Bus::firstOrCreate(
+                $bus = \App\Models\Bus::firstOrCreate(
                     ['mikrotik_serial' => $mikrotikId],
                     ['name' => 'Ônibus ' . $mikrotikId]
                 );
+                // Atualizar IP público e timestamp de sync
+                $bus->update([
+                    'last_public_ip' => $request->ip(),
+                    'last_sync_at' => now(),
+                ]);
                 // Cachear: IP público deste MikroTik → serial (para associar pagamentos)
                 cache()->put('mikrotik_ip_' . $request->ip(), $mikrotikId, now()->addHours(6));
             }

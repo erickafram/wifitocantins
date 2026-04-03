@@ -167,6 +167,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
             Route::post('/reset-bypass', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'resetBypass'])->name('reset-bypass');
             Route::get('/buses', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'getBuses'])->name('buses');
             Route::post('/buses/update', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'updateBus'])->name('buses.update');
+            Route::post('/buses/locations', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'updateBusLocations'])->name('buses.locations');
         });
     });
 });
