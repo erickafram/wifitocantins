@@ -464,6 +464,7 @@ class MikrotikApiController extends Controller
             $ipAddress = $request->ip;
             $macAddress = strtoupper($request->mac);
             $mikrotikIp = $request->ip();
+            $mikrotikId = $request->get('mid', '');
 
             // Armazenar o mapeamento IP→MAC
             MikrotikMacReport::updateOrCreate(
@@ -473,15 +474,22 @@ class MikrotikApiController extends Controller
                 ],
                 [
                     'mikrotik_ip' => $mikrotikIp,
+                    'mikrotik_id' => $mikrotikId ?: null,
                     'reported_at' => now(),
                 ]
             );
 
-            Log::info('MikroTik reportou MAC', [
-                'ip' => $ipAddress,
-                'mac' => $macAddress,
-                'mikrotik_ip' => $mikrotikIp
-            ]);
+            // Atualizar last_mikrotik_id do usuário e auto-registrar ônibus
+            if ($mikrotikId) {
+                User::where('mac_address', $macAddress)
+                    ->whereNotNull('mac_address')
+                    ->update(['last_mikrotik_id' => $mikrotikId]);
+
+                \App\Models\Bus::firstOrCreate(
+                    ['mikrotik_serial' => $mikrotikId],
+                    ['name' => 'Ônibus ' . $mikrotikId]
+                );
+            }
 
             return response()->json([
                 'success' => true,
