@@ -49,12 +49,14 @@ class MikrotikApiController extends Controller
 
             $mikrotikId = $request->get('mid'); // Serial number do MikroTik
 
-            // Auto-registrar ônibus se ainda não existir
+            // Auto-registrar ônibus e cachear mapeamento IP público → mikrotik_id
             if ($mikrotikId) {
                 \App\Models\Bus::firstOrCreate(
                     ['mikrotik_serial' => $mikrotikId],
                     ['name' => 'Ônibus ' . $mikrotikId]
                 );
+                // Cachear: IP público deste MikroTik → serial (para associar pagamentos)
+                cache()->put('mikrotik_ip_' . $request->ip(), $mikrotikId, now()->addHours(6));
             }
 
             // 🔄 Atualizar status de usuários que acabaram de expirar ANTES de buscar

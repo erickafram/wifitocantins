@@ -276,6 +276,15 @@ class PaymentController extends Controller
 
             DB::commit();
 
+            // 🚌 Detectar ônibus pelo IP público (MikroTik cacheia IP→serial a cada sync)
+            if (!$user->last_mikrotik_id) {
+                $publicIp = $request->ip();
+                $mikrotikId = cache()->get('mikrotik_ip_' . $publicIp);
+                if ($mikrotikId) {
+                    $user->update(['last_mikrotik_id' => $mikrotikId]);
+                }
+            }
+
             // 🎯 LOG COMPLETO DO PAGAMENTO CRIADO
             Log::info('💳 PAGAMENTO PIX CRIADO COM SUCESSO', [
                 'payment_id' => $payment->id,
