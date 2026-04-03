@@ -117,34 +117,46 @@ class ServiceReviewController extends Controller
         $validated = $request->validate([
             'phone' => 'required|string|min:10|max:20',
             'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
             'batch_date' => 'nullable|date',
         ], [
             'phone.required' => 'Informe o numero que vai receber o teste.',
             'phone.min' => 'O numero precisa ter pelo menos 10 digitos.',
+            'email.email' => 'E-mail invalido.',
             'batch_date.date' => 'A data do lote precisa ser valida.',
         ]);
 
         $result = $this->reviewWhatsappService->sendManualTest(
             $validated['phone'],
             $validated['name'] ?? null,
-            $validated['batch_date'] ?? today()->toDateString()
+            $validated['batch_date'] ?? today()->toDateString(),
+            $validated['email'] ?? null
         );
 
-        if (! $result['success']) {
-            return redirect()
-                ->route('admin.reviews.settings')
-                ->withInput()
-                ->with('error', 'Falha ao enviar teste: ' . ($result['error'] ?? 'erro desconhecido'));
+        $messages = [];
+
+        if ($result['success']) {
+            $messages[] = 'WhatsApp enviado para ' . ($result['review']->phone ?: $validated['phone']);
+        } else {
+            $messages[] = 'WhatsApp falhou: ' . ($result['error'] ?? 'erro desconhecido');
         }
 
-        $phone = $result['review']->phone ?: $validated['phone'];
-        $linkedUserMessage = $result['matched_user']
-            ? ' Usuario vinculado automaticamente ao cadastro existente.'
-            : ' O envio foi gerado como teste sem vinculo a usuario cadastrado.';
+        if (!empty($result['email_sent'])) {
+            $messages[] = 'Email enviado para ' . $validated['email'];
+        } elseif (!empty($validated['email']) && empty($result['email_sent'])) {
+            $messages[] = 'Email falhou: ' . ($result['email_error'] ?? 'erro desconhecido');
+        }
+
+        $linkedUserMessage = ($result['matched_user'] ?? null)
+            ? ' Usuario vinculado ao cadastro existente.'
+            : '';
+
+        $hasSuccess = ($result['success'] || !empty($result['email_sent']));
 
         return redirect()
             ->route('admin.reviews.settings')
-            ->with('success', 'Link de avaliacao enviado para ' . $phone . '.' . $linkedUserMessage)
-            ->with('manual_review_link', $result['link']);
+            ->withInput()
+            ->with($hasSuccess ? 'success' : 'error', implode(' | ', $messages) . $linkedUserMessage)
+            ->with('manual_review_link', $result['link'] ?? null);
     }
 }

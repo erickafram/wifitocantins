@@ -147,6 +147,13 @@
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">E-mail (opcional)</label>
+                <input type="email" name="email" value="{{ old('email') }}" placeholder="email@exemplo.com" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                @error('email')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
             <div class="flex items-end">
                 <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-5 py-2.5 rounded-xl font-medium hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg">
                     Enviar teste agora
