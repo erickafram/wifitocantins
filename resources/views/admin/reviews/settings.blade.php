@@ -52,11 +52,22 @@
 
                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                     <div>
-                        <p class="font-semibold text-gray-800">Enviar link por WhatsApp</p>
-                        <p class="text-sm text-gray-500">Desative aqui se quiser pausar o disparo automatico das avaliacoes.</p>
+                        <p class="font-semibold text-gray-800">Enviar por WhatsApp</p>
+                        <p class="text-sm text-gray-500">Envia link de avaliação via WhatsApp para os passageiros.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="review_auto_send_enabled" value="1" class="sr-only peer" {{ $settings['review_auto_send_enabled'] ? 'checked' : '' }}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div>
+                        <p class="font-semibold text-gray-800">Enviar por E-mail</p>
+                        <p class="text-sm text-gray-500">Envia link de avaliação por e-mail para passageiros que informaram e-mail.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="review_email_enabled" value="1" class="sr-only peer" {{ $settings['review_email_enabled'] ? 'checked' : '' }}>
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                 </div>

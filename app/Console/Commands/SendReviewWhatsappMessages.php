@@ -20,15 +20,25 @@ class SendReviewWhatsappMessages extends Command
 
     public function handle(ServiceReviewWhatsappService $reviewWhatsappService): int
     {
+        $whatsappEnabled = WhatsappSetting::isReviewAutoSendEnabled();
+        $emailEnabled = WhatsappSetting::get('review_email_enabled', 'true') === 'true';
         $whatsappConnected = WhatsappSetting::isConnected();
 
-        if (! $this->option('force') && ! WhatsappSetting::isReviewAutoSendEnabled()) {
-            $this->info('Envio de avaliacao esta desabilitado. Use --force para ignorar o toggle.');
+        if (! $this->option('force') && ! $whatsappEnabled && ! $emailEnabled) {
+            $this->info('Envio de avaliacao esta desabilitado (WhatsApp e Email). Use --force para ignorar.');
             return self::SUCCESS;
         }
 
-        if (! $whatsappConnected) {
-            $this->warn('WhatsApp nao esta conectado. Enviando apenas por email.');
+        if ($whatsappEnabled && ! $whatsappConnected) {
+            $this->warn('WhatsApp habilitado mas nao esta conectado. Enviando apenas por email.');
+        }
+
+        if (! $whatsappEnabled) {
+            $this->info('WhatsApp desabilitado nas configuracoes.');
+        }
+
+        if (! $emailEnabled) {
+            $this->info('Email desabilitado nas configuracoes.');
         }
 
         $batchDateOption = $this->option('date');
@@ -75,9 +85,9 @@ class SendReviewWhatsappMessages extends Command
                 continue;
             }
 
-            // Enviar por WhatsApp (se conectado e ainda não enviou)
+            // Enviar por WhatsApp (se habilitado, conectado e ainda não enviou)
             $whatsappOk = false;
-            if ($whatsappConnected && $review->whatsapp_status !== 'sent') {
+            if ($whatsappEnabled && $whatsappConnected && $review->whatsapp_status !== 'sent') {
                 $result = $reviewWhatsappService->sendPreparedReview($review, $user->name ?: 'Passageiro');
                 if ($result['success']) {
                     $sent++;
@@ -93,8 +103,8 @@ class SendReviewWhatsappMessages extends Command
                 $skipped++;
             }
 
-            // Enviar por Email (se tem email) — sem delay grande
-            if ($user->email) {
+            // Enviar por Email (se habilitado e tem email)
+            if ($emailEnabled && $user->email) {
                 try {
                     $link = $reviewWhatsappService->resolveReviewLink($review);
                     $displayName = $user->name ?: 'Passageiro';

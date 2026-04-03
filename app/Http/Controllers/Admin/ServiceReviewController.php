@@ -84,6 +84,7 @@ class ServiceReviewController extends Controller
     {
         $settings = [
             'review_auto_send_enabled' => WhatsappSetting::isReviewAutoSendEnabled(),
+            'review_email_enabled' => WhatsappSetting::get('review_email_enabled', 'true') === 'true',
             'review_message_template' => WhatsappSetting::getReviewMessageTemplate(),
             'is_connected' => WhatsappSetting::isConnected(),
             'connected_phone' => WhatsappSetting::getConnectedPhone(),
@@ -99,17 +100,22 @@ class ServiceReviewController extends Controller
         $request->validate([
             'review_message_template' => 'required|string|max:1500',
             'review_auto_send_enabled' => 'nullable|boolean',
+            'review_email_enabled' => 'nullable|boolean',
         ]);
 
         WhatsappSetting::set(
             'review_auto_send_enabled',
             $request->has('review_auto_send_enabled') ? 'true' : 'false'
         );
+        WhatsappSetting::set(
+            'review_email_enabled',
+            $request->has('review_email_enabled') ? 'true' : 'false'
+        );
         WhatsappSetting::set('review_message_template', $request->review_message_template);
 
         return redirect()
             ->route('admin.reviews.settings')
-            ->with('success', 'Configuracoes do modulo de avaliacao atualizadas com sucesso!');
+            ->with('success', 'Configuracoes atualizadas com sucesso!');
     }
 
     public function sendTest(Request $request)
