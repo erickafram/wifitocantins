@@ -49,6 +49,14 @@ class MikrotikApiController extends Controller
 
             $mikrotikId = $request->get('mid'); // Serial number do MikroTik
 
+            // Auto-registrar ônibus se ainda não existir
+            if ($mikrotikId) {
+                \App\Models\Bus::firstOrCreate(
+                    ['mikrotik_serial' => $mikrotikId],
+                    ['name' => 'Ônibus ' . $mikrotikId]
+                );
+            }
+
             // 🔄 Atualizar status de usuários que acabaram de expirar ANTES de buscar
             // Inclui temp_bypass que expirou (3 min sem pagar)
             $justExpired = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
@@ -237,6 +245,12 @@ class MikrotikApiController extends Controller
                 User::where('mac_address', strtoupper($mac))
                     ->whereNotNull('mac_address')
                     ->update(['last_mikrotik_id' => $mikrotikId]);
+
+                // Auto-registrar ônibus se ainda não existir
+                \App\Models\Bus::firstOrCreate(
+                    ['mikrotik_serial' => $mikrotikId],
+                    ['name' => 'Ônibus ' . $mikrotikId]
+                );
             }
             
             return response()->json([
