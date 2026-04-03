@@ -747,12 +747,6 @@ async function loadBuses() {
     container.innerHTML = '<p class="text-center text-muted text-sm py-8">Carregando...</p>';
 
     try {
-        // Atualizar geolocalizações primeiro
-        await fetch('/admin/mikrotik/remote/buses/locations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken }
-        }).catch(() => {});
-
         const resp = await fetch('/admin/mikrotik/remote/buses');
         const data = await resp.json();
 
@@ -774,11 +768,8 @@ async function loadBuses() {
         }
 
         container.innerHTML = buses.map(bus => {
-            const isOnline = bus.last_sync_at && (new Date() - new Date(bus.last_sync_at)) < 600000; // 10 min
+            const isOnline = bus.last_sync_at && (new Date() - new Date(bus.last_sync_at)) < 600000;
             const syncAgo = bus.last_sync_at ? timeAgo(new Date(bus.last_sync_at)) : 'Nunca';
-            const location = bus.last_city ? `${bus.last_city}, ${bus.last_state || ''}` : 'Localização desconhecida';
-            const hasLocation = bus.last_lat && bus.last_lng;
-            const mapUrl = hasLocation ? `https://www.google.com/maps?q=${bus.last_lat},${bus.last_lng}` : '#';
 
             return `
             <div class="bg-surface border border-border rounded-xl p-4 hover:shadow-hover transition-all" id="bus-${bus.id}">
@@ -795,17 +786,6 @@ async function loadBuses() {
                                 Salvar
                             </button>
                         </div>
-
-                        <!-- Localização -->
-                        <div class="flex items-center gap-2 mb-2 p-2 bg-white border border-border rounded-lg">
-                            <svg class="w-4 h-4 ${hasLocation ? 'text-red' : 'text-muted'} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-ink truncate">${location}</p>
-                                <p class="text-[10px] text-muted">IP: ${bus.last_public_ip || '—'} · Sync: ${syncAgo}</p>
-                            </div>
-                            ${hasLocation ? `<a href="${mapUrl}" target="_blank" class="px-2 py-1 bg-blue-pale text-blue text-[10px] font-bold rounded-lg hover:bg-blue/10 transition-colors flex-shrink-0">Ver mapa</a>` : ''}
-                        </div>
-
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="text-[9px] font-bold text-muted uppercase tracking-wider">Serial MikroTik</label>
@@ -822,6 +802,7 @@ async function loadBuses() {
                             <input type="text" value="${bus.route_description || ''}" id="bus-route-${bus.id}" placeholder="Ex: Palmas → Araguaína"
                                    class="w-full text-xs text-ink bg-white border border-border rounded-lg px-2.5 py-1.5 mt-0.5 focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                         </div>
+                        <p class="text-[9px] text-muted mt-2">Último sync: ${syncAgo} · IP: ${bus.last_public_ip || '—'}</p>
                     </div>
                 </div>
             </div>`;
