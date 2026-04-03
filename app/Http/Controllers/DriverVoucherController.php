@@ -77,7 +77,6 @@ class DriverVoucherController extends Controller
         
         // Se não encontrou por código, buscar por documento (CPF)
         if (!$voucher && strlen($cleanedTerm) >= 11) {
-            // Buscar por documento exato ou parcial
             $voucher = Voucher::where('driver_document', 'LIKE', '%' . $cleanedTerm . '%')
                 ->orWhere('driver_document', 'LIKE', '%' . $searchTerm . '%')
                 ->first();
@@ -94,9 +93,20 @@ class DriverVoucherController extends Controller
                 ->withInput();
         }
 
-        // Verificar se o voucher está ativo
+        // Verificar se o voucher pode ser ativado automaticamente
         $voucherStatus = $this->getVoucherStatus($voucher, $macAddress);
 
+        if ($voucherStatus['can_activate'] && $macAddress && $ipAddress) {
+            // Auto-ativar: simular o POST de ativação
+            $activateRequest = new Request([
+                'voucher_code' => $voucher->code,
+                'mac_address' => $macAddress,
+                'ip_address' => $ipAddress,
+            ]);
+            return $this->activate($activateRequest);
+        }
+
+        // Se não pode ativar, mostrar a tela com o status
         return view('portal.voucher.activate', [
             'ip_address' => $ipAddress,
             'mac_address' => $macAddress,

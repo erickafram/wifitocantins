@@ -53,39 +53,30 @@
                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
             <div>
-                <p class="text-white font-semibold text-sm leading-none">Buscar Voucher</p>
-                <p class="text-white/70 text-[10px] mt-0.5">CPF ou código do voucher</p>
+                <p class="text-white font-semibold text-sm leading-none">Acesso Motorista</p>
+                <p class="text-white/70 text-[10px] mt-0.5">Digite seu CPF para liberar a internet</p>
             </div>
         </div>
 
         <form action="{{ route('voucher.search') }}" method="POST" id="searchForm" class="p-5">
             @csrf
             <div class="mb-4">
-                <label for="search_term" class="block text-[11px] font-semibold text-[#333] uppercase tracking-wider mb-1.5">CPF ou Código</label>
+                <label for="search_term" class="block text-[11px] font-semibold text-[#333] uppercase tracking-wider mb-1.5">CPF ou Código do Voucher</label>
                 <input type="text" id="search_term" name="search_term" required autofocus
                        value="{{ old('search_term') }}"
-                       placeholder="000.000.000-00 ou WIFI-XXXX"
-                       class="w-full px-4 py-3 text-center text-base font-semibold text-[#111] bg-[#F8F9FA] border border-[#E5E5E5] rounded-xl
-                              focus:outline-none focus:ring-2 focus:ring-[#00A335]/30 focus:border-[#00A335] transition-all placeholder:text-[#888] placeholder:font-normal">
-                <p class="text-[10px] text-[#888] mt-1.5 text-center">Com ou sem pontos e traços</p>
+                       placeholder="Digite seu CPF"
+                       class="w-full px-4 py-3.5 text-center text-lg font-bold text-[#111] bg-[#F8F9FA] border border-[#E5E5E5] rounded-xl
+                              focus:outline-none focus:ring-2 focus:ring-[#00A335]/30 focus:border-[#00A335] transition-all placeholder:text-[#888] placeholder:font-normal placeholder:text-base">
             </div>
             <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
             <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
             <button type="submit" id="searchBtn"
-                    class="w-full bg-[#00A335] hover:bg-[#00C040] active:bg-[#007A28] text-white font-semibold py-3 rounded-xl
-                           shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all flex items-center justify-center gap-2 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <span id="searchBtnText">Buscar Voucher</span>
+                    class="w-full bg-[#00A335] hover:bg-[#00C040] active:bg-[#007A28] text-white font-bold py-3.5 rounded-xl
+                           shadow-[0_4px_12px_rgba(0,163,53,0.3)] hover:shadow-[0_8px_20px_rgba(0,163,53,0.35)] transition-all flex items-center justify-center gap-2 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span id="searchBtnText">Ativar Internet</span>
             </button>
         </form>
-    </div>
-
-    <!-- Aviso -->
-    <div class="mt-4 bg-white border border-[#E5E5E5] rounded-xl p-3.5 flex items-center gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-        <div class="w-8 h-8 bg-[#FFF8E1] rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg class="w-4 h-4 text-[#E6A817]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
-        </div>
-        <p class="text-xs text-[#333]">Conecte-se ao Wi-Fi <span class="font-bold text-[#111]">"Tocantins Transporte"</span> antes de ativar</p>
     </div>
 
     @else
@@ -240,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchForm.addEventListener('submit', function() {
             searchBtn.disabled = true;
             searchBtn.classList.add('opacity-75');
-            document.getElementById('searchBtnText').textContent = 'Buscando...';
+            document.getElementById('searchBtnText').textContent = 'Ativando...';
         });
     }
 

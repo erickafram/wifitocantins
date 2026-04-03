@@ -131,6 +131,18 @@ class WiFiPortal {
             phoneInput.addEventListener('keydown', (e) => this.handlePhoneKeydown(e));
         }
 
+        // Email autocomplete com sugestões de domínio
+        const emailInput = document.getElementById('user_email');
+        if (emailInput) {
+            emailInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9@._\-+]/g, '');
+                this.showEmailSuggestions(e.target);
+            });
+            emailInput.addEventListener('blur', () => {
+                setTimeout(() => { const s = document.getElementById('email-suggestions'); if (s) s.classList.add('hidden'); }, 200);
+            });
+        }
+
         // Fechar modais clicando fora
         if (this.paymentModal) {
             this.paymentModal.addEventListener('click', (e) => {
@@ -483,10 +495,17 @@ class WiFiPortal {
         const form = e.target;
         const formData = new FormData(form);
         const phone = formData.get('phone').replace(/\D/g, '');
+        const email = (formData.get('email') || '').toLowerCase().trim();
 
         // Validar telefone brasileiro (10 ou 11 dígitos)
         if (phone.length < 10 || phone.length > 11) {
             this.showRegistrationError('Por favor, insira um telefone válido com DDD (10 ou 11 dígitos).');
+            return;
+        }
+
+        // Validar email
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            this.showRegistrationError('Por favor, insira um e-mail válido.');
             return;
         }
 
@@ -523,6 +542,7 @@ class WiFiPortal {
 
             const data = {
                 phone: phone,
+                email: email,
                 user_id: this.currentUserId,
                 mac_address: this.deviceMac,
                 ip_address: this.deviceIp
@@ -1875,6 +1895,29 @@ class WiFiPortal {
         }, 5000);
     }
 
+
+    /**
+     * Mostra sugestões de domínio de email
+     */
+    showEmailSuggestions(input) {
+        const box = document.getElementById('email-suggestions');
+        if (!box) return;
+        const val = input.value;
+        const atIndex = val.indexOf('@');
+        if (atIndex < 1) { box.classList.add('hidden'); return; }
+        const typed = val.substring(atIndex + 1);
+        if (typed.includes('.') && typed.split('.').pop().length >= 2) { box.classList.add('hidden'); return; }
+        const user = val.substring(0, atIndex);
+        const domains = ['gmail.com','hotmail.com','outlook.com','yahoo.com.br','icloud.com','live.com','bol.com.br','uol.com.br'];
+        const matches = domains.filter(d => d.startsWith(typed) && d !== typed);
+        if (matches.length === 0) { box.classList.add('hidden'); return; }
+        box.innerHTML = matches.slice(0, 4).map(d =>
+            `<button type="button" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0" onclick="document.getElementById('user_email').value='${user}@${d}';document.getElementById('email-suggestions').classList.add('hidden')">
+                <span class="text-gray-500">${user}@</span><span class="font-semibold text-gray-800">${d}</span>
+            </button>`
+        ).join('');
+        box.classList.remove('hidden');
+    }
 
     /**
      * Aplica máscara de telefone brasileiro (XX) X XXXX-XXXX

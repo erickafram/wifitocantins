@@ -290,6 +290,9 @@ class PaymentController extends Controller
             // 📱 ENVIAR PIX VIA WHATSAPP (não bloqueia a resposta)
             $this->sendPixViaWhatsapp($user, $payment, $response);
 
+            // 📧 ENVIAR PIX VIA EMAIL (se o usuário informou email)
+            $this->sendPixViaEmail($user, $payment, $response);
+
             return response()->json([
                 'success' => true,
                 'message' => 'QR Code PIX gerado com sucesso!',
@@ -326,142 +329,49 @@ class PaymentController extends Controller
     private function sendPixViaWhatsapp(User $user, Payment $payment, array $pixData): void
     {
         try {
-            // Verificar se o usuário tem telefone
-            if (!$user->phone || strlen($user->phone) < 10) {
-                Log::info('📱 WhatsApp PIX: Usuário sem telefone válido', ['user_id' => $user->id]);
-                return;
-            }
-
-            // Verificar se o WhatsApp está conectado
-            if (!\App\Models\WhatsappSetting::isConnected()) {
-                Log::info('📱 WhatsApp PIX: WhatsApp não está conectado, pulando envio');
-                return;
-            }
+            if (!$user->phone || strlen($user->phone) < 10) return;
+            if (!\App\Models\WhatsappSetting::isConnected()) return;
 
             $phone = \App\Models\WhatsappMessage::formatPhone($user->phone);
             $amount = number_format((float) ($pixData['amount'] ?? $payment->amount), 2, ',', '.');
             $pixCode = $pixData['emv_string'] ?? $payment->pix_emv_string;
 
-            if (!$pixCode) {
-                Log::warning('📱 WhatsApp PIX: Código PIX vazio', ['payment_id' => $payment->id]);
-                return;
-            }
+            if (!$pixCode) return;
 
-            // Montar mensagens (2 separadas para facilitar cópia)
             $nome = $user->name ?? 'Cliente';
-            $manualUrl = url('manual/manualpassageiro.pdf');
-            $message1 = "🚌 *Tocantins Transporte WiFi*\n\n"
-                      . "Olá {$nome}! Seu PIX de *R\$ {$amount}* foi gerado.\n"
-                      . "⏱️ Válido por 3 minutos.\n\n"
-                      . "Sua internet foi liberada por *3 minutos* para efetuar o pagamento.\n"
-                      . "Se o pagamento não for concluído nesse tempo, a internet será bloqueada automaticamente após os 3 minutos.\n\n"
-                      . "Se não conseguir acessar a página de pagamento, entre no site www.tocantinstransportewifi.com.br.\n"
-                      . "Para qualquer dúvida, responda aqui neste número de WhatsApp.\n\n"
-                      . "Se precisar de ajuda, clique no link abaixo para abrir e ler o manual:\n"
-                      . "{$manualUrl}\n\n"
-                      . "👇 Copie o código na próxima mensagem e cole em *PIX Copia e Cola*.";
 
-            $message2 = $pixCode;
+            // Mensagem única: instrução + código PIX junto
+            $message = "🚌 *Tocantins Transporte WiFi*\n\n"
+                     . "Olá {$nome}! PIX de *R\$ {$amount}* gerado.\n"
+                     . "⏱️ Válido por 3 min.\n\n"
+                     . "👇 *Copie e cole no app do banco:*\n\n"
+                     . $pixCode;
 
-            // Enviar via Baileys
             $baileysUrl = env('BAILEYS_SERVER_URL', 'http://localhost:3001');
 
-            // 1ª mensagem: instrução
-            $msg1Record = \App\Models\WhatsappMessage::create([
+            $msgRecord = \App\Models\WhatsappMessage::create([
                 'user_id' => $user->id,
                 'payment_id' => $payment->id,
                 'phone' => $phone,
-                'message' => $message1,
+                'message' => $message,
                 'status' => 'pending',
             ]);
 
-            $resp1 = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
+            $resp = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
                 'phone' => $phone,
-                'message' => $message1,
+                'message' => $message,
             ]);
 
-            if ($resp1->successful()) {
-                $msg1Record->markAsSent($resp1->json('messageId'));
+            if ($resp->successful()) {
+                $msgRecord->markAsSent($resp->json('messageId'));
+                Log::info('📱 WhatsApp PIX enviado', ['payment_id' => $payment->id, 'phone' => $phone]);
             } else {
-                $msg1Record->markAsFailed($resp1->body());
-            }
-
-            // Pequeno delay para manter ordem
-            usleep(300000); // 0.3s
-
-            // 2ª mensagem: só o código PIX (fácil de copiar)
-            $msg2Record = \App\Models\WhatsappMessage::create([
-                'user_id' => $user->id,
-                'payment_id' => $payment->id,
-                'phone' => $phone,
-                'message' => $message2,
-                'status' => 'pending',
-            ]);
-
-            $resp2 = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
-                'phone' => $phone,
-                'message' => $message2,
-            ]);
-
-            if ($resp2->successful()) {
-                $msg2Record->markAsSent($resp2->json('messageId'));
-                Log::info('📱 WhatsApp PIX: 2 mensagens enviadas', [
-                    'payment_id' => $payment->id,
-                    'phone' => $phone,
-                ]);
-
-                $manualPath = public_path('manual/manualpassageiro.pdf');
-
-                if (file_exists($manualPath)) {
-                    $manualCaption = '📘 Manual do passageiro: se tiver dúvidas, veja este guia rápido.';
-                    $manualRecord = \App\Models\WhatsappMessage::create([
-                        'user_id' => $user->id,
-                        'payment_id' => $payment->id,
-                        'phone' => $phone,
-                        'message' => $manualCaption,
-                        'status' => 'pending',
-                    ]);
-
-                    usleep(300000);
-
-                    $manualResp = $this->whatsappHttpClient()->timeout(20)->post($baileysUrl . '/send-document', [
-                        'phone' => $phone,
-                        'documentUrl' => $manualUrl,
-                        'fileName' => 'manualpassageiro.pdf',
-                        'caption' => $manualCaption,
-                    ]);
-
-                    if ($manualResp->successful()) {
-                        $manualRecord->markAsSent($manualResp->json('messageId'));
-                        Log::info('📱 WhatsApp PIX: Manual enviado', [
-                            'payment_id' => $payment->id,
-                            'phone' => $phone,
-                            'manual_url' => $manualUrl,
-                        ]);
-                    } else {
-                        $manualRecord->markAsFailed($manualResp->body());
-                        Log::warning('📱 WhatsApp PIX: Falha ao enviar manual', [
-                            'payment_id' => $payment->id,
-                            'error' => $manualResp->body(),
-                        ]);
-                    }
-                } else {
-                    Log::info('📱 WhatsApp PIX: Manual não encontrado, envio ignorado', [
-                        'payment_id' => $payment->id,
-                        'manual_path' => $manualPath,
-                    ]);
-                }
-            } else {
-                $msg2Record->markAsFailed($resp2->body());
-                Log::warning('📱 WhatsApp PIX: Falha na 2ª mensagem', [
-                    'payment_id' => $payment->id,
-                    'error' => $resp2->body(),
-                ]);
+                $msgRecord->markAsFailed($resp->body());
+                Log::warning('📱 WhatsApp PIX falhou', ['payment_id' => $payment->id, 'error' => $resp->body()]);
             }
 
         } catch (\Exception $e) {
-            // Nunca deixar o erro de WhatsApp afetar a geração do PIX
-            Log::error('📱 WhatsApp PIX: Exceção ao enviar', [
+            Log::error('📱 WhatsApp PIX: Exceção', [
                 'payment_id' => $payment->id ?? null,
                 'error' => $e->getMessage(),
             ]);
@@ -469,7 +379,31 @@ class PaymentController extends Controller
     }
 
     /**
-     * 📱 Envia mensagem WhatsApp confirmando pagamento aprovado
+     * � Envia código PIX por e-mail
+     */
+    private function sendPixViaEmail(User $user, Payment $payment, array $pixData): void
+    {
+        try {
+            if (!$user->email) return;
+
+            $amount = number_format((float) ($pixData['amount'] ?? $payment->amount), 2, ',', '.');
+            $pixCode = $pixData['emv_string'] ?? $payment->pix_emv_string;
+            if (!$pixCode) return;
+
+            $nome = $user->name ?? 'Cliente';
+
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                new \App\Mail\PixCodeMail($nome, $amount, $pixCode)
+            );
+
+            Log::info('📧 Email PIX enviado', ['payment_id' => $payment->id, 'email' => $user->email]);
+        } catch (\Exception $e) {
+            Log::error('📧 Email PIX falhou', ['error' => $e->getMessage(), 'email' => $user->email ?? null]);
+        }
+    }
+
+    /**
+     * �📱 Envia mensagem WhatsApp confirmando pagamento aprovado
      */
     private function sendPaymentConfirmedWhatsapp(User $user, Payment $payment, float $hours): void
     {

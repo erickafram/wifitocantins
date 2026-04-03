@@ -165,13 +165,15 @@ class RegistrationController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'user_id' => 'nullable|exists:users,id', // ID do usuário existente (opcional)
+                'user_id' => 'nullable|exists:users,id',
                 'phone' => 'required|string|min:10|max:20',
+                'email' => 'required|email|max:255',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
             ], [
                 'phone.required' => 'Telefone é obrigatório',
                 'phone.min' => 'Telefone deve ter pelo menos 10 dígitos',
+                'email.email' => 'E-mail inválido',
                 'mac_address.string' => 'MAC address deve ser uma string válida',
                 'ip_address.ip' => 'IP inválido',
             ]);
@@ -215,17 +217,18 @@ class RegistrationController extends Controller
 
             // Limpar telefone (apenas números)
             $cleanPhone = preg_replace('/[^\d]/', '', $request->phone);
+            $email = $request->input('email');
             
             // 🔧 FIX: Primeiro verificar se já existe usuário com este MAC (prioridade máxima)
             $existingUserByMac = $macAddress ? User::where('mac_address', $macAddress)->first() : null;
             
             if ($existingUserByMac) {
-                // Dispositivo já foi usado antes - atualizar telefone e IP
                 $updateData = [
                     'phone' => $cleanPhone,
                     'ip_address' => $ipAddress,
                     'registered_at' => now(),
                 ];
+                if ($email) $updateData['email'] = $email;
 
                 // 🔧 FIX: NÃO resetar status para 'pending' se o usuário já tem acesso ativo
                 // Isso evita que um usuário que já pagou perca o acesso ao reabrir o portal
@@ -315,19 +318,16 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // Criar novo usuário (apenas com telefone, MAC e IP)
+            // Criar novo usuário (apenas com telefone, email, MAC e IP)
             $userData = [
                 'phone' => $cleanPhone,
                 'registered_at' => now(),
                 'status' => 'pending',
             ];
 
-            if ($macAddress) {
-                $userData['mac_address'] = $macAddress;
-            }
-            if ($ipAddress) {
-                $userData['ip_address'] = $ipAddress;
-            }
+            if ($email) $userData['email'] = $email;
+            if ($macAddress) $userData['mac_address'] = $macAddress;
+            if ($ipAddress) $userData['ip_address'] = $ipAddress;
 
             $user = User::create($userData);
 

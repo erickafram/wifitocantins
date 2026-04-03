@@ -556,7 +556,7 @@
                     <button id="close-registration-modal" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">&times;</button>
                 </div>
                 
-                <p class="text-sm text-gray-500 mb-5">Digite seu telefone para gerar o QR Code PIX e se conectar.</p>
+                <p class="text-sm text-gray-500 mb-5">Informe seus dados para gerar o QR Code PIX.</p>
                 
                 <form id="registration-form" class="space-y-4">
                     <div id="registration-errors" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm"></div>
@@ -571,8 +571,27 @@
                             placeholder="(63) 9 8101-3050"
                             maxlength="16"
                             autofocus
-                            class="w-full border border-gray-300 rounded-xl px-4 py-3.5 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all text-base text-center font-medium"
+                            class="w-full border border-gray-300 rounded-xl px-4 py-3.5 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/20 transition-all text-base text-center font-medium"
                         >
+                    </div>
+
+                    <div>
+                        <label for="user_email" class="block text-sm font-medium text-gray-700 mb-1.5">E-mail</label>
+                        <div class="relative">
+                            <input 
+                                type="email" 
+                                id="user_email" 
+                                name="email" 
+                                required
+                                placeholder="seu@email.com"
+                                autocomplete="email"
+                                autocapitalize="none"
+                                spellcheck="false"
+                                class="w-full border border-gray-300 rounded-xl px-4 py-3.5 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/20 transition-all text-base text-center font-medium lowercase"
+                            >
+                            <div id="email-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1 text-center">Receba o código PIX por e-mail</p>
                     </div>
                     
                     <button 
