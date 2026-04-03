@@ -381,4 +381,39 @@ class MikrotikRemoteController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Lista todos os ônibus cadastrados
+     */
+    public function getBuses()
+    {
+        $buses = \App\Models\Bus::orderBy('name')->get();
+        return response()->json(['success' => true, 'buses' => $buses]);
+    }
+
+    /**
+     * Atualiza nome/placa/rota de um ônibus
+     */
+    public function updateBus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:buses,id',
+            'name' => 'required|string|max:100',
+            'plate' => 'nullable|string|max:15',
+            'route_description' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $bus = \App\Models\Bus::findOrFail($request->input('id'));
+            $bus->update($request->only('name', 'plate', 'route_description'));
+
+            return response()->json([
+                'success' => true,
+                'message' => "Ônibus '{$bus->name}' atualizado",
+                'bus' => $bus,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

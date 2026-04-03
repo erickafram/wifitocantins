@@ -133,6 +133,9 @@
                 <button onclick="switchTab('bypass')" id="tab-bypass" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-xs font-bold border-b-2 border-transparent text-muted hover:text-ink transition">
                     Bypass <span id="badge-bypass" class="ml-1 text-[9px] font-bold bg-gold/10 text-gold px-1.5 py-0.5 rounded">0</span>
                 </button>
+                <button onclick="switchTab('buses')" id="tab-buses" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-xs font-bold border-b-2 border-transparent text-muted hover:text-ink transition">
+                    Ônibus <span id="badge-buses" class="ml-1 text-[9px] font-bold bg-blue/10 text-blue px-1.5 py-0.5 rounded">0</span>
+                </button>
             </div>
         </div>
 
@@ -230,6 +233,25 @@
                         <tr><td colspan="8" class="px-4 py-8 text-center text-muted text-sm">Clique em "Bypass" para carregar</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Tab Ônibus -->
+        <div id="content-buses" class="tab-content hidden">
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-ink">Ônibus Cadastrados</h3>
+                        <p class="text-[10px] text-muted">Aparecem automaticamente quando o MikroTik sincroniza</p>
+                    </div>
+                    <button onclick="loadBuses()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border text-ink2 font-semibold text-xs rounded-lg hover:bg-border transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Atualizar
+                    </button>
+                </div>
+                <div id="buses-list" class="space-y-3">
+                    <p class="text-center text-muted text-sm py-8">Carregando...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -604,6 +626,7 @@ function switchTab(tab) {
     document.getElementById('content-' + tab).classList.remove('hidden');
 
     if (tab === 'bypass') loadBypassLogs();
+    if (tab === 'buses') loadBuses();
 }
 
 async function loadBypassLogs() {
@@ -715,6 +738,100 @@ function showToast(message, type = 'info') {
         toast.style.transform = 'translateX(100%)';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// ========== Ônibus ==========
+
+async function loadBuses() {
+    const container = document.getElementById('buses-list');
+    container.innerHTML = '<p class="text-center text-muted text-sm py-8">Carregando...</p>';
+
+    try {
+        const resp = await fetch('/admin/mikrotik/remote/buses');
+        const data = await resp.json();
+
+        if (!data.success) throw new Error(data.error || 'Erro');
+
+        const buses = data.buses;
+        document.getElementById('badge-buses').textContent = buses.length;
+
+        if (buses.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-10">
+                    <div class="w-12 h-12 bg-surface rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    </div>
+                    <p class="text-sm font-medium text-ink2">Nenhum ônibus cadastrado</p>
+                    <p class="text-[10px] text-muted mt-1">Os ônibus aparecem automaticamente quando o MikroTik sincroniza pela primeira vez</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = buses.map(bus => `
+            <div class="bg-surface border border-border rounded-xl p-4 hover:shadow-hover transition-all" id="bus-${bus.id}">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-dark to-green rounded-xl flex items-center justify-center flex-shrink-0 shadow-card">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="text" value="${bus.name}" id="bus-name-${bus.id}"
+                                   class="flex-1 px-3 py-1.5 text-sm font-bold text-ink bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
+                            <button onclick="saveBus(${bus.id})" class="px-3 py-1.5 bg-green hover:bg-green-light text-white font-semibold text-[10px] rounded-lg transition-colors shadow-card">
+                                Salvar
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-bold text-muted uppercase tracking-wider">Serial MikroTik</label>
+                                <p class="text-xs font-mono text-ink2 bg-white border border-border rounded-lg px-2.5 py-1.5 mt-0.5">${bus.mikrotik_serial}</p>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-muted uppercase tracking-wider">Placa</label>
+                                <input type="text" value="${bus.plate || ''}" id="bus-plate-${bus.id}" placeholder="ABC-1234"
+                                       class="w-full text-xs text-ink bg-white border border-border rounded-lg px-2.5 py-1.5 mt-0.5 focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="text-[9px] font-bold text-muted uppercase tracking-wider">Rota</label>
+                            <input type="text" value="${bus.route_description || ''}" id="bus-route-${bus.id}" placeholder="Ex: Palmas → Araguaína"
+                                   class="w-full text-xs text-ink bg-white border border-border rounded-lg px-2.5 py-1.5 mt-0.5 focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
+                        </div>
+                        <p class="text-[9px] text-muted mt-2">Cadastrado em ${new Date(bus.created_at).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        container.innerHTML = '<p class="text-center text-red text-sm py-8">Erro ao carregar ônibus</p>';
+        console.error(e);
+    }
+}
+
+async function saveBus(id) {
+    const name = document.getElementById(`bus-name-${id}`).value.trim();
+    const plate = document.getElementById(`bus-plate-${id}`).value.trim();
+    const route = document.getElementById(`bus-route-${id}`).value.trim();
+
+    if (!name) return showToast('Nome é obrigatório', 'error');
+
+    try {
+        const resp = await fetch('/admin/mikrotik/remote/buses/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ id, name, plate: plate || null, route_description: route || null })
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.error || 'Erro ao salvar', 'error');
+        }
+    } catch (e) {
+        showToast('Erro de conexão', 'error');
+    }
 }
 </script>
 @endsection
