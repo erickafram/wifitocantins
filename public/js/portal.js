@@ -1214,9 +1214,15 @@ class WiFiPortal {
                 const openBankArea = document.getElementById('open-bank-area');
                 if (openBankArea) {
                     openBankArea.classList.remove('hidden');
-                    // Detectar se tem internet → se não tem, ativa bypass automaticamente
                     this.detectAndBypass(data.payment_id);
                 }
+
+                // 📧 Enviar email com código PIX (em background, não bloqueia)
+                fetch('/api/payment/pix/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.getCSRFToken() },
+                    body: JSON.stringify({ payment_id: data.payment_id })
+                }).catch(() => {});
                 
                 setTimeout(() => {
                     btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> COPIAR CÓDIGO PIX';

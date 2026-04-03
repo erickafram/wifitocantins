@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -290,8 +290,7 @@ class PaymentController extends Controller
             // 📱 ENVIAR PIX VIA WHATSAPP (não bloqueia a resposta)
             $this->sendPixViaWhatsapp($user, $payment, $response);
 
-            // 📧 ENVIAR PIX VIA EMAIL (se o usuário informou email)
-            $this->sendPixViaEmail($user, $payment, $response);
+            // 📧 EMAIL será enviado quando o usuário copiar o código (via JS)
 
             return response()->json([
                 'success' => true,
@@ -403,7 +402,33 @@ class PaymentController extends Controller
     }
 
     /**
-     * �📱 Envia mensagem WhatsApp confirmando pagamento aprovado
+     * Endpoint para enviar PIX por email (chamado pelo JS após copiar código)
+     */
+    public function sendPixEmail(Request $request)
+    {
+        try {
+            $payment = Payment::find($request->input('payment_id'));
+            if (!$payment) return response()->json(['success' => false]);
+
+            $user = User::find($payment->user_id);
+            if (!$user || !$user->email) return response()->json(['success' => false, 'message' => 'Sem email']);
+
+            $pixCode = $payment->pix_emv_string;
+            if (!$pixCode) return response()->json(['success' => false]);
+
+            $this->sendPixViaEmail($user, $payment, [
+                'amount' => $payment->amount,
+                'emv_string' => $pixCode,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Email enviado']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Envia mensagem WhatsApp confirmando pagamento aprovado
      */
     private function sendPaymentConfirmedWhatsapp(User $user, Payment $payment, float $hours): void
     {
