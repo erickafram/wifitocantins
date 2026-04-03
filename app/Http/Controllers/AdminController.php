@@ -156,12 +156,25 @@ class AdminController extends Controller
 
         // Gateway de Pagamento - verificar se tem configuração
         try {
-            $gateway = SystemSetting::getValue('payment_gateway', '');
-            $gatewayKey = SystemSetting::getValue('mercadopago_access_token', '') ?: SystemSetting::getValue('gateway_api_key', '');
-            if (!empty($gateway) && !empty($gatewayKey)) {
+            $gateway = SystemSetting::getValue('pix_gateway', config('wifi.payment_gateways.pix.gateway', ''));
+
+            // Verificar token do gateway ativo
+            $hasKey = false;
+            if ($gateway === 'pagbank') {
+                $hasKey = !empty(\App\Helpers\SettingsHelper::getPagBankToken());
+            } elseif ($gateway === 'woovi') {
+                $hasKey = !empty(config('wifi.payment_gateways.pix.woovi_app_id'));
+            } elseif ($gateway === 'santander') {
+                $hasKey = !empty(config('wifi.payment_gateways.pix.client_id'));
+            } else {
+                // fallback: qualquer chave genérica
+                $hasKey = !empty(SystemSetting::getValue('gateway_api_key', ''));
+            }
+
+            if (!empty($gateway) && $hasKey) {
                 $status['pagamentos'] = ['online' => true, 'detail' => ucfirst($gateway)];
             } elseif (!empty($gateway)) {
-                $status['pagamentos'] = ['online' => false, 'detail' => 'API Key ausente', 'warning' => true];
+                $status['pagamentos'] = ['online' => true, 'detail' => ucfirst($gateway), 'warning' => true];
             } else {
                 $status['pagamentos'] = ['online' => false, 'detail' => 'Não configurado'];
             }
@@ -169,13 +182,26 @@ class AdminController extends Controller
             $status['pagamentos'] = ['online' => false, 'detail' => 'Erro ao verificar'];
         }
 
-        // API - verificar se os scripts estão rodando (última ação recente)
+        // API Sync - verificar última chamada ao check-paid-users-lite via MikrotikMacReport
         try {
-            $lastSync = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
-                ->where('expires_at', '>', now())
-                ->where('updated_at', '>=', now()->subMinutes(5))
-                ->exists();
-            $status['api_sync'] = ['online' => $lastSync, 'detail' => $lastSync ? 'Ativo' : 'Sem atividade recente'];
+            $lastReport = \App\Models\MikrotikMacReport::orderBy('reported_at', 'desc')->first();
+            if ($lastReport && $lastReport->reported_at) {
+                $diffMin = now()->diffInMinutes($lastReport->reported_at);
+                if ($diffMin <= 10) {
+                    $status['api_sync'] = ['online' => true, 'detail' => "Sync há {$diffMin}min"];
+                } elseif ($diffMin <= 60) {
+                    $status['api_sync'] = ['online' => true, 'detail' => "Sync há {$diffMin}min", 'warning' => true];
+                } else {
+                    $status['api_sync'] = ['online' => false, 'detail' => 'Sem atividade recente'];
+                }
+            } else {
+                // Sem reports mas verificar se há usuários ativos (script pode estar rodando sem reportar MACs)
+                $hasActiveUsers = \App\Models\User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+                    ->where('expires_at', '>', now())
+                    ->where('updated_at', '>=', now()->subMinutes(15))
+                    ->exists();
+                $status['api_sync'] = ['online' => $hasActiveUsers, 'detail' => $hasActiveUsers ? 'Ativo' : 'Sem atividade recente'];
+            }
         } catch (\Exception $e) {
             $status['api_sync'] = ['online' => false, 'detail' => 'Erro'];
         }

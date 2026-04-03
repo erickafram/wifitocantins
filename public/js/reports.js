@@ -153,48 +153,11 @@ class ReportsManager {
     }
 
     setupFilterPresets() {
-        // Criar botões de filtros rápidos se não existirem
-        this.createQuickFilterButtons();
+        // Quick filters removed — using advanced filters only
     }
 
     createQuickFilterButtons() {
-        const filterContainer = document.querySelector('.space-y-4');
-        if (!filterContainer || document.querySelector('.quick-filters')) return;
-
-        const quickFiltersDiv = document.createElement('div');
-        quickFiltersDiv.className = 'quick-filters flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg';
-        quickFiltersDiv.innerHTML = `
-            <span class="text-sm font-medium text-gray-700 mr-4">Filtros Rápidos:</span>
-            <button data-quick-filter="today" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs hover:bg-blue-200 transition-colors">
-                📅 Hoje
-            </button>
-            <button data-quick-filter="yesterday" class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs hover:bg-gray-200 transition-colors">
-                📅 Ontem
-            </button>
-            <button data-quick-filter="week" class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs hover:bg-green-200 transition-colors">
-                📅 Esta Semana
-            </button>
-            <button data-quick-filter="month" class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs hover:bg-purple-200 transition-colors">
-                📅 Este Mês
-            </button>
-            <button data-quick-filter="paid" class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs hover:bg-green-200 transition-colors">
-                ✅ Apenas Pagos
-            </button>
-            <button data-quick-filter="pending" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs hover:bg-yellow-200 transition-colors">
-                ⏳ Apenas Pendentes
-            </button>
-        `;
-
-        filterContainer.appendChild(quickFiltersDiv);
-
-        // Adicionar event listeners aos novos botões
-        const quickFilters = quickFiltersDiv.querySelectorAll('[data-quick-filter]');
-        quickFilters.forEach(filter => {
-            filter.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.applyQuickFilter(filter.dataset.quickFilter);
-            });
-        });
+        // Removed
     }
 
     applyQuickFilter(filterType) {

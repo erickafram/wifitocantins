@@ -3,11 +3,11 @@
 @section('title', 'Relatórios')
 
 @section('breadcrumb')
-    <span>›</span>
-    <span class="text-tocantins-green font-medium">Relatórios</span>
+    <span class="text-muted">›</span>
+    <span class="text-green font-semibold">Relatórios</span>
 @endsection
 
-@section('page-title', 'Relatórios - WiFi Tocantins')
+@section('page-title', 'Relatórios')
 
 @push('scripts')
     <script src="{{ asset('js/reports.js') }}"></script>
@@ -15,44 +15,45 @@
 
 @section('content')
     @if(session('success'))
-        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-green/20 bg-green-pale px-4 py-3 text-sm text-green font-medium">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-red/20 bg-red-pale px-4 py-3 text-sm text-red font-medium">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
             {{ session('error') }}
         </div>
     @endif
 
-    <!-- Filtros -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-200/50">
-        <h2 class="text-lg font-bold text-tocantins-gray-green mb-4 flex items-center">
-            <span class="mr-2">🔍</span>
-            Filtros de Relatório
-        </h2>
-        
-        <form method="GET" action="{{ route('admin.reports') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Data Inicial -->
+    <!-- Filtros Avançados -->
+    <div class="bg-white rounded-xl shadow-card border border-border mb-6 overflow-hidden">
+        <button type="button" id="toggleAdvancedFilters"
+                class="w-full flex items-center justify-between px-5 py-3 hover:bg-surface transition-colors">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+                <span class="text-sm font-bold text-ink">Filtros Avançados</span>
+            </div>
+            <svg id="filterChevron" class="w-4 h-4 text-muted transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="advancedFiltersPanel" class="border-t border-border p-5 hidden">
+        <form method="GET" action="{{ route('admin.reports') }}">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Inicial</label>
-                    <input type="date" name="start_date" value="{{ $startDate }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">Data Inicial</label>
+                    <input type="date" name="start_date" value="{{ $startDate }}"
+                           class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                 </div>
-                
-                <!-- Data Final -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Final</label>
-                    <input type="date" name="end_date" value="{{ $endDate }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">Data Final</label>
+                    <input type="date" name="end_date" value="{{ $endDate }}"
+                           class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                 </div>
-                
-                <!-- Status do Pagamento -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Pagamento</label>
-                    <select name="payment_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">Status Pagamento</label>
+                    <select name="payment_status" class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                         <option value="all" {{ $paymentStatus == 'all' ? 'selected' : '' }}>Todos</option>
                         <option value="pending" {{ $paymentStatus == 'pending' ? 'selected' : '' }}>Pendente</option>
                         <option value="completed" {{ $paymentStatus == 'completed' ? 'selected' : '' }}>Pago</option>
@@ -60,295 +61,256 @@
                         <option value="cancelled" {{ $paymentStatus == 'cancelled' ? 'selected' : '' }}>Cancelado</option>
                     </select>
                 </div>
-                
-                <!-- Status do Usuário -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Usuário</label>
-                    <select name="user_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-                        <option value="all" {{ $userStatus == 'all' ? 'selected' : '' }}>Todos</option>
-                        <option value="connected" {{ $userStatus == 'connected' ? 'selected' : '' }}>Conectado</option>
-                        <option value="offline" {{ $userStatus == 'offline' ? 'selected' : '' }}>Offline</option>
-                        <option value="active" {{ $userStatus == 'active' ? 'selected' : '' }}>Ativo</option>
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">Ônibus</label>
+                    <select name="bus" class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
+                        <option value="all" {{ ($busFilter ?? 'all') == 'all' ? 'selected' : '' }}>Todos os Ônibus</option>
+                        @foreach($busList as $bus)
+                            <option value="{{ $bus->mikrotik_serial }}" {{ ($busFilter ?? '') == $bus->mikrotik_serial ? 'selected' : '' }}>
+                                {{ $bus->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
             </div>
-            
-            <div class="flex flex-wrap gap-2">
-                <button type="submit" class="bg-gradient-to-r from-tocantins-green to-tocantins-dark-green text-white px-6 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center">
-                    <span class="mr-2">📊</span>
+            <div class="flex gap-2">
+                <button type="submit" class="inline-flex items-center gap-1.5 bg-green hover:bg-green-light text-white font-semibold text-xs px-4 py-2 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     Aplicar Filtros
                 </button>
-                
-                <a href="{{ route('admin.reports') }}" class="bg-gray-500 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors flex items-center">
-                    <span class="mr-2">🔄</span>
+                <a href="{{ route('admin.reports') }}" class="inline-flex items-center gap-1.5 bg-surface border border-border text-ink2 font-semibold text-xs px-4 py-2 rounded-lg hover:bg-border transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Limpar
                 </a>
             </div>
         </form>
+        </div>
     </div>
 
     <!-- Cards de Estatísticas -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        
-        <!-- Receita Total (Pagos) -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-full -translate-y-12 translate-x-12"></div>
-            <div class="relative z-10">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-sm">💵</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Receita (Pagos)</p>
-                        <p class="text-lg font-bold text-green-600">R$ {{ number_format($stats['total_revenue'], 2, ',', '.') }}</p>
-                    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+
+        <div class="bg-white rounded-xl shadow-card border border-border p-4 hover:shadow-hover transition-all">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-green-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <div class="text-xs text-gray-500">
-                    Ticket médio: R$ {{ number_format($stats['avg_payment'], 2, ',', '.') }}
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-green/10 text-green px-1.5 py-0.5 rounded">Pagos</span>
+            </div>
+            <p class="text-xl font-bold text-ink">R$ {{ number_format($stats['total_revenue'], 2, ',', '.') }}</p>
+            <p class="text-[11px] text-muted mt-0.5">Ticket médio: R$ {{ number_format($stats['avg_payment'], 2, ',', '.') }}</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-card border border-border p-4 hover:shadow-hover transition-all">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-gold-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-gold/10 text-gold px-1.5 py-0.5 rounded">Pendente</span>
+            </div>
+            <p class="text-xl font-bold text-ink">R$ {{ number_format($stats['pending_payments'], 2, ',', '.') }}</p>
+            <p class="text-[11px] text-muted mt-0.5">Aguardando pagamento</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-card border border-border p-4 hover:shadow-hover transition-all">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-blue-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                </div>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-blue/10 text-blue px-1.5 py-0.5 rounded">Total</span>
+            </div>
+            <p class="text-xl font-bold text-ink">{{ $stats['total_payments'] }}</p>
+            <div class="flex gap-1.5 mt-2">
+                <span class="text-[9px] font-bold bg-green/10 text-green px-1.5 py-0.5 rounded">{{ $stats['completed_payments_count'] }} pagos</span>
+                <span class="text-[9px] font-bold bg-gold/10 text-gold px-1.5 py-0.5 rounded">{{ $stats['pending_payments_count'] }} pend.</span>
+                <span class="text-[9px] font-bold bg-red/10 text-red px-1.5 py-0.5 rounded">{{ $stats['failed_payments_count'] }} falhos</span>
             </div>
         </div>
 
-        <!-- Pagamentos Pendentes -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-full -translate-y-12 translate-x-12"></div>
-            <div class="relative z-10">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-sm">⏳</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pendentes</p>
-                        <p class="text-lg font-bold text-orange-600">R$ {{ number_format($stats['pending_payments'], 2, ',', '.') }}</p>
-                    </div>
+        <div class="bg-white rounded-xl shadow-card border border-border p-4 hover:shadow-hover transition-all">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-green-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
-                <div class="text-xs text-gray-500">
-                    Aguardando pagamento
-                </div>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-green/10 text-green px-1.5 py-0.5 rounded">Usuários</span>
             </div>
+            <p class="text-xl font-bold text-ink">{{ $stats['total_users'] }}</p>
+            <p class="text-[11px] text-muted mt-0.5">{{ $stats['connected_users'] }} conectados agora</p>
         </div>
 
-        <!-- Total de Pagamentos -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-full -translate-y-12 translate-x-12"></div>
-            <div class="relative z-10">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-sm">💳</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pagamentos</p>
-                        <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['total_payments'] }}</p>
-                    </div>
+        <div class="bg-white rounded-xl shadow-card border border-border p-4 hover:shadow-hover transition-all">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-blue-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                    <div class="rounded-lg bg-green-50 px-2 py-2 text-center">
-                        <span class="mb-1 inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                        <p class="font-semibold text-green-700">{{ $stats['completed_payments_count'] }}</p>
-                        <p class="text-green-600">Pagos</p>
-                    </div>
-                    <div class="rounded-lg bg-yellow-50 px-2 py-2 text-center">
-                        <span class="mb-1 inline-block w-2 h-2 bg-yellow-500 rounded-full"></span>
-                        <p class="font-semibold text-yellow-700">{{ $stats['pending_payments_count'] }}</p>
-                        <p class="text-yellow-600">Pendentes</p>
-                    </div>
-                    <div class="rounded-lg bg-red-50 px-2 py-2 text-center">
-                        <span class="mb-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                        <p class="font-semibold text-red-700">{{ $stats['failed_payments_count'] }}</p>
-                        <p class="text-red-600">Falhos</p>
-                    </div>
-                </div>
-                <div class="mt-3 text-xs text-gray-500">
-                    Total do periodo com distribuicao completa por status.
-                </div>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-blue/10 text-blue px-1.5 py-0.5 rounded">Sessões</span>
             </div>
-        </div>
-
-        <!-- Total de Usuários -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-tocantins-green/10 to-tocantins-dark-green/10 rounded-full -translate-y-12 translate-x-12"></div>
-            <div class="relative z-10">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-tocantins-green to-tocantins-dark-green rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-sm">👥</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Usuários</p>
-                        <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['total_users'] }}</p>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500">
-                    {{ $stats['connected_users'] }} conectados agora
-                </div>
-            </div>
-        </div>
-
-        <!-- Sessões Ativas -->
-        <div class="group bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-lg hover:shadow-xl p-4 border border-gray-200/50 backdrop-blur-sm transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-full -translate-y-12 translate-x-12"></div>
-            <div class="relative z-10">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-white text-sm">🌐</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Sessões Ativas</p>
-                        <p class="text-lg font-bold text-tocantins-gray-green">{{ $stats['active_sessions'] }}</p>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500">
-                    No período selecionado
-                </div>
-            </div>
+            <p class="text-xl font-bold text-ink">{{ $stats['active_sessions'] }}</p>
+            <p class="text-[11px] text-muted mt-0.5">No período selecionado</p>
         </div>
     </div>
 
-    <!-- Gráficos -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        
-        <!-- Gráfico de Receita por Dia -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200/50">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-tocantins-gray-green">Receita por Dia</h3>
-                <div class="text-sm text-gray-500">{{ $startDate }} - {{ $endDate }}</div>
-            </div>
-            <div class="relative h-80">
-                <canvas id="revenueChart" class="w-full h-full"></canvas>
+    <!-- Receita por Ônibus -->
+    @if($revenueByBus->count() > 0)
+    <div class="bg-white rounded-xl shadow-card border border-border mb-6 overflow-hidden">
+        <div class="flex items-center justify-between border-b border-border px-5 py-3">
+            <h3 class="text-sm font-bold text-ink">Receita por Ônibus</h3>
+            <span class="text-[11px] text-muted">{{ $startDate }} — {{ $endDate }}</span>
+        </div>
+        <div class="p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                @php $maxRevenue = $revenueByBus->max('total') ?: 1; @endphp
+                @foreach($revenueByBus as $bus)
+                <div class="bg-surface rounded-xl p-4 border border-border hover:shadow-hover transition-all">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-green-dark to-green rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-ink truncate">{{ $bus->bus_name }}</p>
+                            <p class="text-[10px] text-muted font-mono">{{ $bus->bus_id }}</p>
+                        </div>
+                    </div>
+                    <p class="text-lg font-bold text-green">R$ {{ number_format($bus->total, 2, ',', '.') }}</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-[10px] text-muted">{{ $bus->count }} pagamentos</span>
+                        <span class="text-[10px] font-semibold text-ink2">{{ number_format(($bus->total / $maxRevenue) * 100, 0) }}%</span>
+                    </div>
+                    <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1.5">
+                        <div class="h-full bg-green rounded-full" style="width: {{ ($bus->total / $maxRevenue) * 100 }}%"></div>
+                    </div>
+                </div>
+                @endforeach
             </div>
         </div>
+    </div>
+    @endif
 
-        <!-- Gráfico de Pagamentos por Status -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200/50">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-tocantins-gray-green">Pagamentos por Status</h3>
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-card border border-border p-5 hover:shadow-hover transition-all">
+            <div class="flex justify-between items-center border-b border-border pb-3 mb-4">
+                <h3 class="text-sm font-bold text-ink">Receita por Dia</h3>
+                <span class="text-[11px] text-muted">{{ $startDate }} — {{ $endDate }}</span>
             </div>
-            <div class="relative h-80">
-                <canvas id="paymentsStatusChart" class="w-full h-full"></canvas>
+            <div class="relative h-64"><canvas id="revenueChart" class="w-full h-full"></canvas></div>
+        </div>
+        <div class="bg-white rounded-xl shadow-card border border-border p-5 hover:shadow-hover transition-all">
+            <div class="flex justify-between items-center border-b border-border pb-3 mb-4">
+                <h3 class="text-sm font-bold text-ink">Pagamentos por Status</h3>
             </div>
+            <div class="relative h-64"><canvas id="paymentsStatusChart" class="w-full h-full"></canvas></div>
         </div>
     </div>
 
     <!-- Abas de Conteúdo -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-200/50 overflow-hidden">
-        
+    <div class="bg-white rounded-xl shadow-card border border-border overflow-hidden">
         <!-- Navegação das Abas -->
-        <div class="flex border-b border-gray-200">
-            <button onclick="showTab('payments')" id="tab-payments" class="tab-button flex-1 px-6 py-4 text-sm font-medium text-tocantins-green border-b-2 border-tocantins-green bg-tocantins-green/5">
-                💳 Pagamentos ({{ $payments->total() }})
+        <div class="flex border-b border-border">
+            <button onclick="showTab('payments')" id="tab-payments"
+                    class="tab-button flex-1 px-5 py-3 text-xs font-bold text-green border-b-2 border-green bg-green-pale transition-colors">
+                Pagamentos ({{ $payments->total() }})
             </button>
             @if($canViewUsersTab)
-            <button onclick="showTab('users')" id="tab-users" class="tab-button flex-1 px-6 py-4 text-sm font-medium text-gray-500 hover:text-tocantins-green transition-colors">
-                👥 Usuários ({{ $users->total() }})
+            <button onclick="showTab('users')" id="tab-users"
+                    class="tab-button flex-1 px-5 py-3 text-xs font-bold text-muted border-b-2 border-transparent hover:text-ink hover:bg-surface transition-colors">
+                Usuários ({{ $users->total() }})
             </button>
             @endif
         </div>
 
-        <!-- Conteúdo das Abas -->
-        
         <!-- Aba de Pagamentos -->
-        <div id="content-payments" class="tab-content p-6">
+        <div id="content-payments" class="tab-content p-5">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-tocantins-gray-green">Lista de Pagamentos</h3>
-                <div class="flex space-x-2">
+                <h3 class="text-sm font-bold text-ink">Lista de Pagamentos</h3>
+                <div class="flex gap-2">
                     @if(auth()->user()?->role === 'admin')
                     <form id="bulk-delete-form" method="POST" action="{{ route('admin.reports.payments.bulk-destroy') }}" onsubmit="return confirmBulkDelete();">
                         @csrf
                         @method('DELETE')
-                        <button id="bulk-delete-button" type="submit" disabled class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm opacity-50 cursor-not-allowed transition-all">
+                        <button id="bulk-delete-button" type="submit" disabled
+                                class="inline-flex items-center gap-1.5 bg-red-pale text-red font-semibold text-xs px-3 py-1.5 rounded-lg opacity-50 cursor-not-allowed transition-all">
                             Excluir selecionados (0)
                         </button>
                     </form>
                     @endif
-                    <a href="{{ route('admin.reports.export', ['type' => 'payments', 'format' => 'csv', 'start_date' => $startDate, 'end_date' => $endDate, 'payment_status' => $paymentStatus]) }}" 
-                       class="bg-tocantins-green text-white px-4 py-2 rounded-lg text-sm hover:bg-tocantins-dark-green transition-colors flex items-center">
-                        <span class="mr-2">📥</span>
+                    <a href="{{ route('admin.reports.export', ['type' => 'payments', 'format' => 'csv', 'start_date' => $startDate, 'end_date' => $endDate, 'payment_status' => $paymentStatus]) }}"
+                       class="inline-flex items-center gap-1.5 bg-green hover:bg-green-light text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Exportar CSV
                     </a>
                 </div>
             </div>
-            
+
             <div class="overflow-x-auto">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-gray-200 bg-gray-50">
+                        <tr class="border-b border-border bg-surface">
                             @if(auth()->user()?->role === 'admin')
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 w-10">
-                                <input type="checkbox" id="select-all-payments" class="rounded border-gray-300 text-tocantins-green focus:ring-tocantins-green">
-                            </th>
+                            <th class="py-2.5 px-3 w-8"><input type="checkbox" id="select-all-payments" class="rounded border-border accent-green"></th>
                             @endif
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">ID</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Usuário</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Valor</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Tipo</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Status</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Data Pagamento</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Criado em</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">ID</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Usuário</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Valor</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Tipo</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Status</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Pago em</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Criado</th>
                             @if(auth()->user()?->role === 'admin')
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Ações</th>
+                            <th class="py-2.5 px-3"></th>
                             @endif
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-border">
                         @forelse($payments as $payment)
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-surface transition-colors">
                             @if(auth()->user()?->role === 'admin')
-                            <td class="py-3 px-4">
-                                <input type="checkbox" class="payment-checkbox rounded border-gray-300 text-tocantins-green focus:ring-tocantins-green" value="{{ $payment->id }}">
-                            </td>
+                            <td class="py-3 px-3"><input type="checkbox" class="payment-checkbox rounded border-border accent-green" value="{{ $payment->id }}"></td>
                             @endif
-                            <td class="py-3 px-4 text-sm text-gray-900">#{{ $payment->id }}</td>
-                            <td class="py-3 px-4">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ $payment->user->name ?? 'N/A' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $payment->user->email ?? 'N/A' }}</p>
-                                </div>
+                            <td class="py-3 px-3 text-xs text-muted font-mono">#{{ $payment->id }}</td>
+                            <td class="py-3 px-3">
+                                <p class="text-xs font-medium text-ink">{{ $payment->user->name ?? 'N/A' }}</p>
+                                <p class="text-[10px] text-muted">{{ $payment->user->email ?? 'N/A' }}</p>
                             </td>
-                            <td class="py-3 px-4 text-sm font-semibold text-tocantins-green">
-                                R$ {{ number_format($payment->amount, 2, ',', '.') }}
-                            </td>
-                            <td class="py-3 px-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    {{ $payment->payment_type === 'pix' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
-                                    {{ $payment->payment_type === 'pix' ? '📱 PIX' : '💳 Cartão' }}
+                            <td class="py-3 px-3 text-xs font-bold text-green">R$ {{ number_format($payment->amount, 2, ',', '.') }}</td>
+                            <td class="py-3 px-3">
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded {{ $payment->payment_type === 'pix' ? 'bg-blue/10 text-blue' : 'bg-green/10 text-green' }}">
+                                    {{ $payment->payment_type === 'pix' ? 'PIX' : 'Cartão' }}
                                 </span>
                             </td>
-                            <td class="py-3 px-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    @if($payment->status === 'completed') bg-green-100 text-green-800
-                                    @elseif($payment->status === 'pending') bg-yellow-100 text-yellow-800
-                                    @elseif($payment->status === 'failed') bg-red-100 text-red-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    @if($payment->status === 'completed') ✅ Pago
-                                    @elseif($payment->status === 'pending') ⏳ Pendente
-                                    @elseif($payment->status === 'failed') ❌ Falhou - API-TEST-RICK
-                                    @else 🚫 Cancelado @endif
+                            <td class="py-3 px-3">
+                                @php
+                                    $stMap = [
+                                        'completed' => 'bg-green/10 text-green',
+                                        'pending'   => 'bg-gold/10 text-gold',
+                                        'failed'    => 'bg-red/10 text-red',
+                                    ];
+                                    $stLabel = ['completed'=>'Pago','pending'=>'Pendente','failed'=>'Falhou'];
+                                @endphp
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded {{ $stMap[$payment->status] ?? 'bg-surface text-muted' }}">
+                                    {{ $stLabel[$payment->status] ?? ucfirst($payment->status) }}
                                 </span>
                             </td>
-                            <td class="py-3 px-4 text-sm text-gray-900">
-                                {{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i:s') : '-' }}
-                            </td>
-                            <td class="py-3 px-4 text-sm text-gray-900">
-                                {{ $payment->created_at->format('d/m/Y H:i:s') }}
-                            </td>
+                            <td class="py-3 px-3 text-xs text-ink2">{{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i') : '—' }}</td>
+                            <td class="py-3 px-3 text-xs text-muted">{{ $payment->created_at->format('d/m/Y H:i') }}</td>
                             @if(auth()->user()?->role === 'admin')
-                            <td class="py-3 px-4 text-sm text-gray-900">
-                                <form method="POST" action="{{ route('admin.reports.payments.destroy', $payment) }}" onsubmit="return confirm('Tem certeza que deseja excluir este registro? Esta ação remove também o usuário vinculado e os pagamentos dele.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 transition-colors">
-                                        Excluir
-                                    </button>
+                            <td class="py-3 px-3">
+                                <form method="POST" action="{{ route('admin.reports.payments.destroy', $payment) }}" onsubmit="return confirm('Excluir este registro e o usuário vinculado?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="text-[10px] font-bold bg-red-pale text-red px-2 py-1 rounded-lg hover:bg-red/10 transition-colors">Excluir</button>
                                 </form>
                             </td>
                             @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ auth()->user()?->role === 'admin' ? 9 : 7 }}" class="py-8 px-4 text-center text-gray-500">
-                                <div class="flex flex-col items-center">
-                                    <span class="text-4xl mb-2">📊</span>
-                                    <p class="text-sm">Nenhum pagamento encontrado no período selecionado.</p>
+                            <td colspan="{{ auth()->user()?->role === 'admin' ? 9 : 7 }}" class="py-10 text-center">
+                                <div class="w-10 h-10 bg-surface rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                                 </div>
+                                <p class="text-sm text-muted">Nenhum pagamento encontrado no período.</p>
                             </td>
                         </tr>
                         @endforelse
@@ -357,25 +319,21 @@
             </div>
             
             @if($payments->hasPages())
-            <div class="mt-6 flex items-center justify-between">
-                <div class="text-sm text-gray-700">
-                    Mostrando {{ $payments->firstItem() }} a {{ $payments->lastItem() }} de {{ $payments->total() }} pagamentos
-                </div>
-                <div class="flex items-center gap-2">
-                    @if ($payments->onFirstPage())
-                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Anterior</span>
+            <div class="mt-5 flex items-center justify-between">
+                <p class="text-[11px] text-muted">Mostrando {{ $payments->firstItem() }}–{{ $payments->lastItem() }} de {{ $payments->total() }}</p>
+                <div class="flex items-center gap-1.5">
+                    @if($payments->onFirstPage())
+                        <span class="px-3 py-1.5 rounded-lg border border-border bg-surface text-muted text-xs">Anterior</span>
                     @else
-                        <a href="{{ $payments->previousPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Anterior</a>
+                        <a href="{{ $payments->previousPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-border bg-white text-ink2 hover:bg-surface text-xs transition-colors">Anterior</a>
                     @endif
-
-                    <span class="px-3 py-1.5 rounded-lg border border-tocantins-green/30 bg-tocantins-green/10 text-tocantins-gray-green text-sm font-medium">
-                        Página {{ $payments->currentPage() }} de {{ $payments->lastPage() }}
+                    <span class="px-3 py-1.5 rounded-lg border border-green/30 bg-green-pale text-green text-xs font-semibold">
+                        {{ $payments->currentPage() }} / {{ $payments->lastPage() }}
                     </span>
-
-                    @if ($payments->hasMorePages())
-                        <a href="{{ $payments->nextPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Próxima</a>
+                    @if($payments->hasMorePages())
+                        <a href="{{ $payments->nextPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-border bg-white text-ink2 hover:bg-surface text-xs transition-colors">Próxima</a>
                     @else
-                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Próxima</span>
+                        <span class="px-3 py-1.5 rounded-lg border border-border bg-surface text-muted text-xs">Próxima</span>
                     @endif
                 </div>
             </div>
@@ -384,85 +342,63 @@
 
         @if($canViewUsersTab)
         <!-- Aba de Usuários -->
-        <div id="content-users" class="tab-content p-6 hidden">
+        <div id="content-users" class="tab-content p-5 hidden">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-tocantins-gray-green">Lista de Usuários</h3>
-                <div class="flex space-x-2">
-                    <a href="{{ route('admin.reports.export', ['type' => 'users', 'format' => 'csv', 'start_date' => $startDate, 'end_date' => $endDate, 'user_status' => $userStatus]) }}" 
-                       class="bg-tocantins-green text-white px-4 py-2 rounded-lg text-sm hover:bg-tocantins-dark-green transition-colors flex items-center">
-                        <span class="mr-2">📥</span>
-                        Exportar CSV
-                    </a>
-                </div>
+                <h3 class="text-sm font-bold text-ink">Lista de Usuários</h3>
+                <a href="{{ route('admin.reports.export', ['type' => 'users', 'format' => 'csv', 'start_date' => $startDate, 'end_date' => $endDate, 'user_status' => $userStatus]) }}"
+                   class="inline-flex items-center gap-1.5 bg-green hover:bg-green-light text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Exportar CSV
+                </a>
             </div>
-            
             <div class="overflow-x-auto">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-gray-200 bg-gray-50">
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">ID</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Usuário</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">MAC Address</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Status</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Conectado em</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Expira em</th>
-                            <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">Cadastro</th>
+                        <tr class="border-b border-border bg-surface">
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">ID</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Usuário</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">MAC</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Status</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Conectado</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Expira</th>
+                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5 px-3">Cadastro</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-border">
                         @forelse($users as $user)
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-3 px-4 text-sm text-gray-900">#{{ $user->id }}</td>
-                            <td class="py-3 px-4">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ $user->name ?? 'N/A' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $user->email ?? 'N/A' }}</p>
-                                    @if($user->phone)
-                                    <p class="text-xs text-gray-500">{{ $user->phone }}</p>
-                                    @endif
-                                </div>
+                        <tr class="hover:bg-surface transition-colors">
+                            <td class="py-3 px-3 text-xs text-muted font-mono">#{{ $user->id }}</td>
+                            <td class="py-3 px-3">
+                                <p class="text-xs font-medium text-ink">{{ $user->name ?? 'N/A' }}</p>
+                                <p class="text-[10px] text-muted">{{ $user->email ?? ($user->phone ?? 'N/A') }}</p>
                             </td>
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-3">
                                 @if($user->mac_address)
-                                <div class="flex items-center">
-                                    <div class="w-6 h-6 bg-tocantins-light-yellow rounded-full flex items-center justify-center mr-2">
-                                        <span class="text-tocantins-gray-green text-xs font-bold">
-                                            {{ substr($user->mac_address, -2) }}
-                                        </span>
-                                    </div>
-                                    <span class="text-sm font-mono">{{ $user->mac_address }}</span>
-                                </div>
+                                    <span class="text-xs font-mono text-ink2">{{ $user->mac_address }}</span>
                                 @else
-                                <span class="text-gray-400">-</span>
+                                    <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="py-3 px-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    @if($user->status === 'connected') bg-green-100 text-green-800
-                                    @elseif($user->status === 'active') bg-blue-100 text-blue-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    @if($user->status === 'connected') 🟢 Conectado
-                                    @elseif($user->status === 'active') 🔵 Ativo
-                                    @else ⚫ Offline @endif
+                            <td class="py-3 px-3">
+                                @php
+                                    $uMap = ['connected'=>'bg-green/10 text-green','active'=>'bg-blue/10 text-blue','temp_bypass'=>'bg-gold/10 text-gold'];
+                                    $uLabel = ['connected'=>'Conectado','active'=>'Ativo','temp_bypass'=>'Bypass'];
+                                @endphp
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded {{ $uMap[$user->status] ?? 'bg-surface text-muted' }}">
+                                    {{ $uLabel[$user->status] ?? ucfirst($user->status) }}
                                 </span>
                             </td>
-                            <td class="py-3 px-4 text-sm text-gray-900">
-                                {{ $user->connected_at ? $user->connected_at->format('d/m/Y H:i:s') : '-' }}
-                            </td>
-                            <td class="py-3 px-4 text-sm text-gray-900">
-                                {{ $user->expires_at ? $user->expires_at->format('d/m/Y H:i:s') : '-' }}
-                            </td>
-                            <td class="py-3 px-4 text-sm text-gray-900">
-                                {{ $user->created_at->format('d/m/Y H:i:s') }}
-                            </td>
+                            <td class="py-3 px-3 text-xs text-ink2">{{ $user->connected_at ? $user->connected_at->format('d/m/Y H:i') : '—' }}</td>
+                            <td class="py-3 px-3 text-xs text-ink2">{{ $user->expires_at ? $user->expires_at->format('d/m/Y H:i') : '—' }}</td>
+                            <td class="py-3 px-3 text-xs text-muted">{{ $user->created_at->format('d/m/Y H:i') }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-gray-500">
-                                <div class="flex flex-col items-center">
-                                    <span class="text-4xl mb-2">👥</span>
-                                    <p class="text-sm">Nenhum usuário encontrado no período selecionado.</p>
+                            <td colspan="7" class="py-10 text-center">
+                                <div class="w-10 h-10 bg-surface rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 </div>
+                                <p class="text-sm text-muted">Nenhum usuário encontrado no período.</p>
                             </td>
                         </tr>
                         @endforelse
@@ -471,25 +407,21 @@
             </div>
             
             @if($users->hasPages())
-            <div class="mt-6 flex items-center justify-between">
-                <div class="text-sm text-gray-700">
-                    Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} usuários
-                </div>
-                <div class="flex items-center gap-2">
-                    @if ($users->onFirstPage())
-                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Anterior</span>
+            <div class="mt-5 flex items-center justify-between">
+                <p class="text-[11px] text-muted">Mostrando {{ $users->firstItem() }}–{{ $users->lastItem() }} de {{ $users->total() }}</p>
+                <div class="flex items-center gap-1.5">
+                    @if($users->onFirstPage())
+                        <span class="px-3 py-1.5 rounded-lg border border-border bg-surface text-muted text-xs">Anterior</span>
                     @else
-                        <a href="{{ $users->previousPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Anterior</a>
+                        <a href="{{ $users->previousPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-border bg-white text-ink2 hover:bg-surface text-xs transition-colors">Anterior</a>
                     @endif
-
-                    <span class="px-3 py-1.5 rounded-lg border border-tocantins-green/30 bg-tocantins-green/10 text-tocantins-gray-green text-sm font-medium">
-                        Página {{ $users->currentPage() }} de {{ $users->lastPage() }}
+                    <span class="px-3 py-1.5 rounded-lg border border-green/30 bg-green-pale text-green text-xs font-semibold">
+                        {{ $users->currentPage() }} / {{ $users->lastPage() }}
                     </span>
-
-                    @if ($users->hasMorePages())
-                        <a href="{{ $users->nextPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Próxima</a>
+                    @if($users->hasMorePages())
+                        <a href="{{ $users->nextPageUrl() }}" class="px-3 py-1.5 rounded-lg border border-border bg-white text-ink2 hover:bg-surface text-xs transition-colors">Próxima</a>
                     @else
-                        <span class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm">Próxima</span>
+                        <span class="px-3 py-1.5 rounded-lg border border-border bg-surface text-muted text-xs">Próxima</span>
                     @endif
                 </div>
             </div>
@@ -500,6 +432,19 @@
 
     <!-- Scripts específicos da página -->
     <script>
+        // Toggle filtros avançados
+        (function() {
+            const btn = document.getElementById('toggleAdvancedFilters');
+            const panel = document.getElementById('advancedFiltersPanel');
+            const chevron = document.getElementById('filterChevron');
+            const hasFilters = {{ request()->hasAny(['start_date','end_date','payment_status','bus']) ? 'true' : 'false' }};
+            if (hasFilters && panel) { panel.classList.remove('hidden'); chevron.classList.add('rotate-180'); }
+            btn?.addEventListener('click', () => {
+                panel.classList.toggle('hidden');
+                chevron.classList.toggle('rotate-180');
+            });
+        })();
+
         // Função para mostrar/esconder abas
         function showTab(tabName) {
             // Esconder todos os conteúdos das abas
@@ -509,8 +454,8 @@
             
             // Remover classe ativa de todos os botões
             document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('text-tocantins-green', 'border-tocantins-green', 'bg-tocantins-green/5');
-                button.classList.add('text-gray-500');
+                button.classList.remove('text-green', 'border-green', 'bg-green-pale');
+                button.classList.add('text-muted', 'border-transparent');
             });
             
             // Mostrar conteúdo da aba selecionada
@@ -518,8 +463,8 @@
             
             // Ativar botão da aba selecionada
             const activeButton = document.getElementById('tab-' + tabName);
-            activeButton.classList.remove('text-gray-500');
-            activeButton.classList.add('text-tocantins-green', 'border-tocantins-green', 'bg-tocantins-green/5');
+            activeButton.classList.remove('text-muted', 'border-transparent');
+            activeButton.classList.add('text-green', 'border-green', 'bg-green-pale');
         }
 
         function updateBulkDeleteState() {
@@ -591,12 +536,12 @@
                         datasets: [{
                             label: 'Receita (R$)',
                             data: {!! json_encode($charts['revenue_by_day']->pluck('total')) !!},
-                            borderColor: '#FFD700',
-                            backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                            borderColor: '#00A335',
+                            backgroundColor: 'rgba(0, 163, 53, 0.08)',
                             tension: 0.4,
                             fill: true,
-                            pointBackgroundColor: '#FFD700',
-                            pointBorderColor: '#FFD700',
+                            pointBackgroundColor: '#00A335',
+                            pointBorderColor: '#00A335',
                             pointRadius: 4
                         }]
                     },
@@ -661,10 +606,10 @@
                         datasets: [{
                             data: {!! json_encode($charts['payments_by_status']->pluck('count')) !!},
                             backgroundColor: [
-                                '#10B981', // green - completed
-                                '#F59E0B', // yellow - pending  
-                                '#EF4444', // red - failed
-                                '#6B7280'  // gray - cancelled
+                                '#00A335', // green - completed
+                                '#E6A817', // gold - pending  
+                                '#D32F2F', // red - failed
+                                '#888888'  // muted - cancelled
                             ],
                             borderWidth: 3,
                             borderColor: '#ffffff',

@@ -18,19 +18,26 @@ class ReportsController extends Controller
         $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
         $paymentStatus = $request->get('payment_status', 'all');
         $userStatus = $request->get('user_status', 'all');
+        $busFilter = $request->get('bus', 'all');
         $canViewUsersTab = auth()->user()?->role === 'admin';
         
         // Estatísticas gerais
-        $stats = $this->getGeneralStats($startDate, $endDate, $paymentStatus, $userStatus);
+        $stats = $this->getGeneralStats($startDate, $endDate, $paymentStatus, $userStatus, $busFilter);
         
         // Dados dos pagamentos
-        $payments = $this->getPaymentsData($startDate, $endDate, $paymentStatus);
+        $payments = $this->getPaymentsData($startDate, $endDate, $paymentStatus, $busFilter);
         
         // Dados dos usuários
         $users = $canViewUsersTab ? $this->getUsersData($startDate, $endDate, $userStatus) : null;
         
         // Dados para gráficos
         $charts = $this->getChartsData($startDate, $endDate);
+
+        // Receita por ônibus
+        $revenueByBus = $this->getRevenueByBus($startDate, $endDate);
+
+        // Lista de ônibus para o filtro
+        $busList = \App\Models\Bus::orderBy('name')->get();
         
         return view('admin.reports', compact(
             'stats', 
@@ -41,24 +48,39 @@ class ReportsController extends Controller
             'endDate',
             'paymentStatus',
             'userStatus',
-            'canViewUsersTab'
+            'busFilter',
+            'canViewUsersTab',
+            'revenueByBus',
+            'busList'
         ));
     }
     
-    private function getGeneralStats($startDate, $endDate, $paymentStatus, $userStatus)
+    private function getGeneralStats($startDate, $endDate, $paymentStatus, $userStatus, $busFilter = 'all')
     {
+        $dateRange = [$startDate . ' 00:00:00', $endDate . ' 23:59:59'];
+
+        // Closure para aplicar filtro de ônibus via user.last_mikrotik_id
+        $busScope = function ($query) use ($busFilter) {
+            if ($busFilter !== 'all') {
+                $query->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
+            }
+        };
+
         // Receita total - apenas pagamentos completados
-        $totalRevenue = Payment::where('status', 'completed')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->sum('amount');
+        $revenueQuery = Payment::where('status', 'completed')->whereBetween('created_at', $dateRange);
+        if ($busFilter !== 'all') {
+            $revenueQuery->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
+        }
+        $totalRevenue = $revenueQuery->sum('amount');
         
         // Total de pagamentos - respeitando filtro
-        $query = Payment::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        
+        $query = Payment::whereBetween('created_at', $dateRange);
         if ($paymentStatus !== 'all') {
             $query->where('status', $paymentStatus);
         }
-        
+        if ($busFilter !== 'all') {
+            $query->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
+        }
         $totalPayments = $query->count();
         
         // Pagamentos por status
@@ -117,13 +139,17 @@ class ReportsController extends Controller
         ];
     }
     
-    private function getPaymentsData($startDate, $endDate, $paymentStatus)
+    private function getPaymentsData($startDate, $endDate, $paymentStatus, $busFilter = 'all')
     {
         $query = Payment::with(['user'])
             ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         
         if ($paymentStatus !== 'all') {
             $query->where('status', $paymentStatus);
+        }
+
+        if ($busFilter !== 'all') {
+            $query->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
         }
         
         return $query->orderBy('created_at', 'desc')
@@ -188,6 +214,33 @@ class ReportsController extends Controller
             'users_by_day' => $usersByDay,
             'connections_by_hour' => $connectionsByHour,
         ];
+    }
+
+    /**
+     * Receita agrupada por ônibus (mikrotik_id)
+     */
+    private function getRevenueByBus($startDate, $endDate)
+    {
+        $dateRange = [$startDate . ' 00:00:00', $endDate . ' 23:59:59'];
+        $busNames = \App\Models\Bus::getSerialNameMap();
+
+        $data = Payment::where('payments.status', 'completed')
+            ->whereBetween('payments.created_at', $dateRange)
+            ->join('users', 'payments.user_id', '=', 'users.id')
+            ->select(
+                DB::raw("COALESCE(users.last_mikrotik_id, 'desconhecido') as bus_id"),
+                DB::raw('SUM(payments.amount) as total'),
+                DB::raw('COUNT(payments.id) as count')
+            )
+            ->groupBy('bus_id')
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($row) use ($busNames) {
+                $row->bus_name = $busNames[$row->bus_id] ?? $row->bus_id;
+                return $row;
+            });
+
+        return $data;
     }
     
     public function export(Request $request)

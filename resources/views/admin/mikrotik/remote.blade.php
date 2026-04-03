@@ -1,94 +1,100 @@
 @extends('layouts.admin')
 
-@section('title', 'Controle de Acesso WiFi')
+@section('title', 'MikroTik Remoto')
+
+@section('breadcrumb')
+    <span class="text-muted">›</span>
+    <span class="text-green font-semibold">MikroTik Remoto</span>
+@endsection
+
+@section('page-title', 'MikroTik Remoto')
 
 @section('content')
-<div class="max-w-8xl mx-auto px-4 py-6">
+<div class="max-w-8xl mx-auto">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+    <!-- Hero Banner -->
+    <div class="bg-gradient-to-r from-green-dark via-green to-green-light rounded-xl px-5 py-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Controle de Acesso WiFi</h1>
-            <p class="text-sm text-gray-500 mt-1">Gerencie os MACs liberados. O MikroTik sincroniza a cada 15 segundos via API.</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-0.5">Starlink · Controle de Acesso</p>
+            <h1 class="text-xl font-bold text-white">MikroTik Remoto</h1>
+            <p class="text-xs text-white/70 mt-0.5">Gerencie os MACs liberados. Sincronização a cada 15s via API.</p>
         </div>
-        <div class="flex gap-2">
-            <button onclick="refreshData()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" id="btn-refresh">
-                <svg class="w-4 h-4" id="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="refreshData()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 border border-white/20 rounded-lg text-xs font-semibold text-white hover:bg-white/25 transition" id="btn-refresh">
+                <svg class="w-3.5 h-3.5" id="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Atualizar
             </button>
-            <button onclick="showPreviewAPI()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                Preview API
+            <button onclick="showPreviewAPI()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 border border-white/20 rounded-lg text-xs font-semibold text-white hover:bg-white/25 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                API
             </button>
-            <button onclick="showLogs()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <button onclick="showLogs()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 border border-white/20 rounded-lg text-xs font-semibold text-white hover:bg-white/25 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Logs
             </button>
-            <button onclick="switchTab('bypass')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-300 rounded-lg text-sm font-medium text-amber-700 hover:bg-amber-100 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Bypass Logs
+            <button onclick="switchTab('bypass')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-gold font-bold text-xs rounded-lg hover:bg-gold-pale transition shadow-card">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Bypass
             </button>
         </div>
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl border border-emerald-200 p-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div class="bg-white rounded-xl border border-green/30 shadow-card p-4 hover:shadow-hover transition-all">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0"/></svg>
+                <div class="w-9 h-9 bg-green-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0"/></svg>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500 font-medium">Liberados (L:)</p>
-                    <p class="text-2xl font-bold text-emerald-600" id="stat-liberados">-</p>
+                    <p class="text-[10px] text-muted font-medium">Liberados (L:)</p>
+                    <p class="text-2xl font-bold text-green" id="stat-liberados">-</p>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl border border-red-200 p-4">
+        <div class="bg-white rounded-xl border border-red/30 shadow-card p-4 hover:shadow-hover transition-all">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                <div class="w-9 h-9 bg-red-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500 font-medium">Para Remover (R:)</p>
-                    <p class="text-2xl font-bold text-red-600" id="stat-expirados">-</p>
+                    <p class="text-[10px] text-muted font-medium">Para Remover (R:)</p>
+                    <p class="text-2xl font-bold text-red" id="stat-expirados">-</p>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl border border-blue-200 p-4">
+        <div class="bg-white rounded-xl border border-blue/30 shadow-card p-4 hover:shadow-hover transition-all">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                <div class="w-9 h-9 bg-blue-pale rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500 font-medium">Total Registrados</p>
-                    <p class="text-2xl font-bold text-blue-600" id="stat-total">-</p>
+                    <p class="text-[10px] text-muted font-medium">Total Registrados</p>
+                    <p class="text-2xl font-bold text-blue" id="stat-total">-</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Liberar MAC Manual -->
-    <div class="bg-white rounded-xl border shadow-sm mb-6 overflow-hidden">
-        <div class="px-5 py-3 bg-emerald-50 border-b border-emerald-200">
-            <h2 class="font-semibold text-emerald-800 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                Liberar MAC Manualmente
-            </h2>
+    <div class="bg-white rounded-xl border border-border shadow-card mb-6 overflow-hidden">
+        <div class="px-5 py-3 border-b border-border flex items-center gap-2">
+            <svg class="w-4 h-4 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            <h2 class="text-sm font-bold text-ink">Liberar MAC Manualmente</h2>
         </div>
         <div class="p-5">
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">MAC Address *</label>
-                    <input type="text" id="input-mac" placeholder="XX:XX:XX:XX:XX:XX" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 uppercase" maxlength="17">
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">MAC Address *</label>
+                    <input type="text" id="input-mac" placeholder="XX:XX:XX:XX:XX:XX" class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all uppercase" maxlength="17">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Telefone</label>
-                    <input type="text" id="input-phone" placeholder="(63) 99999-9999" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">Telefone</label>
+                    <input type="text" id="input-phone" placeholder="(63) 99999-9999" class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Duração</label>
-                    <select id="input-hours" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    <label class="block text-[11px] font-semibold text-ink2 uppercase tracking-wider mb-1.5">Duração</label>
+                    <select id="input-hours" class="w-full px-3 py-2 text-sm text-ink bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all">
                         <option value="1">1 hora</option>
                         <option value="2">2 horas</option>
                         <option value="6">6 horas</option>
@@ -101,56 +107,53 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button onclick="liberateMac()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition flex items-center justify-center gap-1.5">
+                    <button onclick="liberateMac()" class="w-full bg-green hover:bg-green-light text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-1.5 shadow-card">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         Liberar
                     </button>
                 </div>
             </div>
-            <p class="text-xs text-gray-400 mt-2">O MikroTik vai liberar esse MAC automaticamente na próxima sincronização (~15s).</p>
+            <p class="text-[10px] text-muted mt-2">O MikroTik vai liberar esse MAC automaticamente na próxima sincronização (~15s).</p>
         </div>
     </div>
 
     <!-- Tabs -->
-    <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <div class="border-b">
+    <div class="bg-white rounded-xl border border-border shadow-card overflow-hidden">
+        <div class="border-b border-border">
             <div class="flex">
-                <button onclick="switchTab('liberados')" id="tab-liberados" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 border-emerald-500 text-emerald-700 bg-emerald-50 transition">
-                    🟢 Liberados <span id="badge-liberados" class="ml-1 bg-emerald-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+                <button onclick="switchTab('liberados')" id="tab-liberados" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-xs font-bold border-b-2 border-green text-green bg-green-pale transition">
+                    Liberados <span id="badge-liberados" class="ml-1 text-[9px] font-bold bg-green/10 text-green px-1.5 py-0.5 rounded">0</span>
                 </button>
-                <button onclick="switchTab('expirados')" id="tab-expirados" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
-                    🔴 Expirados <span id="badge-expirados" class="ml-1 bg-gray-300 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">0</span>
+                <button onclick="switchTab('expirados')" id="tab-expirados" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-xs font-bold border-b-2 border-transparent text-muted hover:text-ink transition">
+                    Expirados <span id="badge-expirados" class="ml-1 text-[9px] font-bold bg-surface text-muted px-1.5 py-0.5 rounded">0</span>
                 </button>
-                <button onclick="switchTab('todos')" id="tab-todos" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
-                    📋 Todos <span id="badge-todos" class="ml-1 bg-gray-300 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">0</span>
+                <button onclick="switchTab('todos')" id="tab-todos" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-xs font-bold border-b-2 border-transparent text-muted hover:text-ink transition">
+                    Todos <span id="badge-todos" class="ml-1 text-[9px] font-bold bg-surface text-muted px-1.5 py-0.5 rounded">0</span>
                 </button>
-                <button onclick="switchTab('bypass')" id="tab-bypass" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition">
-                    ⏱️ Bypass <span id="badge-bypass" class="ml-1 bg-amber-300 text-amber-800 text-xs px-1.5 py-0.5 rounded-full">0</span>
+                <button onclick="switchTab('bypass')" id="tab-bypass" class="tab-btn flex-1 sm:flex-none px-5 py-3 text-xs font-bold border-b-2 border-transparent text-muted hover:text-ink transition">
+                    Bypass <span id="badge-bypass" class="ml-1 text-[9px] font-bold bg-gold/10 text-gold px-1.5 py-0.5 rounded">0</span>
                 </button>
             </div>
         </div>
 
         <!-- Busca -->
-        <div class="px-5 py-3 bg-gray-50 border-b">
-            <input type="text" id="search-input" placeholder="Buscar por MAC, telefone ou nome..." class="w-full sm:w-80 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" oninput="filterTable()">
+        <div class="px-5 py-3 bg-surface border-b border-border">
+            <input type="text" id="search-input" placeholder="Buscar por MAC, telefone ou nome..." class="w-full sm:w-80 px-3 py-2 text-sm text-ink bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all" oninput="filterTable()">
         </div>
 
-        <!-- Tabelas -->
         <div id="content-liberados" class="tab-content">
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Usuário</th>
-                            <th class="px-4 py-3 text-left">Telefone</th>
-                            <th class="px-4 py-3 text-left">MAC Address</th>
-                            <th class="px-4 py-3 text-left">IP</th>
-                            <th class="px-4 py-3 text-left">Expira em</th>
-                            <th class="px-4 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-liberados" class="divide-y divide-gray-100">
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Carregando...</td></tr>
+                    <thead><tr class="border-b border-border bg-surface">
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Usuário</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Telefone</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">MAC Address</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">IP</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Expira em</th>
+                        <th class="px-4 py-2.5 text-center text-[10px] font-bold text-muted uppercase tracking-wider">Ações</th>
+                    </tr></thead>
+                    <tbody id="table-liberados" class="divide-y divide-border">
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-muted text-sm">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -159,17 +162,15 @@
         <div id="content-expirados" class="tab-content hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Usuário</th>
-                            <th class="px-4 py-3 text-left">Telefone</th>
-                            <th class="px-4 py-3 text-left">MAC Address</th>
-                            <th class="px-4 py-3 text-left">Expirou em</th>
-                            <th class="px-4 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-expirados" class="divide-y divide-gray-100">
-                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Carregando...</td></tr>
+                    <thead><tr class="border-b border-border bg-surface">
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Usuário</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Telefone</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">MAC Address</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Expirou em</th>
+                        <th class="px-4 py-2.5 text-center text-[10px] font-bold text-muted uppercase tracking-wider">Ações</th>
+                    </tr></thead>
+                    <tbody id="table-expirados" class="divide-y divide-border">
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-muted text-sm">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -178,18 +179,16 @@
         <div id="content-todos" class="tab-content hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Usuário</th>
-                            <th class="px-4 py-3 text-left">Telefone</th>
-                            <th class="px-4 py-3 text-left">MAC Address</th>
-                            <th class="px-4 py-3 text-left">Status</th>
-                            <th class="px-4 py-3 text-left">Expira/Expirou</th>
-                            <th class="px-4 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-todos" class="divide-y divide-gray-100">
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Carregando...</td></tr>
+                    <thead><tr class="border-b border-border bg-surface">
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Usuário</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Telefone</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">MAC Address</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Expira/Expirou</th>
+                        <th class="px-4 py-2.5 text-center text-[10px] font-bold text-muted uppercase tracking-wider">Ações</th>
+                    </tr></thead>
+                    <tbody id="table-todos" class="divide-y divide-border">
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-muted text-sm">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -197,41 +196,38 @@
 
         <!-- Tab Bypass Logs -->
         <div id="content-bypass" class="tab-content hidden">
-            <!-- Stats bypass -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-amber-50 border-b">
-                <div class="text-center">
-                    <p class="text-xs text-gray-500">Total Hoje</p>
-                    <p class="text-lg font-bold text-amber-700" id="bypass-stat-total">-</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-gold-pale border-b border-border">
+                <div class="text-center p-2 bg-white rounded-xl shadow-card">
+                    <p class="text-[10px] text-muted">Total Hoje</p>
+                    <p class="text-lg font-bold text-gold" id="bypass-stat-total">-</p>
                 </div>
-                <div class="text-center">
-                    <p class="text-xs text-gray-500">Aprovados Hoje</p>
-                    <p class="text-lg font-bold text-emerald-600" id="bypass-stat-aprovados">-</p>
+                <div class="text-center p-2 bg-white rounded-xl shadow-card">
+                    <p class="text-[10px] text-muted">Aprovados</p>
+                    <p class="text-lg font-bold text-green" id="bypass-stat-aprovados">-</p>
                 </div>
-                <div class="text-center">
-                    <p class="text-xs text-gray-500">Negados Hoje</p>
-                    <p class="text-lg font-bold text-red-600" id="bypass-stat-negados">-</p>
+                <div class="text-center p-2 bg-white rounded-xl shadow-card">
+                    <p class="text-[10px] text-muted">Negados</p>
+                    <p class="text-lg font-bold text-red" id="bypass-stat-negados">-</p>
                 </div>
-                <div class="text-center">
-                    <p class="text-xs text-gray-500">Total Geral</p>
-                    <p class="text-lg font-bold text-gray-700" id="bypass-stat-geral">-</p>
+                <div class="text-center p-2 bg-white rounded-xl shadow-card">
+                    <p class="text-[10px] text-muted">Total Geral</p>
+                    <p class="text-lg font-bold text-ink" id="bypass-stat-geral">-</p>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Data/Hora</th>
-                            <th class="px-4 py-3 text-left">Telefone</th>
-                            <th class="px-4 py-3 text-left">MAC</th>
-                            <th class="px-4 py-3 text-left">IP</th>
-                            <th class="px-4 py-3 text-center">Nº</th>
-                            <th class="px-4 py-3 text-center">Status</th>
-                            <th class="px-4 py-3 text-left">Motivo</th>
-                            <th class="px-4 py-3 text-center">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-bypass" class="divide-y divide-gray-100">
-                        <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">Clique em "Bypass Logs" para carregar</td></tr>
+                    <thead><tr class="border-b border-border bg-surface">
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Data/Hora</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Telefone</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">MAC</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">IP</th>
+                        <th class="px-4 py-2.5 text-center text-[10px] font-bold text-muted uppercase tracking-wider">Nº</th>
+                        <th class="px-4 py-2.5 text-center text-[10px] font-bold text-muted uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-2.5 text-left text-[10px] font-bold text-muted uppercase tracking-wider">Motivo</th>
+                        <th class="px-4 py-2.5 text-center text-[10px] font-bold text-muted uppercase tracking-wider">Ação</th>
+                    </tr></thead>
+                    <tbody id="table-bypass" class="divide-y divide-border">
+                        <tr><td colspan="8" class="px-4 py-8 text-center text-muted text-sm">Clique em "Bypass" para carregar</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -240,33 +236,33 @@
 </div>
 
 <!-- Modal Preview API -->
-<div id="modal-api" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
-        <div class="px-5 py-4 border-b flex items-center justify-between">
-            <h3 class="font-bold text-gray-800">Resposta da API para o MikroTik</h3>
-            <button onclick="closeModal('modal-api')" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+<div id="modal-api" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-start justify-center pt-20 p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-modal max-w-lg w-full max-h-[80vh] flex flex-col border border-border">
+        <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+            <h3 class="text-sm font-bold text-ink">Resposta da API para o MikroTik</h3>
+            <button onclick="closeModal('modal-api')" class="text-muted hover:text-ink p-1 hover:bg-surface rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
         <div class="p-5 overflow-y-auto flex-1">
-            <p class="text-xs text-gray-500 mb-3">Isso é exatamente o que o MikroTik recebe ao consultar <code class="bg-gray-100 px-1 py-0.5 rounded">/api/mikrotik/check-paid-users-lite</code></p>
-            <pre id="api-preview-content" class="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono whitespace-pre overflow-x-auto"></pre>
-            <div id="api-preview-stats" class="mt-3 text-xs text-gray-500"></div>
+            <p class="text-[10px] text-muted mb-3">Exatamente o que o MikroTik recebe ao consultar <code class="bg-surface px-1.5 py-0.5 rounded text-[10px] font-mono">/api/mikrotik/check-paid-users-lite</code></p>
+            <pre id="api-preview-content" class="bg-ink text-green-light p-4 rounded-xl text-xs font-mono whitespace-pre overflow-x-auto"></pre>
+            <div id="api-preview-stats" class="mt-3 text-[10px] text-muted"></div>
         </div>
     </div>
 </div>
 
 <!-- Modal Logs -->
-<div id="modal-logs" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
-        <div class="px-5 py-4 border-b flex items-center justify-between">
-            <h3 class="font-bold text-gray-800">Logs do Sistema (MikroTik)</h3>
-            <button onclick="closeModal('modal-logs')" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+<div id="modal-logs" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-start justify-center pt-20 p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-modal max-w-2xl w-full max-h-[80vh] flex flex-col border border-border">
+        <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+            <h3 class="text-sm font-bold text-ink">Logs do Sistema (MikroTik)</h3>
+            <button onclick="closeModal('modal-logs')" class="text-muted hover:text-ink p-1 hover:bg-surface rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
         <div class="p-5 overflow-y-auto flex-1">
-            <pre id="logs-content" class="bg-gray-900 text-gray-300 p-4 rounded-lg text-xs font-mono whitespace-pre-wrap max-h-96 overflow-y-auto"></pre>
+            <pre id="logs-content" class="bg-ink text-gray-300 p-4 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-96 overflow-y-auto"></pre>
         </div>
     </div>
 </div>
@@ -335,32 +331,32 @@ function renderLiberados(users) {
         const diffM = Math.floor((diffMs % 3600000) / 60000);
         const timeLeft = diffH > 0 ? `${diffH}h ${diffM}m` : `${diffM}m`;
 
-        return `<tr class="hover:bg-gray-50 user-row" data-search="${(user.mac_address + ' ' + (user.phone || '') + ' ' + (user.name || '')).toLowerCase()}">
+        return `<tr class="hover:bg-surface user-row" data-search="${(user.mac_address + ' ' + (user.phone || '') + ' ' + (user.name || '')).toLowerCase()}">
             <td class="px-4 py-3">
-                <p class="font-medium text-gray-800 text-sm">${user.name || '-'}</p>
-                <p class="text-xs text-gray-400">${user.device_name || ''}</p>
+                <p class="font-semibold text-ink text-sm">${user.name || '-'}</p>
+                <p class="text-[10px] text-muted">${user.device_name || ''}</p>
             </td>
             <td class="px-4 py-3">
-                <span class="text-sm ${user.phone ? 'text-gray-700 font-medium' : 'text-gray-400'}">${user.phone || 'Não informado'}</span>
+                <span class="text-xs ${user.phone ? 'text-ink2 font-medium' : 'text-muted'}">${user.phone || 'Não informado'}</span>
             </td>
             <td class="px-4 py-3">
-                <code class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded text-xs font-mono">${user.mac_address}</code>
+                <code class="bg-green-pale text-green px-2 py-1 rounded text-[10px] font-mono font-bold">${user.mac_address}</code>
             </td>
-            <td class="px-4 py-3 text-sm text-gray-500">${user.ip_address || '-'}</td>
+            <td class="px-4 py-3 text-xs text-muted">${user.ip_address || '-'}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    <span class="text-sm text-emerald-600 font-medium">${timeLeft}</span>
+                    <span class="w-1.5 h-1.5 bg-green rounded-full animate-pulse"></span>
+                    <span class="text-xs text-green font-semibold">${timeLeft}</span>
                 </div>
-                <p class="text-xs text-gray-400 mt-0.5">${formatDate(user.expires_at)}</p>
+                <p class="text-[10px] text-muted mt-0.5">${formatDate(user.expires_at)}</p>
             </td>
             <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-1">
-                    <button onclick="editExpiration(${user.id}, '${user.mac_address}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Editar tempo">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <button onclick="editExpiration(${user.id}, '${user.mac_address}')" class="p-1.5 text-blue hover:bg-blue-pale rounded-lg transition" title="Editar tempo">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </button>
-                    <button onclick="blockMac('${user.mac_address}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" title="Bloquear">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    <button onclick="blockMac('${user.mac_address}')" class="p-1.5 text-red hover:bg-red-pale rounded-lg transition" title="Bloquear">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                     </button>
                 </div>
             </td>
@@ -376,22 +372,22 @@ function renderExpirados(users) {
     }
 
     tbody.innerHTML = users.map(user => {
-        return `<tr class="hover:bg-gray-50 user-row" data-search="${(user.mac_address + ' ' + (user.phone || '') + ' ' + (user.name || '')).toLowerCase()}">
+        return `<tr class="hover:bg-surface user-row" data-search="${(user.mac_address + ' ' + (user.phone || '') + ' ' + (user.name || '')).toLowerCase()}">
             <td class="px-4 py-3">
-                <p class="font-medium text-gray-800 text-sm">${user.name || '-'}</p>
+                <p class="font-semibold text-ink text-sm">${user.name || '-'}</p>
             </td>
             <td class="px-4 py-3">
-                <span class="text-sm ${user.phone ? 'text-gray-700 font-medium' : 'text-gray-400'}">${user.phone || 'Não informado'}</span>
+                <span class="text-xs ${user.phone ? 'text-ink2 font-medium' : 'text-muted'}">${user.phone || 'Não informado'}</span>
             </td>
             <td class="px-4 py-3">
-                <code class="bg-red-50 text-red-700 px-2 py-1 rounded text-xs font-mono">${user.mac_address}</code>
+                <code class="bg-red-pale text-red px-2 py-1 rounded text-[10px] font-mono font-bold">${user.mac_address}</code>
             </td>
             <td class="px-4 py-3">
-                <span class="text-sm text-red-500">${formatDate(user.expires_at)}</span>
+                <span class="text-xs text-red">${formatDate(user.expires_at)}</span>
             </td>
             <td class="px-4 py-3 text-center">
-                <button onclick="reLiberate(${user.id}, '${user.mac_address}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-100 transition" title="Re-liberar">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <button onclick="reLiberate(${user.id}, '${user.mac_address}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-green-pale text-green rounded-lg text-[10px] font-bold hover:bg-green/10 transition" title="Re-liberar">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Re-liberar
                 </button>
             </td>
@@ -408,35 +404,35 @@ function renderTodos(users) {
 
     tbody.innerHTML = users.map(user => {
         const statusMap = {
-            'connected': { label: 'Liberado', color: 'bg-emerald-100 text-emerald-700' },
-            'active': { label: 'Ativo', color: 'bg-emerald-100 text-emerald-700' },
-            'expired': { label: 'Expirado', color: 'bg-red-100 text-red-700' },
-            'cleaned': { label: 'Limpo', color: 'bg-gray-100 text-gray-500' },
-            'pending': { label: 'Pendente', color: 'bg-amber-100 text-amber-700' },
+            'connected': { label: 'Liberado', color: 'bg-green/10 text-green' },
+            'active': { label: 'Ativo', color: 'bg-green/10 text-green' },
+            'expired': { label: 'Expirado', color: 'bg-red/10 text-red' },
+            'cleaned': { label: 'Limpo', color: 'bg-surface text-muted' },
+            'pending': { label: 'Pendente', color: 'bg-gold/10 text-gold' },
         };
-        const st = statusMap[user.status] || { label: user.status, color: 'bg-gray-100 text-gray-600' };
+        const st = statusMap[user.status] || { label: user.status, color: 'bg-surface text-muted' };
         const isActive = ['connected', 'active'].includes(user.status) && user.expires_at && new Date(user.expires_at) > new Date();
 
-        return `<tr class="hover:bg-gray-50 user-row" data-search="${(user.mac_address + ' ' + (user.phone || '') + ' ' + (user.name || '')).toLowerCase()}">
+        return `<tr class="hover:bg-surface user-row" data-search="${(user.mac_address + ' ' + (user.phone || '') + ' ' + (user.name || '')).toLowerCase()}">
             <td class="px-4 py-3">
-                <p class="font-medium text-gray-800 text-sm">${user.name || '-'}</p>
-                <p class="text-xs text-gray-400">${user.device_name || ''}</p>
+                <p class="font-semibold text-ink text-sm">${user.name || '-'}</p>
+                <p class="text-[10px] text-muted">${user.device_name || ''}</p>
             </td>
             <td class="px-4 py-3">
-                <span class="text-sm ${user.phone ? 'text-gray-700 font-medium' : 'text-gray-400'}">${user.phone || '-'}</span>
+                <span class="text-xs ${user.phone ? 'text-ink2 font-medium' : 'text-muted'}">${user.phone || '-'}</span>
             </td>
             <td class="px-4 py-3">
-                <code class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-mono">${user.mac_address}</code>
+                <code class="bg-surface text-ink2 px-2 py-1 rounded text-[10px] font-mono font-bold">${user.mac_address}</code>
             </td>
             <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}">${st.label}</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${st.color}">${st.label}</span>
             </td>
-            <td class="px-4 py-3 text-sm text-gray-500">${user.expires_at ? formatDate(user.expires_at) : '-'}</td>
+            <td class="px-4 py-3 text-xs text-muted">${user.expires_at ? formatDate(user.expires_at) : '-'}</td>
             <td class="px-4 py-3 text-center">
                 ${isActive ? `
-                    <button onclick="blockMac('${user.mac_address}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition">Bloquear</button>
+                    <button onclick="blockMac('${user.mac_address}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-pale text-red rounded-lg text-[10px] font-bold hover:bg-red/10 transition">Bloquear</button>
                 ` : `
-                    <button onclick="reLiberate(${user.id}, '${user.mac_address}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-medium hover:bg-emerald-100 transition">Liberar</button>
+                    <button onclick="reLiberate(${user.id}, '${user.mac_address}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-green-pale text-green rounded-lg text-[10px] font-bold hover:bg-green/10 transition">Liberar</button>
                 `}
             </td>
         </tr>`;
@@ -597,16 +593,16 @@ document.addEventListener('click', (e) => {
 function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('border-emerald-500', 'text-emerald-700', 'bg-emerald-50');
-        btn.classList.add('border-transparent', 'text-gray-500');
+        btn.classList.remove('border-green', 'text-green', 'bg-green-pale');
+        btn.classList.add('border-transparent', 'text-muted');
     });
-    document.getElementById('tab-' + tab).classList.add('border-emerald-500', 'text-emerald-700', 'bg-emerald-50');
-    document.getElementById('tab-' + tab).classList.remove('border-transparent', 'text-gray-500');
+    const activeBtn = document.getElementById('tab-' + tab);
+    activeBtn.classList.add('border-green', 'text-green', 'bg-green-pale');
+    activeBtn.classList.remove('border-transparent', 'text-muted');
 
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('content-' + tab).classList.remove('hidden');
 
-    // Auto-carregar bypass logs quando clicar na tab
     if (tab === 'bypass') loadBypassLogs();
 }
 

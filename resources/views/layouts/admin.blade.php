@@ -21,19 +21,50 @@
     <!-- Tailwind Config -->
     <script>
         tailwind.config = {
+            safelist: ['lg:ml-16', 'lg:flex'],
             theme: {
                 extend: {
                     colors: {
-                        'tocantins-gold': '#FFD700',
-                        'tocantins-green': '#228B22',
-                        'tocantins-light-cream': '#FFF8DC',
-                        'tocantins-dark-green': '#006400',
-                        'tocantins-light-yellow': '#FFE55C',
-                        'tocantins-gray-green': '#2F4F2F'
+                        surface: '#F8F9FA',
+                        ink:    '#111111',
+                        ink2:   '#333333',
+                        muted:  '#888888',
+                        border: '#E5E5E5',
+                        green: {
+                            DEFAULT: '#00A335',
+                            light:   '#00C040',
+                            dark:    '#007A28',
+                            pale:    '#E8F5E9',
+                        },
+                        gold: {
+                            DEFAULT: '#E6A817',
+                            pale:    '#FFF8E1',
+                        },
+                        red: {
+                            DEFAULT: '#D32F2F',
+                            pale:    '#FFEBEE',
+                        },
+                        blue: {
+                            DEFAULT: '#1565C0',
+                            light:   '#1E88E5',
+                            pale:    '#E3F2FD',
+                        },
                     },
-                    fontFamily: {
-                        'inter': ['Inter', 'sans-serif']
-                    }
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    boxShadow: {
+                        card:  '0 1px 3px rgba(0,0,0,0.08)',
+                        hover: '0 4px 12px rgba(0,0,0,0.10)',
+                        modal: '0 20px 60px rgba(0,0,0,0.20)',
+                    },
+                    keyframes: {
+                        fadeUp: {
+                            '0%':   { opacity: '0', transform: 'translateY(24px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp .5s cubic-bezier(.22,1,.36,1) both',
+                    },
                 }
             }
         }
@@ -41,62 +72,62 @@
     
     @stack('styles')
 </head>
-<body class="font-inter bg-gray-100 text-sm">
+<body class="font-sans bg-surface text-ink text-sm">
 
     <!-- Layout Principal -->
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
+    <div class="min-h-screen bg-surface">
         
         <!-- Sidebar Menu Component -->
         <x-sidebar-menu />
 
         <!-- Main Content Area -->
-        <div class="lg:ml-64 min-h-screen flex flex-col">
+        <!-- lg:ml-16 used when sidebar collapsed -->
+        <div class="lg:ml-64 min-h-screen flex flex-col transition-all duration-300">
             
             <!-- Top Header -->
-            <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 px-4 sm:px-6 py-3">
+            <header class="sticky top-0 z-20 bg-white border-b border-border shadow-card px-4 sm:px-6 py-3">
                 <div class="flex justify-between items-center">
                     <!-- Título e Breadcrumb -->
                     <div class="ml-12 lg:ml-0">
-                        <!-- Breadcrumb -->
-                        <nav class="flex items-center space-x-2 text-xs text-gray-500 mb-0.5">
-                            <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors flex items-center">
-                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <nav class="flex items-center space-x-2 text-[10px] text-muted mb-0.5 uppercase tracking-wider">
+                            <a href="{{ route('admin.dashboard') }}" class="hover:text-green transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                 </svg>
                                 Início
                             </a>
                             @yield('breadcrumb')
                         </nav>
-                        
-                        <h1 class="text-lg sm:text-xl font-bold text-slate-800">
-                            @yield('page-title', 'WiFi Tocantins Admin')
-                        </h1>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base font-bold text-ink">@yield('page-title', 'WiFi Tocantins Admin')</h1>
+                            <span class="hidden sm:inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest bg-green-pale text-green px-2 py-0.5 rounded-full">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green animate-pulse"></span>
+                                Starlink
+                            </span>
+                        </div>
                     </div>
-                    
-                    <!-- Ações Rápidas e Info -->
-                    <div class="flex items-center space-x-3">
-                        <!-- Data/Hora -->
-                        <div class="hidden sm:flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <!-- Ações Rápidas -->
+                    <div class="flex items-center space-x-2">
+                        <div class="hidden sm:flex items-center text-[11px] text-muted bg-surface border border-border px-3 py-1.5 rounded-lg gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             {{ now()->format('d/m/Y H:i') }}
                         </div>
-                        
-                        <!-- Botões de Ação Rápida (Desktop) -->
+
                         <div class="hidden lg:flex items-center space-x-2">
                             @if(!request()->routeIs('admin.reports*'))
-                            <a href="{{ route('admin.reports') }}" class="flex items-center px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">
-                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <a href="{{ route('admin.reports') }}" class="flex items-center px-3 py-1.5 text-xs font-semibold text-green bg-green-pale hover:bg-green/10 rounded-lg transition-colors gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                                 </svg>
                                 Relatórios
                             </a>
                             @endif
-                            
                             @if(!request()->routeIs('admin.vouchers*'))
-                            <a href="{{ route('admin.vouchers.create') }}" class="flex items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors">
-                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <a href="{{ route('admin.vouchers.create') }}" class="flex items-center px-3 py-1.5 text-xs font-semibold text-gold bg-gold-pale hover:bg-gold/10 rounded-lg transition-colors gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
                                 Novo Voucher
@@ -108,13 +139,13 @@
             </header>
 
             <!-- Content Area -->
-            <main class="flex-1 p-4 sm:p-6 pb-20">
+            <main class="flex-1 p-4 sm:p-6 pb-20 animate-fade-up">
                 @yield('content')
             </main>
             
             <!-- Footer -->
-            <footer class="py-3 px-6 text-center text-xs text-gray-400 border-t border-gray-200/50 bg-white/50">
-                © {{ date('Y') }} WiFi Tocantins Transporte. Todos os direitos reservados.
+            <footer class="py-3 px-6 text-center text-[10px] text-muted border-t border-border bg-white">
+                © {{ date('Y') }} Starlink · Tocantins Transporte · WiFi Tocantins. Todos os direitos reservados.
             </footer>
         </div>
     </div>

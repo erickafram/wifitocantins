@@ -1,413 +1,283 @@
 @extends('portal.layout')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50/30 to-cyan-50/30 py-8">
-    <div class="container mx-auto px-4 max-w-md">
-        <!-- Logo/Header -->
-        <div class="text-center mb-6">
-            <div class="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-lg">
-                <span class="text-3xl">🎫</span>
+<div class="min-h-screen bg-[#F8F9FA] py-8 px-4" style="font-family:'Inter',sans-serif">
+<div class="max-w-sm mx-auto" style="animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both">
+
+    <!-- Header -->
+    <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#007A28] to-[#00A335] shadow-[0_4px_12px_rgba(0,0,0,0.1)] mb-3">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+            </svg>
+        </div>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-[#00A335] mb-0.5">Starlink · Tocantins Transporte</p>
+        <h1 class="text-xl font-bold text-[#111] leading-tight">Voucher de Motorista</h1>
+        <p class="text-xs text-[#888] mt-1">Digite seu CPF ou código do voucher</p>
+    </div>
+
+    <!-- Alertas -->
+    @if (session('success'))
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-[#00A335]/20 bg-[#E8F5E9] px-4 py-3">
+            <svg class="w-4 h-4 text-[#00A335] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <p class="text-xs text-[#00A335] font-medium">{{ session('success') }}</p>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="mb-4 flex items-start gap-2 rounded-xl border border-[#D32F2F]/20 bg-[#FFEBEE] px-4 py-3">
+            <svg class="w-4 h-4 text-[#D32F2F] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <p class="text-xs text-[#D32F2F] font-medium" style="white-space:pre-line">{{ session('error') }}</p>
+        </div>
+    @endif
+    @if (session('warning'))
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-[#E6A817]/20 bg-[#FFF8E1] px-4 py-3">
+            <svg class="w-4 h-4 text-[#E6A817] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <p class="text-xs text-[#E6A817] font-medium" style="white-space:pre-line">{{ session('warning') }}</p>
+        </div>
+    @endif
+    @if ($errors->any())
+        <div class="mb-4 rounded-xl border border-[#D32F2F]/20 bg-[#FFEBEE] px-4 py-3">
+            @foreach ($errors->all() as $error)
+                <p class="text-xs text-[#D32F2F] font-medium">{{ $error }}</p>
+            @endforeach
+        </div>
+    @endif
+
+    @if (!isset($voucher))
+    {{-- ═══ ETAPA 1: Busca ═══ --}}
+    <div class="bg-white border border-[#E5E5E5] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
+        <!-- Hero strip -->
+        <div class="bg-gradient-to-r from-[#007A28] via-[#00A335] to-[#00C040] px-5 py-3 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Voucher de Motorista</h1>
-            <p class="text-gray-500 text-sm mt-1">Digite seu CPF ou código do voucher</p>
+            <div>
+                <p class="text-white font-semibold text-sm leading-none">Buscar Voucher</p>
+                <p class="text-white/70 text-[10px] mt-0.5">CPF ou código do voucher</p>
+            </div>
         </div>
 
-        <!-- Mensagens -->
-        @if (session('success'))
-            <div class="mb-4 bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-3 rounded-xl shadow-sm">
-                <div class="flex items-center">
-                    <span class="text-xl mr-2">✅</span>
-                    <span>{{ session('success') }}</span>
+        <form action="{{ route('voucher.search') }}" method="POST" id="searchForm" class="p-5">
+            @csrf
+            <div class="mb-4">
+                <label for="search_term" class="block text-[11px] font-semibold text-[#333] uppercase tracking-wider mb-1.5">CPF ou Código</label>
+                <input type="text" id="search_term" name="search_term" required autofocus
+                       value="{{ old('search_term') }}"
+                       placeholder="000.000.000-00 ou WIFI-XXXX"
+                       class="w-full px-4 py-3 text-center text-base font-semibold text-[#111] bg-[#F8F9FA] border border-[#E5E5E5] rounded-xl
+                              focus:outline-none focus:ring-2 focus:ring-[#00A335]/30 focus:border-[#00A335] transition-all placeholder:text-[#888] placeholder:font-normal">
+                <p class="text-[10px] text-[#888] mt-1.5 text-center">Com ou sem pontos e traços</p>
+            </div>
+            <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
+            <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
+            <button type="submit" id="searchBtn"
+                    class="w-full bg-[#00A335] hover:bg-[#00C040] active:bg-[#007A28] text-white font-semibold py-3 rounded-xl
+                           shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all flex items-center justify-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <span id="searchBtnText">Buscar Voucher</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Aviso -->
+    <div class="mt-4 bg-white border border-[#E5E5E5] rounded-xl p-3.5 flex items-center gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+        <div class="w-8 h-8 bg-[#FFF8E1] rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-[#E6A817]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
+        </div>
+        <p class="text-xs text-[#333]">Conecte-se ao Wi-Fi <span class="font-bold text-[#111]">"Tocantins Transporte"</span> antes de ativar</p>
+    </div>
+
+    @else
+    {{-- ═══ ETAPA 2: Voucher encontrado ═══ --}}
+    <div class="bg-white border border-[#E5E5E5] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
+        <!-- Header verde -->
+        <div class="bg-gradient-to-r from-[#007A28] via-[#00A335] to-[#00C040] px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-white/60">Voucher</p>
+                    <p class="text-lg font-bold text-white font-mono">{{ $voucher->code }}</p>
                 </div>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-white/20 text-white px-2 py-1 rounded-full">Ativo</span>
             </div>
-        @endif
+        </div>
 
-        @if (session('error'))
-            <div class="mb-4 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
-                <div class="flex items-start">
-                    <span class="text-xl mr-2">❌</span>
-                    <span class="text-sm" style="white-space: pre-line;">{{ session('error') }}</span>
+        <div class="p-5">
+            <!-- Motorista -->
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-11 h-11 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
+                    <span class="text-sm font-bold text-[#888]">{{ strtoupper(substr($voucher->driver_name, 0, 2)) }}</span>
                 </div>
-            </div>
-        @endif
-
-        @if (session('warning'))
-            <div class="mb-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-xl shadow-sm">
-                <div class="flex items-center">
-                    <span class="text-xl mr-2">⚠️</span>
-                    <span style="white-space: pre-line;">{{ session('warning') }}</span>
-                </div>
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="mb-4 bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl shadow-sm">
-                <ul class="list-disc list-inside text-sm">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        @if (!isset($voucher))
-            <!-- ETAPA 1: Formulário de Busca -->
-            <div class="bg-white rounded-2xl p-6 shadow-xl">
-                <form action="{{ route('voucher.search') }}" method="POST" id="searchForm">
-                    @csrf
-                    
-                    <!-- Campo de Busca -->
-                    <div class="mb-5">
-                        <label for="search_term" class="block text-sm font-semibold text-gray-700 mb-2">
-                            🔍 CPF ou Código do Voucher
-                        </label>
-                        <input 
-                            type="text" 
-                            id="search_term" 
-                            name="search_term" 
-                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition text-center text-lg font-medium"
-                            placeholder="000.000.000-00 ou WIFI-XXXX-XXXX"
-                            value="{{ old('search_term') }}"
-                            required
-                            autofocus
-                        >
-                        <p class="text-xs text-gray-500 mt-2 text-center">
-                            Digite o CPF cadastrado ou o código do voucher
-                        </p>
-                    </div>
-
-                    <!-- Campos ocultos para MAC e IP -->
-                    <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
-                    <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
-
-                    <!-- Botão de Buscar -->
-                    <button 
-                        type="submit" 
-                        id="searchBtn"
-                        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                    >
-                        <span class="text-lg">🔍</span>
-                        <span>Buscar Voucher</span>
-                    </button>
-                </form>
-
-                <!-- Dica -->
-                <div class="mt-5 bg-blue-50 rounded-xl p-4 text-xs text-blue-700">
-                    <p class="font-semibold mb-1">💡 Dica:</p>
-                    <p>Você pode digitar seu CPF com ou sem pontos e traços. Exemplo: 12345678900 ou 123.456.789-00</p>
-                </div>
-            </div>
-
-            <!-- Aviso Importante -->
-            <div class="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200 shadow-sm">
-                <p class="flex items-center gap-2 text-sm text-gray-700">
-                    <span class="text-xl">⚠️</span>
-                    <span>Conecte-se ao Wi-Fi <strong>"Tocantins Transporte"</strong> antes de ativar</span>
-                </p>
-            </div>
-        @else
-            <!-- ETAPA 2: Voucher Encontrado - Mostrar Informações -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-                <!-- Header do Voucher -->
-                <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-green-100 uppercase tracking-wider">Voucher</p>
-                            <p class="text-xl font-bold font-mono">{{ $voucher->code }}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">
-                                ✅ Ativo
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Informações do Motorista -->
-                <div class="p-6">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span class="text-2xl">👤</span>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800">{{ $voucher->driver_name }}</p>
-                            @if($voucher->driver_document)
-                                <p class="text-sm text-gray-500">CPF: {{ $voucher->driver_document }}</p>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Status do Voucher -->
-                    <div class="mb-5 p-4 rounded-xl 
-                        @if($voucherStatus['type'] === 'success') bg-green-50 border border-green-200
-                        @elseif($voucherStatus['type'] === 'info') bg-blue-50 border border-blue-200
-                        @elseif($voucherStatus['type'] === 'warning') bg-yellow-50 border border-yellow-200
-                        @else bg-red-50 border border-red-200
-                        @endif
-                    ">
-                        <div class="flex items-start gap-3">
-                            <span class="text-xl">
-                                @if($voucherStatus['type'] === 'success') ✅
-                                @elseif($voucherStatus['type'] === 'info') ℹ️
-                                @elseif($voucherStatus['type'] === 'warning') ⚠️
-                                @else ❌
-                                @endif
-                            </span>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium 
-                                    @if($voucherStatus['type'] === 'success') text-green-800
-                                    @elseif($voucherStatus['type'] === 'info') text-blue-800
-                                    @elseif($voucherStatus['type'] === 'warning') text-yellow-800
-                                    @else text-red-800
-                                    @endif
-                                " style="white-space: pre-line;">{{ $voucherStatus['message'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Informações Adicionais -->
-                    <div class="grid grid-cols-2 gap-3 mb-5">
-                        @if($voucherStatus['is_active_session'])
-                            <div class="col-span-2 bg-blue-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-blue-600 font-medium">Status</p>
-                                <p class="text-lg font-bold text-blue-800">Em uso</p>
-                            </div>
-                        @elseif($voucherStatus['next_activation'])
-                            <div class="col-span-2 bg-yellow-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-yellow-600 font-medium">Próxima Ativação Disponível</p>
-                                <p class="text-lg font-bold text-yellow-800">
-                                    {{ $voucherStatus['next_activation']->format('d/m/Y H:i') }}
-                                </p>
-                            </div>
-                        @elseif($voucherStatus['can_activate'])
-                            <div class="col-span-2 bg-green-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-green-600 font-medium">Status</p>
-                                <p class="text-lg font-bold text-green-800">
-                                    Pronto para ativar
-                                </p>
-                            </div>
-                        @endif
-
-                        @if($voucher->expires_at)
-                            <div class="col-span-2 bg-gray-50 rounded-xl p-3 text-center">
-                                <p class="text-xs text-gray-600 font-medium">Validade do Voucher</p>
-                                <p class="text-sm font-bold text-gray-800">
-                                    {{ $voucher->expires_at->format('d/m/Y') }}
-                                    @if($voucher->expires_at->isPast())
-                                        <span class="text-red-600">(Expirado)</span>
-                                    @else
-                                        <span class="text-green-600">({{ $voucher->expires_at->diffForHumans() }})</span>
-                                    @endif
-                                </p>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Botão de Ativar ou Voltar -->
-                    @if($voucherStatus['can_activate'])
-                        <form action="{{ route('voucher.activate.submit') }}" method="POST" id="activateForm">
-                            @csrf
-                            <input type="hidden" name="voucher_code" value="{{ $voucher->code }}">
-                            <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
-                            <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
-                            
-                            <!-- Botão Normal -->
-                            <button 
-                                type="submit" 
-                                id="activateBtn"
-                                class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                            >
-                                <span class="text-xl" id="btnIcon">🚀</span>
-                                <span id="btnText">Ativar Voucher Agora</span>
-                            </button>
-                        </form>
-
-                        <!-- Card de Loading (oculto por padrão) -->
-                        <div id="loadingCard" class="hidden">
-                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                                <!-- Spinner animado -->
-                                <div class="flex justify-center mb-4">
-                                    <div class="relative">
-                                        <div class="w-16 h-16 border-4 border-blue-200 rounded-full"></div>
-                                        <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full absolute top-0 left-0 animate-spin"></div>
-                                        <div class="absolute inset-0 flex items-center justify-center">
-                                            <span class="text-2xl" id="loadingEmoji">📡</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Mensagem de status -->
-                                <p class="text-center text-blue-800 font-semibold text-lg mb-2" id="loadingMessage">
-                                    Conectando ao servidor...
-                                </p>
-                                
-                                <!-- Barra de progresso -->
-                                <div class="w-full bg-blue-200 rounded-full h-2 mb-3">
-                                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-1000" style="width: 5%"></div>
-                                </div>
-
-                                <!-- Temporizador -->
-                                <p class="text-center text-blue-600 text-sm">
-                                    <span id="timerText">Aguarde até 60 segundos...</span>
-                                </p>
-
-                                <!-- Dica -->
-                                <div class="mt-4 bg-white/50 rounded-lg p-3 text-xs text-blue-700">
-                                    <p class="flex items-center gap-2">
-                                        <span>💡</span>
-                                        <span id="tipText">Estamos configurando sua conexão com a internet.</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <a href="{{ route('voucher.activate') }}" 
-                           class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                            <span class="text-xl">←</span>
-                            <span>Voltar e Buscar Outro</span>
-                        </a>
+                <div>
+                    <p class="text-sm font-bold text-[#111]">{{ $voucher->driver_name }}</p>
+                    @if($voucher->driver_document)
+                        <p class="text-[10px] text-[#888]">CPF: {{ $voucher->driver_document }}</p>
                     @endif
                 </div>
             </div>
 
-            <!-- Botão para buscar outro voucher -->
+            <!-- Status -->
+            @php
+                $stColors = [
+                    'success' => ['bg' => 'bg-[#E8F5E9]', 'border' => 'border-[#00A335]/20', 'text' => 'text-[#00A335]', 'icon' => 'M5 13l4 4L19 7'],
+                    'info'    => ['bg' => 'bg-[#E3F2FD]', 'border' => 'border-[#1565C0]/20', 'text' => 'text-[#1565C0]', 'icon' => 'M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z'],
+                    'warning' => ['bg' => 'bg-[#FFF8E1]', 'border' => 'border-[#E6A817]/20', 'text' => 'text-[#E6A817]', 'icon' => 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'],
+                    'error'   => ['bg' => 'bg-[#FFEBEE]', 'border' => 'border-[#D32F2F]/20', 'text' => 'text-[#D32F2F]', 'icon' => 'M6 18L18 6M6 6l12 12'],
+                ];
+                $st = $stColors[$voucherStatus['type']] ?? $stColors['info'];
+            @endphp
+            <div class="mb-4 {{ $st['bg'] }} border {{ $st['border'] }} rounded-xl px-4 py-3 flex items-start gap-2.5">
+                <svg class="w-4 h-4 {{ $st['text'] }} flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $st['icon'] }}"/></svg>
+                <p class="text-xs {{ $st['text'] }} font-medium" style="white-space:pre-line">{{ $voucherStatus['message'] }}</p>
+            </div>
+
+            <!-- Info cards -->
+            <div class="grid grid-cols-2 gap-2 mb-5">
+                @if($voucherStatus['is_active_session'])
+                    <div class="col-span-2 bg-[#E3F2FD] rounded-xl p-3 text-center">
+                        <p class="text-[10px] text-[#1565C0] font-medium">Status</p>
+                        <p class="text-base font-bold text-[#1565C0]">Em uso</p>
+                    </div>
+                @elseif($voucherStatus['next_activation'])
+                    <div class="col-span-2 bg-[#FFF8E1] rounded-xl p-3 text-center">
+                        <p class="text-[10px] text-[#E6A817] font-medium">Próxima Ativação</p>
+                        <p class="text-base font-bold text-[#E6A817]">{{ $voucherStatus['next_activation']->format('d/m/Y H:i') }}</p>
+                    </div>
+                @elseif($voucherStatus['can_activate'])
+                    <div class="col-span-2 bg-[#E8F5E9] rounded-xl p-3 text-center">
+                        <p class="text-[10px] text-[#00A335] font-medium">Status</p>
+                        <p class="text-base font-bold text-[#00A335]">Pronto para ativar</p>
+                    </div>
+                @endif
+
+                @if($voucher->expires_at)
+                    <div class="col-span-2 bg-[#F8F9FA] border border-[#E5E5E5] rounded-xl p-3 text-center">
+                        <p class="text-[10px] text-[#888] font-medium">Validade</p>
+                        <p class="text-sm font-bold text-[#111]">
+                            {{ $voucher->expires_at->format('d/m/Y') }}
+                            @if($voucher->expires_at->isPast())
+                                <span class="text-[#D32F2F]">(Expirado)</span>
+                            @else
+                                <span class="text-[#00A335]">({{ $voucher->expires_at->diffForHumans() }})</span>
+                            @endif
+                        </p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Botão -->
             @if($voucherStatus['can_activate'])
-                <div class="mt-4 text-center">
-                    <a href="{{ route('voucher.activate') }}" class="text-sm text-gray-600 hover:text-green-600 transition">
-                        ← Buscar outro voucher
-                    </a>
+                <form action="{{ route('voucher.activate.submit') }}" method="POST" id="activateForm">
+                    @csrf
+                    <input type="hidden" name="voucher_code" value="{{ $voucher->code }}">
+                    <input type="hidden" name="mac_address" value="{{ $mac_address ?? '' }}">
+                    <input type="hidden" name="ip_address" value="{{ $ip_address ?? '' }}">
+                    <button type="submit" id="activateBtn"
+                            class="w-full bg-[#00A335] hover:bg-[#00C040] active:bg-[#007A28] text-white font-bold py-3.5 rounded-xl
+                                   shadow-[0_4px_12px_rgba(0,163,53,0.3)] hover:shadow-[0_8px_20px_rgba(0,163,53,0.35)] transition-all flex items-center justify-center gap-2 text-sm">
+                        <svg id="btnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span id="btnText">Ativar Voucher Agora</span>
+                    </button>
+                </form>
+                <!-- Loading card -->
+                <div id="loadingCard" class="hidden mt-3">
+                    <div class="bg-[#E3F2FD] border border-[#1565C0]/20 rounded-xl p-5">
+                        <div class="flex justify-center mb-3">
+                            <div class="w-12 h-12 border-3 border-[#1565C0]/20 border-t-[#1565C0] rounded-full animate-spin"></div>
+                        </div>
+                        <p class="text-center text-[#1565C0] font-bold text-sm mb-2" id="loadingMessage">Conectando...</p>
+                        <div class="h-1.5 bg-[#1565C0]/20 rounded-full overflow-hidden mb-2">
+                            <div id="progressBar" class="h-full bg-[#1565C0] rounded-full transition-all duration-1000" style="width:5%"></div>
+                        </div>
+                        <p class="text-center text-[10px] text-[#1565C0]" id="timerText">Aguarde até 60 segundos...</p>
+                    </div>
                 </div>
+            @else
+                <a href="{{ route('voucher.activate') }}"
+                   class="w-full bg-[#F8F9FA] border border-[#E5E5E5] text-[#333] font-semibold py-3 rounded-xl
+                          hover:bg-[#E5E5E5] transition-all flex items-center justify-center gap-2 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Voltar e Buscar Outro
+                </a>
             @endif
-        @endif
-
-        <!-- Link para Verificar Status -->
-        <div class="mt-6 text-center">
-            <a href="{{ route('voucher.status') }}" class="text-sm text-gray-600 hover:text-green-600 transition">
-                Já ativou? Verificar status do voucher →
-            </a>
-        </div>
-
-        <!-- Info do dispositivo (pequeno) -->
-        <div class="mt-4 text-center text-xs text-gray-400">
-            <p>IP: {{ $ip_address ?? 'N/A' }} | MAC: {{ $mac_address ?? 'N/A' }}</p>
         </div>
     </div>
+
+    @if($voucherStatus['can_activate'])
+        <p class="mt-3 text-center">
+            <a href="{{ route('voucher.activate') }}" class="text-xs text-[#888] hover:text-[#00A335] transition-colors">← Buscar outro voucher</a>
+        </p>
+    @endif
+    @endif
+
+    <!-- Links -->
+    <p class="mt-5 text-center">
+        <a href="{{ route('voucher.status') }}" class="text-xs text-[#888] hover:text-[#00A335] transition-colors">Já ativou? Verificar status →</a>
+    </p>
+    <p class="mt-2 text-center text-[10px] text-[#888]/60">IP: {{ $ip_address ?? 'N/A' }} · MAC: {{ $mac_address ?? 'N/A' }}</p>
+
 </div>
+</div>
+
+<style>
+@keyframes fadeUp { 0%{opacity:0;transform:translateY(24px)} 100%{opacity:1;transform:translateY(0)} }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Máscara para CPF
     const searchInput = document.getElementById('search_term');
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
-            let value = e.target.value;
-            
-            // Se parece com código de voucher (começa com WIFI ou tem hífen), converter para maiúsculas
-            if (value.toUpperCase().startsWith('WIFI') || value.includes('-')) {
-                e.target.value = value.toUpperCase();
+            if (e.target.value.toUpperCase().startsWith('WIFI') || e.target.value.includes('-')) {
+                e.target.value = e.target.value.toUpperCase();
             }
         });
     }
 
-    // Loading no formulário de busca
     const searchForm = document.getElementById('searchForm');
     const searchBtn = document.getElementById('searchBtn');
     if (searchForm && searchBtn) {
         searchForm.addEventListener('submit', function() {
             searchBtn.disabled = true;
-            searchBtn.innerHTML = '<span class="text-lg">⏳</span><span>Buscando...</span>';
+            searchBtn.classList.add('opacity-75');
+            document.getElementById('searchBtnText').textContent = 'Buscando...';
         });
     }
 
-    // Loading no formulário de ativação com temporizador
     const activateForm = document.getElementById('activateForm');
     const activateBtn = document.getElementById('activateBtn');
     const loadingCard = document.getElementById('loadingCard');
-    
     if (activateForm && activateBtn && loadingCard) {
         activateForm.addEventListener('submit', function() {
-            // Esconder botão e mostrar card de loading
             activateBtn.classList.add('hidden');
             loadingCard.classList.remove('hidden');
-            
-            // Elementos do loading
-            const loadingMessage = document.getElementById('loadingMessage');
-            const loadingEmoji = document.getElementById('loadingEmoji');
-            const progressBar = document.getElementById('progressBar');
-            const timerText = document.getElementById('timerText');
-            const tipText = document.getElementById('tipText');
-            
-            // Mensagens e emojis para cada etapa
+            const msg = document.getElementById('loadingMessage');
+            const bar = document.getElementById('progressBar');
+            const timer = document.getElementById('timerText');
             const stages = [
-                { time: 0, msg: 'Conectando ao servidor...', emoji: '📡', tip: 'Estamos configurando sua conexão com a internet.', progress: 10 },
-                { time: 5, msg: 'Validando voucher...', emoji: '🔐', tip: 'Verificando se o voucher está disponível.', progress: 25 },
-                { time: 10, msg: 'Registrando dispositivo...', emoji: '📱', tip: 'Associando seu dispositivo ao voucher.', progress: 40 },
-                { time: 15, msg: 'Configurando acesso...', emoji: '⚙️', tip: 'Preparando sua conexão com a rede.', progress: 55 },
-                { time: 25, msg: 'Liberando internet...', emoji: '🌐', tip: 'Quase lá! Liberando acesso à internet.', progress: 70 },
-                { time: 35, msg: 'Finalizando...', emoji: '✨', tip: 'Últimos ajustes na sua conexão.', progress: 85 },
-                { time: 50, msg: 'Aguarde mais um pouco...', emoji: '⏳', tip: 'O servidor está processando sua solicitação.', progress: 95 },
+                {t:0,m:'Conectando ao servidor...',p:10},
+                {t:5,m:'Validando voucher...',p:25},
+                {t:10,m:'Registrando dispositivo...',p:40},
+                {t:15,m:'Configurando acesso...',p:55},
+                {t:25,m:'Liberando internet...',p:70},
+                {t:35,m:'Finalizando...',p:85},
+                {t:50,m:'Aguarde mais um pouco...',p:95},
             ];
-            
-            let secondsElapsed = 0;
-            let currentStage = 0;
-            
-            // Atualizar temporizador a cada segundo
-            const timerInterval = setInterval(function() {
-                secondsElapsed++;
-                const remaining = 60 - secondsElapsed;
-                
-                if (remaining > 0) {
-                    timerText.textContent = `Tempo estimado: ${remaining} segundos...`;
-                } else {
-                    timerText.textContent = 'Processando... aguarde...';
-                }
-                
-                // Verificar se deve mudar de etapa
-                for (let i = stages.length - 1; i >= 0; i--) {
-                    if (secondsElapsed >= stages[i].time && currentStage < i) {
-                        currentStage = i;
-                        loadingMessage.textContent = stages[i].msg;
-                        loadingEmoji.textContent = stages[i].emoji;
-                        tipText.textContent = stages[i].tip;
-                        progressBar.style.width = stages[i].progress + '%';
-                        break;
+            let sec = 0, stage = 0;
+            setInterval(function() {
+                sec++;
+                const rem = 60 - sec;
+                timer.textContent = rem > 0 ? `Tempo estimado: ${rem}s...` : 'Processando...';
+                for (let i = stages.length-1; i >= 0; i--) {
+                    if (sec >= stages[i].t && stage < i) {
+                        stage = i; msg.textContent = stages[i].m; bar.style.width = stages[i].p+'%'; break;
                     }
                 }
-                
-                // Se passou de 60 segundos, mostrar mensagem especial
-                if (secondsElapsed >= 60) {
-                    loadingMessage.textContent = 'Ainda processando...';
-                    loadingEmoji.textContent = '🔄';
-                    tipText.textContent = 'O servidor está demorando mais que o normal. Por favor, aguarde.';
-                    progressBar.style.width = '100%';
-                }
+                if (sec >= 60) { msg.textContent = 'Ainda processando...'; bar.style.width = '100%'; }
             }, 1000);
-            
-            // Iniciar primeira etapa
-            loadingMessage.textContent = stages[0].msg;
-            loadingEmoji.textContent = stages[0].emoji;
-            tipText.textContent = stages[0].tip;
-            progressBar.style.width = stages[0].progress + '%';
+            msg.textContent = stages[0].m; bar.style.width = stages[0].p+'%';
         });
     }
 });
 </script>
-
-<style>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.container > div {
-    animation: fadeIn 0.4s ease-out;
-}
-</style>
 @endsection
-
