@@ -347,35 +347,56 @@ class PaymentController extends Controller
             if (!$pixCode) return;
 
             $nome = $user->name ?? 'Cliente';
-
-            // Mensagem única: instrução + código PIX junto
-            $message = "🚌 *Tocantins Transporte WiFi*\n\n"
-                     . "Olá {$nome}! PIX de *R\$ {$amount}* gerado.\n"
-                     . "⏱️ Válido por 3 min.\n\n"
-                     . "👇 *Copie e cole no app do banco:*\n\n"
-                     . $pixCode;
-
             $baileysUrl = env('BAILEYS_SERVER_URL', 'http://localhost:3001');
 
-            $msgRecord = \App\Models\WhatsappMessage::create([
+            // 1ª mensagem: instrução
+            $message1 = "🚌 *Tocantins Transporte WiFi*\n\n"
+                      . "Olá {$nome}! PIX de *R\$ {$amount}* gerado.\n"
+                      . "⏱️ Válido por 3 min.\n\n"
+                      . "👇 *Copie o código na próxima mensagem e cole no app do banco.*";
+
+            $msg1 = \App\Models\WhatsappMessage::create([
                 'user_id' => $user->id,
                 'payment_id' => $payment->id,
                 'phone' => $phone,
-                'message' => $message,
+                'message' => $message1,
                 'status' => 'pending',
             ]);
 
-            $resp = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
+            $resp1 = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
                 'phone' => $phone,
-                'message' => $message,
+                'message' => $message1,
             ]);
 
-            if ($resp->successful()) {
-                $msgRecord->markAsSent($resp->json('messageId'));
-                Log::info('📱 WhatsApp PIX enviado', ['payment_id' => $payment->id, 'phone' => $phone]);
+            if ($resp1->successful()) {
+                $msg1->markAsSent($resp1->json('messageId'));
             } else {
-                $msgRecord->markAsFailed($resp->body());
-                Log::warning('📱 WhatsApp PIX falhou', ['payment_id' => $payment->id, 'error' => $resp->body()]);
+                $msg1->markAsFailed($resp1->body());
+                return;
+            }
+
+            // Delay para manter ordem
+            sleep(2);
+
+            // 2ª mensagem: só o código PIX (fácil de copiar)
+            $msg2 = \App\Models\WhatsappMessage::create([
+                'user_id' => $user->id,
+                'payment_id' => $payment->id,
+                'phone' => $phone,
+                'message' => $pixCode,
+                'status' => 'pending',
+            ]);
+
+            $resp2 = $this->whatsappHttpClient()->post($baileysUrl . '/send', [
+                'phone' => $phone,
+                'message' => $pixCode,
+            ]);
+
+            if ($resp2->successful()) {
+                $msg2->markAsSent($resp2->json('messageId'));
+                Log::info('📱 WhatsApp PIX enviado (2 msgs)', ['payment_id' => $payment->id, 'phone' => $phone]);
+            } else {
+                $msg2->markAsFailed($resp2->body());
             }
 
         } catch (\Exception $e) {
