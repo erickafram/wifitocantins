@@ -495,17 +495,11 @@ class WiFiPortal {
         const form = e.target;
         const formData = new FormData(form);
         const phone = formData.get('phone').replace(/\D/g, '');
-        const email = (formData.get('email') || '').toLowerCase().trim();
+        const email = '';
 
         // Validar telefone brasileiro (10 ou 11 dígitos)
         if (phone.length < 10 || phone.length > 11) {
             this.showRegistrationError('Por favor, insira um telefone válido com DDD (10 ou 11 dígitos).');
-            return;
-        }
-
-        // Validar email
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            this.showRegistrationError('Por favor, insira um e-mail válido.');
             return;
         }
 
