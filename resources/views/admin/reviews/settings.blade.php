@@ -82,7 +82,7 @@
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="submit" class="bg-gradient-to-r from-tocantins-green to-green-600 text-white px-5 py-3 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-lg">
+                    <button type="submit" class="bg-green hover:bg-green-light text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-card">
                         Salvar configuracoes
                     </button>
                 </div>
