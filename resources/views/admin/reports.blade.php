@@ -437,7 +437,7 @@
             const btn = document.getElementById('toggleAdvancedFilters');
             const panel = document.getElementById('advancedFiltersPanel');
             const chevron = document.getElementById('filterChevron');
-            const hasFilters = {{ request()->hasAny(['start_date','end_date','payment_status','bus']) ? 'true' : 'false' }};
+            const hasFilters = true; // sempre aberto
             if (hasFilters && panel) { panel.classList.remove('hidden'); chevron.classList.add('rotate-180'); }
             btn?.addEventListener('click', () => {
                 panel.classList.toggle('hidden');

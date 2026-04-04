@@ -59,71 +59,46 @@ class ReportsController extends Controller
     {
         $dateRange = [$startDate . ' 00:00:00', $endDate . ' 23:59:59'];
 
-        // Closure para aplicar filtro de ônibus via user.last_mikrotik_id
-        $busScope = function ($query) use ($busFilter) {
+        // Helper: aplica filtro de ônibus a uma query de Payment
+        $applyBus = function ($query) use ($busFilter) {
             if ($busFilter !== 'all') {
                 $query->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
             }
+            return $query;
         };
 
-        // Receita total - apenas pagamentos completados
-        $revenueQuery = Payment::where('status', 'completed')->whereBetween('created_at', $dateRange);
-        if ($busFilter !== 'all') {
-            $revenueQuery->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
-        }
-        $totalRevenue = $revenueQuery->sum('amount');
-        
-        // Total de pagamentos - respeitando filtro
-        $query = Payment::whereBetween('created_at', $dateRange);
-        if ($paymentStatus !== 'all') {
-            $query->where('status', $paymentStatus);
-        }
-        if ($busFilter !== 'all') {
-            $query->whereHas('user', fn($q) => $q->where('last_mikrotik_id', $busFilter));
-        }
-        $totalPayments = $query->count();
-        
-        // Pagamentos por status
-        $paymentsByStatus = Payment::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->select('status', DB::raw('count(*) as count'), DB::raw('sum(amount) as total'))
-            ->groupBy('status')
-            ->get()
-            ->keyBy('status');
-        
-        // Usuários conectados no período
-        $userQuery = User::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        
-        if ($userStatus !== 'all') {
-            $userQuery->where('status', $userStatus);
-        }
-        
+        // Receita total (pagos)
+        $totalRevenue = $applyBus(Payment::where('status', 'completed')->whereBetween('created_at', $dateRange))->sum('amount');
+
+        // Total de pagamentos (respeitando filtro de status)
+        $totalQuery = Payment::whereBetween('created_at', $dateRange);
+        if ($paymentStatus !== 'all') $totalQuery->where('status', $paymentStatus);
+        $totalPayments = $applyBus($totalQuery)->count();
+
+        // Contagem por status
+        $completedPayments = $applyBus(Payment::where('status', 'completed')->whereBetween('created_at', $dateRange))->count();
+        $pendingPaymentsCount = $applyBus(Payment::where('status', 'pending')->whereBetween('created_at', $dateRange))->count();
+        $failedPaymentsCount = $applyBus(Payment::where('status', 'failed')->whereBetween('created_at', $dateRange))->count();
+        $pendingPayments = $applyBus(Payment::where('status', 'pending')->whereBetween('created_at', $dateRange))->sum('amount');
+
+        // Usuários
+        $userQuery = User::whereBetween('created_at', $dateRange);
+        if ($busFilter !== 'all') $userQuery->where('last_mikrotik_id', $busFilter);
         $totalUsers = $userQuery->count();
-        $connectedUsers = User::where('status', 'connected')->count();
-        
+
+        $connectedQuery = User::where('status', 'connected');
+        if ($busFilter !== 'all') $connectedQuery->where('last_mikrotik_id', $busFilter);
+        $connectedUsers = $connectedQuery->count();
+
         // Sessões ativas
-        $activeSessions = DB::table('wifi_sessions')
-            ->whereBetween('started_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->where('session_status', 'active')
-            ->count();
-        
-        // Pagamentos pendentes
-        $pendingPayments = Payment::where('status', 'pending')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->sum('amount');
-        
-        // Contagem de pagamentos por status
-        $completedPayments = Payment::where('status', 'completed')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->count();
-        
-        $pendingPaymentsCount = Payment::where('status', 'pending')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->count();
-        
-        $failedPaymentsCount = Payment::where('status', 'failed')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->count();
-        
+        $sessionsQuery = DB::table('wifi_sessions')
+            ->whereBetween('started_at', $dateRange)
+            ->where('session_status', 'active');
+        if ($busFilter !== 'all') {
+            $sessionsQuery->whereIn('user_id', User::where('last_mikrotik_id', $busFilter)->pluck('id'));
+        }
+        $activeSessions = $sessionsQuery->count();
+
         return [
             'total_revenue' => $totalRevenue,
             'pending_payments' => $pendingPayments,
@@ -134,7 +109,6 @@ class ReportsController extends Controller
             'total_users' => $totalUsers,
             'connected_users' => $connectedUsers,
             'active_sessions' => $activeSessions,
-            'payments_by_status' => $paymentsByStatus,
             'avg_payment' => $completedPayments > 0 ? $totalRevenue / $completedPayments : 0,
         ];
     }
