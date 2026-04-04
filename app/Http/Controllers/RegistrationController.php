@@ -167,7 +167,7 @@ class RegistrationController extends Controller
             $validator = Validator::make($request->all(), [
                 'user_id' => 'nullable|exists:users,id',
                 'phone' => 'required|string|min:10|max:20',
-                'email' => 'required|email|max:255',
+                'email' => 'nullable|email|max:255',
                 'mac_address' => 'nullable|string|max:17',
                 'ip_address' => 'nullable|ip',
             ], [

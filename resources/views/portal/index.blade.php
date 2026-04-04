@@ -575,25 +575,6 @@
                         >
                     </div>
 
-                    <div>
-                        <label for="user_email" class="block text-sm font-medium text-gray-700 mb-1.5">E-mail</label>
-                        <div class="relative">
-                            <input 
-                                type="email" 
-                                id="user_email" 
-                                name="email" 
-                                required
-                                placeholder="seu@email.com"
-                                autocomplete="email"
-                                autocapitalize="none"
-                                spellcheck="false"
-                                class="w-full border border-gray-300 rounded-xl px-4 py-3.5 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/20 transition-all text-base text-center font-medium lowercase"
-                            >
-                            <div id="email-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden"></div>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1 text-center">Receba o código PIX por e-mail</p>
-                    </div>
-                    
                     <button 
                         type="submit" 
                         id="registration-submit-btn"
