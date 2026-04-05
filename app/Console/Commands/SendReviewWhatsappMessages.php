@@ -68,16 +68,25 @@ class SendReviewWhatsappMessages extends Command
                     ->orWhereNotIn('role', ['admin', 'manager']);
             })
             ->orderBy('registered_at')
-            ->get();
+            ->get()
+            ->unique('phone'); // Evitar enviar para o mesmo número duas vezes
 
-        $this->info("Encontrados {$users->count()} passageiros elegiveis.");
+        $this->info("Encontrados {$users->count()} passageiros elegiveis (sem duplicatas de telefone).");
 
         $sent = 0;
         $failed = 0;
         $skipped = 0;
         $emailSent = 0;
+        $sentPhones = []; // Controle extra de telefones já enviados
 
         foreach ($users as $user) {
+            // Proteção extra contra duplicatas
+            $cleanPhone = preg_replace('/\D/', '', $user->phone);
+            if (in_array($cleanPhone, $sentPhones)) {
+                $skipped++;
+                continue;
+            }
+
             $review = $reviewWhatsappService->prepareReviewForUser($user, $batchDate);
 
             if ($review->whatsapp_status === 'sent' && !$user->email) {
@@ -92,13 +101,14 @@ class SendReviewWhatsappMessages extends Command
                 if ($result['success']) {
                     $sent++;
                     $whatsappOk = true;
+                    $sentPhones[] = $cleanPhone;
                     $this->line('  ✓ WhatsApp enviado para ' . ($review->phone ?: $user->phone));
                 } else {
                     $failed++;
                     $this->error('  ✗ WhatsApp falhou para ' . ($review->phone ?: $user->phone));
                 }
-                // Delay longo entre WhatsApp para evitar ban (30s)
-                sleep(30);
+                // Delay longo entre WhatsApp para evitar ban (40-60s aleatório)
+                sleep(rand(40, 60));
             } elseif ($review->whatsapp_status === 'sent') {
                 $skipped++;
             }

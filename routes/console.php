@@ -23,9 +23,9 @@ Schedule::command('whatsapp:send-pending')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/whatsapp-auto-send.log'));
 
-// Scheduler: Envio do link de avaliacao diariamente as 06:30
+// Scheduler: Envio do link de avaliacao diariamente as 07:00
 Schedule::command('reviews:send-whatsapp')
-    ->dailyAt('06:30')
+    ->dailyAt('07:00')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/reviews-whatsapp-send.log'));

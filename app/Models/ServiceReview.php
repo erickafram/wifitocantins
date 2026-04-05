@@ -93,9 +93,9 @@ class ServiceReview extends Model
 
         return [
             'batch_date' => $reference->toDateString(),
-            'start' => $reference->copy()->subDay()->setTime(18, 30, 0),
-            'end' => $reference->copy()->setTime(6, 0, 0),
-            'dispatch_at' => $reference->copy()->setTime(6, 30, 0),
+            'start' => $reference->copy()->subDay()->setTime(18, 0, 0),
+            'end' => $reference->copy()->setTime(7, 0, 0),
+            'dispatch_at' => $reference->copy()->setTime(7, 0, 0),
         ];
     }
 }
