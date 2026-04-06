@@ -72,28 +72,32 @@ Route::get('/admin-access', function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
     // Rotas acessíveis para Admin e Manager
     Route::get('/', [AdminController::class, 'dashboard']);
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report');
-    Route::get('/connection-logs', [AdminController::class, 'connectionLogs'])->name('connection-logs');
-    Route::get('/api/stats', [AdminController::class, 'apiStats'])->name('api.stats');
-    Route::post('/export', [AdminController::class, 'exportReport'])->name('export');
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard')->middleware('module:dashboard');
+    Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report')->middleware('module:dashboard');
+    Route::get('/connection-logs', [AdminController::class, 'connectionLogs'])->name('connection-logs')->middleware('module:dashboard');
+    Route::get('/api/stats', [AdminController::class, 'apiStats'])->name('api.stats')->middleware('module:dashboard');
+    Route::post('/export', [AdminController::class, 'exportReport'])->name('export')->middleware('module:dashboard');
     
-    // Rotas de Relatórios (Admin e Manager)
-    Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
-    Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
+    // Rotas de Relatórios
+    Route::middleware(['module:reports'])->group(function () {
+        Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
+        Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
+    });
     
-    // Rotas de Vouchers (Admin e Manager)
-    Route::get('/vouchers', [AdminVoucherController::class, 'index'])->name('vouchers.index');
-    Route::get('/vouchers/create', [AdminVoucherController::class, 'create'])->name('vouchers.create');
-    Route::post('/vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');
-    Route::get('/vouchers/{voucher}/edit', [AdminVoucherController::class, 'edit'])->name('vouchers.edit');
-    Route::put('/vouchers/{voucher}', [AdminVoucherController::class, 'update'])->name('vouchers.update');
-    Route::post('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'toggleStatus'])->name('vouchers.toggle');
-    Route::post('/vouchers/{voucher}/reset', [AdminVoucherController::class, 'resetDaily'])->name('vouchers.reset');
-    Route::delete('/vouchers/{voucher}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
+    // Rotas de Vouchers
+    Route::middleware(['module:vouchers'])->group(function () {
+        Route::get('/vouchers', [AdminVoucherController::class, 'index'])->name('vouchers.index');
+        Route::get('/vouchers/create', [AdminVoucherController::class, 'create'])->name('vouchers.create');
+        Route::post('/vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');
+        Route::get('/vouchers/{voucher}/edit', [AdminVoucherController::class, 'edit'])->name('vouchers.edit');
+        Route::put('/vouchers/{voucher}', [AdminVoucherController::class, 'update'])->name('vouchers.update');
+        Route::post('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'toggleStatus'])->name('vouchers.toggle');
+        Route::post('/vouchers/{voucher}/reset', [AdminVoucherController::class, 'resetDaily'])->name('vouchers.reset');
+        Route::delete('/vouchers/{voucher}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
+    });
     
     // Rotas do Chat (Atendimento Online)
-    Route::prefix('chat')->name('chat.')->group(function () {
+    Route::middleware(['module:chat'])->prefix('chat')->name('chat.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('index');
         Route::get('/unread-count', [App\Http\Controllers\Admin\ChatController::class, 'getUnreadCount'])->name('unread');
         Route::get('/{id}', [App\Http\Controllers\Admin\ChatController::class, 'show'])->name('show')->where('id', '[0-9]+');
@@ -103,7 +107,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::get('/{id}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getMessages'])->name('messages')->where('id', '[0-9]+');
     });
 
-    Route::prefix('avaliacoes')->name('reviews.')->group(function () {
+    Route::middleware(['module:reviews'])->prefix('avaliacoes')->name('reviews.')->group(function () {
         Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
         Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
         Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');

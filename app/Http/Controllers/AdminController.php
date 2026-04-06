@@ -586,6 +586,8 @@ class AdminController extends Controller
             'mac_address' => 'nullable|string|max:17',
             'ip_address' => 'nullable|ip',
             'device_name' => 'nullable|string|max:255',
+            'allowed_modules' => 'nullable|array',
+            'allowed_modules.*' => 'string|in:' . implode(',', array_keys(User::AVAILABLE_MODULES)),
         ]);
 
         try {
@@ -599,8 +601,9 @@ class AdminController extends Controller
                 'mac_address' => $request->mac_address,
                 'ip_address' => $request->ip_address,
                 'device_name' => $request->device_name,
+                'allowed_modules' => $request->role === 'manager' ? ($request->allowed_modules ?? []) : null,
                 'registered_at' => now(),
-                'email_verified_at' => now(), // Verificar email automaticamente
+                'email_verified_at' => now(),
             ]);
 
             return redirect()->route('admin.users')
@@ -638,6 +641,8 @@ class AdminController extends Controller
             'mac_address' => 'nullable|string|max:17',
             'ip_address' => 'nullable|ip',
             'device_name' => 'nullable|string|max:255',
+            'allowed_modules' => 'nullable|array',
+            'allowed_modules.*' => 'string|in:' . implode(',', array_keys(User::AVAILABLE_MODULES)),
         ];
 
         // Se a senha foi fornecida, adicionar validação
@@ -657,6 +662,7 @@ class AdminController extends Controller
                 'mac_address' => $request->mac_address,
                 'ip_address' => $request->ip_address,
                 'device_name' => $request->device_name,
+                'allowed_modules' => $request->role === 'manager' ? ($request->allowed_modules ?? []) : null,
             ];
 
             // Atualizar senha apenas se foi fornecida

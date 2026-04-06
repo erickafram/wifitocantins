@@ -45,13 +45,14 @@
 
             @php
                 $navItems = [
-                    ['route' => 'admin.dashboard', 'match' => 'admin.dashboard', 'label' => 'Dashboard', 'color' => 'green',
+                    ['route' => 'admin.dashboard', 'match' => 'admin.dashboard', 'label' => 'Dashboard', 'color' => 'green', 'module' => 'dashboard',
                      'icon' => 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z'],
-                    ['route' => 'admin.reports', 'match' => 'admin.reports*', 'label' => 'Relatórios', 'color' => 'green',
+                    ['route' => 'admin.reports', 'match' => 'admin.reports*', 'label' => 'Relatórios', 'color' => 'green', 'module' => 'reports',
                      'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
                 ];
             @endphp
             @foreach($navItems as $item)
+                @if(Auth::user()->hasModule($item['module']))
                 @php $active = request()->routeIs($item['match']); @endphp
                 <a href="{{ route($item['route']) }}" onclick="closeSidebarOnMobile()" title="{{ $item['label'] }}"
                    class="sidebar-link flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all mt-0.5
@@ -63,6 +64,7 @@
                     </span>
                     <span class="sidebar-label truncate">{{ $item['label'] }}</span>
                 </a>
+                @endif
             @endforeach
         </div>
 
@@ -84,6 +86,7 @@
             </a>
             @endif
 
+            @if(Auth::user()->hasModule('vouchers'))
             @php $active = request()->routeIs('admin.vouchers*'); @endphp
             <a href="{{ route('admin.vouchers.index') }}" onclick="closeSidebarOnMobile()" title="Vouchers"
                class="sidebar-link flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all mt-0.5
@@ -95,6 +98,7 @@
                 </span>
                 <span class="sidebar-label truncate">Vouchers</span>
             </a>
+            @endif
 
             @if(Auth::user()->role === 'admin')
             @php $active = request()->routeIs('admin.devices*'); @endphp
@@ -115,6 +119,7 @@
         <div>
             <p class="px-2 mb-1 text-[9px] font-bold text-muted uppercase tracking-widest sidebar-label">Comunicação</p>
 
+            @if(Auth::user()->hasModule('chat'))
             @php $active = request()->routeIs('admin.chat*'); @endphp
             <a href="{{ route('admin.chat.index') }}" onclick="closeSidebarOnMobile()" title="Chat"
                class="sidebar-link relative flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all
@@ -127,6 +132,7 @@
                 <span class="sidebar-label truncate">Chat</span>
                 <span id="chat-unread-badge" class="hidden ml-auto min-w-[18px] h-[18px] px-1 bg-red text-white text-[9px] font-bold rounded-full flex items-center justify-center"></span>
             </a>
+            @endif
 
             @if(Auth::user()->role === 'admin')
             @php $active = request()->routeIs('admin.whatsapp*'); @endphp
@@ -142,6 +148,7 @@
             </a>
             @endif
 
+            @if(Auth::user()->hasModule('reviews'))
             @php $active = request()->routeIs('admin.reviews*'); @endphp
             <a href="{{ route('admin.reviews.index') }}" onclick="closeSidebarOnMobile()" title="Avaliações"
                class="sidebar-link flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all mt-0.5
@@ -153,6 +160,7 @@
                 </span>
                 <span class="sidebar-label truncate">Avaliações</span>
             </a>
+            @endif
         </div>
 
         <!-- Sistema -->

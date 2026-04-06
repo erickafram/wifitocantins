@@ -31,6 +31,7 @@ class User extends Authenticatable
         'data_used',
         'status',
         'role',
+        'allowed_modules',
         'registered_at',
         'email_verified_at',
         'voucher_id',
@@ -65,6 +66,7 @@ class User extends Authenticatable
             'registered_at' => 'datetime',
             'voucher_activated_at' => 'datetime',
             'voucher_last_connection' => 'datetime',
+            'allowed_modules' => 'array',
         ];
     }
 
@@ -111,5 +113,34 @@ class User extends Authenticatable
             && $this->voucher 
             && $this->voucher->isValid() 
             && $this->isConnected();
+    }
+
+    /**
+     * Modulos disponiveis para gerentes
+     */
+    public const AVAILABLE_MODULES = [
+        'dashboard' => 'Dashboard',
+        'reports' => 'Relatorios',
+        'vouchers' => 'Vouchers',
+        'chat' => 'Chat',
+        'reviews' => 'Avaliacoes',
+    ];
+
+    /**
+     * Verifica se o usuario tem acesso a um modulo
+     */
+    public function hasModule(string $module): bool
+    {
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        if ($this->role !== 'manager') {
+            return false;
+        }
+
+        $modules = $this->allowed_modules ?? [];
+
+        return in_array($module, $modules);
     }
 }

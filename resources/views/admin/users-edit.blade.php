@@ -106,6 +106,7 @@
                         id="role" 
                         name="role" 
                         required
+                        onchange="toggleModules()"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('role') border-red-500 @enderror"
                     >
                         <option value="">Selecione o nível de acesso</option>
@@ -138,6 +139,24 @@
                     @error('status')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
+                </div>
+            </div>
+
+            {{-- Modulos de acesso (somente para gerente) --}}
+            @php $currentModules = old('allowed_modules', $user->allowed_modules ?? []); @endphp
+            <div id="modulesSection" class="mt-6 border-t pt-6 {{ old('role', $user->role) === 'manager' ? '' : 'hidden' }}">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Modulos de Acesso</h4>
+                <p class="text-xs text-gray-500 mb-4">Selecione quais modulos este gerente tera acesso no painel.</p>
+                @error('allowed_modules')
+                    <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
+                @enderror
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    @foreach(\App\Models\User::AVAILABLE_MODULES as $key => $label)
+                    <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                        <input type="checkbox" name="allowed_modules[]" value="{{ $key }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" {{ in_array($key, $currentModules) ? 'checked' : '' }}>
+                        <span class="text-sm text-gray-700">{{ $label }}</span>
+                    </label>
+                    @endforeach
                 </div>
             </div>
 
@@ -295,6 +314,16 @@
 
 @push('scripts')
     <script>
+        function toggleModules() {
+            const role = document.getElementById('role').value;
+            const section = document.getElementById('modulesSection');
+            if (role === 'manager') {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
         // Máscara para telefone
         document.getElementById('phone').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');

@@ -68,7 +68,7 @@
 
                 <div>
                     <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Nivel de Acesso <span class="text-red-500">*</span></label>
-                    <select id="role" name="role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('role') border-red-500 @enderror">
+                    <select id="role" name="role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('role') border-red-500 @enderror" onchange="toggleModules()">
                         <option value="">Selecione o nivel de acesso</option>
                         <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>Usuario</option>
                         <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Gerente</option>
@@ -77,7 +77,7 @@
                     @error('role')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
-                    <p class="text-xs text-gray-500 mt-1">Usuario: acesso basico | Gerente: visualiza relatorios | Admin: acesso total</p>
+                    <p class="text-xs text-gray-500 mt-1">Usuario: acesso basico | Gerente: acesso por modulos | Admin: acesso total</p>
                 </div>
 
                 <div>
@@ -104,6 +104,23 @@
                 <div>
                     <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha <span class="text-red-500">*</span></label>
                     <input type="password" id="password_confirmation" name="password_confirmation" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Digite a senha novamente">
+                </div>
+            </div>
+
+            {{-- Modulos de acesso (somente para gerente) --}}
+            <div id="modulesSection" class="border-t pt-6 {{ old('role') === 'manager' ? '' : 'hidden' }}">
+                <h3 class="text-sm font-semibold text-gray-700 mb-2">Modulos de Acesso</h3>
+                <p class="text-xs text-gray-500 mb-4">Selecione quais modulos este gerente tera acesso no painel.</p>
+                @error('allowed_modules')
+                    <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
+                @enderror
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    @foreach(\App\Models\User::AVAILABLE_MODULES as $key => $label)
+                    <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                        <input type="checkbox" name="allowed_modules[]" value="{{ $key }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" {{ in_array($key, old('allowed_modules', [])) ? 'checked' : '' }}>
+                        <span class="text-sm text-gray-700">{{ $label }}</span>
+                    </label>
+                    @endforeach
                 </div>
             </div>
 
@@ -153,6 +170,16 @@
 
 @push('scripts')
 <script>
+function toggleModules() {
+    const role = document.getElementById('role').value;
+    const section = document.getElementById('modulesSection');
+    if (role === 'manager') {
+        section.classList.remove('hidden');
+    } else {
+        section.classList.add('hidden');
+    }
+}
+
 document.getElementById('phone').addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length <= 11) {
