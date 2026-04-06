@@ -146,6 +146,52 @@ class ServiceReviewController extends Controller
             ->with('success', 'Avaliacao excluida com sucesso!');
     }
 
+    public function bulkUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:service_reviews,id',
+            'submitted_at' => 'nullable|date',
+            'rating' => 'nullable|integer|min:1|max:5',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $data = [];
+        if ($request->filled('submitted_at')) {
+            $data['submitted_at'] = $validated['submitted_at'];
+        }
+        if ($request->filled('rating')) {
+            $data['rating'] = $validated['rating'];
+        }
+        if ($request->has('reason') && $validated['reason'] !== null) {
+            $data['reason'] = $validated['reason'];
+        }
+
+        if (!empty($data)) {
+            ServiceReview::whereIn('id', $validated['ids'])->update($data);
+        }
+
+        $count = count($validated['ids']);
+
+        return redirect()
+            ->route('admin.reviews.index')
+            ->with('success', "$count avaliacao(oes) atualizada(s) com sucesso!");
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:service_reviews,id',
+        ]);
+
+        $count = ServiceReview::whereIn('id', $validated['ids'])->delete();
+
+        return redirect()
+            ->route('admin.reviews.index')
+            ->with('success', "$count avaliacao(oes) excluida(s) com sucesso!");
+    }
+
     public function sendTest(Request $request)
     {
         $validated = $request->validate([

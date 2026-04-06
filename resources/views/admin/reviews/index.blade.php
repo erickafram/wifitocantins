@@ -126,11 +126,24 @@
             <span class="text-sm text-gray-500">{{ $reviews->total() }} registro(s)</span>
         </div>
 
+        {{-- Barra de acoes em lote --}}
+        <div id="bulkBar" class="hidden px-6 py-3 bg-blue-50 border-b border-blue-200 flex items-center gap-3 flex-wrap">
+            <span class="text-sm text-blue-800 font-medium"><span id="bulkCount">0</span> selecionado(s)</span>
+            <button type="button" onclick="openBulkEditModal()" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">Editar em lote</button>
+            @if(Auth::user()->role === 'admin')
+            <button type="button" onclick="openBulkDeleteModal()" class="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition-colors">Excluir em lote</button>
+            @endif
+            <button type="button" onclick="clearSelection()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition-colors">Limpar selecao</button>
+        </div>
+
         @if($reviews->count() > 0)
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-4 py-3 text-center w-10">
+                            <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" onchange="toggleSelectAll(this)">
+                        </th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Passageiro</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Telefone</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Cadastro da viagem</th>
@@ -144,6 +157,9 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($reviews as $review)
                     <tr class="hover:bg-gray-50 transition-colors align-top">
+                        <td class="px-4 py-3 text-center">
+                            <input type="checkbox" class="row-checkbox rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" value="{{ $review->id }}" onchange="updateBulkBar()">
+                        </td>
                         <td class="px-4 py-3">
                             <div class="font-medium text-gray-800">{{ $review->user?->name ?: 'Passageiro sem nome' }}</div>
                             <div class="text-xs text-gray-500">Usuario #{{ $review->user_id ?? '-' }} | Lote {{ $review->batch_date?->format('d/m/Y') }}</div>
@@ -276,7 +292,107 @@
 </div>
 @endif
 
+{{-- Modal de edicao em lote --}}
+<div id="bulkEditModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Editar em lote</h3>
+            <button type="button" onclick="closeBulkEditModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">Apenas os campos preenchidos serao alterados nos <span id="bulkEditCount" class="font-semibold text-gray-800">0</span> registros selecionados.</p>
+        <form id="bulkEditForm" method="POST" action="{{ route('admin.reviews.bulk-update') }}">
+            @csrf
+            @method('PUT')
+            <div id="bulkEditIds"></div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Respondido em</label>
+                    <input type="datetime-local" name="submitted_at" id="bulkEditSubmittedAt" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nota</label>
+                    <select name="rating" id="bulkEditRating" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                        <option value="">Nao alterar</option>
+                        @for($r = 1; $r <= 5; $r++)
+                        <option value="{{ $r }}">{{ $r }} estrela{{ $r > 1 ? 's' : '' }}</option>
+                        @endfor
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
+                    <textarea name="reason" id="bulkEditReason" rows="3" maxlength="1000" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm" placeholder="Deixe vazio para nao alterar..."></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex gap-3 justify-end">
+                <button type="button" onclick="closeBulkEditModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition-colors">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors">Salvar em lote</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal de exclusao em lote --}}
+@if(Auth::user()->role === 'admin')
+<div id="bulkDeleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Excluir em lote</h3>
+            <button type="button" onclick="closeBulkDeleteModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+        </div>
+        <p class="text-sm text-gray-600 mb-2">Tem certeza que deseja excluir <span id="bulkDeleteCount" class="font-semibold">0</span> avaliacao(oes)?</p>
+        <p class="text-xs text-red-500 mb-6">Esta acao nao pode ser desfeita.</p>
+        <form id="bulkDeleteForm" method="POST" action="{{ route('admin.reviews.bulk-destroy') }}">
+            @csrf
+            @method('DELETE')
+            <div id="bulkDeleteIds"></div>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeBulkDeleteModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition-colors">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors">Excluir tudo</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 <script>
+// Selecao
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+}
+
+function updateBulkBar() {
+    const ids = getSelectedIds();
+    const bar = document.getElementById('bulkBar');
+    const count = document.getElementById('bulkCount');
+    const selectAll = document.getElementById('selectAll');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+
+    count.textContent = ids.length;
+
+    if (ids.length > 0) {
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+    } else {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
+    }
+
+    selectAll.checked = allCheckboxes.length > 0 && ids.length === allCheckboxes.length;
+    selectAll.indeterminate = ids.length > 0 && ids.length < allCheckboxes.length;
+}
+
+function toggleSelectAll(el) {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = el.checked);
+    updateBulkBar();
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateBulkBar();
+}
+
+// Edicao individual
 function openEditModal(id, submittedAt, rating, reason) {
     const modal = document.getElementById('editModal');
     const form = document.getElementById('editForm');
@@ -289,19 +405,18 @@ function openEditModal(id, submittedAt, rating, reason) {
     modal.classList.add('flex');
 }
 function closeEditModal() {
-    const modal = document.getElementById('editModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    document.getElementById('editModal').classList.add('hidden');
+    document.getElementById('editModal').classList.remove('flex');
 }
 document.getElementById('editModal').addEventListener('click', function(e) {
     if (e.target === this) closeEditModal();
 });
 
+// Exclusao individual
 function openDeleteModal(id, name) {
     const modal = document.getElementById('deleteModal');
     if (!modal) return;
-    const form = document.getElementById('deleteForm');
-    form.action = '{{ url("admin/avaliacoes") }}/' + id;
+    document.getElementById('deleteForm').action = '{{ url("admin/avaliacoes") }}/' + id;
     document.getElementById('deleteReviewName').textContent = name;
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -315,6 +430,63 @@ function closeDeleteModal() {
 if (document.getElementById('deleteModal')) {
     document.getElementById('deleteModal').addEventListener('click', function(e) {
         if (e.target === this) closeDeleteModal();
+    });
+}
+
+// Edicao em lote
+function injectIds(containerId, ids) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    ids.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = id;
+        container.appendChild(input);
+    });
+}
+
+function openBulkEditModal() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    injectIds('bulkEditIds', ids);
+    document.getElementById('bulkEditCount').textContent = ids.length;
+    document.getElementById('bulkEditSubmittedAt').value = '';
+    document.getElementById('bulkEditRating').value = '';
+    document.getElementById('bulkEditReason').value = '';
+    const modal = document.getElementById('bulkEditModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeBulkEditModal() {
+    const modal = document.getElementById('bulkEditModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+document.getElementById('bulkEditModal').addEventListener('click', function(e) {
+    if (e.target === this) closeBulkEditModal();
+});
+
+// Exclusao em lote
+function openBulkDeleteModal() {
+    const modal = document.getElementById('bulkDeleteModal');
+    if (!modal) return;
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    injectIds('bulkDeleteIds', ids);
+    document.getElementById('bulkDeleteCount').textContent = ids.length;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeBulkDeleteModal() {
+    const modal = document.getElementById('bulkDeleteModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+if (document.getElementById('bulkDeleteModal')) {
+    document.getElementById('bulkDeleteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeBulkDeleteModal();
     });
 }
 </script>
