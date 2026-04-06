@@ -70,8 +70,10 @@ Route::get('/admin-access', function () {
 
 // Painel Administrativo (Protegido por autenticação)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
-    // Rotas acessíveis para Admin e Manager
-    Route::get('/', [AdminController::class, 'dashboard']);
+    // Rota raiz redireciona para o primeiro modulo disponivel
+    Route::get('/', function () {
+        return redirect(auth()->user()->getHomeRoute());
+    });
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard')->middleware('module:dashboard');
     Route::get('/revenue-report', [AdminController::class, 'revenueReport'])->name('revenue-report')->middleware('module:dashboard');
     Route::get('/connection-logs', [AdminController::class, 'connectionLogs'])->name('connection-logs')->middleware('module:dashboard');

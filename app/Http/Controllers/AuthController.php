@@ -57,8 +57,8 @@ class AuthController extends Controller
         // Regenerar sessão por segurança
         $request->session()->regenerate();
 
-        // Redirecionar para dashboard
-        return redirect()->intended(route('admin.dashboard'))
+        // Redirecionar para o primeiro modulo disponivel
+        return redirect()->intended($user->getHomeRoute())
                         ->with('success', 'Login realizado com sucesso!');
     }
 

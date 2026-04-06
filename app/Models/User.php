@@ -143,4 +143,30 @@ class User extends Authenticatable
 
         return in_array($module, $modules);
     }
+
+    /**
+     * Retorna a rota do primeiro modulo disponivel para o usuario
+     */
+    public function getHomeRoute(): string
+    {
+        if ($this->role === 'admin') {
+            return route('admin.dashboard');
+        }
+
+        $moduleRoutes = [
+            'dashboard' => 'admin.dashboard',
+            'reports' => 'admin.reports',
+            'vouchers' => 'admin.vouchers.index',
+            'chat' => 'admin.chat.index',
+            'reviews' => 'admin.reviews.index',
+        ];
+
+        foreach ($this->allowed_modules ?? [] as $module) {
+            if (isset($moduleRoutes[$module])) {
+                return route($moduleRoutes[$module]);
+            }
+        }
+
+        return route('admin.dashboard');
+    }
 }
