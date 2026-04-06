@@ -108,13 +108,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
         Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
         Route::post('/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('send-test');
-        Route::put('/lote/editar', [AdminServiceReviewController::class, 'bulkUpdate'])->name('bulk-update');
-        Route::put('/{review}', [AdminServiceReviewController::class, 'update'])->name('update');
     });
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
-        // Exclusão de avaliação
+        // Edicao e exclusao de avaliacoes (somente admin)
+        Route::put('/avaliacoes/lote/editar', [AdminServiceReviewController::class, 'bulkUpdate'])->name('reviews.bulk-update');
+        Route::put('/avaliacoes/{review}', [AdminServiceReviewController::class, 'update'])->name('reviews.update');
         Route::delete('/avaliacoes/lote/excluir', [AdminServiceReviewController::class, 'bulkDestroy'])->name('reviews.bulk-destroy');
         Route::delete('/avaliacoes/{review}', [AdminServiceReviewController::class, 'destroy'])->name('reviews.destroy');
 

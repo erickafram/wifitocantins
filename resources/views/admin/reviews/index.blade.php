@@ -126,24 +126,26 @@
             <span class="text-sm text-gray-500">{{ $reviews->total() }} registro(s)</span>
         </div>
 
-        {{-- Barra de acoes em lote --}}
+        {{-- Barra de acoes em lote (somente admin) --}}
+        @if(Auth::user()->role === 'admin')
         <div id="bulkBar" class="hidden px-6 py-3 bg-blue-50 border-b border-blue-200 flex items-center gap-3 flex-wrap">
             <span class="text-sm text-blue-800 font-medium"><span id="bulkCount">0</span> selecionado(s)</span>
             <button type="button" onclick="openBulkEditModal()" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">Editar em lote</button>
-            @if(Auth::user()->role === 'admin')
             <button type="button" onclick="openBulkDeleteModal()" class="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition-colors">Excluir em lote</button>
-            @endif
             <button type="button" onclick="clearSelection()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition-colors">Limpar selecao</button>
         </div>
+        @endif
 
         @if($reviews->count() > 0)
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50">
                     <tr>
+                        @if(Auth::user()->role === 'admin')
                         <th class="px-4 py-3 text-center w-10">
                             <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" onchange="toggleSelectAll(this)">
                         </th>
+                        @endif
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Passageiro</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Telefone</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Cadastro da viagem</th>
@@ -151,15 +153,19 @@
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Nota</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Motivo</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Respondido em</th>
+                        @if(Auth::user()->role === 'admin')
                         <th class="px-4 py-3 text-center font-medium text-gray-600">Acoes</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach($reviews as $review)
                     <tr class="hover:bg-gray-50 transition-colors align-top">
+                        @if(Auth::user()->role === 'admin')
                         <td class="px-4 py-3 text-center">
                             <input type="checkbox" class="row-checkbox rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" value="{{ $review->id }}" onchange="updateBulkBar()">
                         </td>
+                        @endif
                         <td class="px-4 py-3">
                             <div class="font-medium text-gray-800">{{ $review->user?->name ?: 'Passageiro sem nome' }}</div>
                             <div class="text-xs text-gray-500">Usuario #{{ $review->user_id ?? '-' }} | Lote {{ $review->batch_date?->format('d/m/Y') }}</div>
@@ -202,18 +208,18 @@
                         <td class="px-4 py-3 text-gray-600">
                             {{ $review->submitted_at?->format('d/m/Y H:i') ?: '-' }}
                         </td>
+                        @if(Auth::user()->role === 'admin')
                         <td class="px-4 py-3 text-center">
                             <div class="flex items-center justify-center gap-1">
                                 <button type="button" onclick="openEditModal({{ $review->id }}, '{{ $review->submitted_at?->format('Y-m-d\TH:i') }}', {{ $review->rating ?? 'null' }}, '{{ addslashes($review->reason ?? '') }}')" class="inline-flex items-center justify-center px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">
                                     Editar
                                 </button>
-                                @if(Auth::user()->role === 'admin')
                                 <button type="button" onclick="openDeleteModal({{ $review->id }}, '{{ addslashes($review->user?->name ?: 'Passageiro sem nome') }}')" class="inline-flex items-center justify-center px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition-colors">
                                     Excluir
                                 </button>
-                                @endif
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @endforeach
                 </tbody>
@@ -231,6 +237,9 @@
         @endif
     </div>
 </div>
+
+{{-- Modais de edicao e exclusao (somente admin) --}}
+@if(Auth::user()->role === 'admin')
 
 {{-- Modal de edicao --}}
 <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
@@ -270,7 +279,6 @@
 </div>
 
 {{-- Modal de confirmacao de exclusao --}}
-@if(Auth::user()->role === 'admin')
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
         <div class="flex items-center justify-between mb-4">
@@ -290,7 +298,6 @@
         </form>
     </div>
 </div>
-@endif
 
 {{-- Modal de edicao em lote --}}
 <div id="bulkEditModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
@@ -332,7 +339,6 @@
 </div>
 
 {{-- Modal de exclusao em lote --}}
-@if(Auth::user()->role === 'admin')
 <div id="bulkDeleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
         <div class="flex items-center justify-between mb-4">
@@ -352,7 +358,6 @@
         </form>
     </div>
 </div>
-@endif
 
 <script>
 // Selecao
@@ -394,44 +399,33 @@ function clearSelection() {
 
 // Edicao individual
 function openEditModal(id, submittedAt, rating, reason) {
-    const modal = document.getElementById('editModal');
     const form = document.getElementById('editForm');
     const queryString = window.location.search;
     form.action = '{{ url("admin/avaliacoes") }}/' + id + queryString;
     document.getElementById('editSubmittedAt').value = submittedAt || '';
     document.getElementById('editRating').value = rating || '';
     document.getElementById('editReason').value = reason || '';
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    document.getElementById('editModal').classList.remove('hidden');
+    document.getElementById('editModal').classList.add('flex');
 }
 function closeEditModal() {
     document.getElementById('editModal').classList.add('hidden');
     document.getElementById('editModal').classList.remove('flex');
 }
-document.getElementById('editModal').addEventListener('click', function(e) {
-    if (e.target === this) closeEditModal();
-});
+document.getElementById('editModal').addEventListener('click', function(e) { if (e.target === this) closeEditModal(); });
 
 // Exclusao individual
 function openDeleteModal(id, name) {
-    const modal = document.getElementById('deleteModal');
-    if (!modal) return;
     document.getElementById('deleteForm').action = '{{ url("admin/avaliacoes") }}/' + id;
     document.getElementById('deleteReviewName').textContent = name;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.getElementById('deleteModal').classList.add('flex');
 }
 function closeDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('flex');
 }
-if (document.getElementById('deleteModal')) {
-    document.getElementById('deleteModal').addEventListener('click', function(e) {
-        if (e.target === this) closeDeleteModal();
-    });
-}
+document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
 
 // Edicao em lote
 function injectIds(containerId, ids) {
@@ -454,40 +448,30 @@ function openBulkEditModal() {
     document.getElementById('bulkEditSubmittedAt').value = '';
     document.getElementById('bulkEditRating').value = '';
     document.getElementById('bulkEditReason').value = '';
-    const modal = document.getElementById('bulkEditModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    document.getElementById('bulkEditModal').classList.remove('hidden');
+    document.getElementById('bulkEditModal').classList.add('flex');
 }
 function closeBulkEditModal() {
-    const modal = document.getElementById('bulkEditModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    document.getElementById('bulkEditModal').classList.add('hidden');
+    document.getElementById('bulkEditModal').classList.remove('flex');
 }
-document.getElementById('bulkEditModal').addEventListener('click', function(e) {
-    if (e.target === this) closeBulkEditModal();
-});
+document.getElementById('bulkEditModal').addEventListener('click', function(e) { if (e.target === this) closeBulkEditModal(); });
 
 // Exclusao em lote
 function openBulkDeleteModal() {
-    const modal = document.getElementById('bulkDeleteModal');
-    if (!modal) return;
     const ids = getSelectedIds();
     if (ids.length === 0) return;
     injectIds('bulkDeleteIds', ids);
     document.getElementById('bulkDeleteCount').textContent = ids.length;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    document.getElementById('bulkDeleteModal').classList.remove('hidden');
+    document.getElementById('bulkDeleteModal').classList.add('flex');
 }
 function closeBulkDeleteModal() {
-    const modal = document.getElementById('bulkDeleteModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    document.getElementById('bulkDeleteModal').classList.add('hidden');
+    document.getElementById('bulkDeleteModal').classList.remove('flex');
 }
-if (document.getElementById('bulkDeleteModal')) {
-    document.getElementById('bulkDeleteModal').addEventListener('click', function(e) {
-        if (e.target === this) closeBulkDeleteModal();
-    });
-}
+document.getElementById('bulkDeleteModal').addEventListener('click', function(e) { if (e.target === this) closeBulkDeleteModal(); });
 </script>
+
+@endif
 @endsection
