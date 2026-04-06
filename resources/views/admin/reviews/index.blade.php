@@ -174,7 +174,7 @@
                 <input type="date" name="answered_to" value="{{ request('answered_to') }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="flex-1 bg-tocantins-green text-white py-2 px-3 rounded-xl font-medium hover:bg-green-700 transition-colors text-sm">Filtrar</button>
+                <button type="submit" class="flex-1 bg-emerald-600 text-white py-2 px-3 rounded-xl font-medium hover:bg-emerald-700 transition-colors text-sm">Filtrar</button>
                 <a href="{{ route('admin.reviews.index') }}" class="bg-gray-200 text-gray-600 py-2 px-3 rounded-xl font-medium hover:bg-gray-300 transition-colors text-sm">✕</a>
             </div>
         </form>
