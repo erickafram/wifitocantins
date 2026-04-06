@@ -108,10 +108,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
         Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
         Route::post('/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('send-test');
+        Route::put('/{review}', [AdminServiceReviewController::class, 'update'])->name('update');
     });
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
+        // Exclusão de avaliação
+        Route::delete('/avaliacoes/{review}', [AdminServiceReviewController::class, 'destroy'])->name('reviews.destroy');
+
         // Exclusão de registro de relatório (pagamento + usuário vinculado)
         Route::delete('/reports/payments', [ReportsController::class, 'destroyPaymentRecords'])
             ->name('reports.payments.bulk-destroy');

@@ -118,6 +118,34 @@ class ServiceReviewController extends Controller
             ->with('success', 'Configuracoes atualizadas com sucesso!');
     }
 
+    public function update(Request $request, ServiceReview $review)
+    {
+        $validated = $request->validate([
+            'submitted_at' => 'nullable|date',
+            'rating' => 'nullable|integer|min:1|max:5',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $review->update([
+            'submitted_at' => $validated['submitted_at'] ?: null,
+            'rating' => $validated['rating'] ?: null,
+            'reason' => $validated['reason'] ?: null,
+        ]);
+
+        return redirect()
+            ->route('admin.reviews.index', $request->query())
+            ->with('success', 'Avaliacao atualizada com sucesso!');
+    }
+
+    public function destroy(ServiceReview $review)
+    {
+        $review->delete();
+
+        return redirect()
+            ->route('admin.reviews.index')
+            ->with('success', 'Avaliacao excluida com sucesso!');
+    }
+
     public function sendTest(Request $request)
     {
         $validated = $request->validate([

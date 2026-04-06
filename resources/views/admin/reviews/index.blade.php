@@ -138,7 +138,7 @@
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Nota</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Motivo</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Respondido em</th>
-                        <th class="px-4 py-3 text-center font-medium text-gray-600">Link</th>
+                        <th class="px-4 py-3 text-center font-medium text-gray-600">Acoes</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -187,9 +187,16 @@
                             {{ $review->submitted_at?->format('d/m/Y H:i') ?: '-' }}
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <a href="{{ route('reviews.show', $review->token) }}" target="_blank" class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-xs font-medium transition-colors">
-                                Abrir
-                            </a>
+                            <div class="flex items-center justify-center gap-1">
+                                <button type="button" onclick="openEditModal({{ $review->id }}, '{{ $review->submitted_at?->format('Y-m-d\TH:i') }}', {{ $review->rating ?? 'null' }}, '{{ addslashes($review->reason ?? '') }}')" class="inline-flex items-center justify-center px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">
+                                    Editar
+                                </button>
+                                @if(Auth::user()->role === 'admin')
+                                <button type="button" onclick="openDeleteModal({{ $review->id }}, '{{ addslashes($review->user?->name ?: 'Passageiro sem nome') }}')" class="inline-flex items-center justify-center px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition-colors">
+                                    Excluir
+                                </button>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -208,4 +215,107 @@
         @endif
     </div>
 </div>
+
+{{-- Modal de edicao --}}
+<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Editar avaliacao</h3>
+            <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+        </div>
+        <form id="editForm" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Respondido em</label>
+                    <input type="datetime-local" name="submitted_at" id="editSubmittedAt" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nota</label>
+                    <select name="rating" id="editRating" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
+                        <option value="">Sem nota</option>
+                        @for($r = 1; $r <= 5; $r++)
+                        <option value="{{ $r }}">{{ $r }} estrela{{ $r > 1 ? 's' : '' }}</option>
+                        @endfor
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
+                    <textarea name="reason" id="editReason" rows="3" maxlength="1000" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm" placeholder="Motivo da avaliacao..."></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex gap-3 justify-end">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition-colors">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal de confirmacao de exclusao --}}
+@if(Auth::user()->role === 'admin')
+<div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Excluir avaliacao</h3>
+            <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+        </div>
+        <p class="text-sm text-gray-600 mb-1">Tem certeza que deseja excluir a avaliacao de:</p>
+        <p class="text-sm font-semibold text-gray-800 mb-4" id="deleteReviewName"></p>
+        <p class="text-xs text-red-500 mb-6">Esta acao nao pode ser desfeita.</p>
+        <form id="deleteForm" method="POST">
+            @csrf
+            @method('DELETE')
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition-colors">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors">Excluir</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+<script>
+function openEditModal(id, submittedAt, rating, reason) {
+    const modal = document.getElementById('editModal');
+    const form = document.getElementById('editForm');
+    const queryString = window.location.search;
+    form.action = '{{ url("admin/avaliacoes") }}/' + id + queryString;
+    document.getElementById('editSubmittedAt').value = submittedAt || '';
+    document.getElementById('editRating').value = rating || '';
+    document.getElementById('editReason').value = reason || '';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+});
+
+function openDeleteModal(id, name) {
+    const modal = document.getElementById('deleteModal');
+    if (!modal) return;
+    const form = document.getElementById('deleteForm');
+    form.action = '{{ url("admin/avaliacoes") }}/' + id;
+    document.getElementById('deleteReviewName').textContent = name;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+if (document.getElementById('deleteModal')) {
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteModal();
+    });
+}
+</script>
 @endsection
