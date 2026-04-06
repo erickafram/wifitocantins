@@ -111,12 +111,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
 
     Route::middleware(['module:reviews'])->prefix('avaliacoes')->name('reviews.')->group(function () {
         Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
+        Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
     });
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
-        // Configuracoes e teste de avaliacoes (somente admin)
-        Route::get('/avaliacoes/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('reviews.settings');
+        // Configuracoes e teste de avaliacoes (somente admin pode editar)
         Route::put('/avaliacoes/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('reviews.settings.update');
         Route::post('/avaliacoes/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('reviews.send-test');
 

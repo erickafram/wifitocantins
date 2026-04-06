@@ -16,24 +16,16 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-2">
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.reviews.index') }}" class="px-4 py-2 rounded-xl text-sm font-medium {{ request()->routeIs('admin.reviews.index') ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Lista</a>
-            @if(Auth::user()->role === 'admin')
             <a href="{{ route('admin.reviews.settings') }}" class="px-4 py-2 rounded-xl text-sm font-medium {{ request()->routeIs('admin.reviews.settings*') ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Configuracoes</a>
-            @endif
         </div>
     </div>
 
     @if(session('success'))
-    <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-2xl">
-        {{ session('success') }}
-    </div>
+    <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-2xl">{{ session('success') }}</div>
     @endif
-
     @if(session('error'))
-    <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-2xl">
-        {{ session('error') }}
-    </div>
+    <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-2xl">{{ session('error') }}</div>
     @endif
-
     @if(session('manual_review_link'))
     <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-2xl">
         <p class="font-medium">Link gerado para teste manual:</p>
@@ -45,9 +37,11 @@
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-6 border-b border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800">Configuracoes do envio</h2>
-                <p class="mt-1 text-sm text-gray-500">O scheduler dispara automaticamente todo dia as 06:30 e considera a janela de passageiros cadastrados entre 18:30 do dia anterior e 06:00 do dia atual.</p>
+                <p class="mt-1 text-sm text-gray-500">O scheduler dispara automaticamente todo dia as 06:30.</p>
             </div>
 
+            @if(Auth::user()->role === 'admin')
+            {{-- Admin: formulario editavel --}}
             <form method="POST" action="{{ route('admin.reviews.settings.update') }}" class="p-6 space-y-6">
                 @csrf
                 @method('PUT')
@@ -55,7 +49,7 @@
                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                     <div>
                         <p class="font-semibold text-gray-800">Enviar por WhatsApp</p>
-                        <p class="text-sm text-gray-500">Envia link de avaliação via WhatsApp para os passageiros.</p>
+                        <p class="text-sm text-gray-500">Envia link de avaliacao via WhatsApp.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="review_auto_send_enabled" value="1" class="sr-only peer" {{ $settings['review_auto_send_enabled'] ? 'checked' : '' }}>
@@ -66,7 +60,7 @@
                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                     <div>
                         <p class="font-semibold text-gray-800">Enviar por E-mail</p>
-                        <p class="text-sm text-gray-500">Envia link de avaliação por e-mail para passageiros que informaram e-mail.</p>
+                        <p class="text-sm text-gray-500">Envia link por e-mail para quem informou.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="review_email_enabled" value="1" class="sr-only peer" {{ $settings['review_email_enabled'] ? 'checked' : '' }}>
@@ -76,7 +70,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Mensagem da pesquisa</label>
-                    <p class="text-xs text-gray-500 mb-2">Use essa mensagem para pedir a opiniao do passageiro sobre atendimento, servico e experiencia durante a viagem. Variaveis: <span class="font-mono">{nome}</span>, <span class="font-mono">{telefone}</span>, <span class="font-mono">{link}</span>, <span class="font-mono">{data_viagem}</span></p>
+                    <p class="text-xs text-gray-500 mb-2">Variaveis: <span class="font-mono">{nome}</span>, <span class="font-mono">{telefone}</span>, <span class="font-mono">{link}</span>, <span class="font-mono">{data_viagem}</span></p>
                     <textarea name="review_message_template" rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent font-mono text-sm" required>{{ old('review_message_template', $settings['review_message_template']) }}</textarea>
                     @error('review_message_template')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -84,11 +78,42 @@
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="submit" class="bg-green hover:bg-green-light text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-card">
-                        Salvar configuracoes
-                    </button>
+                    <button type="submit" class="bg-green hover:bg-green-light text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-card">Salvar configuracoes</button>
                 </div>
             </form>
+            @else
+            {{-- Gestor: somente leitura --}}
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div>
+                        <p class="font-semibold text-gray-800">Enviar por WhatsApp</p>
+                        <p class="text-sm text-gray-500">Envia link de avaliacao via WhatsApp.</p>
+                    </div>
+                    <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $settings['review_auto_send_enabled'] ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500' }}">
+                        {{ $settings['review_auto_send_enabled'] ? 'Ativado' : 'Desativado' }}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div>
+                        <p class="font-semibold text-gray-800">Enviar por E-mail</p>
+                        <p class="text-sm text-gray-500">Envia link por e-mail para quem informou.</p>
+                    </div>
+                    <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold {{ $settings['review_email_enabled'] ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500' }}">
+                        {{ $settings['review_email_enabled'] ? 'Ativado' : 'Desativado' }}
+                    </span>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensagem da pesquisa</label>
+                    <div class="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 font-mono text-sm text-gray-600 whitespace-pre-wrap">{{ $settings['review_message_template'] }}</div>
+                </div>
+
+                <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+                    Somente o administrador pode alterar estas configuracoes.
+                </div>
+            </div>
+            @endif
         </div>
 
         <div class="space-y-6">
@@ -100,9 +125,7 @@
                         <p class="text-sm {{ $settings['is_connected'] ? 'text-green-600' : 'text-red-600' }}">{{ $settings['connected_phone'] ?: 'Nenhum numero conectado' }}</p>
                     </div>
                     @if(Auth::user()->role === 'admin')
-                    <a href="{{ route('admin.whatsapp.index') }}" class="text-sm font-medium {{ $settings['is_connected'] ? 'text-green-700' : 'text-red-700' }} underline">Abrir modulo WhatsApp</a>
-                    @else
-                    <span class="text-xs font-medium {{ $settings['is_connected'] ? 'text-green-700' : 'text-red-700' }}">Acompanhamento disponivel</span>
+                    <a href="{{ route('admin.whatsapp.index') }}" class="text-sm font-medium {{ $settings['is_connected'] ? 'text-green-700' : 'text-red-700' }} underline">Abrir WhatsApp</a>
                     @endif
                 </div>
             </div>
@@ -131,10 +154,11 @@
         </div>
     </div>
 
+    @if(Auth::user()->role === 'admin')
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="p-6 border-b border-gray-100">
             <h2 class="text-lg font-bold text-gray-800">Disparo manual para teste</h2>
-            <p class="mt-1 text-sm text-gray-500">Use este formulario para enviar a pesquisa de opiniao para um numero especifico e testar o fluxo imediatamente.</p>
+            <p class="mt-1 text-sm text-gray-500">Envie a pesquisa para um numero especifico e teste o fluxo.</p>
         </div>
 
         <form method="POST" action="{{ route('admin.reviews.send-test') }}" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -142,43 +166,31 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Telefone do teste</label>
                 <input type="text" name="phone" value="{{ old('phone') }}" placeholder="63999999999" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm" required>
-                @error('phone')
-                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                @enderror
+                @error('phone')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nome exibido</label>
-                <input type="text" name="name" value="{{ old('name') }}" placeholder="Opcional para teste sem cadastro" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-                @error('name')
-                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                @enderror
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="Opcional" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Data do lote</label>
                 <input type="date" name="batch_date" value="{{ old('batch_date', $currentWindow['batch_date']) }}" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-                @error('batch_date')
-                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">E-mail (opcional)</label>
                 <input type="email" name="email" value="{{ old('email') }}" placeholder="email@exemplo.com" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-tocantins-green focus:border-transparent text-sm">
-                @error('email')
-                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                @enderror
             </div>
             <div class="flex items-end">
-                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-5 py-2.5 rounded-xl font-medium hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg">
-                    Enviar teste agora
-                </button>
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-5 py-2.5 rounded-xl font-medium hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg">Enviar teste agora</button>
             </div>
         </form>
 
         <div class="px-6 pb-6">
             <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
-                Se o telefone informado ja existir em um cadastro, o convite de avaliacao sera vinculado automaticamente ao usuario encontrado. Caso contrario, o teste sera enviado mesmo assim, apenas como link manual.
+                Se o telefone ja existir em um cadastro, o convite sera vinculado ao usuario. Caso contrario, sera enviado como link manual.
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection

@@ -14,9 +14,7 @@
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-2">
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.reviews.index') }}" class="px-4 py-2 rounded-xl text-sm font-medium {{ request()->routeIs('admin.reviews.index') ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Lista</a>
-            @if(Auth::user()->role === 'admin')
             <a href="{{ route('admin.reviews.settings') }}" class="px-4 py-2 rounded-xl text-sm font-medium {{ request()->routeIs('admin.reviews.settings*') ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Configuracoes</a>
-            @endif
         </div>
     </div>
 
