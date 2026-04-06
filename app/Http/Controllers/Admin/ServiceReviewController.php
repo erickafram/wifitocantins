@@ -73,10 +73,42 @@ class ServiceReviewController extends Controller
                 $rating => ServiceReview::where('rating', $rating)->count(),
             ]);
 
+        // Dados para grafico de avaliacoes dos ultimos 14 dias
+        $dailyStats = ServiceReview::selectRaw("DATE(batch_date) as date, COUNT(*) as total, SUM(CASE WHEN submitted_at IS NOT NULL THEN 1 ELSE 0 END) as answered, ROUND(AVG(CASE WHEN rating IS NOT NULL THEN rating END), 1) as avg_rating")
+            ->where('batch_date', '>=', now()->subDays(13)->startOfDay())
+            ->groupByRaw('DATE(batch_date)')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $chartLabels = [];
+        $chartInvites = [];
+        $chartAnswered = [];
+        $chartAvgRating = [];
+
+        for ($i = 13; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $label = now()->subDays($i)->format('d/m');
+            $chartLabels[] = $label;
+            $chartInvites[] = (int) ($dailyStats[$date]->total ?? 0);
+            $chartAnswered[] = (int) ($dailyStats[$date]->answered ?? 0);
+            $chartAvgRating[] = (float) ($dailyStats[$date]->avg_rating ?? 0);
+        }
+
+        // Taxa de resposta
+        $responseRate = $stats['total_invites'] > 0
+            ? round(($stats['answered'] / $stats['total_invites']) * 100, 1)
+            : 0;
+
         return view('admin.reviews.index', compact(
             'reviews',
             'stats',
-            'distribution'
+            'distribution',
+            'chartLabels',
+            'chartInvites',
+            'chartAnswered',
+            'chartAvgRating',
+            'responseRate'
         ));
     }
 

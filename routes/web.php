@@ -111,13 +111,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
 
     Route::middleware(['module:reviews'])->prefix('avaliacoes')->name('reviews.')->group(function () {
         Route::get('/', [AdminServiceReviewController::class, 'index'])->name('index');
-        Route::get('/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('settings');
-        Route::put('/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('settings.update');
-        Route::post('/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('send-test');
     });
     
     // Rotas APENAS para Administradores
     Route::middleware(['admin.only'])->group(function () {
+        // Configuracoes e teste de avaliacoes (somente admin)
+        Route::get('/avaliacoes/configuracoes', [AdminServiceReviewController::class, 'settings'])->name('reviews.settings');
+        Route::put('/avaliacoes/configuracoes', [AdminServiceReviewController::class, 'updateSettings'])->name('reviews.settings.update');
+        Route::post('/avaliacoes/enviar-teste', [AdminServiceReviewController::class, 'sendTest'])->name('reviews.send-test');
+
         // Edicao e exclusao de avaliacoes (somente admin)
         Route::put('/avaliacoes/lote/editar', [AdminServiceReviewController::class, 'bulkUpdate'])->name('reviews.bulk-update');
         Route::put('/avaliacoes/{review}', [AdminServiceReviewController::class, 'update'])->name('reviews.update');
