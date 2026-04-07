@@ -55,6 +55,3 @@ curl -k https://www.tocantinstransportewifi.com.br
 php artisan tinker
 # Digite: \App\Models\SystemSetting::all();
 # Pressione Ctrl+D para sair
-
-ENVAIR AVALIAÇÃO PARA OS USUÁRIOS CASO NAO ENVIAR AUTOMATICO
-php artisan reviews:send-whatsapp --date=2026-04-02 --force

@@ -206,16 +206,13 @@
                             <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" onchange="toggleSelectAll(this)">
                         </th>
                         @endif
-                        <th class="px-4 py-3 text-left font-medium text-gray-600">Passageiro</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Telefone</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Viagem</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Envio</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Nota</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Motivo</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600">Respondido em</th>
-                        @if(Auth::user()->role === 'admin')
-                        <th class="px-4 py-3 text-center font-medium text-gray-600">Acoes</th>
-                        @endif
+                        <th class="px-4 py-3 text-center font-medium text-gray-600">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -226,10 +223,6 @@
                             <input type="checkbox" class="row-checkbox rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" value="{{ $review->id }}" onchange="updateBulkBar()">
                         </td>
                         @endif
-                        <td class="px-4 py-3">
-                            <div class="font-medium text-gray-800">{{ $review->user?->name ?: 'Sem nome' }}</div>
-                            <div class="text-xs text-gray-400">#{{ $review->user_id ?? '-' }} | Lote {{ $review->batch_date?->format('d/m') }}</div>
-                        </td>
                         <td class="px-4 py-3 font-mono text-gray-700 text-xs">{{ $review->phone ?: '-' }}</td>
                         <td class="px-4 py-3 text-gray-600 text-xs">{{ $review->registration_at?->format('d/m/Y H:i') ?: '-' }}</td>
                         <td class="px-4 py-3">
@@ -248,29 +241,35 @@
                                 };
                             @endphp
                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $sendBadge }}">{{ $sendLabel }}</span>
-                            @if($review->whatsapp_error_message)
-                            <div class="mt-1 text-xs text-red-500 max-w-[150px] truncate" title="{{ $review->whatsapp_error_message }}">{{ $review->whatsapp_error_message }}</div>
-                            @endif
                         </td>
                         <td class="px-4 py-3">
                             @if($review->rating)
-                            <div class="text-amber-500 text-sm leading-none">{{ str_repeat('★', $review->rating) }}<span class="text-gray-300">{{ str_repeat('☆', 5 - $review->rating) }}</span></div>
+                            <span class="inline-flex items-center gap-1 text-sm font-bold {{ $review->rating >= 4 ? 'text-green' : ($review->rating >= 3 ? 'text-gold' : 'text-red') }}">
+                                {{ $review->rating }}<span class="text-amber-400">★</span>
+                            </span>
                             @else
                             <span class="text-gray-300">-</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-gray-600 text-xs max-w-[200px] truncate" title="{{ $review->reason }}">
-                            {{ $review->reason ?: '-' }}
+                        <td class="px-4 py-3 text-gray-600 text-xs max-w-[250px]">
+                            <div style="white-space:pre-line;word-break:break-word">{{ $review->reason ?: '-' }}</div>
                         </td>
                         <td class="px-4 py-3 text-gray-600 text-xs">{{ $review->submitted_at?->format('d/m/Y H:i') ?: '-' }}</td>
-                        @if(Auth::user()->role === 'admin')
                         <td class="px-4 py-3 text-center">
                             <div class="flex items-center justify-center gap-1">
-                                <button type="button" onclick="openEditModal({{ $review->id }}, '{{ $review->submitted_at?->format('Y-m-d\TH:i') }}', {{ $review->rating ?? 'null' }}, '{{ addslashes($review->reason ?? '') }}')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded text-xs font-medium transition-colors">Editar</button>
-                                <button type="button" onclick="openDeleteModal({{ $review->id }}, '{{ addslashes($review->user?->name ?: 'Sem nome') }}')" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-medium transition-colors">Excluir</button>
+                                <button type="button" onclick="openViewModal({{ json_encode(['id'=>$review->id,'phone'=>$review->phone,'name'=>$review->user?->name,'user_id'=>$review->user_id,'batch_date'=>$review->batch_date?->format('d/m/Y'),'registration_at'=>$review->registration_at?->format('d/m/Y H:i'),'whatsapp_status'=>$sendLabel,'rating'=>$review->rating,'reason'=>$review->reason,'submitted_at'=>$review->submitted_at?->format('d/m/Y H:i'),'token'=>$review->token]) }})" class="p-1.5 text-blue hover:bg-blue-pale rounded-lg transition-colors" title="Visualizar">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </button>
+                                @if(Auth::user()->role === 'admin')
+                                <button type="button" onclick="openEditModal({{ $review->id }}, '{{ $review->submitted_at?->format('Y-m-d\TH:i') }}', {{ $review->rating ?? 'null' }}, '{{ addslashes($review->reason ?? '') }}')" class="p-1.5 text-gold hover:bg-gold-pale rounded-lg transition-colors" title="Editar">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
+                                <button type="button" onclick="openDeleteModal({{ $review->id }}, '{{ addslashes($review->user?->name ?: 'Sem nome') }}')" class="p-1.5 text-red hover:bg-red-pale rounded-lg transition-colors" title="Excluir">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                                @endif
                             </div>
                         </td>
-                        @endif
                     </tr>
                     @endforeach
                 </tbody>
@@ -287,6 +286,68 @@
         @endif
     </div>
 </div>
+
+{{-- Modal de visualização (todos os níveis) --}}
+<div id="viewModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-modal w-full max-w-md mx-4 overflow-hidden">
+        <div class="bg-gradient-to-r from-green-dark via-green to-green-light px-5 py-4 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">Detalhes da Avaliação</h3>
+            <button type="button" onclick="modal('viewModal',false)" class="text-white/70 hover:text-white text-xl">&times;</button>
+        </div>
+        <div class="p-5 space-y-3" id="viewModalContent"></div>
+    </div>
+</div>
+
+<script>
+function openViewModal(data) {
+    const ratingStars = data.rating ? '★'.repeat(data.rating) + '☆'.repeat(5 - data.rating) : 'Sem nota';
+    const ratingColor = data.rating >= 4 ? 'text-green' : (data.rating >= 3 ? 'text-gold' : 'text-red');
+    const link = data.token ? '{{ url("avaliacao") }}/' + data.token : '#';
+
+    document.getElementById('viewModalContent').innerHTML = `
+        <div class="flex items-center gap-3 pb-3 border-b border-border">
+            <div class="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                <span class="text-sm font-bold text-muted">${(data.name || '?').substring(0,2).toUpperCase()}</span>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-ink">${data.name || 'Passageiro sem nome'}</p>
+                <p class="text-[10px] text-muted">ID #${data.user_id || '-'} · Telefone: ${data.phone || '-'}</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-surface rounded-xl p-3">
+                <p class="text-[10px] text-muted font-bold uppercase tracking-wider">Lote</p>
+                <p class="text-sm font-semibold text-ink">${data.batch_date || '-'}</p>
+            </div>
+            <div class="bg-surface rounded-xl p-3">
+                <p class="text-[10px] text-muted font-bold uppercase tracking-wider">Viagem</p>
+                <p class="text-sm font-semibold text-ink">${data.registration_at || '-'}</p>
+            </div>
+            <div class="bg-surface rounded-xl p-3">
+                <p class="text-[10px] text-muted font-bold uppercase tracking-wider">Envio</p>
+                <p class="text-sm font-semibold text-ink">${data.whatsapp_status || '-'}</p>
+            </div>
+            <div class="bg-surface rounded-xl p-3">
+                <p class="text-[10px] text-muted font-bold uppercase tracking-wider">Respondido</p>
+                <p class="text-sm font-semibold text-ink">${data.submitted_at || 'Não respondeu'}</p>
+            </div>
+        </div>
+        ${data.rating ? `
+        <div class="bg-surface rounded-xl p-3 text-center">
+            <p class="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Nota</p>
+            <p class="text-2xl ${ratingColor}">${ratingStars}</p>
+            <p class="text-lg font-bold ${ratingColor}">${data.rating}/5</p>
+        </div>` : ''}
+        ${data.reason ? `
+        <div class="bg-surface rounded-xl p-3">
+            <p class="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Motivo</p>
+            <p class="text-sm text-ink" style="white-space:pre-line;word-break:break-word">${data.reason}</p>
+        </div>` : ''}
+        <a href="${link}" target="_blank" class="block text-center text-xs text-blue hover:underline">Abrir link da avaliação →</a>
+    `;
+    modal('viewModal', true);
+}
+</script>
 
 @if(Auth::user()->role === 'admin')
 {{-- Modal de edicao --}}
