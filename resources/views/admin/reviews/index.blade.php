@@ -478,7 +478,7 @@ function updateBulkBar() {
 function toggleSelectAll(el) { document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = el.checked); updateBulkBar(); }
 function clearSelection() { document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false); document.getElementById('selectAll').checked = false; updateBulkBar(); }
 
-function modal(id, show) { const m = document.getElementById(id); if(show) { m.classList.remove('hidden'); m.classList.add('flex'); window.scrollTo({top:0,behavior:'smooth'}); document.body.style.overflow='hidden'; } else { m.classList.add('hidden'); m.classList.remove('flex'); document.body.style.overflow=''; } }
+function modal(id, show) { const m = document.getElementById(id); if(show) { document.body.appendChild(m); m.classList.remove('hidden'); m.classList.add('flex'); document.body.style.overflow='hidden'; } else { m.classList.add('hidden'); m.classList.remove('flex'); document.body.style.overflow=''; } }
 function openEditModal(id, s, r, reason) { document.getElementById('editForm').action = '{{ url("admin/avaliacoes") }}/' + id + window.location.search; document.getElementById('editSubmittedAt').value = s||''; document.getElementById('editRating').value = r||''; document.getElementById('editReason').value = reason||''; modal('editModal', true); }
 function closeEditModal() { modal('editModal', false); }
 function openDeleteModal(id, name) { document.getElementById('deleteForm').action = '{{ url("admin/avaliacoes") }}/' + id; document.getElementById('deleteReviewName').textContent = name; modal('deleteModal', true); }
