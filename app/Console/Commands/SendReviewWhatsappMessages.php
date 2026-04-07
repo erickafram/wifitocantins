@@ -14,9 +14,11 @@ class SendReviewWhatsappMessages extends Command
 {
     protected $signature = 'reviews:send-whatsapp
                             {--date= : Data de referencia do lote no formato YYYY-MM-DD}
-                            {--force : Forcar envio mesmo se o toggle estiver desabilitado}';
+                            {--force : Forcar envio mesmo se o toggle estiver desabilitado}
+                            {--batch=8 : Quantidade de mensagens por lote}
+                            {--pause=30 : Pausa em minutos entre lotes}';
 
-    protected $description = 'Envia links de avaliacao via WhatsApp e Email para passageiros do lote 18:30-06:00';
+    protected $description = 'Envia links de avaliacao via WhatsApp e Email para passageiros (envio pausado para evitar ban)';
 
     public function handle(ServiceReviewWhatsappService $reviewWhatsappService): int
     {
@@ -77,10 +79,16 @@ class SendReviewWhatsappMessages extends Command
         $failed = 0;
         $skipped = 0;
         $emailSent = 0;
-        $sentPhones = []; // Controle extra de telefones já enviados
+        $sentPhones = [];
+
+        $batchSize = (int) $this->option('batch');    // 8 por padrão
+        $pauseMinutes = (int) $this->option('pause'); // 30 min entre lotes
+        $messageCount = 0;
+
+        $this->info("Estrategia anti-ban: {$batchSize} msgs por lote, pausa de {$pauseMinutes}min entre lotes.");
 
         foreach ($users as $user) {
-            // Proteção extra contra duplicatas
+            // Proteção contra duplicatas
             $cleanPhone = preg_replace('/\D/', '', $user->phone);
             if (in_array($cleanPhone, $sentPhones)) {
                 $skipped++;
@@ -102,13 +110,21 @@ class SendReviewWhatsappMessages extends Command
                     $sent++;
                     $whatsappOk = true;
                     $sentPhones[] = $cleanPhone;
-                    $this->line('  ✓ WhatsApp enviado para ' . ($review->phone ?: $user->phone));
+                    $messageCount++;
+                    $this->line("  ✓ WhatsApp enviado para " . ($review->phone ?: $user->phone) . " [{$messageCount}]");
                 } else {
                     $failed++;
                     $this->error('  ✗ WhatsApp falhou para ' . ($review->phone ?: $user->phone));
                 }
-                // Delay longo entre WhatsApp para evitar ban (40-60s aleatório)
-                sleep(rand(40, 60));
+                // Delay entre mensagens individuais (15-25s, parece humano)
+                sleep(rand(15, 25));
+
+                // Pausa longa entre lotes para evitar ban
+                if ($messageCount > 0 && $messageCount % $batchSize === 0) {
+                    $this->warn("  ⏸️  Pausa de {$pauseMinutes} minutos apos {$messageCount} mensagens...");
+                    sleep($pauseMinutes * 60);
+                    $this->info("  ▶️  Retomando envio...");
+                }
             } elseif ($review->whatsapp_status === 'sent') {
                 $skipped++;
             }
