@@ -288,7 +288,7 @@
 </div>
 
 {{-- Modal de visualização (todos os níveis) --}}
-<div id="viewModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+<div id="viewModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40 backdrop-blur-sm overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-modal w-full max-w-md mx-4 overflow-hidden">
         <div class="bg-gradient-to-r from-green-dark via-green to-green-light px-5 py-4 flex items-center justify-between">
             <h3 class="text-sm font-bold text-white">Detalhes da Avaliação</h3>
@@ -351,7 +351,7 @@ function openViewModal(data) {
 
 @if(Auth::user()->role === 'admin')
 {{-- Modal de edicao --}}
-<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+<div id="editModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Editar avaliacao</h3>
@@ -388,7 +388,7 @@ function openViewModal(data) {
 </div>
 
 {{-- Modal de exclusao --}}
-<div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+<div id="deleteModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Excluir avaliacao</h3>
@@ -409,7 +409,7 @@ function openViewModal(data) {
 </div>
 
 {{-- Modal edicao em lote --}}
-<div id="bulkEditModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+<div id="bulkEditModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Editar em lote</h3>
@@ -446,7 +446,7 @@ function openViewModal(data) {
 </div>
 
 {{-- Modal exclusao em lote --}}
-<div id="bulkDeleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+<div id="bulkDeleteModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Excluir em lote</h3>
