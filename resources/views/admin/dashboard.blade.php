@@ -67,20 +67,24 @@
             <div class="flex items-center justify-between">
                 <div class="w-11 h-11 bg-green-pale rounded-xl flex items-center justify-center">
                     <svg class="w-5 h-5 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
                     </svg>
                 </div>
                 <div class="text-right">
-                    <p class="text-2xl font-bold text-ink">{{ $stats['connected_users'] }}</p>
-                    <p class="text-[11px] text-muted">Conectados agora</p>
+                    @php
+                        $busOnline = \App\Models\Bus::where('last_sync_at', '>=', now()->subMinutes(5))->count();
+                        $busTotal = \App\Models\Bus::count();
+                    @endphp
+                    <p class="text-2xl font-bold text-ink">{{ $busOnline }}/{{ $busTotal }}</p>
+                    <p class="text-[11px] text-muted">Onibus online</p>
                 </div>
             </div>
             <div class="mt-4 flex items-center justify-between">
                 <span class="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-green/10 text-green px-1.5 py-0.5 rounded">
-                    <span class="w-1.5 h-1.5 bg-green rounded-full animate-pulse"></span>Online
+                    <span class="w-1.5 h-1.5 bg-green rounded-full animate-pulse"></span>MikroTik
                 </span>
-                @if($stats['temp_bypass_active'] > 0)
-                    <span class="text-[11px] font-semibold text-gold">{{ $stats['temp_bypass_active'] }} bypass</span>
+                @if($busTotal - $busOnline > 0)
+                    <span class="text-[11px] font-semibold text-muted">{{ $busTotal - $busOnline }} offline</span>
                 @endif
             </div>
         </div>
@@ -188,193 +192,65 @@
         </div>
     </div>
 
-    <!-- Content Grid: Connected Users + Sidebar -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        
-        <!-- Usuários Online -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-card border border-border">
-            <div class="flex justify-between items-center border-b border-border px-4 py-3">
-                <div>
-                    <h3 class="text-sm font-bold text-ink">Usuários Conectados</h3>
-                    <p class="text-[11px] text-muted">{{ count($connected_users) }} online agora</p>
-                </div>
-                <a href="{{ route('admin.mikrotik.remote.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-pale text-blue font-semibold rounded-lg text-xs hover:bg-blue/10 transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
-                    Painel MikroTik
-                </a>
+    <!-- Onibus Cadastrados -->
+    <div class="bg-white rounded-xl shadow-card border border-border">
+        <div class="flex justify-between items-center border-b border-border px-4 py-3">
+            <div>
+                <h3 class="text-sm font-bold text-ink">Onibus Cadastrados</h3>
+                <p class="text-[11px] text-muted">
+                    @php
+                        $onlineCount = $buses->filter(fn($b) => $b->last_sync_at && $b->last_sync_at->diffInMinutes(now()) <= 5)->count();
+                        $offlineCount = $buses->count() - $onlineCount;
+                    @endphp
+                    <span class="text-green font-semibold">{{ $onlineCount }} online</span> · <span class="text-muted">{{ $offlineCount }} offline</span> · {{ $buses->count() }} total
+                </p>
             </div>
-            <div class="p-4">
-            @if(count($connected_users) > 0)
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead>
-                        <tr class="border-b border-border">
-                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5">Usuário</th>
-                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5">Status</th>
-                            <th class="text-left text-[10px] font-bold text-muted uppercase tracking-wider py-2.5">Expira</th>
-                            <th class="text-right text-[10px] font-bold text-muted uppercase tracking-wider py-2.5">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-border">
-                        @foreach($connected_users as $user)
-                        @php
-                            $statusColors = [
-                                'connected'   => 'bg-green/10 text-green',
-                                'active'      => 'bg-green/10 text-green',
-                                'temp_bypass' => 'bg-gold/10 text-gold',
-                            ];
-                            $statusLabels = [
-                                'connected'   => 'Conectado',
-                                'active'      => 'Ativo',
-                                'temp_bypass' => 'Bypass',
-                            ];
-                            $stColor  = $statusColors[$user->status] ?? 'bg-gray-100 text-muted';
-                            $stLabel  = $statusLabels[$user->status] ?? ucfirst($user->status);
-                            $expiresIn = $user->expires_at ? now()->diffInMinutes($user->expires_at, false) : 0;
-                            $urgent    = $expiresIn > 0 && $expiresIn < 30;
-                        @endphp
-                        <tr class="hover:bg-surface transition-colors">
-                            <td class="py-3">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 bg-gradient-to-br {{ $user->status === 'temp_bypass' ? 'from-gold to-gold/70' : 'from-green-dark to-green' }} rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <span class="text-white text-xs font-bold">{{ strtoupper(substr($user->name ?? $user->mac_address, 0, 2)) }}</span>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-ink">{{ $user->name ?? 'Dispositivo' }}</p>
-                                        <p class="text-[10px] text-muted font-mono">{{ $user->mac_address }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3">
-                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded {{ $stColor }}">{{ $stLabel }}</span>
-                            </td>
-                            <td class="py-3">
-                                @if($user->expires_at)
-                                    @if($expiresIn > 0)
-                                        <span class="text-xs font-semibold {{ $urgent ? 'text-red' : ($expiresIn >= 60 ? 'text-green' : 'text-gold') }}">
-                                            {{ $expiresIn >= 60 ? floor($expiresIn/60).'h '.($expiresIn%60).'m' : $expiresIn.'m' }}
-                                        </span>
-                                        <p class="text-[10px] text-muted">{{ $user->expires_at->format('H:i') }}</p>
-                                    @else
-                                        <span class="text-[10px] text-red font-semibold">Expirado</span>
-                                    @endif
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td>
-                            <td class="py-3 text-right">
-                                <button class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-pale text-red rounded-lg text-xs font-semibold hover:bg-red/10 transition-colors"
-                                    onclick="disconnectUser('{{ $user->mac_address }}')">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                    </svg>
-                                    Desconectar
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <a href="{{ route('admin.mikrotik.remote.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-pale text-blue font-semibold rounded-lg text-xs hover:bg-blue/10 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
+                Painel MikroTik
+            </a>
+        </div>
+        <div class="p-4">
+            @if($buses->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                @foreach($buses as $bus)
+                @php
+                    $isOnline = $bus->last_sync_at && $bus->last_sync_at->diffInMinutes(now()) <= 5;
+                    $syncAgo = $bus->last_sync_at ? $bus->last_sync_at->diffForHumans(short: true) : 'nunca';
+                @endphp
+                <div class="rounded-xl border {{ $isOnline ? 'border-green/30 bg-green/5' : 'border-border bg-white' }} p-4 hover:shadow-hover transition-all">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full {{ $isOnline ? 'bg-green animate-pulse' : 'bg-gray-300' }}"></span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider {{ $isOnline ? 'text-green' : 'text-muted' }}">{{ $isOnline ? 'Online' : 'Offline' }}</span>
+                        </div>
+                        <span class="text-[10px] text-muted font-mono">{{ $bus->mikrotik_serial }}</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="text-sm font-bold text-ink">{{ $bus->name ?: 'Sem nome' }}</p>
+                        @if($bus->plate || $bus->route_description)
+                        <div class="flex items-center gap-2 text-[11px] text-muted">
+                            @if($bus->plate)
+                            <span class="inline-flex items-center gap-1 bg-surface px-1.5 py-0.5 rounded font-mono font-semibold">{{ $bus->plate }}</span>
+                            @endif
+                            @if($bus->route_description)
+                            <span class="truncate">{{ $bus->route_description }}</span>
+                            @endif
+                        </div>
+                        @endif
+                        <p class="text-[10px] text-muted">Sync: {{ $syncAgo }} · IP: {{ $bus->last_public_ip ?: '-' }}</p>
+                    </div>
+                </div>
+                @endforeach
             </div>
             @else
             <div class="text-center py-10">
                 <div class="w-12 h-12 bg-surface rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg class="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
-                    </svg>
+                    <svg class="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
                 </div>
-                <p class="text-muted text-sm">Nenhum usuário conectado no momento</p>
+                <p class="text-muted text-sm">Nenhum onibus cadastrado</p>
             </div>
             @endif
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="space-y-4">
-
-            <!-- Últimos Pagamentos -->
-            <div class="bg-white rounded-xl shadow-card border border-border">
-                <div class="flex items-center justify-between border-b border-border px-4 py-3">
-                    <h3 class="text-sm font-bold text-ink">Últimos Pagamentos</h3>
-                    <a href="{{ route('admin.reports') }}" class="text-[11px] font-semibold text-green hover:text-green-dark">Ver todos</a>
-                </div>
-                <div class="p-4">
-                @if(count($recent_payments) > 0)
-                    <div class="divide-y divide-border">
-                        @foreach($recent_payments as $payment)
-                        @php
-                            $pMap = [
-                                'completed' => ['bg' => 'bg-green/10',  'text' => 'text-green',  'icon' => '✅'],
-                                'pending'   => ['bg' => 'bg-gold/10',   'text' => 'text-gold',   'icon' => '⏳'],
-                                'failed'    => ['bg' => 'bg-red-pale',  'text' => 'text-red',    'icon' => '❌'],
-                                'expired'   => ['bg' => 'bg-surface',   'text' => 'text-muted',  'icon' => '⏰'],
-                            ];
-                            $p = $pMap[$payment->status] ?? ['bg' => 'bg-surface', 'text' => 'text-muted', 'icon' => '?'];
-                        @endphp
-                        <div class="flex items-center justify-between py-2.5">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <span class="text-sm flex-shrink-0">{{ $p['icon'] }}</span>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-medium text-ink truncate">{{ $payment->user->phone ?? $payment->user->name ?? 'N/A' }}</p>
-                                    <p class="text-[10px] text-muted">{{ $payment->created_at->format('d/m H:i') }}</p>
-                                </div>
-                            </div>
-                            <span class="text-xs font-bold {{ $p['text'] }} flex-shrink-0 ml-2">R$ {{ number_format($payment->amount, 2, ',', '.') }}</span>
-                        </div>
-                        @endforeach
-                    </div>
-                @else
-                    <p class="text-center text-muted text-xs py-4">Nenhum pagamento</p>
-                @endif
-                </div>
-            </div>
-
-            <!-- Bypass Activity -->
-            <div class="bg-white rounded-xl shadow-card border border-border">
-                <div class="flex items-center justify-between border-b border-border px-4 py-3">
-                    <h3 class="text-sm font-bold text-ink">Bypass Temporário</h3>
-                    <a href="{{ route('admin.mikrotik.remote.index') }}" class="text-[11px] font-semibold text-gold hover:text-gold/80">Ver logs</a>
-                </div>
-                <div class="grid grid-cols-3 gap-2 p-4">
-                    <div class="text-center p-2.5 bg-surface rounded-xl">
-                        <p class="text-lg font-bold text-ink">{{ $bypass_stats['total_hoje'] }}</p>
-                        <p class="text-[10px] text-muted">Total</p>
-                    </div>
-                    <div class="text-center p-2.5 bg-green-pale rounded-xl">
-                        <p class="text-lg font-bold text-green">{{ $bypass_stats['aprovados_hoje'] }}</p>
-                        <p class="text-[10px] text-muted">Aprovados</p>
-                    </div>
-                    <div class="text-center p-2.5 bg-red-pale rounded-xl">
-                        <p class="text-lg font-bold text-red">{{ $bypass_stats['negados_hoje'] }}</p>
-                        <p class="text-[10px] text-muted">Negados</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ações Rápidas -->
-            <div class="bg-white rounded-xl shadow-card border border-border">
-                <div class="border-b border-border px-4 py-3">
-                    <h3 class="text-sm font-bold text-ink">Ações Rápidas</h3>
-                </div>
-                <div class="p-4 space-y-2">
-                    <a href="{{ route('admin.mikrotik.remote.index') }}" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-blue-pale text-blue font-semibold rounded-lg text-xs hover:bg-blue/10 transition-colors">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
-                        Controle MikroTik
-                    </a>
-                    <a href="{{ route('admin.vouchers.index') }}" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-green-pale text-green font-semibold rounded-lg text-xs hover:bg-green/10 transition-colors">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                        Gerenciar Vouchers
-                    </a>
-                    <a href="{{ route('admin.reports') }}" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-gold-pale text-gold font-semibold rounded-lg text-xs hover:bg-gold/10 transition-colors">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        Ver Relatórios
-                    </a>
-                    <a href="{{ route('admin.users') }}" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-surface border border-border text-ink2 font-semibold rounded-lg text-xs hover:bg-border transition-colors">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                        Gerenciar Usuários
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </div>

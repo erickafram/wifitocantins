@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Ntfy.sh - Push Notifications Gratuitas
+    |--------------------------------------------------------------------------
+    | Serviço gratuito de push notifications para celular.
+    | Instale o app "ntfy" no celular e inscreva-se no tópico configurado.
+    | https://ntfy.sh
+    */
+    'ntfy' => [
+        'enabled' => env('NTFY_ENABLED', false),
+        'server_url' => env('NTFY_SERVER_URL', 'https://ntfy.sh'),
+        'topic' => env('NTFY_TOPIC', ''),
+    ],
+
 ];

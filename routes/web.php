@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\ServiceReviewController as AdminServiceReviewCont
 use App\Http\Controllers\ServiceReviewController;
 use App\Http\Controllers\Admin\WhatsappController;
 use App\Http\Controllers\DriverVoucherController;
+use App\Http\Controllers\DriverRequestController;
+use App\Http\Controllers\Admin\DriverRequestController as AdminDriverRequestController;
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
@@ -56,6 +58,11 @@ Route::get('/reativar', function () {
 
 Route::get('/avaliacao/{token}', [ServiceReviewController::class, 'show'])->name('reviews.show');
 Route::post('/avaliacao/{token}', [ServiceReviewController::class, 'store'])->name('reviews.store');
+
+// Cadastro publico de motoristas (nao precisa estar na rede)
+Route::get('/cadastro-motorista', [DriverRequestController::class, 'create'])->name('driver-request.create');
+Route::post('/cadastro-motorista', [DriverRequestController::class, 'store'])->name('driver-request.store');
+Route::get('/cadastro-motorista/enviado', [DriverRequestController::class, 'success'])->name('driver-request.success');
 
 // Rotas de Autenticação
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -148,6 +155,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
             Route::post('/send-pending', [WhatsappController::class, 'sendToPendingPayments'])->name('send-pending');
             Route::post('/resend/{id}', [WhatsappController::class, 'resendMessage'])->name('resend');
         });
+
+        // Pedidos de motoristas
+        Route::get('/pedidos-motoristas', [AdminDriverRequestController::class, 'index'])->name('driver-requests.index');
+        Route::patch('/pedidos-motoristas/{driverRequest}/aprovar', [AdminDriverRequestController::class, 'approve'])->name('driver-requests.approve');
+        Route::patch('/pedidos-motoristas/{driverRequest}/rejeitar', [AdminDriverRequestController::class, 'reject'])->name('driver-requests.reject');
 
         // Gerenciamento de Usuários
         Route::get('/users', [AdminController::class, 'users'])->name('users');

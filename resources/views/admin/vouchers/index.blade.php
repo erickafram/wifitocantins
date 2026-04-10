@@ -19,10 +19,16 @@
             <h1 class="text-xl font-bold text-white">Vouchers</h1>
             <p class="text-xs text-white/70 mt-0.5">Gerencie os vouchers de acesso para motoristas</p>
         </div>
-        <a href="{{ route('admin.vouchers.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-green font-bold text-xs rounded-lg hover:bg-green-pale transition-colors shadow-card">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            Novo Voucher
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('admin.driver-requests.index') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 border border-white/20 text-white font-semibold text-xs rounded-lg hover:bg-white/25 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Pedidos Motoristas
+            </a>
+            <a href="{{ route('admin.vouchers.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-green font-bold text-xs rounded-lg hover:bg-green-pale transition-colors shadow-card">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                Novo Voucher
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

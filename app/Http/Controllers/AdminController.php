@@ -22,21 +22,17 @@ class AdminController extends Controller
     public function dashboard()
     {
         $stats = $this->getDashboardStats();
-        $connected_users = $this->getConnectedUsers();
         $revenue_chart = $this->getRevenueChartData();
         $connections_chart = $this->getConnectionsChartData();
         $system_status = $this->getSystemStatus();
-        $recent_payments = $this->getRecentPayments();
-        $bypass_stats = $this->getBypassStats();
+        $buses = \App\Models\Bus::orderByDesc('last_sync_at')->get();
 
         return view('admin.dashboard', compact(
             'stats',
-            'connected_users', 
             'revenue_chart',
             'connections_chart',
             'system_status',
-            'recent_payments',
-            'bypass_stats'
+            'buses'
         ));
     }
 
