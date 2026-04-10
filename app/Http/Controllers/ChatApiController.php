@@ -61,6 +61,16 @@ class ChatApiController extends Controller
                 'last_message_at' => now(),
                 'unread_count' => $conversation->unread_count + 1,
             ]);
+
+            // Notificar via ntfy
+            try {
+                app(\App\Services\NtfyService::class)->send(
+                    "💬 Nova mensagem no chat",
+                    "De: {$request->name} ({$request->phone})\n\n{$request->message}",
+                    'high',
+                    ['speech_balloon']
+                );
+            } catch (\Exception $e) {}
         } else {
             $message = $existingMessage;
         }
@@ -109,6 +119,17 @@ class ChatApiController extends Controller
             'last_message_at' => now(),
             'unread_count' => $conversation->unread_count + 1,
         ]);
+
+        // Notificar via ntfy
+        try {
+            $visitorName = $conversation->visitor_name ?: 'Visitante';
+            app(\App\Services\NtfyService::class)->send(
+                "💬 {$visitorName} enviou mensagem",
+                $request->message,
+                'high',
+                ['speech_balloon']
+            );
+        } catch (\Exception $e) {}
 
         return response()->json([
             'success' => true,
