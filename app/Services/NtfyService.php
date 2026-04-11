@@ -67,7 +67,7 @@ class NtfyService
     {
         $busInfo = $busName ? " | Bus: {$busName}" : '';
         $title = "Pagamento Confirmado!";
-        $message = "{$userName}\nR\$ {$amount} - {$method}{$busInfo}\n" . now()->format('d/m/Y H:i:s');
+        $message = "{$userName}\nR\$ {$amount} - {$method}{$busInfo}\n" . now()->format('d-m-Y H:i:s');
 
         return $this->send($title, $message, 'high', ['white_check_mark', 'moneybag']);
     }
