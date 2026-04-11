@@ -65,12 +65,10 @@ class NtfyService
      */
     public function notifyPaymentCompleted(string $userName, string $amount, string $method, ?string $busName = null): bool
     {
-        $emoji = $method === 'pix' ? '💠' : '💳';
-        $busInfo = $busName ? " | Ônibus: {$busName}" : '';
+        $busInfo = $busName ? " | Bus: {$busName}" : '';
+        $title = "Pagamento Confirmado!";
+        $message = "{$userName}\nR\$ {$amount} - {$method}{$busInfo}\n" . now()->format('d/m/Y H:i:s');
 
-        $title = "{$emoji} Pagamento Confirmado!";
-        $message = "👤 {$userName}\n💰 R$ {$amount}\n📱 {$method}{$busInfo}\n🕐 " . now()->format('d/m/Y H:i:s');
-
-        return $this->send($title, $message, 'high', ['money_with_wings', 'white_check_mark']);
+        return $this->send($title, $message, 'high', ['white_check_mark', 'moneybag']);
     }
 }

@@ -543,7 +543,7 @@ class PaymentController extends Controller
                 ]);
             }
 
-            // 🔒 ANTI-ABUSO: Máximo 2 bypasses por hora
+            //  ANTI-ABUSO: Máximo 2 bypasses por hora
             // Verificar por MAC (mesmo dispositivo)
             $bypassesByMac = \Illuminate\Support\Facades\Cache::get('bypass_mac_' . strtoupper($user->mac_address), 0);
 

@@ -65,10 +65,10 @@ class ChatApiController extends Controller
             // Notificar via ntfy
             try {
                 app(\App\Services\NtfyService::class)->send(
-                    "💬 Nova mensagem no chat",
-                    "{$request->name}\n📞 {$request->phone}\n\n{$request->message}",
+                    "Nova mensagem no chat",
+                    "{$request->name}\n{$request->phone}\n\n{$request->message}",
                     'high',
-                    ['speech_balloon']
+                    ['speech_balloon', 'incoming_envelope']
                 );
             } catch (\Exception $e) {}
         } else {
@@ -125,8 +125,8 @@ class ChatApiController extends Controller
             $visitorName = $conversation->visitor_name ?: 'Visitante';
             $visitorPhone = $conversation->visitor_phone ?: '';
             app(\App\Services\NtfyService::class)->send(
-                "💬 {$visitorName}",
-                "📞 {$visitorPhone}\n\n{$request->message}",
+                "Mensagem de {$visitorName}",
+                "{$visitorPhone}\n\n{$request->message}",
                 'high',
                 ['speech_balloon']
             );
