@@ -248,6 +248,18 @@ class RegistrationController extends Controller
                     'phone' => $cleanPhone,
                 ]);
 
+                if ($hasActiveAccess) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Você já tem acesso ativo! Reconectando...',
+                        'user_id' => $existingUserByMac->id,
+                        'existing_user' => true,
+                        'already_active' => true,
+                        'expires_at' => $existingUserByMac->expires_at,
+                        'redirect_to_payment' => false,
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Dispositivo reconhecido!',
@@ -275,13 +287,44 @@ class RegistrationController extends Controller
                 ];
 
                 if (HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
+                    // Limpar MAC de outros registros que possam ter este mesmo MAC (constraint unique)
+                    User::where('mac_address', $macAddress)
+                        ->where('id', '!=', $user->id)
+                        ->update(['mac_address' => null]);
+                    
+                    // 🗑️ Marcar MAC antigo para remoção no Mikrotik
+                    HotspotIdentity::markOrphanedMac($user->mac_address);
+                    
                     $updateData['mac_address'] = $macAddress;
+                    
+                    \Log::info('🔄 MAC ATUALIZADO para usuário existente (user_id)', [
+                        'user_id' => $user->id,
+                        'old_mac' => $user->mac_address,
+                        'new_mac' => $macAddress,
+                    ]);
                 }
                 if ($ipAddress && $user->ip_address !== $ipAddress) {
                     $updateData['ip_address'] = $ipAddress;
                 }
 
                 $user->update($updateData);
+
+                // 🔧 FIX: Verificar se o usuário já tem sessão ativa
+                $hasActiveAccess = in_array($user->status, ['connected', 'active'])
+                    && $user->expires_at
+                    && $user->expires_at > now();
+
+                if ($hasActiveAccess) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Você já tem acesso ativo! Reconectando...',
+                        'user_id' => $user->id,
+                        'existing_user' => true,
+                        'already_active' => true,
+                        'expires_at' => $user->expires_at,
+                        'redirect_to_payment' => false,
+                    ]);
+                }
 
                 return response()->json([
                     'success' => true,
@@ -296,18 +339,60 @@ class RegistrationController extends Controller
             $existingUserByPhone = User::where('phone', $cleanPhone)->first();
 
             if ($existingUserByPhone) {
-                // Usuário já existe com este telefone - atualizar MAC/IP (seguro pois já verificamos MAC)
+                // Usuário já existe com este telefone - atualizar MAC/IP
                 $updateData = ['phone' => $cleanPhone];
                 $updateData['registered_at'] = now();
                 
-                if (HotspotIdentity::shouldReplaceMac($existingUserByPhone->mac_address, $macAddress)) {
+                // 🔧 FIX: Sempre atualizar o MAC para o MAC atual do dispositivo
+                // Usuários que voltam podem ter MAC diferente (MAC aleatório ou outro dispositivo)
+                // O MAC antigo no banco não serve mais - precisa ser o MAC atual para liberar no Mikrotik
+                if ($macAddress && HotspotIdentity::shouldReplaceMac($existingUserByPhone->mac_address, $macAddress)) {
+                    // Limpar MAC de outros registros que possam ter este mesmo MAC (constraint unique)
+                    User::where('mac_address', $macAddress)
+                        ->where('id', '!=', $existingUserByPhone->id)
+                        ->update(['mac_address' => null]);
+                    
+                    // 🗑️ Marcar MAC antigo para remoção no Mikrotik
+                    HotspotIdentity::markOrphanedMac($existingUserByPhone->mac_address);
+                    
                     $updateData['mac_address'] = $macAddress;
+                    
+                    \Log::info('🔄 MAC ATUALIZADO para usuário que voltou (encontrado por telefone)', [
+                        'user_id' => $existingUserByPhone->id,
+                        'old_mac' => $existingUserByPhone->mac_address,
+                        'new_mac' => $macAddress,
+                        'phone' => $cleanPhone,
+                    ]);
                 }
                 if ($ipAddress) {
                     $updateData['ip_address'] = $ipAddress;
                 }
                 
+                // 🔧 FIX: Verificar se o usuário já tem sessão ativa (pagou e ainda tem tempo)
+                // Se sim, não precisa pagar de novo - apenas atualizar MAC e liberar
+                $hasActiveAccess = in_array($existingUserByPhone->status, ['connected', 'active'])
+                    && $existingUserByPhone->expires_at
+                    && $existingUserByPhone->expires_at > now();
+
                 $existingUserByPhone->update($updateData);
+                
+                if ($hasActiveAccess) {
+                    \Log::info('✅ Usuário com sessão ativa reconectou com MAC diferente', [
+                        'user_id' => $existingUserByPhone->id,
+                        'new_mac' => $macAddress,
+                        'expires_at' => $existingUserByPhone->expires_at,
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Você já tem acesso ativo! Reconectando...',
+                        'user_id' => $existingUserByPhone->id,
+                        'existing_user' => true,
+                        'already_active' => true,
+                        'expires_at' => $existingUserByPhone->expires_at,
+                        'redirect_to_payment' => false,
+                    ]);
+                }
                 
                 return response()->json([
                     'success' => true,
@@ -367,12 +452,19 @@ class RegistrationController extends Controller
             $user = User::where('mac_address', $mac)->first();
             
             if ($user) {
+                // 🔧 FIX: Informar se o usuário já tem sessão ativa
+                $hasActiveAccess = in_array($user->status, ['connected', 'active'])
+                    && $user->expires_at
+                    && $user->expires_at > now();
+
                 return response()->json([
                     'exists' => true,
                     'user_id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $user->phone,
+                    'already_active' => $hasActiveAccess,
+                    'expires_at' => $hasActiveAccess ? $user->expires_at : null,
                 ]);
             }
             

@@ -559,6 +559,21 @@ class WiFiPortal {
             if (result.success) {
                 this.currentUserId = result.user_id;
                 
+                // 🔧 FIX: Se o usuário já tem sessão ativa (pagou e ainda tem tempo),
+                // não pedir pagamento de novo - apenas liberar o novo MAC no Mikrotik
+                if (result.already_active) {
+                    console.log('✅ Usuário já tem acesso ativo! Liberando novo MAC...');
+                    this.hideLoading();
+                    this.showSuccessMessage('✅ Você já tem acesso ativo! Reconectando...');
+                    await this.allowDevice(this.deviceMac);
+                    
+                    // Aguardar sync do Mikrotik e verificar conexão
+                    setTimeout(() => {
+                        this.checkConnectionStatus();
+                    }, 5000);
+                    return;
+                }
+                
                 // 🚀 GERAR QR CODE IMEDIATAMENTE (já está com loading)
                 console.log('✅ Cadastro OK, gerando QR Code PIX...');
                 await this.processPixPaymentFast();
@@ -780,8 +795,20 @@ class WiFiPortal {
             this.hideLoading();
 
             if (data.exists && data.user_id) {
-                // Usuário já existe - ir direto para QR Code PIX
+                // Usuário já existe
                 this.currentUserId = data.user_id;
+                
+                // 🔧 FIX: Se já tem sessão ativa, não pedir pagamento
+                if (data.already_active) {
+                    console.log('✅ Usuário já tem acesso ativo! MAC já está liberado.');
+                    this.showSuccessMessage('✅ Você já tem acesso ativo! Conectando...');
+                    await this.allowDevice(this.deviceMac);
+                    setTimeout(() => {
+                        this.checkConnectionStatus();
+                    }, 5000);
+                    return;
+                }
+                
                 console.log('✅ Usuário já cadastrado, gerando QR Code PIX direto...');
                 this.processPixPayment();
             } else {

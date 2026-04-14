@@ -76,6 +76,20 @@ class PaymentController extends Controller
                     // Atualizar MAC e IP se necessário
                     $userUpdates = [];
                     if ($macAddress && HotspotIdentity::shouldReplaceMac($user->mac_address, $macAddress)) {
+                        // Limpar MAC de outros registros que possam ter este mesmo MAC (constraint unique)
+                        User::where('mac_address', $macAddress)
+                            ->where('id', '!=', $user->id)
+                            ->update(['mac_address' => null]);
+                        
+                        // 🗑️ Marcar MAC antigo para remoção no Mikrotik
+                        HotspotIdentity::markOrphanedMac($user->mac_address);
+                        
+                        Log::info('🔄 MAC ATUALIZADO no pagamento (user_id)', [
+                            'user_id' => $user->id,
+                            'old_mac' => $user->mac_address,
+                            'new_mac' => $macAddress,
+                        ]);
+                        
                         $userUpdates['mac_address'] = $macAddress;
                     }
                     if ($clientIp && $user->ip_address !== $clientIp) {
@@ -1176,6 +1190,10 @@ class PaymentController extends Controller
         $startTime = microtime(true);
 
         try {
+            // 🔧 FIX: Recarregar o model do usuário para garantir que temos o MAC mais recente
+            // Entre a criação do pagamento e a confirmação via webhook, o MAC pode ter sido atualizado
+            $payment->user->refresh();
+
             Log::info('🔓 Iniciando ativação de acesso do usuário', [
                 'payment_id' => $payment->id,
                 'user_id' => $payment->user_id,

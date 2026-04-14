@@ -172,4 +172,28 @@ class HotspotIdentity
 
         return $normalizedMac;
     }
+
+    /**
+     * Marca um MAC antigo como órfão para ser removido do Mikrotik no próximo sync.
+     * Usado quando o MAC de um usuário é substituído por um novo (MAC aleatório mudou).
+     */
+    public static function markOrphanedMac(?string $oldMac): void
+    {
+        if (! $oldMac || self::isMockMac($oldMac)) {
+            return;
+        }
+
+        $orphanedMacs = cache()->get('orphaned_macs_to_remove', []);
+        $normalized = strtoupper(trim($oldMac));
+        
+        if (! in_array($normalized, $orphanedMacs)) {
+            $orphanedMacs[] = $normalized;
+            // Manter no cache por 1 hora (tempo suficiente para vários syncs)
+            cache()->put('orphaned_macs_to_remove', $orphanedMacs, now()->addHour());
+            
+            \Illuminate\Support\Facades\Log::info('🗑️ MAC antigo marcado para remoção do Mikrotik', [
+                'orphaned_mac' => $normalized,
+            ]);
+        }
+    }
 }

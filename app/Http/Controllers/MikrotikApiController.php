@@ -148,6 +148,23 @@ class MikrotikApiController extends Controller
             foreach ($expiredMacs as $mac) {
                 $output .= "R:$mac\n";
             }
+            
+            // 🔧 FIX: Incluir MACs antigos que foram substituídos (órfãos)
+            // Quando um usuário reconecta com MAC novo, o MAC antigo fica liberado no Mikrotik
+            // sem ninguém mandando remover. Usamos cache para rastrear esses MACs temporariamente.
+            $orphanedMacs = cache()->get('orphaned_macs_to_remove', []);
+            if (!empty($orphanedMacs)) {
+                foreach ($orphanedMacs as $orphanMac) {
+                    $orphanMac = strtoupper(trim($orphanMac));
+                    // Só remover se não está na lista de ativos (segurança)
+                    if ($orphanMac && !in_array($orphanMac, $activeMacs) && !in_array($orphanMac, $expiredMacs)) {
+                        $output .= "R:$orphanMac\n";
+                    }
+                }
+                // Limpar cache após enviar (o Mikrotik vai processar na próxima sync)
+                cache()->forget('orphaned_macs_to_remove');
+            }
+            
             $output .= "END";
 
             // 📊 Log para debug (reduzir spam: só logar a cada 2min ou quando houver mudança)
