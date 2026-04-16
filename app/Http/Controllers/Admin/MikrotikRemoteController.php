@@ -288,6 +288,20 @@ class MikrotikRemoteController extends Controller
 
             $logs = $query->limit(100)->get();
 
+            // Adicionar info de bloqueio a cada log
+            $logs->transform(function ($log) {
+                $log->is_blocked = false;
+                if ($log->mac_address) {
+                    $blockInfo = \Illuminate\Support\Facades\Cache::get('bypass_blocked_' . strtoupper($log->mac_address));
+                    if ($blockInfo) {
+                        $log->is_blocked = true;
+                        $log->blocked_by = $blockInfo['blocked_by'] ?? 'Admin';
+                        $log->blocked_at = $blockInfo['blocked_at'] ?? null;
+                    }
+                }
+                return $log;
+            });
+
             // Estatísticas
             $today = now()->startOfDay();
             $stats = [
@@ -348,6 +362,87 @@ class MikrotikRemoteController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Erro ao resetar bypass: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Bloquear MAC de usar bypass por 12 horas
+     * O usuário não poderá usar liberação temporária durante esse período
+     */
+    public function blockBypass(Request $request)
+    {
+        $request->validate([
+            'mac' => 'required|string',
+            'phone' => 'nullable|string',
+        ]);
+
+        try {
+            $mac = strtoupper(trim($request->input('mac')));
+            $phone = $request->input('phone');
+
+            // Bloquear MAC por 12 horas
+            $blockKey = 'bypass_blocked_' . $mac;
+            \Illuminate\Support\Facades\Cache::put($blockKey, [
+                'blocked_at' => now()->toISOString(),
+                'blocked_by' => auth()->user()->name ?? 'Admin',
+                'phone' => $phone,
+            ], now()->addHours(12));
+
+            // Também bloquear por telefone se disponível
+            if ($phone) {
+                $phoneBlockKey = 'bypass_blocked_phone_' . preg_replace('/[^\d]/', '', $phone);
+                \Illuminate\Support\Facades\Cache::put($phoneBlockKey, [
+                    'blocked_at' => now()->toISOString(),
+                    'blocked_by' => auth()->user()->name ?? 'Admin',
+                    'mac' => $mac,
+                ], now()->addHours(12));
+            }
+
+            Log::info("🚫 Admin: Bypass BLOQUEADO por 12h", [
+                'mac' => $mac,
+                'phone' => $phone,
+                'blocked_by' => auth()->user()->name ?? 'Admin',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "MAC {$mac} bloqueado de usar bypass por 12 horas.",
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao bloquear bypass: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Desbloquear MAC do bypass
+     */
+    public function unblockBypass(Request $request)
+    {
+        $request->validate([
+            'mac' => 'required|string',
+            'phone' => 'nullable|string',
+        ]);
+
+        try {
+            $mac = strtoupper(trim($request->input('mac')));
+            $phone = $request->input('phone');
+
+            \Illuminate\Support\Facades\Cache::forget('bypass_blocked_' . $mac);
+
+            if ($phone) {
+                \Illuminate\Support\Facades\Cache::forget('bypass_blocked_phone_' . preg_replace('/[^\d]/', '', $phone));
+            }
+
+            Log::info("✅ Admin: Bypass DESBLOQUEADO", ['mac' => $mac, 'phone' => $phone]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "MAC {$mac} desbloqueado. Pode usar bypass novamente.",
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao desbloquear bypass: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

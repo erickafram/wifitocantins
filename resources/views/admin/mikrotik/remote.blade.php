@@ -657,21 +657,38 @@ async function loadBypassLogs() {
                 ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">❌ Negado</span>'
                 : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">✅ Aprovado</span>';
 
-            return `<tr class="hover:bg-gray-50 user-row" data-search="${(log.phone || '').toLowerCase()} ${(log.mac_address || '').toLowerCase()} ${(log.ip_address || '').toLowerCase()}">
+            const blockedBadge = log.is_blocked
+                ? '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-red-600 text-white ml-1">🚫 BLOQUEADO</span>'
+                : '';
+
+            return `<tr class="hover:bg-gray-50 user-row ${log.is_blocked ? 'bg-red-50/50' : ''}" data-search="${(log.phone || '').toLowerCase()} ${(log.mac_address || '').toLowerCase()} ${(log.ip_address || '').toLowerCase()}">
                 <td class="px-4 py-3 text-xs text-gray-600">${date}</td>
                 <td class="px-4 py-3 text-sm">${log.phone || '-'}</td>
-                <td class="px-4 py-3 font-mono text-xs text-gray-600">${log.mac_address || '-'}</td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-600">${log.mac_address || '-'}${blockedBadge}</td>
                 <td class="px-4 py-3 text-xs text-gray-500">${log.ip_address || '-'}</td>
                 <td class="px-4 py-3 text-center"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${log.bypass_number > 2 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}">${log.bypass_number}</span></td>
                 <td class="px-4 py-3 text-center">${statusBadge}</td>
                 <td class="px-4 py-3 text-xs text-gray-500">${log.deny_reason || '-'}</td>
                 <td class="px-4 py-3 text-center">
+                    <div class="flex items-center justify-center gap-1">
                     ${log.was_denied && log.bypass_number > 2 ? `
                         <button onclick="resetBypass('${log.mac_address || ''}', '${log.phone || ''}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-300 rounded-lg text-xs font-medium hover:bg-amber-100 transition" title="Resetar contador de bypass">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             Resetar
                         </button>
-                    ` : '<span class="text-gray-300">-</span>'}
+                    ` : ''}
+                    ${log.mac_address ? (log.is_blocked ? `
+                        <button onclick="unblockBypass('${log.mac_address || ''}', '${log.phone || ''}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-green-50 text-green-700 border border-green-300 rounded-lg text-xs font-medium hover:bg-green-100 transition" title="Desbloquear bypass">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                            Desbloquear
+                        </button>
+                    ` : `
+                        <button onclick="blockBypass('${log.mac_address || ''}', '${log.phone || ''}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-700 border border-red-300 rounded-lg text-xs font-medium hover:bg-red-100 transition" title="Bloquear bypass por 12h">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                            Bloquear 12h
+                        </button>
+                    `) : ''}
+                    </div>
                 </td>
             </tr>`;
         }).join('');
@@ -706,6 +723,50 @@ async function resetBypass(mac, phone) {
             loadBypassLogs();
         } else {
             showToast(data.error || 'Erro ao resetar', 'error');
+        }
+    } catch (e) {
+        showToast('Erro de conexão', 'error');
+    }
+}
+
+async function blockBypass(mac, phone) {
+    if (!confirm(`🚫 Bloquear bypass por 12 HORAS para:\nMAC: ${mac || 'N/A'}\nTelefone: ${phone || 'N/A'}\n\nO usuário NÃO poderá usar liberação temporária durante esse período.`)) return;
+
+    try {
+        const res = await fetch('/admin/mikrotik/remote/block-bypass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ mac: mac || null, phone: phone || null })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+            loadBypassLogs();
+        } else {
+            showToast(data.error || 'Erro ao bloquear', 'error');
+        }
+    } catch (e) {
+        showToast('Erro de conexão', 'error');
+    }
+}
+
+async function unblockBypass(mac, phone) {
+    if (!confirm(`✅ Desbloquear bypass para:\nMAC: ${mac || 'N/A'}\n\nO usuário poderá usar liberação temporária novamente.`)) return;
+
+    try {
+        const res = await fetch('/admin/mikrotik/remote/unblock-bypass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ mac: mac || null, phone: phone || null })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+            loadBypassLogs();
+        } else {
+            showToast(data.error || 'Erro ao desbloquear', 'error');
         }
     } catch (e) {
         showToast('Erro de conexão', 'error');

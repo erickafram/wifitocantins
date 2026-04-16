@@ -557,6 +557,43 @@ class PaymentController extends Controller
                 ]);
             }
 
+            // 🚫 VERIFICAR BLOQUEIO ADMINISTRATIVO DE BYPASS
+            // Admin pode bloquear um MAC/telefone de usar bypass por 12 horas
+            $macBlocked = \Illuminate\Support\Facades\Cache::get('bypass_blocked_' . strtoupper($user->mac_address));
+            $phoneBlocked = null;
+            if ($user->phone) {
+                $phoneBlocked = \Illuminate\Support\Facades\Cache::get('bypass_blocked_phone_' . preg_replace('/[^\d]/', '', $user->phone));
+            }
+
+            if ($macBlocked || $phoneBlocked) {
+                $blockedInfo = $macBlocked ?: $phoneBlocked;
+
+                \App\Models\TempBypassLog::create([
+                    'user_id' => $user->id,
+                    'payment_id' => $payment->id,
+                    'mac_address' => $user->mac_address,
+                    'phone' => $user->phone,
+                    'ip_address' => $request->ip(),
+                    'bypass_number' => 0,
+                    'was_denied' => true,
+                    'deny_reason' => 'Bloqueado pelo administrador',
+                ]);
+
+                Log::warning('🚫 Bypass BLOQUEADO por admin', [
+                    'user_id' => $user->id,
+                    'mac_address' => $user->mac_address,
+                    'phone' => $user->phone,
+                    'blocked_by' => $blockedInfo['blocked_by'] ?? 'Admin',
+                    'blocked_at' => $blockedInfo['blocked_at'] ?? null,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Seu acesso temporário foi suspenso pelo administrador. Realize o pagamento para continuar navegando.',
+                    'blocked' => true,
+                ]);
+            }
+
             //  ANTI-ABUSO: Máximo 2 bypasses por hora
             // Verificar por MAC (mesmo dispositivo)
             $bypassesByMac = \Illuminate\Support\Facades\Cache::get('bypass_mac_' . strtoupper($user->mac_address), 0);
