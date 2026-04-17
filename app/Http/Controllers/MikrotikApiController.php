@@ -90,55 +90,67 @@ class MikrotikApiController extends Controller
             // Corrige casos onde o MAC no banco não corresponde ao MAC real no MikroTik
             $this->crossReferenceMacs();
 
-            // 🎯 Buscar MACs ativos - usuários que pagaram e ainda têm tempo
-            // Se mid fornecido: filtra por ônibus + usuários sem ônibus definido
-            // Se mid não fornecido: retorna todos (compatível com scripts antigos)
-            $activeQuery = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
-                ->where('expires_at', '>', now())
-                ->whereNotNull('mac_address')
-                ->where('mac_address', '!=', '');
+            // 🎯 Buscar MACs ativos e expirados - cacheados por 8s por MikroTik.
+            // Com 8 MikroTiks sincronizando a cada 15s, o cache reduz ~50% da carga no banco
+            // sem atrasar perceptivelmente a liberação (próximo sync em até 15s de qualquer forma).
+            // Os side-effects acima (expirar, autoheal, crossref, bus update) NÃO são cacheados
+            // — rodam a cada requisição, mantendo a consistência do estado.
+            $listsCacheKey = 'mikrotik_sync_lists_' . ($mikrotikId ?: 'all');
+            [$activeMacs, $expiredMacs] = cache()->remember($listsCacheKey, 8, function () use ($mikrotikId) {
+                // Buscar MACs ativos - usuários que pagaram e ainda têm tempo
+                // Se mid fornecido: filtra por ônibus + usuários sem ônibus definido
+                // Se mid não fornecido: retorna todos (compatível com scripts antigos)
+                $activeQuery = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+                    ->where('expires_at', '>', now())
+                    ->whereNotNull('mac_address')
+                    ->where('mac_address', '!=', '');
 
-            if ($mikrotikId) {
-                $activeQuery->where(function($q) use ($mikrotikId) {
-                    $q->where('last_mikrotik_id', $mikrotikId)
-                      ->orWhereNull('last_mikrotik_id')
-                      ->orWhere('last_mikrotik_id', '');
-                });
-            }
+                if ($mikrotikId) {
+                    $activeQuery->where(function($q) use ($mikrotikId) {
+                        $q->where('last_mikrotik_id', $mikrotikId)
+                          ->orWhereNull('last_mikrotik_id')
+                          ->orWhere('last_mikrotik_id', '');
+                    });
+                }
 
-            $activeMacs = $activeQuery
-                ->orderBy('expires_at', 'desc')
-                ->limit(200)
-                ->pluck('mac_address')
-                ->map(fn($mac) => strtoupper(trim($mac)))
-                ->unique()
-                ->values()
-                ->toArray();
+                $active = $activeQuery
+                    ->orderBy('expires_at', 'desc')
+                    ->limit(200)
+                    ->pluck('mac_address')
+                    ->map(fn($mac) => strtoupper(trim($mac)))
+                    ->unique()
+                    ->values()
+                    ->toArray();
 
-            // 🗑️ Buscar MACs expirados para remover (apenas últimas 2h para reduzir payload)
-            $expiredQuery = User::where('status', 'expired')
-                ->whereNotNull('mac_address')
-                ->where('mac_address', '!=', '')
-                ->whereNotIn('mac_address', $activeMacs)
-                ->where('expires_at', '>', now()->subHours(2))
-                ->where('expires_at', '<', now());
+                // MACs expirados para remover (últimas 48h).
+                // Janela maior garante que MACs expirados sejam efetivamente removidos do MikroTik
+                // mesmo se o MikroTik estiver offline por várias horas (Starlink instável).
+                $expiredQuery = User::where('status', 'expired')
+                    ->whereNotNull('mac_address')
+                    ->where('mac_address', '!=', '')
+                    ->whereNotIn('mac_address', $active)
+                    ->where('expires_at', '>', now()->subHours(48))
+                    ->where('expires_at', '<', now());
 
-            if ($mikrotikId) {
-                $expiredQuery->where(function($q) use ($mikrotikId) {
-                    $q->where('last_mikrotik_id', $mikrotikId)
-                      ->orWhereNull('last_mikrotik_id')
-                      ->orWhere('last_mikrotik_id', '');
-                });
-            }
+                if ($mikrotikId) {
+                    $expiredQuery->where(function($q) use ($mikrotikId) {
+                        $q->where('last_mikrotik_id', $mikrotikId)
+                          ->orWhereNull('last_mikrotik_id')
+                          ->orWhere('last_mikrotik_id', '');
+                    });
+                }
 
-            $expiredMacs = $expiredQuery
-                ->orderBy('expires_at', 'desc')
-                ->limit(100)
-                ->pluck('mac_address')
-                ->map(fn($mac) => strtoupper(trim($mac)))
-                ->unique()
-                ->values()
-                ->toArray();
+                $expired = $expiredQuery
+                    ->orderBy('expires_at', 'desc')
+                    ->limit(100)
+                    ->pluck('mac_address')
+                    ->map(fn($mac) => strtoupper(trim($mac)))
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+                return [$active, $expired];
+            });
 
             // 📝 Formato ultra-compacto: L:MAC = liberar, R:MAC = remover
             $output = "OK\n";

@@ -205,18 +205,83 @@ class PortalController extends Controller
     }
 
     /**
-     * API para detectar dispositivo
+     * API para detectar dispositivo.
+     *
+     * Nunca retorna MAC MOCK. Se o MikroTik ainda não reportou o MAC real
+     * deste IP, devolve mac_address=null + needs_retry=true para o
+     * mac-detector.js insistir. Isso evita que um MAC fictício seja gravado
+     * no cadastro e, depois, sincronizado ao MikroTik sem efeito — causa
+     * principal de "paguei e não liberou".
      */
     public function detectDevice(Request $request)
     {
-        $clientInfo = $this->getClientInfo($request);
+        $ip = $request->ip();
+        $realMac = $this->tryDetectRealMac($request, $ip);
 
         return response()->json([
             'success' => true,
-            'mac_address' => $clientInfo['mac_address'],
-            'ip_address' => $clientInfo['ip_address'],
-            'user_agent' => $clientInfo['user_agent']
+            'mac_address' => $realMac,
+            'needs_retry' => $realMac === null,
+            'ip_address' => $ip,
+            'user_agent' => $request->userAgent(),
         ]);
+    }
+
+    /**
+     * Tenta todas as fontes confiáveis de MAC (report, URL, header, ARP).
+     * Retorna null se nenhuma produzir MAC real — sem gerar MOCK.
+     */
+    private function tryDetectRealMac(Request $request, string $ip): ?string
+    {
+        $internalIp = $this->getInternalIpFromHeaders($request);
+
+        // 1. MAC reportado pelo MikroTik (script registrarMacs a cada 1min)
+        try {
+            $reportedMac = MikrotikMacReport::getLatestMacForIp($internalIp);
+            if (!$reportedMac && $internalIp !== $ip) {
+                $reportedMac = MikrotikMacReport::getLatestMacForIp($ip);
+            }
+            if ($reportedMac) {
+                $cleanMac = strtoupper($reportedMac->mac_address);
+                if (!$this->isLikelyMockMac($cleanMac)) {
+                    $this->markMikrotikContextVerified($request);
+                    return $cleanMac;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro ao consultar MACs reportados', ['error' => $e->getMessage()]);
+        }
+
+        // 2. MAC via URL (MikroTik redirect)
+        $macViaUrl = $request->get('mac') ?: $request->get('mikrotik_mac') ?: $request->get('client_mac');
+        if ($macViaUrl && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $macViaUrl)) {
+            $cleanMac = strtoupper(str_replace('-', ':', $macViaUrl));
+            if (!$this->isLikelyMockMac($cleanMac)) {
+                $this->markMikrotikContextVerified($request);
+                return $cleanMac;
+            }
+        }
+
+        // 3. MAC via headers do MikroTik
+        $mikrotikMac = $request->header('X-Real-MAC')
+            ?: $request->header('X-Mikrotik-MAC')
+            ?: $request->header('X-Client-MAC');
+        if ($mikrotikMac && preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mikrotikMac)) {
+            $cleanMac = strtoupper(str_replace('-', ':', $mikrotikMac));
+            if (!$this->isLikelyMockMac($cleanMac)) {
+                $this->markMikrotikContextVerified($request);
+                return $cleanMac;
+            }
+        }
+
+        // 4. Consultar ARP do MikroTik (só se hotspot estiver configurado)
+        $macFromArp = $this->queryMacByIpFromMikrotik($internalIp ?: $ip);
+        if ($macFromArp && !$this->isLikelyMockMac($macFromArp)) {
+            $this->markMikrotikContextVerified($request);
+            return strtoupper($macFromArp);
+        }
+
+        return null;
     }
 
     /**
@@ -543,13 +608,52 @@ class PortalController extends Controller
      */
     private function findConnectedUserByIp(string $ip): ?User
     {
+        // 0. 🍪 Prioridade: cookie persistente setado pós-pagamento.
+        // Resolve o caso do MAC randomizado que mudou entre sessões (iOS/Android).
+        // Se o cookie aponta para um usuário pago com tempo, reaproveita a compra
+        // atualizando o MAC/IP para os atuais — evita cobrança duplicada.
+        $cookieUserId = request()->cookie('wt_user');
+        if ($cookieUserId && is_numeric($cookieUserId)) {
+            $cookieUser = User::where('id', (int) $cookieUserId)
+                ->whereIn('status', ['connected', 'active'])
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if ($cookieUser) {
+                // Se o dispositivo voltou com MAC diferente (randomização), atualiza
+                // o cadastro e marca o MAC antigo como órfão para ser removido do
+                // MikroTik no próximo sync. Assim o novo MAC é liberado automaticamente.
+                try {
+                    $currentMac = $this->tryDetectRealMac(request(), $ip);
+                    if ($currentMac && \App\Support\HotspotIdentity::shouldReplaceMac($cookieUser->mac_address, $currentMac)) {
+                        User::where('mac_address', $currentMac)
+                            ->where('id', '!=', $cookieUser->id)
+                            ->update(['mac_address' => null]);
+                        \App\Support\HotspotIdentity::markOrphanedMac($cookieUser->mac_address);
+                        $cookieUser->update([
+                            'mac_address' => $currentMac,
+                            'ip_address' => $ip,
+                        ]);
+                        Log::info('🍪 Cookie reaproveitado com MAC novo', [
+                            'user_id' => $cookieUser->id,
+                            'new_mac' => $currentMac,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Cookie reuse: erro ao atualizar MAC', ['error' => $e->getMessage()]);
+                }
+
+                return $cookieUser;
+            }
+        }
+
         // 1. Buscar usuário ATIVO com este IP
         $activeUser = User::where('ip_address', $ip)
             ->where('status', 'connected')
             ->where('expires_at', '>', now())
             ->orderBy('connected_at', 'desc')
             ->first();
-        
+
         if ($activeUser) {
             return $activeUser;
         }

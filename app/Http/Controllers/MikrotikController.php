@@ -499,6 +499,23 @@ class MikrotikController extends Controller
      */
     private function allowDeviceInMikrotik($macAddress)
     {
+        // ⚠️ Conexão direta ao MikroTik via socket está desativada no fluxo normal.
+        //
+        // Motivo: temos 8+ MikroTiks atrás de Starlinks com IP público dinâmico. O
+        // servidor cloud não consegue alcançá-los via socket (causa dos erros
+        // "Operation now in progress" no log). A liberação é feita pelo próprio
+        // MikroTik, que executa o script `syncPagos` a cada 15s e consulta
+        // /api/mikrotik/check-paid-users-lite — esse endpoint retorna o MAC como
+        // L:<mac> e o MikroTik aplica o ip-binding localmente.
+        //
+        // Para forçar liberação imediata (opcional, via WEBHOOK_DIRECT_MIKROTIK=true),
+        // ative a flag de config. Em produção normal, retornamos sucesso e confiamos
+        // no pull de 15s.
+        if (!config('wifi.mikrotik.direct_socket_enabled', false)) {
+            Log::info("✅ {$macAddress} marcado para liberação (via syncPagos em até 15s)");
+            return true;
+        }
+
         try {
             if (!config('wifi.mikrotik.api_enabled', true)) {
                 Log::info("API MikroTik desabilitada - simulando liberação para {$macAddress}");
@@ -506,16 +523,16 @@ class MikrotikController extends Controller
             }
 
             Log::info("Liberando dispositivo {$macAddress} no MikroTik");
-            
+
             $socket = $this->connectToMikroTik();
-            
+
             // Primeiro, verificar se já existe usuário
             $this->writeCommand($socket, '/ip/hotspot/user/print', [
                 '?name' => $macAddress
             ]);
-            
+
             $response = $this->readResponse($socket);
-            
+
             $userExists = false;
             foreach ($response as $line) {
                 if (strpos($line, '!re') === 0) {
@@ -523,7 +540,7 @@ class MikrotikController extends Controller
                     break;
                 }
             }
-            
+
             if (!$userExists) {
                 // Criar usuário do hotspot
                 $this->writeCommand($socket, '/ip/hotspot/user/add', [
@@ -532,9 +549,9 @@ class MikrotikController extends Controller
                     'profile' => 'default',
                     'comment' => 'Auto-created for paid access'
                 ]);
-                
+
                 $addResponse = $this->readResponse($socket);
-                
+
                 // Verificar se foi criado com sucesso
                 $success = false;
                 foreach ($addResponse as $line) {
@@ -543,7 +560,7 @@ class MikrotikController extends Controller
                         break;
                     }
                 }
-                
+
                 if (!$success) {
                     Log::error("Falha ao criar usuário hotspot para {$macAddress}");
                     socket_close($socket);
@@ -555,18 +572,20 @@ class MikrotikController extends Controller
                     'name' => $macAddress,
                     'disabled' => 'no'
                 ]);
-                
+
                 $this->readResponse($socket);
             }
-            
+
             socket_close($socket);
-            
+
             Log::info("Dispositivo {$macAddress} liberado no MikroTik com sucesso");
             return true;
-            
+
         } catch (\Exception $e) {
-            Log::error("Erro ao liberar {$macAddress} no MikroTik: " . $e->getMessage());
-            return false;
+            // Em vez de ERROR (que polui o log), logar como INFO — não é falha real
+            // pois o syncPagos do MikroTik vai liberar em até 15s.
+            Log::info("Socket direto indisponível para {$macAddress} (esperado em setup Starlink) — syncPagos liberará em até 15s");
+            return true;
         }
     }
 

@@ -908,7 +908,7 @@ class PaymentController extends Controller
 
         $payment = Payment::find($request->payment_id);
 
-        return response()->json([
+        $response = response()->json([
             'success' => true,
             'payment' => [
                 'id' => $payment->id,
@@ -918,6 +918,31 @@ class PaymentController extends Controller
                 'paid_at' => $payment->paid_at,
             ],
         ]);
+
+        // 🍪 Cookie persistente de autenticação pós-pagamento.
+        // Permite reaproveitar a compra quando o dispositivo volta com MAC randomizado
+        // diferente (iOS/Android geram MAC novo por rede). O PortalController busca
+        // por esse cookie e re-associa o MAC atual ao usuário pago.
+        if ($payment->status === 'completed' && $payment->user_id) {
+            $user = User::find($payment->user_id);
+            $expiresMinutes = 60 * 24 * 7; // 7 dias
+            if ($user && $user->expires_at && $user->expires_at->isFuture()) {
+                $expiresMinutes = max($expiresMinutes, $user->expires_at->diffInMinutes(now()));
+            }
+            $response->cookie(
+                'wt_user',
+                (string) $payment->user_id,
+                $expiresMinutes,
+                '/',       // path
+                null,      // domain (atual)
+                true,      // secure (HTTPS)
+                true,      // httpOnly
+                false,
+                'Lax'
+            );
+        }
+
+        return $response;
     }
 
     /**

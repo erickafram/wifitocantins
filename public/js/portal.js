@@ -194,9 +194,9 @@ class WiFiPortal {
             
         } catch (error) {
             console.error('❌ Erro ao detectar dispositivo:', error);
-            // Usar MAC mock como fallback
-            this.deviceMac = this.generateMockMac();
-            console.log('⚠️ MAC mock gerado como fallback:', this.deviceMac);
+            // Não gerar MOCK — handleConnectClick mostra o overlay "no-wifi-warning"
+            // quando deviceMac está vazio, o que é o comportamento correto.
+            this.deviceMac = '';
         }
     }
 
@@ -246,21 +246,33 @@ class WiFiPortal {
             }
         }
         
-        // Se não encontrou MAC real, usar o último obtido
-        console.warn('⚠️ Timeout: Usando último MAC obtido');
-        const response = await fetch('/api/detect-device', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': this.getCSRFToken()
+        // Timeout: se o backend realmente não confirmou o MAC, deixar vazio.
+        // Tentativa final com chamada bloqueante:
+        console.warn('⚠️ Timeout: tentando última confirmação...');
+        try {
+            const response = await fetch('/api/detect-device', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                }
+            });
+            const data = await response.json();
+            if (data.mac_address && this.isValidMacAddress(data.mac_address)) {
+                this.deviceMac = data.mac_address.toUpperCase();
+                if (data.client_ip || data.ip_address) {
+                    this.deviceIp = data.client_ip || data.ip_address;
+                }
+                console.log('📱 MAC final:', this.deviceMac);
+                return;
             }
-        });
-        const data = await response.json();
-        this.deviceMac = (data.mac_address || this.generateMockMac()).toUpperCase();
-        if (data.client_ip || data.ip_address) {
-            this.deviceIp = data.client_ip || data.ip_address;
+        } catch (e) {
+            console.error('Falha na tentativa final:', e);
         }
-        console.log('📱 MAC final:', this.deviceMac);
+
+        // Sem MAC confirmado — handleConnectClick mostrará o aviso "conecte ao WiFi".
+        this.deviceMac = '';
+        console.warn('⚠️ Não foi possível confirmar MAC — aguardando usuário reconectar ao WiFi');
     }
 
     /**
