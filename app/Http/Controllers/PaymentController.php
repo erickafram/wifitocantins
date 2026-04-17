@@ -12,6 +12,7 @@ use App\Services\SantanderPixService;
 use App\Services\WooviPixService;
 use App\Support\HotspotIdentity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -1356,10 +1357,23 @@ class PaymentController extends Controller
             // O servidor está na nuvem e NÃO consegue conectar diretamente ao MikroTik (10.10.10.1)
             // A liberação acontece via syncPagos que roda a cada 15 segundos no MikroTik
             // O status já está 'connected' no banco, o MikroTik vai buscar na próxima sync
+
+            // 🔥 Invalidar cache de listas de MACs para que a PRÓXIMA chamada de
+            // checkPaidUsersLite reconsulte o banco e pegue este usuário imediatamente.
+            // Sem isso, o user paga mas o MikroTik pode estar servindo resposta cacheada
+            // (TTL 8s) até 8 segundos a mais que o necessário. Com o forget, a janela
+            // máxima volta a ser o próprio intervalo de sync (até 15s) — o melhor possível
+            // sem acesso direto ao MikroTik.
+            Cache::forget('mikrotik_sync_lists_all');
+            if ($mikrotikId) {
+                Cache::forget('mikrotik_sync_lists_' . $mikrotikId);
+            }
+
             Log::info('🚀 Pagamento ativado - MAC será liberado no próximo sync (até 15s)', [
                 'user_id' => $payment->user_id,
                 'mac_address' => $payment->user->mac_address,
                 'expires_at' => $expiresAt->toISOString(),
+                'cache_invalidated' => $mikrotikId ? 'all + ' . $mikrotikId : 'all',
             ]);
 
             $processingTime = round((microtime(true) - $startTime) * 1000, 2);

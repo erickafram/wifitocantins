@@ -17,6 +17,95 @@ class MikrotikRemoteController extends Controller
     }
 
     /**
+     * 🩺 Dashboard de saúde dos 8 MikroTiks (ônibus + Starlink).
+     *
+     * Cada MikroTik chama /api/mikrotik/check-paid-users-lite a cada 15s e isso
+     * atualiza buses.last_sync_at. Se o sync parou, ou o ônibus está desligado,
+     * ou a Starlink caiu, ou a rota do hotspot parou — de qualquer forma o
+     * usuário não consegue pagar/conectar naquele ônibus. Este painel mostra
+     * isso ANTES da reclamação chegar.
+     */
+    public function health()
+    {
+        $buses = \App\Models\Bus::orderBy('name')->get();
+
+        $data = $buses->map(function ($bus) {
+            $seconds = $bus->last_sync_at ? $bus->last_sync_at->diffInSeconds(now()) : null;
+
+            if ($seconds === null) {
+                $status = 'unknown';
+            } elseif ($seconds <= 30) {
+                $status = 'online';
+            } elseif ($seconds <= 300) {
+                $status = 'lagging';
+            } else {
+                $status = 'offline';
+            }
+
+            $activeUsers = User::where('last_mikrotik_id', $bus->mikrotik_serial)
+                ->whereIn('status', ['connected', 'active', 'temp_bypass'])
+                ->where('expires_at', '>', now())
+                ->count();
+
+            return [
+                'bus' => $bus,
+                'status' => $status,
+                'seconds_since_sync' => $seconds,
+                'active_users' => $activeUsers,
+            ];
+        });
+
+        $summary = [
+            'total' => $data->count(),
+            'online' => $data->where('status', 'online')->count(),
+            'lagging' => $data->where('status', 'lagging')->count(),
+            'offline' => $data->whereIn('status', ['offline', 'unknown'])->count(),
+            'total_users' => $data->sum('active_users'),
+        ];
+
+        return view('admin.mikrotik.saude', compact('data', 'summary'));
+    }
+
+    /**
+     * Endpoint JSON para auto-refresh da saúde sem recarregar a página.
+     */
+    public function healthJson()
+    {
+        $buses = \App\Models\Bus::orderBy('name')->get();
+
+        $data = $buses->map(function ($bus) {
+            $seconds = $bus->last_sync_at ? $bus->last_sync_at->diffInSeconds(now()) : null;
+            if ($seconds === null) $status = 'unknown';
+            elseif ($seconds <= 30) $status = 'online';
+            elseif ($seconds <= 300) $status = 'lagging';
+            else $status = 'offline';
+
+            $activeUsers = User::where('last_mikrotik_id', $bus->mikrotik_serial)
+                ->whereIn('status', ['connected', 'active', 'temp_bypass'])
+                ->where('expires_at', '>', now())
+                ->count();
+
+            return [
+                'serial' => $bus->mikrotik_serial,
+                'name' => $bus->name,
+                'plate' => $bus->plate,
+                'status' => $status,
+                'seconds_since_sync' => $seconds,
+                'last_sync_at' => $bus->last_sync_at?->toIso8601String(),
+                'last_public_ip' => $bus->last_public_ip,
+                'last_city' => $bus->last_city,
+                'last_state' => $bus->last_state,
+                'active_users' => $activeUsers,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'checked_at' => now()->toIso8601String(),
+        ]);
+    }
+
+    /**
      * Retorna dados dos usuários com MAC - fonte de verdade para o MikroTik
      * O MikroTik consulta /api/mikrotik/check-paid-users-lite a cada 15s
      * Então o que está aqui = o que o MikroTik vai executar

@@ -168,9 +168,21 @@
         <div>
             <p class="px-2 mb-1 text-[9px] font-bold text-muted uppercase tracking-widest sidebar-label">Sistema</p>
 
+            @php $active = request()->routeIs('admin.mikrotik.health'); @endphp
+            <a href="{{ route('admin.mikrotik.health') }}" onclick="closeSidebarOnMobile()" title="Saúde dos MikroTiks"
+               class="sidebar-link flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all
+                      {{ $active ? 'bg-green text-white shadow-card' : 'text-ink2 hover:bg-surface hover:text-ink' }}">
+                <span class="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 {{ $active ? 'bg-white/20' : 'bg-surface' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </span>
+                <span class="sidebar-label truncate">Saúde</span>
+            </a>
+
             @php $active = request()->routeIs('admin.mikrotik.remote*'); @endphp
             <a href="{{ route('admin.mikrotik.remote.index') }}" onclick="closeSidebarOnMobile()" title="MikroTik"
-               class="sidebar-link flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all
+               class="sidebar-link flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all mt-0.5
                       {{ $active ? 'bg-red text-white shadow-card' : 'text-ink2 hover:bg-surface hover:text-ink' }}">
                 <span class="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 {{ $active ? 'bg-white/20' : 'bg-surface' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

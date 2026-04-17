@@ -180,6 +180,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::get('/api', [AdminController::class, 'apiSettings'])->name('api');
         Route::post('/api/gateway', [AdminController::class, 'updateGateway'])->name('api.update-gateway');
         
+        // 🩺 Dashboard de saúde dos 8 MikroTiks (verde/amarelo/vermelho por ônibus)
+        Route::get('/mikrotik/saude', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'health'])->name('mikrotik.health');
+        Route::get('/mikrotik/saude/json', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'healthJson'])->name('mikrotik.health.json');
+
         // Painel Remoto Mikrotik
         Route::prefix('mikrotik/remote')->name('mikrotik.remote.')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\MikrotikRemoteController::class, 'index'])->name('index');
