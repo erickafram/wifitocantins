@@ -639,8 +639,27 @@ class PortalController extends Controller
                             'new_mac' => $currentMac,
                         ]);
                     }
+
+                    // 🚌 Reatribuir o ônibus atual se for diferente do gravado.
+                    // Cobre o caso "paguei no ônibus 1, hoje estou no ônibus 3":
+                    // descobre o serial do MikroTik atual via cache do IP público
+                    // (gravado em MikrotikApiController quando cada ônibus sincroniza),
+                    // atualiza o last_mikrotik_id do usuário e invalida a lista global
+                    // de MACs para o próximo sync (≤15s) já pegar no ônibus certo.
+                    $publicIp = request()->ip();
+                    $currentMikrotikId = \Illuminate\Support\Facades\Cache::get('mikrotik_ip_' . $publicIp);
+                    if ($currentMikrotikId && $cookieUser->last_mikrotik_id !== $currentMikrotikId) {
+                        $cookieUser->update(['last_mikrotik_id' => $currentMikrotikId]);
+                        \Illuminate\Support\Facades\Cache::forget('mikrotik_sync_lists_all');
+                        Log::info('🚌 Usuário reassociado a novo ônibus via cookie', [
+                            'user_id' => $cookieUser->id,
+                            'old_mikrotik_id' => $cookieUser->getOriginal('last_mikrotik_id'),
+                            'new_mikrotik_id' => $currentMikrotikId,
+                            'public_ip' => $publicIp,
+                        ]);
+                    }
                 } catch (\Exception $e) {
-                    Log::warning('Cookie reuse: erro ao atualizar MAC', ['error' => $e->getMessage()]);
+                    Log::warning('Cookie reuse: erro ao atualizar MAC/ônibus', ['error' => $e->getMessage()]);
                 }
 
                 return $cookieUser;

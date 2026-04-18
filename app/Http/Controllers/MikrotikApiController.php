@@ -90,59 +90,47 @@ class MikrotikApiController extends Controller
             // Corrige casos onde o MAC no banco não corresponde ao MAC real no MikroTik
             $this->crossReferenceMacs();
 
-            // 🎯 Buscar MACs ativos e expirados - cacheados por 8s por MikroTik.
-            // Com 8 MikroTiks sincronizando a cada 15s, o cache reduz ~50% da carga no banco
-            // sem atrasar perceptivelmente a liberação (próximo sync em até 15s de qualquer forma).
+            // 🎯 Buscar MACs ativos e expirados - cacheados por 8s (chave global).
+            // Com 8 MikroTiks sincronizando a cada 15s, o cache compartilhado reduz ~87% da carga
+            // no banco (8 requests em 8s compartilham 1 query) sem atrasar a liberação — o
+            // PaymentController invalida a chave ao pagar, e o próximo sync (≤15s) já pega.
             // Os side-effects acima (expirar, autoheal, crossref, bus update) NÃO são cacheados
             // — rodam a cada requisição, mantendo a consistência do estado.
-            $listsCacheKey = 'mikrotik_sync_lists_' . ($mikrotikId ?: 'all');
-            [$activeMacs, $expiredMacs] = cache()->remember($listsCacheKey, 8, function () use ($mikrotikId) {
-                // Buscar MACs ativos - usuários que pagaram e ainda têm tempo
-                // Se mid fornecido: filtra por ônibus + usuários sem ônibus definido
-                // Se mid não fornecido: retorna todos (compatível com scripts antigos)
-                $activeQuery = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
+            $listsCacheKey = 'mikrotik_sync_lists_all';
+            [$activeMacs, $expiredMacs] = cache()->remember($listsCacheKey, 8, function () {
+                // 🌐 BROADCAST: TODOS os MikroTiks recebem TODOS os MACs ativos,
+                // independente do last_mikrotik_id do usuário.
+                //
+                // Motivo: usuário pagou no ônibus 1, pegou o ônibus 3 hoje. Sem broadcast
+                // o MikroTik do ônibus 3 não sabe que esse MAC está liberado — o usuário
+                // aparece "acesso ativo" no portal mas não tem internet no ônibus 3.
+                //
+                // Custo: cada ip-binding no MikroTik tem até 200 MACs mesmo se a maioria
+                // não está fisicamente naquele ônibus. Sem impacto prático (o device só
+                // responde no WiFi em que está conectado).
+                $active = User::whereIn('status', ['connected', 'active', 'temp_bypass'])
                     ->where('expires_at', '>', now())
                     ->whereNotNull('mac_address')
-                    ->where('mac_address', '!=', '');
-
-                if ($mikrotikId) {
-                    $activeQuery->where(function($q) use ($mikrotikId) {
-                        $q->where('last_mikrotik_id', $mikrotikId)
-                          ->orWhereNull('last_mikrotik_id')
-                          ->orWhere('last_mikrotik_id', '');
-                    });
-                }
-
-                $active = $activeQuery
+                    ->where('mac_address', '!=', '')
                     ->orderBy('expires_at', 'desc')
-                    ->limit(200)
+                    ->limit(1000)
                     ->pluck('mac_address')
                     ->map(fn($mac) => strtoupper(trim($mac)))
                     ->unique()
                     ->values()
                     ->toArray();
 
-                // MACs expirados para remover (últimas 48h).
+                // MACs expirados para remover (últimas 48h) — também broadcast.
                 // Janela maior garante que MACs expirados sejam efetivamente removidos do MikroTik
                 // mesmo se o MikroTik estiver offline por várias horas (Starlink instável).
-                $expiredQuery = User::where('status', 'expired')
+                $expired = User::where('status', 'expired')
                     ->whereNotNull('mac_address')
                     ->where('mac_address', '!=', '')
                     ->whereNotIn('mac_address', $active)
                     ->where('expires_at', '>', now()->subHours(48))
-                    ->where('expires_at', '<', now());
-
-                if ($mikrotikId) {
-                    $expiredQuery->where(function($q) use ($mikrotikId) {
-                        $q->where('last_mikrotik_id', $mikrotikId)
-                          ->orWhereNull('last_mikrotik_id')
-                          ->orWhere('last_mikrotik_id', '');
-                    });
-                }
-
-                $expired = $expiredQuery
+                    ->where('expires_at', '<', now())
                     ->orderBy('expires_at', 'desc')
-                    ->limit(100)
+                    ->limit(500)
                     ->pluck('mac_address')
                     ->map(fn($mac) => strtoupper(trim($mac)))
                     ->unique()

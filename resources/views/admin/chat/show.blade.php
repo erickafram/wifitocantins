@@ -76,40 +76,203 @@
             </div>
 
             @foreach($conversation->messages as $message)
-            <div class="flex {{ $message->sender_type === 'admin' ? 'justify-end' : 'justify-start' }} chat-message-enter">
-                @if($message->sender_type === 'visitor')
-                <div class="flex items-end space-x-2 lg:space-x-3 max-w-[85%] lg:max-w-[70%]">
-                    <div class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 font-bold text-xs lg:text-sm flex-shrink-0">
-                        {{ strtoupper(substr($conversation->visitor_name, 0, 1)) }}
-                    </div>
-                    <div class="bg-white rounded-2xl rounded-bl-md px-3 lg:px-4 py-2 lg:py-3 shadow-md border border-gray-100">
-                        <p class="text-sm text-gray-800 leading-relaxed break-words">{{ $message->message }}</p>
-                        <p class="text-xs text-gray-400 mt-1 lg:mt-2">{{ $message->created_at->format('H:i') }}</p>
+            @php
+                $msgType = $message->type ?? 'text';
+                $isAI = ($message->sender_type === 'admin') && is_null($message->admin_id) && !empty($message->metadata['ai']);
+                $senderLabel = $isAI ? '🤖 Assistente IA' : ($message->admin->name ?? 'admin');
+            @endphp
+
+            {{-- 📡 Cartão: admin solicitou teste de conexão --}}
+            @if($msgType === 'probe_request')
+                <div class="flex justify-center chat-message-enter">
+                    <div class="max-w-md w-full bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                                📡
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-blue-700 uppercase tracking-wider">Teste de conexão solicitado</p>
+                                <p class="text-[10px] text-gray-500">por {{ $senderLabel }} · {{ $message->created_at->format('H:i') }}</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">{{ $message->message }}</p>
+                        @php
+                            $probeUrl = $message->metadata['probe_url'] ?? null;
+                            $probeExpires = isset($message->metadata['expires_at']) ? \Carbon\Carbon::parse($message->metadata['expires_at']) : null;
+                            $expired = $probeExpires && $probeExpires->isPast();
+                            $probe = \App\Models\ConnectivityProbe::find($message->metadata['probe_id'] ?? 0);
+                            $completed = $probe && $probe->isCompleted();
+                        @endphp
+                        @if($completed)
+                            <div class="text-xs text-emerald-700 bg-emerald-100 rounded-lg p-2 text-center font-semibold">
+                                ✅ Teste concluído — ver resultado abaixo
+                            </div>
+                        @elseif($expired)
+                            <div class="text-xs text-gray-600 bg-gray-100 rounded-lg p-2 text-center">
+                                ⏰ Link expirou (30 min sem resposta)
+                            </div>
+                        @elseif($probeUrl)
+                            <a href="{{ $probeUrl }}" target="_blank"
+                               class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-xl font-semibold text-sm transition">
+                                ▶ Abrir teste (visão do cliente)
+                            </a>
+                            <div class="mt-2 flex items-center gap-1.5">
+                                <input type="text" readonly value="{{ $probeUrl }}"
+                                       class="flex-1 text-[11px] font-mono bg-white border rounded px-2 py-1 text-gray-500"
+                                       onclick="this.select()">
+                                <button onclick="navigator.clipboard.writeText('{{ $probeUrl }}'); this.textContent='✓';"
+                                        class="text-[11px] px-2 py-1 bg-white border rounded hover:bg-gray-50 font-semibold">
+                                    copiar
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1 text-center">
+                                Expira {{ $probeExpires ? $probeExpires->diffForHumans() : 'em 30min' }}
+                            </p>
+                        @endif
                     </div>
                 </div>
-                @else
-                <div class="max-w-[85%] lg:max-w-[70%]">
-                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl rounded-br-md px-3 lg:px-4 py-2 lg:py-3 shadow-md">
-                        <p class="text-sm leading-relaxed break-words">{{ $message->message }}</p>
-                        <div class="flex items-center justify-end space-x-2 mt-1 lg:mt-2 flex-wrap">
-                            @if($message->admin)
-                            <span class="text-xs text-emerald-100 hidden sm:inline">{{ $message->admin->name }}</span>
-                            <span class="text-emerald-200 hidden sm:inline">•</span>
-                            @endif
-                            <span class="text-xs text-emerald-100">{{ $message->created_at->format('H:i') }}</span>
-                            <svg class="w-4 h-4 text-emerald-200" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
+
+            {{-- ✅/❌ Cartão: resultado do teste --}}
+            @elseif($msgType === 'probe_result')
+                @php
+                    $verdict = $message->metadata['verdict'] ?? 'failed';
+                    $results = $message->metadata['results'] ?? [];
+                    $verdictMap = [
+                        'excellent' => ['bg' => 'from-emerald-50 to-green-50', 'border' => 'border-emerald-300', 'icon' => '🚀', 'label' => 'Conexão excelente', 'text' => 'text-emerald-700'],
+                        'good'      => ['bg' => 'from-emerald-50 to-teal-50', 'border' => 'border-emerald-200', 'icon' => '✅', 'label' => 'Conexão OK', 'text' => 'text-emerald-700'],
+                        'poor'      => ['bg' => 'from-amber-50 to-yellow-50', 'border' => 'border-amber-300', 'icon' => '⚠️', 'label' => 'Conexão ruim', 'text' => 'text-amber-700'],
+                        'failed'    => ['bg' => 'from-red-50 to-rose-50', 'border' => 'border-red-300', 'icon' => '❌', 'label' => 'Sem internet', 'text' => 'text-red-700'],
+                    ];
+                    $v = $verdictMap[$verdict] ?? $verdictMap['failed'];
+                @endphp
+                <div class="flex justify-center chat-message-enter">
+                    <div class="max-w-md w-full bg-gradient-to-br {{ $v['bg'] }} border-2 {{ $v['border'] }} rounded-2xl p-4 shadow-sm">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="text-3xl">{{ $v['icon'] }}</div>
+                            <div class="flex-1">
+                                <p class="text-[10px] font-bold {{ $v['text'] }} uppercase tracking-wider">Resultado do teste</p>
+                                <p class="text-base font-bold {{ $v['text'] }}">{{ $v['label'] }}</p>
+                            </div>
+                            <p class="text-[10px] text-gray-500">{{ $message->created_at->format('H:i') }}</p>
+                        </div>
+                        <div class="bg-white/70 rounded-xl p-3 space-y-1.5 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">DNS resolve:</span>
+                                <span class="font-mono {{ ($results['dns_ok'] ?? false) ? 'text-emerald-600' : 'text-red-600' }}">
+                                    {{ ($results['dns_ok'] ?? false) ? '✅ OK' : '❌ falhou' }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Google HTTPS:</span>
+                                <span class="font-mono {{ ($results['google_ok'] ?? false) ? 'text-emerald-600' : 'text-red-600' }}">
+                                    {{ ($results['google_ok'] ?? false) ? '✅ OK' : '❌ falhou' }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Download:</span>
+                                <span class="font-mono font-bold text-gray-800">
+                                    @if(isset($results['download_mbps']) && $results['download_mbps'] > 0)
+                                        {{ number_format($results['download_mbps'], 1) }} Mbps
+                                    @else
+                                        <span class="text-red-600">❌ falhou</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Latência (ping):</span>
+                                <span class="font-mono font-bold text-gray-800">
+                                    @if(isset($results['latency_ms']) && $results['latency_ms'] !== null)
+                                        {{ round($results['latency_ms']) }} ms
+                                    @else
+                                        <span class="text-red-600">❌ falhou</span>
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+                        @if(isset($message->metadata['client_ip']) || isset($message->metadata['user_agent']))
+                        <details class="mt-3 text-[10px] text-gray-500">
+                            <summary class="cursor-pointer hover:text-gray-700 font-semibold">Detalhes técnicos</summary>
+                            <div class="mt-1 space-y-0.5 font-mono">
+                                @if(isset($message->metadata['client_ip']))
+                                    <div>IP cliente: {{ $message->metadata['client_ip'] }}</div>
+                                @endif
+                                @if(isset($results['connection_type']))
+                                    <div>Tipo conexão: {{ $results['connection_type'] }}</div>
+                                @endif
+                                @if(isset($results['screen']))
+                                    <div>Tela: {{ $results['screen'] }}</div>
+                                @endif
+                                @if(isset($message->metadata['user_agent']))
+                                    <div class="truncate">UA: {{ $message->metadata['user_agent'] }}</div>
+                                @endif
+                            </div>
+                        </details>
+                        @endif
+                    </div>
+                </div>
+
+            {{-- Mensagem texto padrão --}}
+            @else
+                <div class="flex {{ $message->sender_type === 'admin' ? 'justify-end' : 'justify-start' }} chat-message-enter">
+                    @if($message->sender_type === 'visitor')
+                    <div class="flex items-end space-x-2 lg:space-x-3 max-w-[85%] lg:max-w-[70%]">
+                        <div class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 font-bold text-xs lg:text-sm flex-shrink-0">
+                            {{ strtoupper(substr($conversation->visitor_name, 0, 1)) }}
+                        </div>
+                        <div class="bg-white rounded-2xl rounded-bl-md px-3 lg:px-4 py-2 lg:py-3 shadow-md border border-gray-100">
+                            <p class="text-sm text-gray-800 leading-relaxed break-words">{{ $message->message }}</p>
+                            <p class="text-xs text-gray-400 mt-1 lg:mt-2">{{ $message->created_at->format('H:i') }}</p>
                         </div>
                     </div>
+                    @else
+                    <div class="max-w-[85%] lg:max-w-[70%]">
+                        @if($isAI)
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl rounded-br-md px-3 lg:px-4 py-2 lg:py-3 shadow-md relative">
+                            <div class="absolute -top-2 -left-2 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center text-sm" title="Resposta automática da IA">🤖</div>
+                            <p class="text-sm leading-relaxed break-words">{{ $message->message }}</p>
+                            <div class="flex items-center justify-end space-x-2 mt-1 lg:mt-2 flex-wrap">
+                                <span class="text-xs text-indigo-100 hidden sm:inline font-semibold">Assistente IA</span>
+                                @if(!empty($message->metadata['escalated']))
+                                    <span class="text-[10px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded font-bold">ESCALADO</span>
+                                @endif
+                                <span class="text-indigo-200 hidden sm:inline">•</span>
+                                <span class="text-xs text-indigo-100">{{ $message->created_at->format('H:i') }}</span>
+                            </div>
+                        </div>
+                        @else
+                        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl rounded-br-md px-3 lg:px-4 py-2 lg:py-3 shadow-md">
+                            <p class="text-sm leading-relaxed break-words">{{ $message->message }}</p>
+                            <div class="flex items-center justify-end space-x-2 mt-1 lg:mt-2 flex-wrap">
+                                @if($message->admin)
+                                <span class="text-xs text-emerald-100 hidden sm:inline">{{ $message->admin->name }}</span>
+                                <span class="text-emerald-200 hidden sm:inline">•</span>
+                                @endif
+                                <span class="text-xs text-emerald-100">{{ $message->created_at->format('H:i') }}</span>
+                                <svg class="w-4 h-4 text-emerald-200" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
-                @endif
-            </div>
+            @endif
             @endforeach
         </div>
 
         <!-- Input de Mensagem -->
         @if($conversation->status !== 'closed')
+        <div class="px-3 lg:px-4 pt-2 border-t bg-white">
+            <button type="button" id="request-probe-btn"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-3 py-1.5 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>📡 Solicitar teste de conexão</span>
+            </button>
+            <p class="text-[10px] text-gray-400 mt-1">Envia um link pro usuário clicar — ele roda 5 testes e o resultado aparece aqui.</p>
+        </div>
         <div class="p-3 lg:p-4 border-t bg-white">
             <form id="reply-form" class="flex items-center space-x-2 lg:space-x-3">
                 @csrf
@@ -214,9 +377,96 @@
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        <span class="text-gray-600 text-sm font-mono">{{ $conversation->visitor_mac }}</span>
+                        <span class="text-gray-600 text-sm font-mono select-all">{{ strtoupper($conversation->visitor_mac) }}</span>
                     </div>
                 </div>
+                @endif
+
+                {{-- 🔎 Cadastro vinculado (casa por MAC ou telefone) --}}
+                @php $linkedUser = $conversation->linked_user; @endphp
+                @if($linkedUser)
+                    @php
+                        $isActive = in_array($linkedUser->status, ['connected', 'active', 'temp_bypass'])
+                            && $linkedUser->expires_at && $linkedUser->expires_at->isFuture();
+                        if ($isActive) {
+                            $boxClass = 'bg-emerald-50 border-emerald-200';
+                            $badgeClass = 'bg-emerald-100 text-emerald-700';
+                            $dotClass = 'bg-emerald-500 animate-pulse';
+                            $expColor = 'text-emerald-600';
+                            $statusLabel = 'ACESSO ATIVO';
+                        } elseif ($linkedUser->status === 'expired') {
+                            $boxClass = 'bg-red-50 border-red-200';
+                            $badgeClass = 'bg-red-100 text-red-700';
+                            $dotClass = 'bg-red-500';
+                            $expColor = 'text-red-600';
+                            $statusLabel = 'EXPIRADO';
+                        } else {
+                            $boxClass = 'bg-gray-50 border-gray-200';
+                            $badgeClass = 'bg-gray-100 text-gray-700';
+                            $dotClass = 'bg-gray-500';
+                            $expColor = 'text-gray-600';
+                            $statusLabel = strtoupper($linkedUser->status ?? 'SEM STATUS');
+                        }
+                    @endphp
+                    <div class="pt-4 border-t">
+                        <label class="text-xs font-medium text-gray-400 uppercase tracking-wider">Cadastro Vinculado</label>
+                        <div class="mt-2 p-3 rounded-xl border {{ $boxClass }}">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold {{ $badgeClass }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $dotClass }} mr-1.5"></span>
+                                    {{ $statusLabel }}
+                                </span>
+                                <a href="{{ route('admin.users.edit', $linkedUser->id) }}" class="text-[10px] text-emerald-600 font-semibold hover:underline">
+                                    Ver cadastro →
+                                </a>
+                            </div>
+                            <div class="text-xs text-gray-700 space-y-1">
+                                @if($linkedUser->expires_at)
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Expira:</span>
+                                        <span class="font-medium">
+                                            {{ $linkedUser->expires_at->format('d/m H:i') }}
+                                            @if($linkedUser->expires_at->isFuture())
+                                                <span class="{{ $expColor }}">({{ $linkedUser->expires_at->diffForHumans() }})</span>
+                                            @else
+                                                <span class="text-red-600">(já passou)</span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                @endif
+                                @if($linkedUser->mac_address)
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">MAC cadastro:</span>
+                                        <span class="font-mono text-[11px]">{{ strtoupper($linkedUser->mac_address) }}</span>
+                                    </div>
+                                    @if($conversation->visitor_mac && strtoupper(trim($conversation->visitor_mac)) !== strtoupper(trim($linkedUser->mac_address)))
+                                        <div class="px-2 py-1 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-800 mt-1">
+                                            ⚠️ MAC do chat difere do cadastro — possível randomização do dispositivo.
+                                        </div>
+                                    @endif
+                                @endif
+                                @if($conversation->linked_bus_name)
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Ônibus:</span>
+                                        <span class="font-medium">🚌 {{ $conversation->linked_bus_name }}</span>
+                                    </div>
+                                @endif
+                                @if($linkedUser->connected_at)
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Último conectado:</span>
+                                        <span>{{ $linkedUser->connected_at->diffForHumans() }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @elseif($conversation->visitor_mac || $conversation->visitor_phone)
+                    <div class="pt-4 border-t">
+                        <label class="text-xs font-medium text-gray-400 uppercase tracking-wider">Cadastro Vinculado</label>
+                        <div class="mt-2 p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-600">
+                            Nenhum cadastro encontrado com esse MAC ou telefone.
+                        </div>
+                    </div>
                 @endif
 
                 <div class="pt-4 border-t">
@@ -412,6 +662,43 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 📡 Solicitar teste de conexão
+    const probeBtn = document.getElementById('request-probe-btn');
+    if (probeBtn) {
+        probeBtn.addEventListener('click', function() {
+            if (!confirm('Enviar um teste de conexão para o usuário?\n\nO link aparecerá no chat. Ele terá 30 minutos para clicar e rodar os testes.')) return;
+            probeBtn.disabled = true;
+            const originalHtml = probeBtn.innerHTML;
+            probeBtn.innerHTML = '<span class="animate-pulse">Enviando...</span>';
+
+            fetch('{{ route("admin.chat.probe.create", $conversation->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // reload para mostrar o cartão completo renderizado pelo Blade
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + (data.error || 'não foi possível criar o teste'));
+                    probeBtn.disabled = false;
+                    probeBtn.innerHTML = originalHtml;
+                }
+            })
+            .catch(e => {
+                console.error(e);
+                alert('Erro ao solicitar teste');
+                probeBtn.disabled = false;
+                probeBtn.innerHTML = originalHtml;
+            });
+        });
+    }
+
     // Polling para novas mensagens
     let lastMessageId = {{ $conversation->messages->last()->id ?? 0 }};
     
@@ -421,8 +708,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success && data.messages.length > 0) {
                     const newMessages = data.messages.filter(m => m.id > lastMessageId && m.sender_type === 'visitor');
-                    
+
+                    // Se veio resultado de probe, recarrega pra pegar o cartão renderizado
+                    if (newMessages.some(m => (m.type || 'text') === 'probe_result')) {
+                        window.location.reload();
+                        return;
+                    }
+
                     newMessages.forEach(msg => {
+                        if ((msg.type || 'text') !== 'text') return;
                         const msgDiv = document.createElement('div');
                         msgDiv.className = 'flex justify-start chat-message-enter';
                         msgDiv.innerHTML = `

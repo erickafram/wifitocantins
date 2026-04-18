@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\WhatsappController;
 use App\Http\Controllers\DriverVoucherController;
 use App\Http\Controllers\DriverRequestController;
 use App\Http\Controllers\Admin\DriverRequestController as AdminDriverRequestController;
+use App\Http\Controllers\ConnectivityProbeController;
 
 // Página principal do portal cativo
 Route::get('/', [PortalController::class, 'index'])->name('portal.index');
@@ -34,6 +35,12 @@ Route::post('/sair', [PortalAuthController::class, 'logout'])->middleware('auth'
 
 Route::get('/suporte/diagnostico', [SupportDiagnosticController::class, 'show'])->name('support.diagnostics');
 Route::post('/suporte/diagnostico/consultar', [SupportDiagnosticController::class, 'lookup'])->name('support.diagnostics.lookup');
+
+// 📡 Probe de diagnóstico — link público enviado pelo admin via chat
+Route::get('/diagnostico/{token}', [ConnectivityProbeController::class, 'show'])->name('diagnostico.show');
+Route::post('/api/diagnostico/{token}/report', [ConnectivityProbeController::class, 'report'])->name('diagnostico.report');
+Route::get('/api/diagnostico/ping', [ConnectivityProbeController::class, 'ping'])->name('diagnostico.ping');
+Route::get('/api/diagnostico/download', [ConnectivityProbeController::class, 'downloadPayload'])->name('diagnostico.download');
 
 // Rotas de Vouchers para Motoristas (Não requer autenticação)
 Route::prefix('voucher')->name('voucher.')->group(function () {
@@ -114,6 +121,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
         Route::post('/{id}/close', [App\Http\Controllers\Admin\ChatController::class, 'close'])->name('close')->where('id', '[0-9]+');
         Route::delete('/{id}', [App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('destroy')->where('id', '[0-9]+');
         Route::get('/{id}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getMessages'])->name('messages')->where('id', '[0-9]+');
+        // 📡 Admin gera link de teste de conexão a partir do chat
+        Route::post('/{id}/probe', [ConnectivityProbeController::class, 'createFromChat'])->name('probe.create')->where('id', '[0-9]+');
     });
 
     Route::middleware(['module:reviews'])->prefix('avaliacoes')->name('reviews.')->group(function () {

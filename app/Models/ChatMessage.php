@@ -13,10 +13,13 @@ class ChatMessage extends Model
         'admin_id',
         'message',
         'is_read',
+        'type',
+        'metadata',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
+        'metadata' => 'array',
     ];
 
     public function conversation(): BelongsTo

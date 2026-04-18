@@ -4,11 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Services\ChatAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ChatApiController extends Controller
 {
+    public function __construct(private ChatAIService $ai) {}
+
+    /**
+     * Dispara a IA para responder à última mensagem do visitante.
+     * Se ela conseguir responder/escalar, retorna a mensagem criada pra devolver no payload.
+     * Silencioso em falha: quem chama continua o fluxo normal (notificação ntfy, etc).
+     */
+    private function maybeRunAI(ChatConversation $conv): ?ChatMessage
+    {
+        $conv->refresh();
+        if (!$this->ai->shouldRespond($conv)) return null;
+        return $this->ai->respond($conv);
+    }
+
     public function startConversation(Request $request)
     {
         $request->validate([
@@ -49,6 +64,8 @@ class ChatApiController extends Controller
             ->where('created_at', '>=', now()->subMinutes(2))
             ->first();
 
+        $aiReply = null;
+
         if (!$existingMessage) {
             $message = ChatMessage::create([
                 'conversation_id' => $conversation->id,
@@ -62,15 +79,20 @@ class ChatApiController extends Controller
                 'unread_count' => $conversation->unread_count + 1,
             ]);
 
-            // Notificar via ntfy
-            try {
-                app(\App\Services\NtfyService::class)->send(
-                    "Nova mensagem no chat",
-                    "{$request->name}\n{$request->phone}\n\n{$request->message}",
-                    'high',
-                    ['speech_balloon', 'incoming_envelope']
-                );
-            } catch (\Exception $e) {}
+            // 🤖 IA tenta responder antes do humano
+            $aiReply = $this->maybeRunAI($conversation);
+
+            // Só notifica ntfy se IA não respondeu (escalate já tem ntfy próprio)
+            if (!$aiReply) {
+                try {
+                    app(\App\Services\NtfyService::class)->send(
+                        "Nova mensagem no chat",
+                        "{$request->name}\n{$request->phone}\n\n{$request->message}",
+                        'high',
+                        ['speech_balloon', 'incoming_envelope']
+                    );
+                } catch (\Exception $e) {}
+            }
         } else {
             $message = $existingMessage;
         }
@@ -80,6 +102,7 @@ class ChatApiController extends Controller
             'conversation_id' => $conversation->id,
             'session_id' => $sessionId,
             'message' => $message,
+            'ai_reply' => $aiReply,
         ]);
     }
 
@@ -120,21 +143,26 @@ class ChatApiController extends Controller
             'unread_count' => $conversation->unread_count + 1,
         ]);
 
-        // Notificar via ntfy
-        try {
-            $visitorName = $conversation->visitor_name ?: 'Visitante';
-            $visitorPhone = $conversation->visitor_phone ?: '';
-            app(\App\Services\NtfyService::class)->send(
-                "Mensagem de {$visitorName}",
-                "{$visitorPhone}\n\n{$request->message}",
-                'high',
-                ['speech_balloon']
-            );
-        } catch (\Exception $e) {}
+        // 🤖 IA tenta responder antes do humano
+        $aiReply = $this->maybeRunAI($conversation);
+
+        if (!$aiReply) {
+            try {
+                $visitorName = $conversation->visitor_name ?: 'Visitante';
+                $visitorPhone = $conversation->visitor_phone ?: '';
+                app(\App\Services\NtfyService::class)->send(
+                    "Mensagem de {$visitorName}",
+                    "{$visitorPhone}\n\n{$request->message}",
+                    'high',
+                    ['speech_balloon']
+                );
+            } catch (\Exception $e) {}
+        }
 
         return response()->json([
             'success' => true,
             'message' => $message,
+            'ai_reply' => $aiReply,
         ]);
     }
 

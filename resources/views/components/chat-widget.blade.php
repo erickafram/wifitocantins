@@ -443,26 +443,79 @@
     }
 
     // Adicionar mensagem na tela
+    // Renderiza uma mensagem vinda do servidor (aceita probe_request, escalate, text)
+    function renderServerMessage(msg) {
+        if (!msg) return;
+        const isAdmin = msg.sender_type === 'admin';
+        const isAI = isAdmin && msg.metadata && msg.metadata.ai === true;
+        const adminName = isAI ? '🤖 Assistente' : (msg.admin && msg.admin.name ? msg.admin.name : 'Atendente');
+        const time = new Date(msg.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+        if (msg.type === 'probe_request' && msg.metadata && msg.metadata.probe_url) {
+            renderProbeButton(msg.message, msg.metadata.probe_url, adminName, time);
+        } else {
+            addMessage(msg.message, isAdmin, adminName, time);
+        }
+    }
+
+    function renderProbeButton(text, url, adminName, time) {
+        const messagesDiv = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = 'flex justify-start chat-message-enter';
+        div.innerHTML = `
+            <div class="max-w-[90%] w-full bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 shadow-sm">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-white text-xs">📡</div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Teste de conexão</p>
+                        <p class="text-[9px] text-gray-500">${adminName} · ${time}</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-700 mb-2">${text}</p>
+                <a href="${url}" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded-lg font-semibold text-xs transition">
+                    ▶ Fazer teste agora
+                </a>
+                <p class="text-[9px] text-gray-400 mt-1 text-center">Leva 15 segundos</p>
+            </div>
+        `;
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
     function addMessage(message, isAdmin = false, adminName = null, time = null) {
         const messagesDiv = document.getElementById('chat-messages');
         const msgDiv = document.createElement('div');
         msgDiv.className = `flex ${isAdmin ? 'justify-start' : 'justify-end'} chat-message-enter`;
-        
+
         const displayTime = time || new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-        
+        const isAI = adminName && adminName.indexOf('🤖') === 0;
+
         if (isAdmin) {
-            msgDiv.innerHTML = `
-                <div class="flex items-end space-x-2 max-w-[85%]">
-                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md">
-                        ${adminName ? adminName.charAt(0).toUpperCase() : 'A'}
+            if (isAI) {
+                msgDiv.innerHTML = `
+                    <div class="flex items-end space-x-2 max-w-[85%]">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-base flex-shrink-0 shadow-md">🤖</div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-indigo-100">
+                            <p class="text-xs font-medium text-indigo-600 mb-1">Assistente</p>
+                            <p class="text-sm text-gray-800 leading-relaxed">${message}</p>
+                            <p class="text-xs text-gray-400 mt-2">${displayTime}</p>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-gray-100">
-                        ${adminName ? `<p class="text-xs font-medium text-emerald-600 mb-1">${adminName}</p>` : ''}
-                        <p class="text-sm text-gray-800 leading-relaxed">${message}</p>
-                        <p class="text-xs text-gray-400 mt-2">${displayTime}</p>
+                `;
+            } else {
+                msgDiv.innerHTML = `
+                    <div class="flex items-end space-x-2 max-w-[85%]">
+                        <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md">
+                            ${adminName ? adminName.charAt(0).toUpperCase() : 'A'}
+                        </div>
+                        <div class="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-gray-100">
+                            ${adminName ? `<p class="text-xs font-medium text-emerald-600 mb-1">${adminName}</p>` : ''}
+                            <p class="text-sm text-gray-800 leading-relaxed">${message}</p>
+                            <p class="text-xs text-gray-400 mt-2">${displayTime}</p>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         } else {
             msgDiv.innerHTML = `
                 <div class="max-w-[85%]">
@@ -526,15 +579,21 @@
                     chatUserName = name;
                     localStorage.setItem('chat_session_id', chatSessionId);
                     localStorage.setItem('chat_user_name', chatUserName);
-                    
+
                     showMessagesContainer();
                     addMessage(message, false);
-                    
-                    // Mensagem automática do sistema
-                    setTimeout(() => {
-                        addMessage('Obrigado por entrar em contato, ' + name.split(' ')[0] + '! 😊 Nossa equipe foi notificada e responderá em breve. Enquanto isso, fique à vontade para enviar mais detalhes.', true, 'Assistente Virtual');
-                    }, 800);
-                    
+
+                    if (data.ai_reply) {
+                        // IA respondeu: mostra a resposta dela (texto ou probe)
+                        setTimeout(() => renderServerMessage(data.ai_reply), 600);
+                        if (data.ai_reply.id) lastMessageId = Math.max(lastMessageId, data.ai_reply.id);
+                    } else {
+                        // Sem IA: mensagem genérica de boas-vindas
+                        setTimeout(() => {
+                            addMessage('Obrigado por entrar em contato, ' + name.split(' ')[0] + '! 😊 Nossa equipe foi notificada e responderá em breve.', true, 'Atendente');
+                        }, 800);
+                    }
+
                     startPolling();
                 } else {
                     alert(data.message || 'Erro ao iniciar conversa. Tente novamente.');
@@ -604,6 +663,11 @@
                 if (data.success && data.message && data.message.id) {
                     lastMessageId = Math.max(lastMessageId, data.message.id);
                 }
+
+                if (data.ai_reply) {
+                    setTimeout(() => renderServerMessage(data.ai_reply), 400);
+                    if (data.ai_reply.id) lastMessageId = Math.max(lastMessageId, data.ai_reply.id);
+                }
             })
             .catch(error => {
                 console.error('Erro ao enviar:', error);
@@ -642,11 +706,12 @@
                     `;
                     
                     data.messages.forEach(msg => {
-                        const isAdmin = msg.sender_type === 'admin';
-                        const adminName = isAdmin && msg.admin ? msg.admin.name : (isAdmin ? 'Atendente' : null);
-                        const time = new Date(msg.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                        
-                        addMessage(msg.message, isAdmin, adminName, time);
+                        if (msg.sender_type === 'admin') {
+                            renderServerMessage(msg);
+                        } else {
+                            const time = new Date(msg.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                            addMessage(msg.message, false, null, time);
+                        }
                         lastMessageId = Math.max(lastMessageId, msg.id);
                     });
                 }
@@ -689,8 +754,7 @@
                     
                     if (data.success && data.has_new && data.messages) {
                         data.messages.forEach(msg => {
-                            const adminName = msg.admin ? msg.admin.name : 'Atendente';
-                            addMessage(msg.message, true, adminName);
+                            renderServerMessage(msg);
                             lastMessageId = Math.max(lastMessageId, msg.id);
                         });
                         

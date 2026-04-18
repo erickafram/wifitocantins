@@ -49,4 +49,18 @@ return [
         'topic' => env('NTFY_TOPIC', ''),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Together.ai — IA que responde no chat antes de escalar para humano
+    |--------------------------------------------------------------------------
+    */
+    'together' => [
+        'enabled' => env('CHAT_AI_ENABLED', false),
+        'api_key' => env('TOGETHER_API_KEY'),
+        'api_url' => env('TOGETHER_API_URL', 'https://api.together.xyz/v1/chat/completions'),
+        'model' => env('CHAT_AI_MODEL', 'deepseek-ai/DeepSeek-V3'),
+        'timeout' => env('CHAT_AI_TIMEOUT', 15),
+        'max_turns' => env('CHAT_AI_MAX_TURNS', 6),
+    ],
+
 ];
